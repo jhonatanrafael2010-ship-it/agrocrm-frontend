@@ -39,13 +39,11 @@ const VisitsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)
 
   const [form, setForm] = useState({
-  date: '',
-  client_id: '',
-  property_id: '',
-  plot_id: '',
-  recommendation: '',
-  quantidade: 1,
-  intervalo: 'dia',
+    date: '',
+    client_id: '',
+    property_id: '',
+    plot_id: '',
+    recommendation: '',
   })
   const [viewOpen, setViewOpen] = useState(false)
   const [activeVisit, setActiveVisit] = useState<Visit | null>(null)
@@ -74,7 +72,7 @@ const VisitsPage: React.FC = () => {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target
-  setForm(f => ({ ...f, [name]: name === 'quantidade' ? Number(value) : value }))
+    setForm(f => ({ ...f, [name]: value }))
   }
 
   function formatDateBR(dateStr?: string) {
@@ -94,40 +92,24 @@ const VisitsPage: React.FC = () => {
 
   async function handleSave() {
     if (!form.date || !form.client_id || !form.property_id || !form.plot_id) return alert('Data, cliente, propriedade e talhão são obrigatórios')
-    if (!form.quantidade || form.quantidade < 1) return alert('Quantidade deve ser pelo menos 1')
     setSubmitting(true)
     try {
-      const visitasCriadas: Visit[] = [];
-      // Manipula a data como string para evitar problemas de fuso horário
-      let dataBaseStr = form.date;
-      for (let i = 0; i < form.quantidade; i++) {
-        const res = await fetch(`${API_BASE}visits`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: dataBaseStr,
-            client_id: Number(form.client_id),
-            property_id: Number(form.property_id),
-            plot_id: Number(form.plot_id),
-            recommendation: form.recommendation,
-            intervalo: form.intervalo,
-          })
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-        const created: Visit = body.visit || body;
-        visitasCriadas.push(created);
-        // Avança a data conforme intervalo
-        let [yyyy, mm, dd] = dataBaseStr.split('-').map(Number);
-        const dateObj = new Date(yyyy, mm - 1, dd);
-        if (form.intervalo === 'dia') dateObj.setDate(dateObj.getDate() + 1);
-        else if (form.intervalo === 'semana') dateObj.setDate(dateObj.getDate() + 7);
-        else if (form.intervalo === 'mes') dateObj.setMonth(dateObj.getMonth() + 1);
-        // Gera nova string no formato YYYY-MM-DD
-        dataBaseStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-      }
-      setVisits(v => [...visitasCriadas, ...v])
+      const res = await fetch(`${API_BASE}visits`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: form.date,
+          client_id: Number(form.client_id),
+          property_id: Number(form.property_id),
+          plot_id: Number(form.plot_id),
+          recommendation: form.recommendation,
+        })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+      const created: Visit = body.visit || body;
+      setVisits(v => [created, ...v])
       setOpen(false)
-  setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '', quantidade: 1, intervalo: 'dia' })
+      setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
     } catch (err: any) {
       alert(err?.message || 'Erro ao criar acompanhamento')
     } finally { setSubmitting(false) }
@@ -251,14 +233,7 @@ const VisitsPage: React.FC = () => {
           <div className="modal">
             <h3>Nova Visita</h3>
             <div className="form-row"><label>Data</label><input name="date" type="date" value={form.date} onChange={handleChange} /></div>
-            <div className="form-row"><label>Quantidade</label><input name="quantidade" type="number" min={1} value={form.quantidade} onChange={handleChange} /></div>
-            <div className="form-row"><label>Intervalo</label>
-              <select name="intervalo" value={form.intervalo} onChange={handleChange} style={{ background: '#16222a', color: '#e2e8f0', border: '1px solid #253544', borderRadius: 5, padding: '4px 8px', fontSize: 15 }}>
-                <option value="dia">Por dia</option>
-                <option value="semana">Por semana</option>
-                <option value="mes">Por mês</option>
-              </select>
-            </div>
+            {/* Campos de quantidade e intervalo removidos */}
             <div className="form-row">
               <label>Cliente</label>
               <DarkSelect name="client_id" value={form.client_id} placeholder="Selecione cliente" options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]} onChange={handleChange as any} />
