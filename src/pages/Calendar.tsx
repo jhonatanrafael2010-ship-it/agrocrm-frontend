@@ -24,7 +24,6 @@ const CalendarPage: React.FC = () => {
 
   // modal state for creating a visit
   const [open, setOpen] = useState(false)
-  const [selDate, setSelDate] = useState<string>('')
   const [form, setForm] = useState({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
   const [viewOpen, setViewOpen] = useState(false)
   const [activeEvent, setActiveEvent] = useState<any>(null)
@@ -36,21 +35,20 @@ const CalendarPage: React.FC = () => {
       fetch(`${API_BASE}clients`).then(r => r.json()),
       fetch(`${API_BASE}properties`).then(r => r.json()),
       fetch(`${API_BASE}plots`).then(r => r.json()),
-      fetch(`${API_BASE}plantings`).then(r => r.json()),
       fetch(`${API_BASE}visits`).then(r => r.json()),
     ])
-      .then(([cs, ps, pls, plantings, visits]) => {
+      .then(([cs, ps, pls, visits]) => {
         if (!mounted) return
-        // map visits and plantings to calendar events
+        // map visits to calendar events
         const evs: any[] = []
-          if (visits && Array.isArray(visits)) {
-            visits.forEach((v: any) => {
-              if (v.date) {
-                const clientName = (cs || []).find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`;
-                evs.push({ id: `visit-${v.id}`, title: clientName, start: v.date, extendedProps: { type: 'visit', raw: v } })
-              }
-            })
-          }
+        if (visits && Array.isArray(visits)) {
+          visits.forEach((v: any) => {
+            if (v.date) {
+              const clientName = (cs || []).find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`;
+              evs.push({ id: `visit-${v.id}`, title: clientName, start: v.date, extendedProps: { type: 'visit', raw: v } })
+            }
+          })
+        }
         setEvents(evs)
         setClients(cs || [])
         setProperties(ps || [])
