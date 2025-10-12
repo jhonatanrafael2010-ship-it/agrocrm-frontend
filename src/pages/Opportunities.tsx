@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import './Opportunities.css'
+import pencilIcon from '../assets/pencil.svg'
+import trashIcon from '../assets/trash.svg'
 import DarkSelect from '../components/DarkSelect'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
@@ -31,6 +33,7 @@ const OpportunitiesPage: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ client_id: '', title: '', estimated_value: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [editing, setEditing] = useState<Opportunity | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -74,22 +77,35 @@ const OpportunitiesPage: React.FC = () => {
     setForm(f => ({ ...f, [name]: value }))
   }
 
-  async function handleCreate() {
+  async function handleSave() {
     if (!form.client_id || !form.title) return alert('Cliente e título são obrigatórios')
     setSubmitting(true)
     try {
-      const res = await fetch(`${API_BASE}opportunities`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: Number(form.client_id), title: form.title, estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined })
-      })
-      const body = await res.json()
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`)
-      const created = body.opportunity || body
-      setOpps(o => [created, ...o])
+      let res, body
+      if (editing) {
+        res = await fetch(`${API_BASE}opportunities/${editing.id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: Number(form.client_id), title: form.title, estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined })
+        })
+        body = await res.json()
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`)
+        const updated = body.opportunity || body
+        setOpps(o => o.map(op => op.id === updated.id ? updated : op))
+      } else {
+        res = await fetch(`${API_BASE}opportunities`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: Number(form.client_id), title: form.title, estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined })
+        })
+        body = await res.json()
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`)
+        const created = body.opportunity || body
+        setOpps(o => [created, ...o])
+      }
       setOpen(false)
+      setEditing(null)
       setForm({ client_id: '', title: '', estimated_value: '' })
     } catch (err: any) {
-      alert(err?.message || 'Erro ao criar oportunidade')
+      alert(err?.message || 'Erro ao salvar oportunidade')
     } finally { setSubmitting(false) }
   }
 
@@ -152,7 +168,20 @@ const OpportunitiesPage: React.FC = () => {
                               <div className="card-value">{op.estimated_value ? `R$ ${op.estimated_value}` : ''}</div>
                               <div className="card-actions">
                                 {s.key !== 'fechadas' && <button className="btn-primary" onClick={() => changeStageRemote(op.id, 'fechadas')}>Fechar</button>}
-                                <button className="btn-action btn-delete" onClick={() => deleteOpportunity(op.id)} style={{ marginLeft: 8 }}>Excluir</button>
+                                <button className="btn-action btn-edit" title="Editar" style={{ marginRight: 8, background: 'none', border: 'none', padding: '4px 6px' }} onClick={() => {
+                                  setOpen(true)
+                                  setEditing(op)
+                                  setForm({
+                                    client_id: op.client_id ? String(op.client_id) : '',
+                                    title: op.title || '',
+                                    estimated_value: op.estimated_value ? String(op.estimated_value) : ''
+                                  })
+                                }}>
+                                  <img src={pencilIcon} alt="Editar" style={{ width: 20, height: 20, verticalAlign: 'middle', filter: 'drop-shadow(0 0 2px #1976d2)' }} />
+                                </button>
+                                <button className="btn-action btn-delete" title="Excluir" style={{ background: 'none', border: 'none', padding: '4px 6px' }} onClick={() => deleteOpportunity(op.id)}>
+                                  <img src={trashIcon} alt="Excluir" style={{ width: 20, height: 20, verticalAlign: 'middle', filter: 'drop-shadow(0 0 2px #d32f2f)' }} />
+                                </button>
                               </div>
                             </div>
                           )}
@@ -171,15 +200,15 @@ const OpportunitiesPage: React.FC = () => {
       {open && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>Nova Oportunidade</h3>
+            <h3>{editing ? 'Editar Oportunidade' : 'Nova Oportunidade'}</h3>
             <div className="form-row"><label>Cliente</label>
-              <DarkSelect name="client_id" value={form.client_id} placeholder="Selecione cliente" options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]} onChange={handleChange as any} />
+              <DarkSelect name="client_id" value={form.client_id} placeholder="Selecione cliente" options={[{ value: '', label: 'Selecione cliente' }, ...[...clients].sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: String(c.id), label: c.name }))]} onChange={handleChange as any} />
             </div>
             <div className="form-row"><label>Título</label><input name="title" value={form.title} onChange={handleChange} /></div>
             <div className="form-row"><label>Valor estimado</label><input name="estimated_value" value={form.estimated_value} onChange={handleChange} placeholder="0" /></div>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
-              <button className="btn-save" onClick={handleCreate} disabled={submitting}>{submitting ? 'Salvando...' : 'Salvar'}</button>
+              <button className="btn-cancel" onClick={() => { setOpen(false); setEditing(null); }}>Cancelar</button>
+              <button className="btn-save" onClick={handleSave} disabled={submitting}>{submitting ? (editing ? 'Salvando...' : 'Salvando...') : (editing ? 'Salvar alterações' : 'Salvar')}</button>
             </div>
           </div>
         </div>

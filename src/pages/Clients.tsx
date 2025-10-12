@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import pencilIcon from '../assets/pencil.svg'
+import trashIcon from '../assets/trash.svg'
 import './Clients.css'
 
 type Client = {
@@ -17,7 +19,7 @@ const Clients: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  const [editing, setEditing] = useState<Client | null>(null)
   const [form, setForm] = useState({ name: '', document: '', segment: '', vendor: '' })
 
   useEffect(() => {
@@ -47,22 +49,34 @@ const Clients: React.FC = () => {
     if (!form.name.trim()) return alert('Nome é obrigatório')
     setSubmitting(true)
     try {
-      const res = await fetch(`${API_BASE}clients`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const body = await res.json()
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`)
-
-      // backend returns {message, client}
-      const created: Client = body.client || body
-      setClients(c => [created, ...c])
+      let res, body
+      if (editing) {
+        res = await fetch(`${API_BASE}clients/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        body = await res.json()
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`)
+        const updated: Client = body.client || body
+        setClients(c => c.map(cl => cl.id === updated.id ? updated : cl))
+      } else {
+        res = await fetch(`${API_BASE}clients`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        body = await res.json()
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`)
+        const created: Client = body.client || body
+        setClients(c => [created, ...c])
+      }
       setOpen(false)
+      setEditing(null)
       setForm({ name: '', document: '', segment: '', vendor: '' })
     } catch (err: any) {
-      console.error('create client err', err)
-      alert(err?.message || 'Erro ao criar cliente')
+      console.error('save client err', err)
+      alert(err?.message || 'Erro ao salvar cliente')
     } finally {
       setSubmitting(false)
     }
@@ -88,7 +102,11 @@ const Clients: React.FC = () => {
     <div className="clients-container">
       <div className="clients-header">
         <h2>Clientes</h2>
-        <button className="btn-new" onClick={() => setOpen(true)}>Novo Cliente</button>
+        <button className="btn-new" onClick={() => {
+          setOpen(true)
+          setEditing(null)
+          setForm({ name: '', document: '', segment: '', vendor: '' })
+        }}>Novo Cliente</button>
       </div>
 
       <div className="clients-card">
@@ -115,7 +133,21 @@ const Clients: React.FC = () => {
                   <td>{c.segment ?? '--'}</td>
                   <td>{c.vendor ?? '--'}</td>
                   <td>
-                    <button className="btn-action btn-delete" onClick={() => handleDelete(c.id)} style={{ marginLeft: 8 }}>Excluir</button>
+                    <button className="btn-action btn-edit" title="Editar" style={{ marginRight: 8, padding: '4px 6px', background: 'none', border: 'none' }} onClick={() => {
+                      setOpen(true)
+                      setEditing(c)
+                      setForm({
+                        name: c.name || '',
+                        document: c.document || '',
+                        segment: c.segment || '',
+                        vendor: c.vendor || ''
+                      })
+                    }}>
+                      <img src={pencilIcon} alt="Editar" style={{ width: 20, height: 20, verticalAlign: 'middle', filter: 'drop-shadow(0 0 2px #1976d2)' }} />
+                    </button>
+                    <button className="btn-action btn-delete" title="Excluir" style={{ background: 'none', border: 'none', padding: '4px 6px' }} onClick={() => handleDelete(c.id)}>
+                      <img src={trashIcon} alt="Excluir" style={{ width: 20, height: 20, verticalAlign: 'middle', filter: 'drop-shadow(0 0 2px #d32f2f)' }} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -127,7 +159,7 @@ const Clients: React.FC = () => {
       {open && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal">
-            <h3>Novo Cliente</h3>
+            <h3>{editing ? 'Editar Cliente' : 'Novo Cliente'}</h3>
 
             <div className="form-row">
               <label>Nome</label>
@@ -150,8 +182,11 @@ const Clients: React.FC = () => {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
-              <button className="btn-save" onClick={handleSave} disabled={submitting}>{submitting ? 'Salvando...' : 'Salvar'}</button>
+              <button className="btn-cancel" onClick={() => {
+                setOpen(false)
+                setEditing(null)
+              }}>Cancelar</button>
+              <button className="btn-save" onClick={handleSave} disabled={submitting}>{submitting ? (editing ? 'Salvando...' : 'Salvando...') : (editing ? 'Salvar alterações' : 'Salvar')}</button>
             </div>
           </div>
         </div>
