@@ -1,0 +1,29 @@
+.opportunities-page { color: #dfeff0 }
+.kanban { display:flex; gap:16px }
+.kanban-col { background: rgba(7,24,40,0.6); padding:12px; border-radius:10px; flex:1 }
+.kanban-col h4 { margin:0 0 8px 0 }
+.kanban-list { display:flex; flex-direction:column; gap:10px }
+.kanban-card { background: rgba(2,8,12,0.3); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.02) }
+.kanban-card[draggable="true"] { box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+.card-title { font-weight:700 }
+.card-sub { color:#9fb3b6; font-size:0.95rem }
+.card-value { margin-top:6px; font-weight:700 }
+.card-value {
+	margin-top: 6px;
+	font-weight: 700;
+	font-size: 1.1rem;
+	color: #fff;
+	letter-spacing: 0.5px;
+}
+.card-actions { display:flex; gap:8px; margin-top:10px }
+.card-actions button { padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#dfeff0 }
+.card-actions .btn-primary { background:#2dd36f; color:#02251f; border:none }
+
+.modal-overlay { position: fixed; inset:0; background: rgba(2,6,10,0.6); display:flex; align-items:center; justify-content:center; z-index:200 }
+.modal { width:420px; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border-radius:12px; padding:18px }
+.form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:10px }
+.form-row label { font-size:0.9rem; color:#cbdedf }
+.form-row input, .form-row select { padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:#eafaf9 }
+.modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:6px }
+.btn-cancel { background:#17242a; color:#dfeff0; border:none; padding:8px 12px; border-radius:8px }
+.btn-save { background:#2dd36f; color:#02251f; border:none; padding:8px 12px; border-radius:8px; font-weight:700 }

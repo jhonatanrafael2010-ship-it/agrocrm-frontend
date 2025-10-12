@@ -1,0 +1,100 @@
+# Node
+node_modules/
+
+# Optional npm cache directory
+.npm/
+
+# Lock files
+# Uncomment if you use these package managers and don't want to commit lockfiles
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build output
+/dist/
+/build/
+/out/
+
+# Vite cache
+/.vite/
+
+# Parcel / Next / other caches
+/.parcel-cache/
+/.next/
+
+# Local env files
+.env
+.env.*.local
+.env.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Runtime data
+/pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+/coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor directories and files
+/.vscode/
+/.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+/.cache/
+/.turbo/
+/.cache-loader/
+
+# JetBrains
+*.iml
+
+# Mac artifact
+Icon
+
+# Test output
+/test-results/
+
+# Ignore local env for editors
+/.history/# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

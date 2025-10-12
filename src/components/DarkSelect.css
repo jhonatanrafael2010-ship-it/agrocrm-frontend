@@ -1,0 +1,7 @@
+.dark-select { position: relative; display: inline-block; width: 100%; }
+.ds-control { width: 100%; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:#eafaf9; cursor:pointer }
+.ds-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ds-arrow { margin-left: 8px; color: #9fb3b6 }
+.ds-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border:1px solid rgba(255,255,255,0.04); border-radius:8px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); max-height: 220px; overflow:auto; z-index: 999 }
+.ds-option { padding: 8px 10px; color: #eafaf9; cursor: pointer }
+.ds-option:hover, .ds-option:focus { background: rgba(255,255,255,0.03) }
