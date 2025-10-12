@@ -27,8 +27,6 @@ const PropertiesTalhoesPage: React.FC = () => {
   const [openPlot, setOpenPlot] = React.useState(false)
   const [openPlanting, setOpenPlanting] = React.useState(false)
   const [editingProp, setEditingProp] = React.useState<Property | null>(null)
-  const [editingPlot, setEditingPlot] = React.useState<Plot | null>(null)
-  const [editingPlanting, setEditingPlanting] = React.useState<Planting | null>(null)
 
   // Forms
   const [propForm, setPropForm] = React.useState({ client_id: '', name: '', city_state: '', area_ha: '' })
