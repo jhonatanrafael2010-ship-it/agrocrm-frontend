@@ -68,13 +68,6 @@ const Dashboard: React.FC = () => {
     return () => { mounted = false }
   }, [])
 
-  function applyLast7() {
-    const t = new Date()
-    const e = formatDate(t)
-    const s = formatDate(new Date(t.getTime() - 6 * 24 * 60 * 60 * 1000))
-    setStartDate(s)
-    setEndDate(e)
-  }
 
   // filter opportunities by selected date range
   function inRange(dateStr?: string) {
