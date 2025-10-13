@@ -127,23 +127,47 @@ button:focus-visible {
 /* Ensure dropdowns follow dark color scheme where supported */
 select, option { color-scheme: dark; }
 
+/* ====================== */
+/* 🌗 Tema Claro / Escuro */
+/* ====================== */
+
 :root {
-  --bg: #f9f9f9;
-  --text: #111;
-  --panel: #fff;
-  --muted: #666;
+  --bg: #f0f2f5;      /* leve cinza claro */
+  --text: #1a1a1a;     /* texto escuro */
+  --panel: #ffffff;    /* cartões e seções */
+  --muted: #666666;    /* texto secundário */
 }
 
 [data-theme='dark'] {
-  --bg: #121212;
-  --text: #f1f1f1;
+  --bg: #0f0f0f;
+  --text: #f5f5f5;
   --panel: #1e1e1e;
   --muted: #9fb3b6;
 }
 
-body {
-  background: var(--bg);
+html, body {
+  background-color: var(--bg);
   color: var(--text);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Corrige painéis, cards, modais e tabelas */
+div, section, article, table, th, td, input, select, textarea {
+  background-color: var(--panel);
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* Cards e blocos principais */
+.card, .clients-card, .modal, .dashboard-section {
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Tabelas */
+.clients-table th,
+.clients-table td {
+  background-color: var(--panel);
+  color: var(--text);
+}
