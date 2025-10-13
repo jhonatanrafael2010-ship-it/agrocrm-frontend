@@ -1,3 +1,17 @@
+html, body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Corrige painéis, cards e tabelas */
+div, section, table, th, td, input, select, textarea {
+  background-color: var(--panel);
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
