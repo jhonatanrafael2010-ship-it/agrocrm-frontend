@@ -112,3 +112,24 @@ button:focus-visible {
 
 /* Ensure dropdowns follow dark color scheme where supported */
 select, option { color-scheme: dark; }
+
+:root {
+  --bg: #f9f9f9;
+  --text: #111;
+  --panel: #fff;
+  --muted: #666;
+}
+
+[data-theme='dark'] {
+  --bg: #121212;
+  --text: #f1f1f1;
+  --panel: #1e1e1e;
+  --muted: #9fb3b6;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+

@@ -46,3 +46,24 @@ h1 {
   line-height: 1.02;
   margin: 1.5rem 0 1rem;
 }
+
+.theme-toggle-btn {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  font-size: 1.5rem;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  transition: all 0.25s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: rotate(20deg);
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
