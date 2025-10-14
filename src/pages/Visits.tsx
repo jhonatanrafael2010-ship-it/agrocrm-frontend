@@ -18,6 +18,15 @@ type Plot = { id: number; name: string }
 const API_BASE = import.meta.env.VITE_API_URL || '/api/'
 
 const VisitsPage: React.FC = () => {
+  const [visitForm, setVisitForm] = useState({ culture: '', variety: '' });
+const [varieties, setVarieties] = useState([]);
+
+useEffect(() => {
+  fetch(`${API_BASE}varieties`)
+    .then(r => r.ok ? r.json() : [])
+    .then(data => setVarieties(Array.isArray(data) ? data : []))
+    .catch(() => setVarieties([]))
+}, []);
   const [visits, setVisits] = useState<Visit[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [properties, setProperties] = useState<Property[]>([])
@@ -237,6 +246,32 @@ const VisitsPage: React.FC = () => {
               <label>Cliente</label>
               <DarkSelect name="client_id" value={form.client_id} placeholder="Selecione cliente" options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]} onChange={handleChange as any} />
             </div>
+            <div className="form-row">
+  <label>Cultura</label>
+  <select
+    value={visitForm.culture || ''}
+    onChange={(e) => setVisitForm({ ...visitForm, culture: e.target.value, variety: '' })}
+  >
+    <option value="">Selecione</option>
+    <option value="Milho">Milho</option>
+    <option value="Soja">Soja</option>
+    <option value="Algodão">Algodão</option>
+  </select>
+</div>
+
+<div className="form-row">
+  <label>Variedade</label>
+  <select
+    value={visitForm.variety || ''}
+    onChange={(e) => setVisitForm({ ...visitForm, variety: e.target.value })}
+    disabled={!visitForm.culture}
+  >
+    <option value="">Selecione a variedade</option>
+    {varieties
+      .filter(v => v.culture.toLowerCase() === (visitForm.culture || '').toLowerCase())
+      .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+  </select>
+</div>
             <div className="form-row">
               <label>Propriedade</label>
               <DarkSelect name="property_id" value={form.property_id} placeholder="Selecione propriedade" options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]} onChange={handleChange as any} />
