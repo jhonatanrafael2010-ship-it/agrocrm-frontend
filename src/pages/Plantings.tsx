@@ -15,6 +15,15 @@ const PlantingsPage: React.FC = () => {
   const [plantForm, setPlantForm] = useState({ plot_id: '', culture: '', variety: '', planting_date: '' })
   const [submitting, setSubmitting] = useState(false)
   const [editing, setEditing] = useState<Planting | null>(null)
+  const [varieties, setVarieties] = useState<{id:number; culture:string; name:string}[]>([])
+
+useEffect(() => {
+  fetch(`${API_BASE}varieties`)
+    .then(r => r.ok ? r.json() : [])
+    .then(data => setVarieties(Array.isArray(data) ? data : []))
+    .catch(() => setVarieties([]))
+}, [])
+
 
   useEffect(() => {
     let mounted = true
@@ -117,8 +126,39 @@ const PlantingsPage: React.FC = () => {
               <label>Talhão</label>
               <DarkSelect name="plot_id" value={plantForm.plot_id} placeholder="Selecione um talhão" options={[{ value: '', label: 'Selecione um talhão' }, ...[...plots].sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: String(p.id), label: p.name }))]} onChange={handlePlantChange as any} />
             </div>
-            <div className="form-row"><label>Cultura</label><input name="culture" value={plantForm.culture} onChange={handlePlantChange} /></div>
-            <div className="form-row"><label>Variedade</label><input name="variety" value={plantForm.variety} onChange={handlePlantChange} /></div>
+            <div className="form-row">
+  <label>Cultura</label>
+  <select
+    name="culture"
+    value={plantForm.culture}
+    onChange={(e) => {
+      const value = e.target.value
+      setPlantForm(f => ({ ...f, culture: value, variety: '' })) // limpa variedade ao trocar cultura
+    }}
+  >
+    <option value="">Selecione</option>
+    <option value="Milho">Milho</option>
+    <option value="Soja">Soja</option>
+    <option value="Algodão">Algodão</option>
+  </select>
+</div>
+
+<div className="form-row">
+  <label>Variedade</label>
+  <select
+    name="variety"
+    value={plantForm.variety}
+    onChange={handlePlantChange as any}
+    disabled={!plantForm.culture}
+  >
+    <option value="">Selecione a variedade</option>
+    {varieties
+      .filter(v => v.culture.toLowerCase() === (plantForm.culture || '').toLowerCase())
+      .map(v => <option key={v.id} value={v.name}>{v.name}</option>)
+    }
+  </select>
+</div>
+
             <div className="form-row"><label>Data plantio</label><input type="date" name="planting_date" value={plantForm.planting_date} onChange={handlePlantChange} /></div>
             <div className="modal-actions"><button className="btn-cancel" onClick={() => { setOpenPlanting(false); setEditing(null); }}>Cancelar</button><button className="btn-save" onClick={handleSave} disabled={submitting}>{submitting ? (editing ? 'Salvando...' : 'Salvando...') : (editing ? 'Salvar alterações' : 'Salvar')}</button></div>
           </div>
