@@ -5,7 +5,7 @@
 .clients-table thead th { text-align:left; padding:12px 16px; color:#9fb3b6; font-weight:700 }
 .clients-table tbody td { padding:12px 16px; color:#d7eef0 }
 .btn-action { background: transparent; color: #dfeff0; border: 1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:8px; cursor:pointer }
-.modal-overlay { position: fixed; inset: 0; background: rgba(2,6,10,0.6); display:flex; align-items:center; justify-content:center; z-index:200 }
+.modal-overlay { position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; z-index:200 }
 .modal { width:420px; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border-radius:12px; padding:18px }
 .form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:10px }
 .form-row label { font-size:0.9rem; color:#cbdedf }

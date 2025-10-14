@@ -51,9 +51,9 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* normal document flow so header/nav layout behaves as expected */
-  background-color: #0b1620 !important;
+  background-color: var(--bg) !important;
 }
+
 
 h1 {
   font-size: 3.2em;
@@ -191,4 +191,57 @@ div, section, article, table, th, td, input, select, textarea {
 .clients-table td {
   background-color: var(--panel);
   color: var(--text);
+
+  /* ======================================================= */
+/* 🔧 Tema global para substituir cores fixas escuras      */
+/* ======================================================= */
+[data-theme='light'] {
+  --bg: #f7f9fb;
+  --panel: #ffffff;
+  --text: #1a1a1a;
+  --muted: #777;
+  --accent: #2dd36f;
+}
+
+[data-theme='dark'] {
+  --bg: #0b1620;
+  --panel: rgba(7,24,40,0.85);
+  --text: #dfeff0;
+  --muted: #9fb3b6;
+  --accent: #2dd36f;
+}
+
+/* Corrige fundos e textos fixos para ambos os temas */
+.card,
+.clients-card,
+.dashboard-section,
+.chart-card,
+.kanban-col,
+.modal,
+.clients-container,
+.properties-page,
+.opportunities-page,
+.calendar-wrap {
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+/* Botões principais */
+.btn-save, .btn-new, .btn-primary {
+  background: var(--accent) !important;
+  color: #02251f !important;
+}
+
+/* Textos secundários */
+.muted, .card-sub, .clients-table thead th {
+  color: var(--muted) !important;
+}
+
+/* Campos e inputs */
+input, select, textarea {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
 }

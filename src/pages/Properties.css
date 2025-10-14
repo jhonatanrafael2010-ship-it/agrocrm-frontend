@@ -29,7 +29,7 @@
 .td-name { font-weight: 600 }
 
 /* reuse modal styles from Clients.css - but redefine here so import order doesn't matter */
-.modal-overlay { position: fixed; inset: 0; background: rgba(2,6,10,0.6); display:flex; align-items:center; justify-content:center; z-index:200 }
+.modal-overlay { position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; z-index:200 }
 .modal { width:420px; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border-radius:12px; padding:18px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.03) }
 .form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:10px }
 .form-row label { font-size:0.9rem; color:#cbdedf }

@@ -12,7 +12,7 @@
 .modal { width:420px; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border-radius:12px; padding:18px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.03) }
 .form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:10px }
 .form-row label { font-size:0.9rem; color:#cbdedf }
-.form-row input, .form-row select { padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:#eafaf9 }
+.form-row input, .form-row select { padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); color:#eafaf9 }
 .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:6px }
 .btn-cancel { background:#17242a; color:#dfeff0; border:none; padding:8px 12px; border-radius:8px }
 .btn-save { background:#2dd36f; color:#02251f; border:none; padding:8px 12px; border-radius:8px; font-weight:700 }
