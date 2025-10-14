@@ -1,206 +1,19 @@
-html, body {
-  background-color: var(--bg);
-  color: var(--text);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
+/* =========================================================
+🌗 SISTEMA DE TEMA UNIFICADO — AGROCRM (2025)
+Mantém aparência escura atual e adiciona modo claro coerente
+========================================================= */
 
-/* Corrige painéis, cards e tabelas */
-div, section, table, th, td, input, select, textarea {
-  background-color: var(--panel);
-  color: var(--text);
-  border-color: var(--muted);
-}
-
-
+/* ------------------ */
+/* VARIÁVEIS GLOBAIS */
+/* ------------------ */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: var(--text);
-  background-color: var(--bg);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* O fundo agora respeita o tema claro/escuro */
-body {
-  background: var(--bg);
-  color: var(--text);
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg) !important;
-}
-
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-/* Make selects, options and form controls in modals follow the dark theme */
-.modal select,
-.modal input,
-.modal textarea,
-.form-row select,
-.form-row input,
-.form-row textarea {
-  background: rgba(255,255,255,0.02);
-  color: #eafaf9;
-  border: 1px solid rgba(255,255,255,0.04);
-}
-
-.modal select option,
-.form-row select option {
-  /* dropdown option background when open */
-  background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98));
-  color: #eafaf9;
-}
-
-/* Remove native bright arrow rendering on some browsers so the select looks consistent */
-.modal select, .form-row select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #9fb3b6 50%), linear-gradient(135deg, #9fb3b6 50%, transparent 50%);
-  background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px);
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 36px; /* space for arrow */
-}
-
-/* Ensure dropdowns follow dark color scheme where supported */
-select, option { color-scheme: dark; }
-
-/* ====================== */
-/* 🌗 Tema Claro / Escuro */
-/* ====================== */
-
-:root {
-  --bg: #f0f2f5;      /* leve cinza claro */
-  --text: #1a1a1a;     /* texto escuro */
-  --panel: #ffffff;    /* cartões e seções */
-  --muted: #666666;    /* texto secundário */
-}
-
-[data-theme='dark'] {
-  --bg: #0f0f0f;
-  --text: #f5f5f5;
-  --panel: #1e1e1e;
-  --muted: #9fb3b6;
-}
-
-html, body {
-  background-color: var(--bg);
-  color: var(--text);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Corrige painéis, cards, modais e tabelas */
-div, section, article, table, th, td, input, select, textarea {
-  background-color: var(--panel);
-  color: var(--text);
-  border-color: var(--muted);
-}
-
-/* Cards e blocos principais — estilo aprimorado */
-.card, .clients-card, .modal, .dashboard-section {
-  background-color: var(--panel);
-  color: var(--text);
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Tema claro: sombras e bordas mais suaves */
-[data-theme='light'] .card,
-[data-theme='light'] .clients-card,
-[data-theme='light'] .modal,
-[data-theme='light'] .dashboard-section {
-  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-
-/* Tema escuro: contraste mais definido */
-[data-theme='dark'] .card,
-[data-theme='dark'] .clients-card,
-[data-theme='dark'] .modal,
-[data-theme='dark'] .dashboard-section {
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.05);
-}
-
-
-/* Tabelas */
-.clients-table th,
-.clients-table td {
-  background-color: var(--panel);
-  color: var(--text);
-
-  /* ======================================================= */
-/* 🔧 Tema global para substituir cores fixas escuras      */
-/* ======================================================= */
-[data-theme='light'] {
-  --bg: #f7f9fb;
+  --bg: #f4f5f7;
   --panel: #ffffff;
   --text: #1a1a1a;
-  --muted: #777;
+  --muted: #666666;
   --accent: #2dd36f;
+  --border: rgba(0,0,0,0.08);
+  --shadow: rgba(0,0,0,0.1);
 }
 
 [data-theme='dark'] {
@@ -209,39 +22,222 @@ div, section, article, table, th, td, input, select, textarea {
   --text: #dfeff0;
   --muted: #9fb3b6;
   --accent: #2dd36f;
+  --border: rgba(255,255,255,0.05);
+  --shadow: rgba(0,0,0,0.4);
 }
 
-/* Corrige fundos e textos fixos para ambos os temas */
-.card,
-.clients-card,
-.dashboard-section,
-.chart-card,
-.kanban-col,
-.modal,
-.clients-container,
-.properties-page,
-.opportunities-page,
-.calendar-wrap {
-  background-color: var(--panel) !important;
-  color: var(--text) !important;
+/* ------------------ */
+/* BASE / BODY / HTML */
+/* ------------------ */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  transition: background 0.3s ease, color 0.3s ease;
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Botões principais */
-.btn-save, .btn-new, .btn-primary {
-  background: var(--accent) !important;
-  color: #02251f !important;
+/* ------------------ */
+/* BOTÃO DO TEMA      */
+/* ------------------ */
+.theme-toggle-btn {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.8rem;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 2px 10px var(--shadow);
+  transition: all 0.3s ease, transform 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-/* Textos secundários */
-.muted, .card-sub, .clients-table thead th {
-  color: var(--muted) !important;
+.theme-toggle-btn:hover {
+  transform: rotate(25deg) scale(1.1);
 }
 
-/* Campos e inputs */
+[data-theme='light'] .theme-toggle-btn {
+  background: #fff7d1;
+  color: #e39b00;
+}
+
+[data-theme='dark'] .theme-toggle-btn {
+  background: #1e1e1e;
+  color: #c2d1ff;
+}
+
+/* ------------------ */
+/* ESTRUTURA GERAL    */
+/* ------------------ */
+div, section, article, table, th, td, input, select, textarea {
+  background-color: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ------------------ */
+/* CARTÕES E PAINÉIS  */
+/* ------------------ */
+.card, .clients-card, .dashboard-section, .chart-card, .kanban-col {
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.card:hover, .clients-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px var(--shadow);
+}
+
+.card-title, .muted, .card-sub, .clients-table thead th {
+  color: var(--muted);
+}
+
+/* ------------------ */
+/* TABELAS / LISTAS   */
+/* ------------------ */
+.clients-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.clients-table th, .clients-table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+.td-name { font-weight: 600; }
+
+/* ------------------ */
+/* BOTÕES             */
+/* ------------------ */
+button, .btn-new, .btn-save, .btn-primary, .btn-action {
+  font-family: inherit;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-weight: 600;
+}
+
+.btn-new, .btn-save, .btn-primary {
+  background: var(--accent);
+  color: #02251f;
+  padding: 8px 12px;
+}
+
+.btn-action {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+}
+
+.btn-cancel {
+  background: var(--muted);
+  color: #fff;
+}
+
+/* ------------------ */
+/* FORMULÁRIOS / INPUTS */
+/* ------------------ */
 input, select, textarea {
-  background: var(--panel) !important;
-  color: var(--text) !important;
-  border: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+}
+label { color: var(--muted); font-size: 0.9rem; }
+
+/* ------------------ */
+/* MODAL / OVERLAY    */
+/* ------------------ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
 }
 
+.modal {
+  width: 420px;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+}
+
+.modal h3 { margin-top: 0; }
+
+/* ------------------ */
+/* CALENDÁRIO         */
+/* ------------------ */
+.calendar-page { color: var(--text); }
+.calendar-wrap {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 12px;
+}
+.fc .fc-toolbar-title { color: var(--text); }
+.fc .fc-button {
+  background: var(--accent);
+  color: #02251f;
+  border: none;
+}
+.fc .fc-daygrid-event {
+  background: var(--accent);
+  color: #02251f;
+}
+
+/* ------------------ */
+/* KANBAN / OPORT.    */
+/* ------------------ */
+.opportunities-page { color: var(--text); }
+.kanban { display: flex; gap: 16px; }
+.kanban-col h4 { margin: 0 0 8px 0; }
+.kanban-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text);
+}
+
+/* ------------------ */
+/* DASHBOARD          */
+/* ------------------ */
+.dashboard-page { color: var(--text); padding-top: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.chart-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+
+/* ------------------ */
+/* RESPONSIVO         */
+/* ------------------ */
+@media (max-width: 900px) {
+  .clients-table { min-width: 0; }
+}
+@media (max-width: 800px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .chart-row { flex-direction: column; }
 }
