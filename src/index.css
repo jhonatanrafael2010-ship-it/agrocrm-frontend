@@ -68,6 +68,28 @@ html, body {
   transform: rotate(25deg) scale(1.1);
 }
 
+/* ============================= */
+/* 🎨 Variáveis globais por tema */
+/* ============================= */
+[data-theme='light'] {
+  --bg: #f7f9fb;          /* fundo levemente acinzentado */
+  --panel: #ffffff;       /* cartões e colunas brancas */
+  --text: #101418;        /* texto principal — mais escuro e forte */
+  --muted: #444a52;       /* texto secundário — contraste suficiente no branco */
+  --accent: #2dd36f;      /* verde principal */
+}
+
+[data-theme='dark'] {
+  --bg: #0b1620;
+  --panel: rgba(7,24,40,0.85);
+  --text: #dfeff0;
+  --muted: #9fb3b6;
+  --accent: #2dd36f;
+}
+
+/* ============================= */
+/* 🌗 Botão de alternância de tema */
+/* ============================= */
 [data-theme='light'] .theme-toggle-btn {
   background: #fff7d1;
   color: #e39b00;
@@ -77,6 +99,7 @@ html, body {
   background: #1e1e1e;
   color: #c2d1ff;
 }
+
 
 /* ------------------ */
 /* ESTRUTURA GERAL    */
