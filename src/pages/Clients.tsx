@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import pencilIcon from '../assets/pencil.svg'
 import trashIcon from '../assets/trash.svg'
-import './Clients.css'
+
 
 type Client = {
   id: number

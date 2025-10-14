@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import './Properties.css'
 import DarkSelect from '../components/DarkSelect'
 
 type Property = { id: number; name: string }

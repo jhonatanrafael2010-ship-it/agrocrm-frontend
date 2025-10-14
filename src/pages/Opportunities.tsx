@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import './Opportunities.css'
 import pencilIcon from '../assets/pencil.svg'
 import trashIcon from '../assets/trash.svg'
 import DarkSelect from '../components/DarkSelect'

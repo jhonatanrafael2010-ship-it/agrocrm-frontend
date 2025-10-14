@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import './Visits.css'
 import DarkSelect from '../components/DarkSelect'
 
 type Visit = {

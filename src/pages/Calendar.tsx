@@ -4,7 +4,6 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
-import './Calendar.css'
 import DarkSelect from '../components/DarkSelect'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/'

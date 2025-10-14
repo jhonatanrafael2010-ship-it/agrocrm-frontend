@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import pencilIcon from '../assets/pencil.svg'
 import trashIcon from '../assets/trash.svg'
-import './Properties.css'
 import DarkSelect from '../components/DarkSelect'
 
 type Plot = { id: number; name: string }
