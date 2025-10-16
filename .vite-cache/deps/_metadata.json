@@ -1,0 +1,91 @@
+{
+  "hash": "8ac4785d",
+  "configHash": "10286a53",
+  "lockfileHash": "35b370fd",
+  "browserHash": "009730dc",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "1f8a4085",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "891213b3",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "8d37565d",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "f5d60885",
+      "needsInterop": true
+    },
+    "@fullcalendar/core/locales/pt-br": {
+      "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
+      "file": "@fullcalendar_core_locales_pt-br.js",
+      "fileHash": "940947fb",
+      "needsInterop": false
+    },
+    "@fullcalendar/daygrid": {
+      "src": "../../node_modules/@fullcalendar/daygrid/index.js",
+      "file": "@fullcalendar_daygrid.js",
+      "fileHash": "0126f365",
+      "needsInterop": false
+    },
+    "@fullcalendar/interaction": {
+      "src": "../../node_modules/@fullcalendar/interaction/index.js",
+      "file": "@fullcalendar_interaction.js",
+      "fileHash": "e70e0c52",
+      "needsInterop": false
+    },
+    "@fullcalendar/react": {
+      "src": "../../node_modules/@fullcalendar/react/dist/index.js",
+      "file": "@fullcalendar_react.js",
+      "fileHash": "bf8180d4",
+      "needsInterop": false
+    },
+    "@fullcalendar/timegrid": {
+      "src": "../../node_modules/@fullcalendar/timegrid/index.js",
+      "file": "@fullcalendar_timegrid.js",
+      "fileHash": "5e5f0712",
+      "needsInterop": false
+    },
+    "@hello-pangea/dnd": {
+      "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
+      "file": "@hello-pangea_dnd.js",
+      "fileHash": "74b9cd27",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "6c13a0af",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-FKRRNJA4": {
+      "file": "chunk-FKRRNJA4.js"
+    },
+    "chunk-UNLUE3XC": {
+      "file": "chunk-UNLUE3XC.js"
+    },
+    "chunk-FUPQPBBX": {
+      "file": "chunk-FUPQPBBX.js"
+    },
+    "chunk-O4N2BAMV": {
+      "file": "chunk-O4N2BAMV.js"
+    },
+    "chunk-5WRI5ZAA": {
+      "file": "chunk-5WRI5ZAA.js"
+    }
+  }
+}
