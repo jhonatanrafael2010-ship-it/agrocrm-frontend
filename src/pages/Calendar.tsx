@@ -11,7 +11,6 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api/'
 type Client = { id: number; name: string }
 type Property = { id: number; client_id: number; name: string }
 type Plot = { id: number; property_id: number; name: string }
-// Visit type not required here
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<FullCalendar | null>(null)
@@ -21,15 +20,16 @@ const CalendarPage: React.FC = () => {
   const [plots, setPlots] = useState<Plot[]>([])
   const [loading, setLoading] = useState(false)
 
-  // modal state for creating a visit
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
   const [viewOpen, setViewOpen] = useState(false)
   const [activeEvent, setActiveEvent] = useState<any>(null)
 
+  // ✅ Corrigido: destrói o calendário anterior ao recarregar dados
   useEffect(() => {
     let mounted = true
     setLoading(true)
+
     Promise.all([
       fetch(`${API_BASE}clients`).then(r => r.json()),
       fetch(`${API_BASE}properties`).then(r => r.json()),
@@ -38,28 +38,70 @@ const CalendarPage: React.FC = () => {
     ])
       .then(([cs, ps, pls, visits]) => {
         if (!mounted) return
-        // map visits to calendar events
         const evs: any[] = []
+
         if (visits && Array.isArray(visits)) {
           visits.forEach((v: any) => {
             if (v.date) {
-              const clientName = (cs || []).find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`;
-              evs.push({ id: `visit-${v.id}`, title: clientName, start: v.date, extendedProps: { type: 'visit', raw: v } })
+              const clientName = (cs || []).find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`
+              evs.push({
+                id: `visit-${v.id}`,
+                title: clientName,
+                start: v.date,
+                extendedProps: { type: 'visit', raw: v }
+              })
             }
           })
         }
+
         setEvents(evs)
         setClients(cs || [])
         setProperties(ps || [])
         setPlots(pls || [])
       })
-      .catch(err => console.error(err))
+      .catch(err => console.error('Erro ao carregar calendário:', err))
       .finally(() => setLoading(false))
 
     return () => { mounted = false }
   }, [])
 
-  // Buscar propriedades do backend ao selecionar cliente
+  // ✅ Recriação segura do calendário — evita duplicação
+  useEffect(() => {
+    const calendarEl = document.getElementById('calendar')
+    if (!calendarEl) return
+
+    // destrói instância anterior se existir
+    if ((window as any).activeCalendar) {
+      (window as any).activeCalendar.destroy()
+    }
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+      locales: [ptBrLocale],
+      locale: 'pt-br',
+      initialView: 'dayGridMonth',
+      selectable: true,
+      events: events || [],
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      select: handleDateSelect,
+      eventClick: handleEventClick,
+      height: 650
+    })
+
+    calendar.render()
+    ;(window as any).activeCalendar = calendar
+
+    return () => {
+      calendar.destroy()
+      ;(window as any).activeCalendar = null
+    }
+  }, [events])
+
+  // Carregar propriedades e talhões de acordo com cliente
   useEffect(() => {
     if (!form.client_id) {
       setProperties([])
@@ -73,18 +115,14 @@ const CalendarPage: React.FC = () => {
     setPlots([])
   }, [form.client_id])
 
-  // Buscar plots do backend ao selecionar propriedade
   useEffect(() => {
     if (!form.property_id) {
       setPlots([])
       return
     }
-    // Busca os talhões do banco de dados usando GET
     fetch(`${API_BASE}plots?property_id=${form.property_id}`)
       .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        setPlots(Array.isArray(data) ? data : [])
-      })
+      .then(data => setPlots(Array.isArray(data) ? data : []))
       .catch(() => setPlots([]))
   }, [form.property_id])
 
@@ -101,18 +139,18 @@ const CalendarPage: React.FC = () => {
       const mm = String(d.getMonth() + 1).padStart(2, '0')
       const yyyy = d.getFullYear()
       return `${dd}/${mm}/${yyyy}`
-    } catch (err) { return String(dateStr) }
+    } catch {
+      return String(dateStr)
+    }
   }
 
   function handleDateSelect(selectInfo: any) {
-    const dateStr = selectInfo.startStr // yyyy-mm-dd
+    const dateStr = selectInfo.startStr
     const [yyyy, mm, dd] = dateStr.split('-')
     const brDate = `${dd}/${mm}/${yyyy}`
     setForm(f => ({ ...f, date: brDate }))
     setOpen(true)
   }
-
-  // handleFormChange removed; using specific handlers for dependent selects
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target
@@ -120,21 +158,42 @@ const CalendarPage: React.FC = () => {
   }
 
   async function handleCreateVisit() {
-    if (!form.date || !form.client_id || !form.property_id || !form.plot_id) return alert('Data, cliente, propriedade e talhão são obrigatórios')
+    if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
+      return alert('Data, cliente, propriedade e talhão são obrigatórios')
+
     try {
-      // converter data para yyyy-mm-dd corretamente
       const [dd, mm, yyyy] = form.date.split('/')
-      // garantir que dd, mm, yyyy sejam válidos
       const dateISO = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+
       const res = await fetch(`${API_BASE}visits`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: Number(form.client_id), property_id: Number(form.property_id), plot_id: Number(form.plot_id), date: dateISO, recommendation: form.recommendation })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: Number(form.client_id),
+          property_id: Number(form.property_id),
+          plot_id: Number(form.plot_id),
+          date: dateISO,
+          recommendation: form.recommendation
+        })
       })
+
       const body = await res.json()
       if (!res.ok) throw new Error(body.message || `status ${res.status}`)
+
       const created = body.visit || body
-      const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`;
-      setEvents(e => [{ id: `visit-${created.id}`, title: clientName, start: created.date, extendedProps: { type: 'visit', raw: created } }, ...e])
+      const clientName =
+        clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
+
+      setEvents(e => [
+        {
+          id: `visit-${created.id}`,
+          title: clientName,
+          start: created.date,
+          extendedProps: { type: 'visit', raw: created }
+        },
+        ...e
+      ])
+
       setOpen(false)
       setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
     } catch (err: any) {
@@ -157,22 +216,9 @@ const CalendarPage: React.FC = () => {
       <h2>Calendário</h2>
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
-      <div className="calendar-wrap">
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          locales={[ptBrLocale]}
-          locale="pt-br"
-          initialView="dayGridMonth"
-          selectable={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          events={events}
-          headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
-          height={650}
-        />
-      </div>
+      <div id="calendar" className="calendar-wrap"></div>
 
+      {/* Modal: nova visita */}
       {open && (
         <div className="modal-overlay">
           <div className="modal">
@@ -185,9 +231,7 @@ const CalendarPage: React.FC = () => {
                 value={form.client_id}
                 placeholder="Selecione cliente"
                 options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-                onChange={(e: any) => {
-                  setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))
-                }}
+                onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
               />
             </div>
             <div className="form-row">
@@ -197,9 +241,7 @@ const CalendarPage: React.FC = () => {
                 value={form.property_id}
                 placeholder="Selecione propriedade"
                 options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
-                onChange={(e: any) => {
-                  setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))
-                }}
+                onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
               />
             </div>
             <div className="form-row">
@@ -221,7 +263,7 @@ const CalendarPage: React.FC = () => {
         </div>
       )}
 
-      {/* View modal for events */}
+      {/* Modal: visualizar evento */}
       {viewOpen && activeEvent && (
         <div className="modal-overlay">
           <div className="modal">
@@ -233,13 +275,6 @@ const CalendarPage: React.FC = () => {
                 <div className="form-row"><label>Cliente</label><div>{getClientName(activeEvent.extendedProps.raw?.client_id)}</div></div>
                 <div className="form-row"><label>Propriedade</label><div>{getPropertyName(activeEvent.extendedProps.raw?.property_id)}</div></div>
                 <div className="form-row"><label>Talhão</label><div>{getPlotName(activeEvent.extendedProps.raw?.plot_id)}</div></div>
-              </>
-            )}
-            {activeEvent.extendedProps?.type === 'planting' && (
-              <>
-                <div className="form-row"><label>Data</label><div>{formatDateBR(activeEvent.startStr)}</div></div>
-                <div className="form-row"><label>Cultura</label><div>{activeEvent.extendedProps.raw?.culture}</div></div>
-                <div className="form-row"><label>Variedade</label><div>{activeEvent.extendedProps.raw?.variety}</div></div>
               </>
             )}
             <div className="modal-actions">

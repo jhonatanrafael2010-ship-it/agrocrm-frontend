@@ -91,3 +91,34 @@ h1 {
   color: #c2d1ff;
 }
 
+/* ====== Calendário (FullCalendar) ====== */
+.fc-toolbar-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  font-weight: 500;
+  text-transform: lowercase;
+  padding: 2px 4px;
+}
+
+/* remove duplicações visuais */
+.fc .fc-toolbar-chunk > .fc-toolbar-title + .fc-toolbar-title {
+  display: none !important;
+}
+
+/* mantém espaçamento consistente */
+.calendar-page {
+  color: var(--text);
+  padding-top: 8px;
+}
+
+.calendar-wrap {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
