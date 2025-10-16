@@ -75,56 +75,62 @@ const CalendarCore: React.FC = () => {
   const [loading, setLoading] = useState(false)
 
   // 🔹 Carrega dados iniciais
-  useEffect(() => {
-    console.log('🧠 Calendar montado')
-    setLoading(true)
+  // 🔹 Carrega dados iniciais
+useEffect(() => {
+  console.log('🧠 Calendar montado')
+  setLoading(true)
 
-    Promise.all([
-      fetch(`${API_BASE}clients`).then(r => r.json()),
-      fetch(`${API_BASE}properties`).then(r => r.json()),
-      fetch(`${API_BASE}plots`).then(r => r.json()),
-      fetch(`${API_BASE}visits`).then(r => r.json()),
+  Promise.all([
+    fetch(`${API_BASE}clients`).then(r => r.json()),
+    fetch(`${API_BASE}properties`).then(r => r.json()),
+    fetch(`${API_BASE}plots`).then(r => r.json()),
+    fetch(`${API_BASE}visits`).then(r => r.json()),
+  ])
+    .then(([cs, ps, pls, visits]) => {
+      const evs: any[] = []
+
+      if (Array.isArray(visits)) {
+        visits.forEach((v: any) => {
+          if (v.date) {
+            const clientName =
+              cs.find((c: any) => c.id === v.client_id)?.name ||
+              `Cliente: ${v.client_id}`
+            evs.push({
+              id: `visit-${v.id}`,
+              title: clientName,
+              start: v.date,
+              extendedProps: { type: 'visit', raw: v },
+            })
+          }
+        })
+      }
+
+      setEvents(evs)
+      setClients(cs || [])
+      setProperties(ps || [])
+      setPlots(pls || [])
+
+      // ✅ Agora carrega culturas e variedades separadamente
       fetch(`${API_BASE}cultures`)
-  .then(r => r.ok ? r.json() : Promise.reject('Falha em /cultures'))
-  .then(data => setCultures(Array.isArray(data) ? data : []))
-  .catch(err => { console.error('Erro carregando culturas:', err); setCultures([]); }),
+        .then(r => r.ok ? r.json() : Promise.reject('Falha em /cultures'))
+        .then(data => setCultures(Array.isArray(data) ? data : []))
+        .catch(err => { console.error('Erro carregando culturas:', err); setCultures([]) })
 
-       fetch(`${API_BASE}varieties`)
-  .then(r => r.ok ? r.json() : Promise.reject('Falha em /varieties'))
-  .then(data => setVarieties(Array.isArray(data) ? data : []))
-  .catch(err => { console.error('Erro carregando variedades:', err); setVarieties([]); })
-    ])
-      .then(([cs, ps, pls, visits, cts, vars]) => {
-        const evs: any[] = []
-        if (Array.isArray(visits)) {
-          visits.forEach((v: any) => {
-            if (v.date) {
-              const clientName = cs.find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`
-              evs.push({
-                id: `visit-${v.id}`,
-                title: clientName,
-                start: v.date,
-                extendedProps: { type: 'visit', raw: v }
-              })
-            }
-          })
-        }
-        setEvents(evs)
-        setClients(cs || [])
-        setProperties(ps || [])
-        setPlots(pls || [])
-        setCultures(cts || [])
-        setVarieties(vars || [])
-      })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false))
+      fetch(`${API_BASE}varieties`)
+        .then(r => r.ok ? r.json() : Promise.reject('Falha em /varieties'))
+        .then(data => setVarieties(Array.isArray(data) ? data : []))
+        .catch(err => { console.error('Erro carregando variedades:', err); setVarieties([]) })
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoading(false))
 
-    return () => {
-      const container = containerRef.current
-      if (container) container.innerHTML = ''
-      console.log('🧹 Calendar desmontado e container limpo')
-    }
-  }, [])
+  return () => {
+    const container = containerRef.current
+    if (container) container.innerHTML = ''
+    console.log('🧹 Calendar desmontado e container limpo')
+  }
+}, [])
+
 
   // 🔹 Selecionar data
   const handleDateSelect = (info: any) => {
