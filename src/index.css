@@ -186,7 +186,20 @@ input, select, textarea {
   background: var(--panel);
   color: var(--text);
 }
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: var(--muted);
+}
+
 label { color: var(--muted); font-size: 0.9rem; }
+[data-theme='light'] label {
+  color: #222;
+}
 
 /* ------------------ */
 /* MODAL / OVERLAY    */
@@ -212,6 +225,13 @@ label { color: var(--muted); font-size: 0.9rem; }
 }
 
 .modal h3 { margin-top: 0; }
+
+.modal .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
 
 /* ------------------ */
 /* CALENDÁRIO         */
