@@ -28,6 +28,7 @@ const App: React.FC = () => {
   function toggleTheme() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
   }
+console.log('📦 App renderizou com rota:', route)
 
   return (
     <>
@@ -43,6 +44,7 @@ const App: React.FC = () => {
       {/* Estrutura principal */}
       <Navbar activeItem={route} onNavigate={setRoute} />
       <main
+       key={route}
         style={{
           padding: '2.5rem 1rem 2rem',
           maxWidth: 1100,
