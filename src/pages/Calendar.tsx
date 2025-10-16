@@ -386,26 +386,43 @@ useEffect(() => {
   </button>
 
   <button
-    className="btn-delete"
-    onClick={() => {
-      if (confirm('Deseja realmente excluir esta visita?')) {
-        setOpen(false)
-        alert('⚠️ Função de exclusão ainda não vinculada ao backend.')
-      }
-    }}
-    style={{
-      flex: 1,
-      background: '#c0392b',
-      border: 'none',
-      color: '#fff',
-      padding: '8px 10px',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontWeight: 600,
-    }}
-  >
-    Excluir
-  </button>
+  className="btn-delete"
+  onClick={async () => {
+    if (!form.id) return
+    const confirmar = confirm('🗑 Deseja realmente excluir esta visita?')
+    if (!confirmar) return
+
+    try {
+      const resp = await fetch(`${API_BASE}visits/${form.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`)
+
+      // Remove a visita do calendário local
+      setEvents(evts => evts.filter(e => e.id !== `visit-${form.id}`))
+
+      alert('✅ Visita excluída com sucesso!')
+      setOpen(false)
+    } catch (err) {
+      console.error('Erro ao excluir visita:', err)
+      alert('❌ Erro ao excluir visita.')
+    }
+  }}
+  style={{
+    flex: 1,
+    background: '#c0392b',
+    border: 'none',
+    color: '#fff',
+    padding: '8px 10px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  }}
+>
+  Excluir
+</button>
+
 </div>
 
           </div>
