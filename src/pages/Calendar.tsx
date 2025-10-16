@@ -26,12 +26,15 @@ const CalendarPage: React.FC = () => {
   const [activeEvent, setActiveEvent] = useState<any>(null)
 
   // 🔹 Carregar dados iniciais
- useEffect(() => {
+useEffect(() => {
   if (initialized.current) return
   initialized.current = true
 
   let mounted = true
   setLoading(true)
+
+  const calendarContainer = document.querySelector('.fc')
+  if (calendarContainer) calendarContainer.remove() // 💥 remove qualquer instância anterior
 
   Promise.all([
     fetch(`${API_BASE}clients`).then(r => r.json()),
@@ -63,8 +66,16 @@ const CalendarPage: React.FC = () => {
     .catch(err => console.error(err))
     .finally(() => setLoading(false))
 
-  return () => { mounted = false }
+  return () => {
+    mounted = false
+    // 🔹 limpeza manual do calendário anterior
+    const calendarRoot = document.querySelector('.fc')
+    if (calendarRoot && calendarRoot.parentElement) {
+      calendarRoot.parentElement.removeChild(calendarRoot)
+    }
+  }
 }, [])
+
 
 
   // 🔹 Re-render seguro do calendário (sem duplicar textos)
