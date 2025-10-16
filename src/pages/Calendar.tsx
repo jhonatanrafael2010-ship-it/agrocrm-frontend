@@ -15,6 +15,7 @@ type Plot = { id: number; property_id: number; name: string }
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null)
   const [events, setEvents] = useState<any[]>([])
+  const initialized = useRef(false)
   const [clients, setClients] = useState<Client[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [plots, setPlots] = useState<Plot[]>([])
@@ -25,42 +26,46 @@ const CalendarPage: React.FC = () => {
   const [activeEvent, setActiveEvent] = useState<any>(null)
 
   // 🔹 Carregar dados iniciais
-  useEffect(() => {
-    let mounted = true
-    setLoading(true)
-    Promise.all([
-      fetch(`${API_BASE}clients`).then(r => r.json()),
-      fetch(`${API_BASE}properties`).then(r => r.json()),
-      fetch(`${API_BASE}plots`).then(r => r.json()),
-      fetch(`${API_BASE}visits`).then(r => r.json())
-    ])
-      .then(([cs, ps, pls, visits]) => {
-        if (!mounted) return
-        const evs: any[] = []
-        if (Array.isArray(visits)) {
-          visits.forEach((v: any) => {
-            if (v.date) {
-              const clientName =
-                (cs || []).find((c: any) => c.id === v.client_id)?.name ||
-                `Cliente: ${v.client_id}`
-              evs.push({
-                id: `visit-${v.id}`,
-                title: clientName,
-                start: v.date,
-                extendedProps: { type: 'visit', raw: v }
-              })
-            }
-          })
-        }
-        setClients(cs || [])
-        setProperties(ps || [])
-        setPlots(pls || [])
-        setEvents(evs)
-      })
-      .catch(err => console.error('Erro ao carregar calendário:', err))
-      .finally(() => setLoading(false))
-    return () => { mounted = false }
-  }, [])
+ useEffect(() => {
+  if (initialized.current) return
+  initialized.current = true
+
+  let mounted = true
+  setLoading(true)
+
+  Promise.all([
+    fetch(`${API_BASE}clients`).then(r => r.json()),
+    fetch(`${API_BASE}properties`).then(r => r.json()),
+    fetch(`${API_BASE}plots`).then(r => r.json()),
+    fetch(`${API_BASE}visits`).then(r => r.json()),
+  ])
+    .then(([cs, ps, pls, visits]) => {
+      if (!mounted) return
+      const evs: any[] = []
+      if (visits && Array.isArray(visits)) {
+        visits.forEach((v: any) => {
+          if (v.date) {
+            const clientName = (cs || []).find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`
+            evs.push({
+              id: `visit-${v.id}`,
+              title: clientName,
+              start: v.date,
+              extendedProps: { type: 'visit', raw: v }
+            })
+          }
+        })
+      }
+      setEvents(evs)
+      setClients(cs || [])
+      setProperties(ps || [])
+      setPlots(pls || [])
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoading(false))
+
+  return () => { mounted = false }
+}, [])
+
 
   // 🔹 Re-render seguro do calendário (sem duplicar textos)
   useEffect(() => {
