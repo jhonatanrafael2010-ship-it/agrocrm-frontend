@@ -179,7 +179,8 @@ const CalendarPage: React.FC = () => {
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
       <div className="calendar-wrap">
-        <FullCalendar
+  {console.log('🔁 Calendar renderizado')}
+  <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           locales={[ptBrLocale]}
