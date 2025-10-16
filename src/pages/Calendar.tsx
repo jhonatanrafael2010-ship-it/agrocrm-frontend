@@ -20,8 +20,6 @@ const CalendarCore: React.FC = memo(() => {
   const [plots, setPlots] = useState<Plot[]>([])
   const [form, setForm] = useState({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
   const [open, setOpen] = useState(false)
-  const [viewOpen, setViewOpen] = useState(false)
-  const [activeEvent, setActiveEvent] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
