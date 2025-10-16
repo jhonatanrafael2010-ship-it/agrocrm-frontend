@@ -62,6 +62,7 @@ const CalendarCore: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([])
   const [plots, setPlots] = useState<Plot[]>([])
   const [form, setForm] = useState({
+    id: null as number | null,
     date: '',
     client_id: '',
     property_id: '',
@@ -220,6 +221,7 @@ useEffect(() => {
 
       setOpen(false)
       setForm({
+        id: null,
         date: '',
         client_id: '',
         property_id: '',
