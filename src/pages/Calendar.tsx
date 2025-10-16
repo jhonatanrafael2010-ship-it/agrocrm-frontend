@@ -173,14 +173,14 @@ const CalendarPage: React.FC = () => {
     setViewOpen(true)
   }
 
+  console.log('🔁 Calendar renderizado')
   return (
     <div className="calendar-page">
       <h2>Calendário</h2>
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
       <div className="calendar-wrap">
-  {console.log('🔁 Calendar renderizado')}
-  <FullCalendar
+        <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           locales={[ptBrLocale]}
