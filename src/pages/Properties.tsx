@@ -167,7 +167,6 @@ const PropertiesTalhoesPage: React.FC = () => {
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn-new" onClick={() => setOpenProp(true)}>Nova Propriedade</button>
             <button className="btn-new" onClick={() => setOpenPlot(true)}>Novo Talhão</button>
-            <button className="btn-new" onClick={() => setOpenPlanting(true)}>Novo Plantio</button>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>

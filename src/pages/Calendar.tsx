@@ -84,8 +84,15 @@ const CalendarCore: React.FC = () => {
       fetch(`${API_BASE}properties`).then(r => r.json()),
       fetch(`${API_BASE}plots`).then(r => r.json()),
       fetch(`${API_BASE}visits`).then(r => r.json()),
-      fetch(`${API_BASE}cultures`).then(r => r.ok ? r.json() : []).catch(() => []),
-      fetch(`${API_BASE}varieties`).then(r => r.ok ? r.json() : []).catch(() => [])
+      fetch(`${API_BASE}cultures`)
+  .then(r => r.ok ? r.json() : Promise.reject('Falha em /cultures'))
+  .then(data => setCultures(Array.isArray(data) ? data : []))
+  .catch(err => { console.error('Erro carregando culturas:', err); setCultures([]); }),
+
+       fetch(`${API_BASE}varieties`)
+  .then(r => r.ok ? r.json() : Promise.reject('Falha em /varieties'))
+  .then(data => setVarieties(Array.isArray(data) ? data : []))
+  .catch(err => { console.error('Erro carregando variedades:', err); setVarieties([]); })
     ])
       .then(([cs, ps, pls, visits, cts, vars]) => {
         const evs: any[] = []
@@ -339,39 +346,62 @@ const CalendarCore: React.FC = () => {
             </div>
 
             <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-              <button
-                className="btn-cancel"
-                onClick={() => setOpen(false)}
-                style={{
-                  flex: 1,
-                  background: 'var(--muted)',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '8px 10px',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancelar
-              </button>
+  <button
+    className="btn-cancel"
+    onClick={() => setOpen(false)}
+    style={{
+      flex: 1,
+      background: 'var(--muted)',
+      border: 'none',
+      color: '#fff',
+      padding: '8px 10px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+    }}
+  >
+    Cancelar
+  </button>
 
-              <button
-                className="btn-save"
-                onClick={handleCreateVisit}
-                style={{
-                  flex: 1,
-                  background: 'var(--accent)',
-                  border: 'none',
-                  color: '#02251f',
-                  padding: '8px 10px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                Salvar
-              </button>
-            </div>
+  <button
+    className="btn-save"
+    onClick={handleCreateVisit}
+    style={{
+      flex: 1,
+      background: 'var(--accent)',
+      border: 'none',
+      color: '#02251f',
+      padding: '8px 10px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontWeight: 600,
+    }}
+  >
+    Salvar
+  </button>
+
+  <button
+    className="btn-delete"
+    onClick={() => {
+      if (confirm('Deseja realmente excluir esta visita?')) {
+        setOpen(false)
+        alert('⚠️ Função de exclusão ainda não vinculada ao backend.')
+      }
+    }}
+    style={{
+      flex: 1,
+      background: '#c0392b',
+      border: 'none',
+      color: '#fff',
+      padding: '8px 10px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontWeight: 600,
+    }}
+  >
+    Excluir
+  </button>
+</div>
+
           </div>
         </div>
       )}
