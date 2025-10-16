@@ -47,10 +47,12 @@ const PHENO: Record<string, { code: string; name: string; days: number }[]> = {
     { code: "C1", name: "1º capulho aberto", days: 117 },
     { code: "Colh", name: "Colheita", days: 165 }
   ]
-};
+}
 
-
-const CalendarPage: React.FC = () => {
+// ============================================================
+// 🌾 Componente principal — CalendarCore
+// ============================================================
+const CalendarCore: React.FC = () => {
   const calendarRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [events, setEvents] = useState<any[]>([])
@@ -60,15 +62,15 @@ const CalendarPage: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([])
   const [plots, setPlots] = useState<Plot[]>([])
   const [form, setForm] = useState({
-  date: '',
-  client_id: '',
-  property_id: '',
-  plot_id: '',
-  recommendation: '',
-  culture: '',          // 👈 novo
-  variety: '',          // 👈 novo
-  genPheno: true        // 👈 novo (checkbox: gerar cronograma)
-});
+    date: '',
+    client_id: '',
+    property_id: '',
+    plot_id: '',
+    recommendation: '',
+    culture: '',
+    variety: '',
+    genPheno: true
+  })
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -80,19 +82,17 @@ const CalendarPage: React.FC = () => {
     Promise.all([
       fetch(`${API_BASE}clients`).then(r => r.json()),
       fetch(`${API_BASE}properties`).then(r => r.json()),
-      fetch(`${API_BASE}cultures`).then(r => r.ok ? r.json() : []).then(setCultures).catch(() => setCultures([])),
-  fetch(`${API_BASE}varieties`).then(r => r.ok ? r.json() : []).then(setVarieties).catch(() => setVarieties([])),
       fetch(`${API_BASE}plots`).then(r => r.json()),
-      fetch(`${API_BASE}visits`).then(r => r.json())
+      fetch(`${API_BASE}visits`).then(r => r.json()),
+      fetch(`${API_BASE}cultures`).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${API_BASE}varieties`).then(r => r.ok ? r.json() : []).catch(() => [])
     ])
-      .then(([cs, ps, pls, visits]) => {
+      .then(([cs, ps, pls, visits, cts, vars]) => {
         const evs: any[] = []
         if (Array.isArray(visits)) {
           visits.forEach((v: any) => {
             if (v.date) {
-              const clientName =
-                (cs || []).find((c: any) => c.id === v.client_id)?.name ||
-                `Cliente: ${v.client_id}`
+              const clientName = cs.find((c: any) => c.id === v.client_id)?.name || `Cliente: ${v.client_id}`
               evs.push({
                 id: `visit-${v.id}`,
                 title: clientName,
@@ -106,12 +106,13 @@ const CalendarPage: React.FC = () => {
         setClients(cs || [])
         setProperties(ps || [])
         setPlots(pls || [])
+        setCultures(cts || [])
+        setVarieties(vars || [])
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false))
 
     return () => {
-      // 🔥 DESTRÓI qualquer instância de calendário antiga
       const container = containerRef.current
       if (container) container.innerHTML = ''
       console.log('🧹 Calendar desmontado e container limpo')
@@ -131,107 +132,98 @@ const CalendarPage: React.FC = () => {
     setForm(f => ({ ...f, [name]: value }))
   }
 
+  // 🔹 Utilitário para adicionar dias
+  function addDaysISO(iso: string, days: number) {
+    const d = new Date(iso)
+    d.setDate(d.getDate() + days)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+
   // 🔹 Criar visita
- const handleCreateVisit = async () => {
-  if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
-    return alert('Data, cliente, propriedade e talhão são obrigatórios')
+  const handleCreateVisit = async () => {
+    if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
+      return alert('Data, cliente, propriedade e talhão são obrigatórios')
 
-  try {
-    // converte dd/mm/aaaa -> ISO
-    const [d, m, y] = form.date.split('/')
-    const plantingISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+    try {
+      const [d, m, y] = form.date.split('/')
+      const plantingISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
 
-    const baseVisit = {
-      client_id: Number(form.client_id),
-      property_id: Number(form.property_id),
-      plot_id: Number(form.plot_id)
-    }
+      const baseVisit = {
+        client_id: Number(form.client_id),
+        property_id: Number(form.property_id),
+        plot_id: Number(form.plot_id)
+      }
 
-    // 1) cria a visita do dia selecionado
-    const firstRes = await fetch(`${API_BASE}visits`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...baseVisit, date: plantingISO, recommendation: form.recommendation })
-    })
-    const firstBody = await firstRes.json()
-    if (!firstRes.ok) throw new Error(firstBody.message || `status ${firstRes.status}`)
-    const created = firstBody.visit || firstBody
+      // 1️⃣ Cria visita inicial
+      const firstRes = await fetch(`${API_BASE}visits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...baseVisit, date: plantingISO, recommendation: form.recommendation })
+      })
+      const firstBody = await firstRes.json()
+      if (!firstRes.ok) throw new Error(firstBody.message || `status ${firstRes.status}`)
+      const created = firstBody.visit || firstBody
 
-    // 2) se marcado, gerar fenologia e enviar em lote
-    if (form.genPheno && form.culture && PHENO[form.culture]) {
-      const items = PHENO[form.culture].map(stage => ({
-        ...baseVisit,
-        date: addDaysISO(plantingISO, stage.days),
-        recommendation: `${stage.code} — ${stage.name}${form.variety ? ` (${form.variety})` : ''}`
-      }))
+      // 2️⃣ Gera fenologia se marcado
+      if (form.genPheno && form.culture && PHENO[form.culture]) {
+        const items = PHENO[form.culture].map(stage => ({
+          ...baseVisit,
+          date: addDaysISO(plantingISO, stage.days),
+          recommendation: `${stage.code} — ${stage.name}${form.variety ? ` (${form.variety})` : ''}`
+        }))
+        const unique = items.filter(it => it.date !== plantingISO)
 
-      // remove duplicidade do "Plantio" que já foi salvo como primeira visita
-      const unique = items.filter(it => it.date !== plantingISO)
+        if (unique.length) {
+          const bulkRes = await fetch(`${API_BASE}visits/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: unique })
+          })
+          const bulkBody = await bulkRes.json()
+          if (!bulkRes.ok) throw new Error(bulkBody.message || `status ${bulkRes.status}`)
 
-      if (unique.length) {
-        const bulkRes = await fetch(`${API_BASE}visits/bulk`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: unique })
-        })
-        const bulkBody = await bulkRes.json()
-        if (!bulkRes.ok) throw new Error(bulkBody.message || `status ${bulkRes.status}`)
-
-        // adiciona no calendário (os criados + o primeiro)
-        const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
-        const allCreated = [created, ...bulkBody]
-        setEvents(e => [
-          ...e,
-          ...allCreated.map(v => ({
-            id: `visit-${v.id}`,
-            title: clientName,
-            start: v.date,
-            extendedProps: { type: 'visit', raw: v }
-          }))
-        ])
+          const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
+          const allCreated = [created, ...bulkBody]
+          setEvents(e => [
+            ...e,
+            ...allCreated.map(v => ({
+              id: `visit-${v.id}`,
+              title: clientName,
+              start: v.date,
+              extendedProps: { type: 'visit', raw: v }
+            }))
+          ])
+        }
       } else {
-        // só o primeiro foi criado
         const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
         setEvents(e => [
           ...e,
           { id: `visit-${created.id}`, title: clientName, start: created.date, extendedProps: { type: 'visit', raw: created } }
         ])
       }
-    } else {
-      // sem fenologia — só a primeira visita
-      const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
-      setEvents(e => [
-        ...e,
-        { id: `visit-${created.id}`, title: clientName, start: created.date, extendedProps: { type: 'visit', raw: created } }
-      ])
+
+      setOpen(false)
+      setForm({
+        date: '',
+        client_id: '',
+        property_id: '',
+        plot_id: '',
+        recommendation: '',
+        culture: '',
+        variety: '',
+        genPheno: true
+      })
+    } catch (err: any) {
+      alert(err?.message || 'Erro ao criar visita')
     }
-
-    setOpen(false)
-    setForm({
-      date: '',
-      client_id: '',
-      property_id: '',
-      plot_id: '',
-      recommendation: '',
-      culture: '',
-      variety: '',
-      genPheno: true
-    })
-  } catch (err: any) {
-    alert(err?.message || 'Erro ao criar visita')
   }
-}
 
-
-  function addDaysISO(iso: string, days: number) {
-  const d = new Date(iso)
-  d.setDate(d.getDate() + days)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
+  // ============================================================
+  // 🗓️ Renderização do componente
+  // ============================================================
   return (
     <div className="calendar-page">
       <h2>Calendário</h2>
@@ -258,131 +250,141 @@ const CalendarPage: React.FC = () => {
 
       {open && (
         <div className="modal-overlay">
-         <div className="modal">
-  <h3>Nova Visita</h3>
+          <div className="modal">
+            <h3>Nova Visita</h3>
 
-  <div className="form-row">
-    <label>Data</label>
-    <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
-  </div>
+            <div className="form-row">
+              <label>Data</label>
+              <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
+            </div>
 
-  <div className="form-row">
-    <label>Cliente</label>
-    <DarkSelect
-      name="client_id"
-      value={form.client_id}
-      placeholder="Selecione cliente"
-      options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-      onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
-    />
-  </div>
+            <div className="form-row">
+              <label>Cliente</label>
+              <DarkSelect
+                name="client_id"
+                value={form.client_id}
+                placeholder="Selecione cliente"
+                options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
+                onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
+              />
+            </div>
 
-  <div className="form-row">
-    <label>Propriedade</label>
-    <DarkSelect
-      name="property_id"
-      value={form.property_id}
-      placeholder="Selecione propriedade"
-      options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
-      onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
-    />
-  </div>
+            <div className="form-row">
+              <label>Propriedade</label>
+              <DarkSelect
+                name="property_id"
+                value={form.property_id}
+                placeholder="Selecione propriedade"
+                options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
+                onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
+              />
+            </div>
 
-  <div className="form-row">
-    <label>Talhão</label>
-    <DarkSelect
-      name="plot_id"
-      value={form.plot_id}
-      placeholder="Selecione talhão"
-      options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
-      onChange={handleChange as any}
-    />
-  </div>
+            <div className="form-row">
+              <label>Talhão</label>
+              <DarkSelect
+                name="plot_id"
+                value={form.plot_id}
+                placeholder="Selecione talhão"
+                options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
+                onChange={handleChange as any}
+              />
+            </div>
 
-  <div className="form-row">
-    <label>Cultura</label>
-    <select
-      name="culture"
-      value={form.culture}
-      onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
-    >
-      <option value="">Selecione</option>
-      {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-    </select>
-  </div>
+            <div className="form-row">
+              <label>Cultura</label>
+              <select
+                name="culture"
+                value={form.culture}
+                onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
+              >
+                <option value="">Selecione</option>
+                {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
 
-  <div className="form-row">
-    <label>Variedade</label>
-    <select
-      name="variety"
-      value={form.variety}
-      onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
-      disabled={!form.culture}
-    >
-      <option value="">Selecione</option>
-      {varieties
-        .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
-        .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
-    </select>
-  </div>
+            <div className="form-row">
+              <label>Variedade</label>
+              <select
+                name="variety"
+                value={form.variety}
+                onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
+                disabled={!form.culture}
+              >
+                <option value="">Selecione</option>
+                {varieties
+                  .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
+                  .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+              </select>
+            </div>
 
-  <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-    <input
-      id="genPheno"
-      type="checkbox"
-      checked={form.genPheno}
-      onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
-    />
-    <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
-  </div>
+            <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                id="genPheno"
+                type="checkbox"
+                checked={form.genPheno}
+                onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
+              />
+              <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
+            </div>
 
-   <div className="form-row">
-    <label>Recomendação</label>
-    <textarea
-      name="recommendation"
-      value={form.recommendation}
-      onChange={handleChange}
-      placeholder="Observações ou anotações técnicas..."
-    />
-  </div>
+            <div className="form-row">
+              <label>Recomendação</label>
+              <textarea
+                name="recommendation"
+                value={form.recommendation}
+                onChange={handleChange}
+                placeholder="Observações ou anotações técnicas..."
+              />
+            </div>
 
-  <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-    <button
-      className="btn-cancel"
-      onClick={() => setOpen(false)}
-      style={{
-        flex: 1,
-        background: 'var(--muted)',
-        border: 'none',
-        color: '#fff',
-        padding: '8px 10px',
-        borderRadius: '8px',
-        cursor: 'pointer',
-      }}
-    >
-      Cancelar
-    </button>
-    <button
-      className="btn-save"
-      onClick={handleCreateVisit}
-      style={{
-        flex: 1,
-        background: 'var(--accent)',
-        border: 'none',
-        color: '#02251f',
-        padding: '8px 10px',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontWeight: '600',
-      }}
-    >
-      Salvar
-    </button>
-  </div>
-</div> {/* fecha .modal */}
-</div> {/* fecha .modal-overlay */}
-</div> {/* fecha .calendar-page */}
-)
+            <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+              <button
+                className="btn-cancel"
+                onClick={() => setOpen(false)}
+                style={{
+                  flex: 1,
+                  background: 'var(--muted)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className="btn-save"
+                onClick={handleCreateVisit}
+                style={{
+                  flex: 1,
+                  background: 'var(--accent)',
+                  border: 'none',
+                  color: '#02251f',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// 🔁 Wrapper para controle de renderização
+// ============================================================
+const CalendarPage: React.FC = () => {
+  console.log('🔁 Calendar renderizado')
+  return <CalendarCore />
 }
 
 export default CalendarPage
