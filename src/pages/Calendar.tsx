@@ -59,6 +59,7 @@ const CalendarCore: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([])
   const [cultures, setCultures] = useState<Culture[]>([])
   const [varieties, setVarieties] = useState<Variety[]>([])
+  const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [plots, setPlots] = useState<Plot[]>([])
   const [form, setForm] = useState({
@@ -66,6 +67,7 @@ const CalendarCore: React.FC = () => {
     date: '',
     client_id: '',
     property_id: '',
+    consultant_id: '',
     plot_id: '',
     recommendation: '',
     culture: '',
@@ -121,6 +123,12 @@ useEffect(() => {
         .then(r => r.ok ? r.json() : Promise.reject('Falha em /varieties'))
         .then(data => setVarieties(Array.isArray(data) ? data : []))
         .catch(err => { console.error('Erro carregando variedades:', err); setVarieties([]) })
+
+      fetch(`${API_BASE}consultants`)
+  .then(r => r.ok ? r.json() : Promise.reject('Falha em /consultants'))
+  .then(data => setConsultants(Array.isArray(data) ? data : []))
+  .catch(err => { console.error('Erro carregando consultores:', err); setConsultants([]) })
+
     })
     .catch(err => console.error(err))
     .finally(() => setLoading(false))
@@ -166,10 +174,12 @@ useEffect(() => {
       const plantingISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
 
       const baseVisit = {
-        client_id: Number(form.client_id),
-        property_id: Number(form.property_id),
-        plot_id: Number(form.plot_id)
-      }
+  client_id: Number(form.client_id),
+  property_id: Number(form.property_id),
+  plot_id: Number(form.plot_id),
+  consultant_id: form.consultant_id ? Number(form.consultant_id) : null
+}
+
 
       // 1️⃣ Cria visita inicial
       const firstRes = await fetch(`${API_BASE}visits`, {
@@ -181,87 +191,126 @@ useEffect(() => {
       if (!firstRes.ok) throw new Error(firstBody.message || `status ${firstRes.status}`)
       const created = firstBody.visit || firstBody
 
-      // 2️⃣ Gera fenologia se marcado
-      if (form.genPheno && form.culture && PHENO[form.culture]) {
-        const items = PHENO[form.culture].map(stage => ({
-          ...baseVisit,
-          date: addDaysISO(plantingISO, stage.days),
-          recommendation: `${stage.code} — ${stage.name}${form.variety ? ` (${form.variety})` : ''}`
-        }))
-        const unique = items.filter(it => it.date !== plantingISO)
+      // ============================================================
+// 🧠 Atualização: geração de eventos + exibição detalhada
+// ============================================================
+if (form.genPheno && form.culture && PHENO[form.culture]) {
+  const items = PHENO[form.culture].map(stage => ({
+    ...baseVisit,
+    date: addDaysISO(plantingISO, stage.days),
+    recommendation: `${stage.code} — ${stage.name}${form.variety ? ` (${form.variety})` : ''}`
+  }))
+  const unique = items.filter(it => it.date !== plantingISO)
 
-        if (unique.length) {
-          const bulkRes = await fetch(`${API_BASE}visits/bulk`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: unique })
-          })
-          const bulkBody = await bulkRes.json()
-          if (!bulkRes.ok) throw new Error(bulkBody.message || `status ${bulkRes.status}`)
+  if (unique.length) {
+    const bulkRes = await fetch(`${API_BASE}visits/bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: unique })
+    })
+    const bulkBody = await bulkRes.json()
+    if (!bulkRes.ok) throw new Error(bulkBody.message || `status ${bulkRes.status}`)
 
-          const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
-          const allCreated = [created, ...bulkBody]
-          setEvents(e => [
-            ...e,
-            ...allCreated.map(v => ({
-              id: `visit-${v.id}`,
-              title: clientName,
-              start: v.date,
-              extendedProps: { type: 'visit', raw: v }
-            }))
-          ])
+    const allCreated = [created, ...bulkBody]
+    setEvents(e => [
+      ...e,
+      ...allCreated.map(v => {
+        const clientName = clients.find(c => c.id === v.client_id)?.name || `Cliente ${v.client_id}`
+        const consultant = consultants.find(x => x.id === v.consultant_id)?.name || ''
+        const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
+        const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation
+
+        const titleLines = [clientName]
+        if (variety) titleLines.push(variety)
+        if (stage) titleLines.push(stage)
+        if (consultant) titleLines.push(`👨‍🌾 ${consultant}`)
+
+        return {
+          id: `visit-${v.id}`,
+          title: titleLines.join('\n'),
+          start: v.date,
+          extendedProps: { type: 'visit', raw: v }
         }
-      } else {
-        const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
-        setEvents(e => [
-          ...e,
-          { id: `visit-${created.id}`, title: clientName, start: created.date, extendedProps: { type: 'visit', raw: created } }
-        ])
-      }
-
-      setOpen(false)
-      setForm({
-        id: null,
-        date: '',
-        client_id: '',
-        property_id: '',
-        plot_id: '',
-        recommendation: '',
-        culture: '',
-        variety: '',
-        genPheno: true
       })
+    ])
+  }
+} else {
+  // ✅ caso sem geração fenológica
+  const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
+  const consultant = consultants.find(x => x.id === Number(form.consultant_id))?.name || ''
+  const variety = form.variety || ''
+  const stage = form.recommendation || ''
+
+  const titleLines = [clientName]
+  if (variety) titleLines.push(variety)
+  if (stage) titleLines.push(stage)
+  if (consultant) titleLines.push(`👨‍🌾 ${consultant}`)
+
+  setEvents(e => [
+    ...e,
+    {
+      id: `visit-${created.id}`,
+      title: titleLines.join('\n'),
+      start: created.date,
+      extendedProps: { type: 'visit', raw: created }
+    }
+  ])
+}
+
+// 🔄 limpa o formulário e fecha o modal
+setOpen(false)
+setForm({
+  date: '',
+  client_id: '',
+  property_id: '',
+  plot_id: '',
+  consultant_id: '',
+  recommendation: '',
+  culture: '',
+  variety: '',
+  genPheno: true
+})
+
     } catch (err: any) {
       alert(err?.message || 'Erro ao criar visita')
     }
   }
 
-  // ============================================================
-  // 🗓️ Renderização do componente
-  // ============================================================
-  return (
-    <div className="calendar-page">
-      <h2>Calendário</h2>
-      {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
+ // ============================================================
+// 🗓️ Renderização do componente
+// ============================================================
+return (
+  <div className="calendar-page">
+    <h2>Calendário</h2>
+    {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
-      <div ref={containerRef} className="calendar-wrap">
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          locales={[ptBrLocale]}
-          locale="pt-br"
-          initialView="dayGridMonth"
-          selectable
-          select={handleDateSelect}
-          events={events}
-          height={650}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          }}
-        />
-      </div>
+    <div ref={containerRef} className="calendar-wrap">
+      <FullCalendar
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        locales={[ptBrLocale]}
+        locale="pt-br"
+        initialView="dayGridMonth"
+        selectable
+        select={handleDateSelect}
+        events={events}
+        height={650}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        eventDidMount={(info) => {
+          // ✅ Permite múltiplas linhas e melhor legibilidade
+          info.el.style.whiteSpace = 'pre-line';
+          info.el.style.lineHeight = '1.3';
+          info.el.style.padding = '4px';
+        }}
+      />
+    </div>
+  </div>
+)
+
 
       {open && (
         <div className="modal-overlay">
@@ -332,6 +381,21 @@ useEffect(() => {
                   .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
               </select>
             </div>
+
+            <div className="form-row">
+  <label>Consultor</label>
+  <select
+    name="consultant_id"
+    value={form.consultant_id}
+    onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
+  >
+    <option value="">Selecione</option>
+    {consultants.map(c => (
+      <option key={c.id} value={c.id}>{c.name}</option>
+    ))}
+  </select>
+</div>
+
 
             <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
