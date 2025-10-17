@@ -276,7 +276,7 @@ setForm({
     }
   }
 
- // ============================================================
+// ============================================================
 // 🗓️ Renderização do componente
 // ============================================================
 return (
@@ -308,195 +308,151 @@ return (
         }}
       />
     </div>
+
+    {/* ✅ Modal precisa estar dentro do mesmo return */}
+    {open && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>Nova Visita</h3>
+
+          <div className="form-row">
+            <label>Data</label>
+            <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
+          </div>
+
+          <div className="form-row">
+            <label>Cliente</label>
+            <DarkSelect
+              name="client_id"
+              value={form.client_id}
+              placeholder="Selecione cliente"
+              options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
+              onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
+            />
+          </div>
+
+          <div className="form-row">
+            <label>Propriedade</label>
+            <DarkSelect
+              name="property_id"
+              value={form.property_id}
+              placeholder="Selecione propriedade"
+              options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
+              onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
+            />
+          </div>
+
+          <div className="form-row">
+            <label>Talhão</label>
+            <DarkSelect
+              name="plot_id"
+              value={form.plot_id}
+              placeholder="Selecione talhão"
+              options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
+              onChange={handleChange as any}
+            />
+          </div>
+
+          <div className="form-row">
+            <label>Cultura</label>
+            <select
+              name="culture"
+              value={form.culture}
+              onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
+            >
+              <option value="">Selecione</option>
+              {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <label>Variedade</label>
+            <select
+              name="variety"
+              value={form.variety}
+              onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
+              disabled={!form.culture}
+            >
+              <option value="">Selecione</option>
+              {varieties
+                .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
+                .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+            </select>
+          </div>
+
+          <div className="form-row">
+            <label>Consultor</label>
+            <select
+              name="consultant_id"
+              value={form.consultant_id}
+              onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
+            >
+              <option value="">Selecione</option>
+              {consultants.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              id="genPheno"
+              type="checkbox"
+              checked={form.genPheno}
+              onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
+            />
+            <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
+          </div>
+
+          <div className="form-row">
+            <label>Recomendação</label>
+            <textarea
+              name="recommendation"
+              value={form.recommendation}
+              onChange={handleChange}
+              placeholder="Observações ou anotações técnicas..."
+            />
+          </div>
+
+          <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button className="btn-cancel" onClick={() => setOpen(false)} style={{
+              flex: 1, background: 'var(--muted)', border: 'none', color: '#fff',
+              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer'
+            }}>Cancelar</button>
+
+            <button className="btn-save" onClick={handleCreateVisit} style={{
+              flex: 1, background: 'var(--accent)', border: 'none', color: '#02251f',
+              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600
+            }}>Salvar</button>
+
+            <button className="btn-delete"
+              onClick={async () => {
+                if (!form.id) return
+                const confirmar = confirm('🗑 Deseja realmente excluir esta visita?')
+                if (!confirmar) return
+
+                try {
+                  const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+                  if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`)
+                  setEvents(evts => evts.filter(e => e.id !== `visit-${form.id}`))
+                  alert('✅ Visita excluída com sucesso!')
+                  setOpen(false)
+                } catch (err) {
+                  console.error('Erro ao excluir visita:', err)
+                  alert('❌ Erro ao excluir visita.')
+                }
+              }}
+              style={{
+                flex: 1, background: '#c0392b', border: 'none', color: '#fff',
+                padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600
+              }}>Excluir</button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 )
 
-
-      {open && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Nova Visita</h3>
-
-            <div className="form-row">
-              <label>Data</label>
-              <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
-            </div>
-
-            <div className="form-row">
-              <label>Cliente</label>
-              <DarkSelect
-                name="client_id"
-                value={form.client_id}
-                placeholder="Selecione cliente"
-                options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-                onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
-              />
-            </div>
-
-            <div className="form-row">
-              <label>Propriedade</label>
-              <DarkSelect
-                name="property_id"
-                value={form.property_id}
-                placeholder="Selecione propriedade"
-                options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
-                onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
-              />
-            </div>
-
-            <div className="form-row">
-              <label>Talhão</label>
-              <DarkSelect
-                name="plot_id"
-                value={form.plot_id}
-                placeholder="Selecione talhão"
-                options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
-                onChange={handleChange as any}
-              />
-            </div>
-
-            <div className="form-row">
-              <label>Cultura</label>
-              <select
-                name="culture"
-                value={form.culture}
-                onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
-              >
-                <option value="">Selecione</option>
-                {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-
-            <div className="form-row">
-              <label>Variedade</label>
-              <select
-                name="variety"
-                value={form.variety}
-                onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
-                disabled={!form.culture}
-              >
-                <option value="">Selecione</option>
-                {varieties
-                  .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
-                  .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
-              </select>
-            </div>
-
-            <div className="form-row">
-  <label>Consultor</label>
-  <select
-    name="consultant_id"
-    value={form.consultant_id}
-    onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
-  >
-    <option value="">Selecione</option>
-    {consultants.map(c => (
-      <option key={c.id} value={c.id}>{c.name}</option>
-    ))}
-  </select>
-</div>
-
-
-            <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                id="genPheno"
-                type="checkbox"
-                checked={form.genPheno}
-                onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
-              />
-              <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
-            </div>
-
-            <div className="form-row">
-              <label>Recomendação</label>
-              <textarea
-                name="recommendation"
-                value={form.recommendation}
-                onChange={handleChange}
-                placeholder="Observações ou anotações técnicas..."
-              />
-            </div>
-
-            <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-  <button
-    className="btn-cancel"
-    onClick={() => setOpen(false)}
-    style={{
-      flex: 1,
-      background: 'var(--muted)',
-      border: 'none',
-      color: '#fff',
-      padding: '8px 10px',
-      borderRadius: '8px',
-      cursor: 'pointer',
-    }}
-  >
-    Cancelar
-  </button>
-
-  <button
-    className="btn-save"
-    onClick={handleCreateVisit}
-    style={{
-      flex: 1,
-      background: 'var(--accent)',
-      border: 'none',
-      color: '#02251f',
-      padding: '8px 10px',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontWeight: 600,
-    }}
-  >
-    Salvar
-  </button>
-
-  <button
-  className="btn-delete"
-  onClick={async () => {
-    if (!form.id) return
-    const confirmar = confirm('🗑 Deseja realmente excluir esta visita?')
-    if (!confirmar) return
-
-    try {
-      const resp = await fetch(`${API_BASE}visits/${form.id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      })
-      if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`)
-
-      // Remove a visita do calendário local
-      setEvents(evts => evts.filter(e => e.id !== `visit-${form.id}`))
-
-      alert('✅ Visita excluída com sucesso!')
-      setOpen(false)
-    } catch (err) {
-      console.error('Erro ao excluir visita:', err)
-      alert('❌ Erro ao excluir visita.')
-    }
-  }}
-  style={{
-    flex: 1,
-    background: '#c0392b',
-    border: 'none',
-    color: '#fff',
-    padding: '8px 10px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 600,
-  }}
->
-  Excluir
-</button>
-
-</div>
-
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ============================================================
 // 🔁 Wrapper para controle de renderização
