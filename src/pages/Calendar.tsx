@@ -220,10 +220,12 @@ if (form.genPheno && form.culture && PHENO[form.culture]) {
         const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
         const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation
 
-        const titleLines = [clientName]
-        if (variety) titleLines.push(variety)
-        if (stage) titleLines.push(stage)
-        if (consultant) titleLines.push(`👨‍🌾 ${consultant}`)
+        const titleLines = [];
+titleLines.push(`👤 ${clientName}`);
+if (variety) titleLines.push(`🌱 ${variety}`);
+if (stage) titleLines.push(`📍 ${stage}`);
+if (consultant) titleLines.push(`👨‍🌾 ${consultant}`);
+
 
         return {
           id: `visit-${v.id}`,
@@ -288,27 +290,82 @@ return (
 
     <div ref={containerRef} className="calendar-wrap">
       <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        locales={[ptBrLocale]}
-        locale="pt-br"
-        initialView="dayGridMonth"
-        selectable
-        select={handleDateSelect}
-        events={events}
-        height={650}
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        eventDidMount={(info) => {
-          // ✅ Permite múltiplas linhas e melhor legibilidade
-          info.el.style.whiteSpace = 'pre-line';
-          info.el.style.lineHeight = '1.3';
-          info.el.style.padding = '4px';
-        }}
-      />
+  ref={calendarRef}
+  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+  locales={[ptBrLocale]}
+  locale="pt-br"
+  initialView="dayGridMonth"
+  selectable
+  select={handleDateSelect}
+  events={events.map(ev => {
+    // 🧠 Define cor automática com base em status e data
+    const today = new Date().toISOString().split("T")[0];
+    let backgroundColor = "#3b82f6"; // azul padrão = planejada
+
+    if (ev.extendedProps?.raw?.status === "done") backgroundColor = "#16a34a"; // verde concluída
+    else if (ev.start < today) backgroundColor = "#dc2626"; // vermelha atrasada
+
+    return { ...ev, backgroundColor };
+  })}
+  height={650}
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+  }}
+
+  // =======================
+  // 📅 Estilo visual
+  // =======================
+  eventDidMount={(info) => {
+    info.el.style.whiteSpace = 'pre-line';
+    info.el.style.lineHeight = '1.3';
+    info.el.style.padding = '4px';
+    info.el.style.borderRadius = '6px';
+    info.el.style.color = '#fff';
+  }}
+
+  // =======================
+  // 🖱️ Clique em evento
+  // =======================
+  eventClick={async (info) => {
+    const v = info.event.extendedProps?.raw;
+    if (!v || !v.id) return;
+
+    const action = prompt(
+      `Visita de ${v.client?.name || 'cliente'}\n\n` +
+      `1️⃣ Digite "c" para marcar como concluída\n` +
+      `2️⃣ Digite "d" para excluir a visita\n` +
+      `3️⃣ Ou pressione Cancelar para sair.`
+    );
+
+    if (action?.toLowerCase() === 'c') {
+      // ✅ Atualiza status para concluída
+      await fetch(`${API_BASE}visits/${v.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+      });
+      setEvents((prev) =>
+        prev.map(e =>
+          e.id === `visit-${v.id}`
+            ? { ...e, extendedProps: { ...e.extendedProps, raw: { ...v, status: 'done' } } }
+            : e
+        )
+      );
+      alert('✅ Visita marcada como concluída!');
+    }
+
+    if (action?.toLowerCase() === 'd') {
+      const confirmar = confirm('🗑 Deseja realmente excluir esta visita?');
+      if (!confirmar) return;
+      await fetch(`${API_BASE}visits/${v.id}`, { method: 'DELETE' });
+      setEvents((prev) => prev.filter(e => e.id !== `visit-${v.id}`));
+      alert('🗑 Visita excluída com sucesso!');
+    }
+  }}
+/>
+
     </div>
 
     {/* ✅ Modal precisa estar dentro do mesmo return */}
