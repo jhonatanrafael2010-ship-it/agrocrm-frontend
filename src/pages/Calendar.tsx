@@ -449,10 +449,10 @@ return (
           </div>
         </div>
       </div>
-    )}
+       )}
   </div>
-)
-
+)   // 👈 esse fecha o return do CalendarCore
+}   // 👈 esse fecha o componente CalendarCore!
 
 // ============================================================
 // 🔁 Wrapper para controle de renderização
@@ -463,3 +463,4 @@ const CalendarPage: React.FC = () => {
 }
 
 export default CalendarPage
+
