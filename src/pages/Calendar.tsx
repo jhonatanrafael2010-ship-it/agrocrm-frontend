@@ -298,7 +298,7 @@ return (
     {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
     <div ref={containerRef} className="calendar-wrap">
-      <FullCalendar
+     <FullCalendar
   ref={calendarRef}
   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
   locales={[ptBrLocale]}
@@ -309,58 +309,60 @@ return (
   events={events.map(ev => {
     // 🧠 Define cor automática com base em status e data
     const today = new Date().toISOString().split("T")[0];
-    let backgroundColor = "#3b82f6"; // azul padrão = planejada
+    let backgroundColor = "#3b82f6"; // azul = planejada
 
-    if (ev.extendedProps?.raw?.status === "done") backgroundColor = "#16a34a"; // verde concluída
-    else if (ev.start < today) backgroundColor = "#dc2626"; // vermelha atrasada
+    if (ev.extendedProps?.raw?.status === "done") {
+      backgroundColor = "#16a34a"; // verde = concluída
+    } else if (ev.start < today) {
+      backgroundColor = "#dc2626"; // vermelha = atrasada
+    }
 
     return { ...ev, backgroundColor };
   })}
   height={650}
   headerToolbar={{
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    left: "prev,next today",
+    center: "title",
+    right: "dayGridMonth,timeGridWeek,timeGridDay",
   }}
-
   // =======================
-  // 📅 Estilo visual
+  // 📅 Estilo visual do evento
   // =======================
   eventDidMount={(info) => {
-  const color = info.event.backgroundColor || '#3b82f6';
-  info.el.style.background = color;
-  info.el.style.color = '#fff';
-  info.el.style.padding = '6px';
-  info.el.style.borderRadius = '8px';
-  info.el.style.whiteSpace = 'pre-line';
-  info.el.style.lineHeight = '1.3';
-  info.el.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
-  info.el.style.fontSize = '0.85rem';
-  info.el.style.textAlign = 'left';
-}}
-
-
+    const color = info.event.backgroundColor || "#3b82f6";
+    info.el.style.background = color;
+    info.el.style.color = "#fff";
+    info.el.style.padding = "6px";
+    info.el.style.borderRadius = "8px";
+    info.el.style.whiteSpace = "pre-line";
+    info.el.style.lineHeight = "1.3";
+    info.el.style.boxShadow = "0 2px 5px rgba(0,0,0,0.15)";
+    info.el.style.fontSize = "0.85rem";
+    info.el.style.textAlign = "left";
+  }}
   // =======================
-  // 🖱️ Clique em evento
+  // 🖱️ Clique no evento
   // =======================
   eventClick={(info) => {
-  const v = info.event.extendedProps?.raw;
-  if (!v) return;
+    const v = info.event.extendedProps?.raw;
+    if (!v) return;
 
-  setForm({
-    id: v.id,
-    date: v.date ? new Date(v.date).toLocaleDateString('pt-BR') : '',
-    client_id: String(v.client_id || ''),
-    property_id: String(v.property_id || ''),
-    plot_id: String(v.plot_id || ''),
-    consultant_id: String(v.consultant_id || ''),
-    culture: v.culture || '',
-    variety: v.variety || '',
-    recommendation: v.recommendation || '',
-    genPheno: false,
-  });
-  setOpen(true);
-}}
+    setForm({
+      id: v.id,
+      date: v.date ? new Date(v.date).toLocaleDateString("pt-BR") : "",
+      client_id: String(v.client_id || ""),
+      property_id: String(v.property_id || ""),
+      plot_id: String(v.plot_id || ""),
+      consultant_id: String(v.consultant_id || ""),
+      culture: v.culture || "",
+      variety: v.variety || "",
+      recommendation: v.recommendation || "",
+      genPheno: false,
+    });
+    setOpen(true);
+  }}
+/>
+
 
 
     if (action?.toLowerCase() === 'c') {
