@@ -220,11 +220,20 @@ if (form.genPheno && form.culture && PHENO[form.culture]) {
         const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
         const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation
 
-        const titleLines = [];
-titleLines.push(`👤 ${clientName}`);
-if (variety) titleLines.push(`🌱 ${variety}`);
-if (stage) titleLines.push(`📍 ${stage}`);
-if (consultant) titleLines.push(`👨‍🌾 ${consultant}`);
+       const titleLines = [
+  `👤 ${clientName}`,
+  variety ? `🌱 ${variety}` : '',
+  stage ? `📍 ${stage}` : '',
+  consultant ? `👨‍🌾 ${consultant}` : '',
+].filter(Boolean);
+
+evs.push({
+  id: `visit-${v.id}`,
+  title: titleLines.join('\n'),
+  start: v.date,
+  extendedProps: { type: 'visit', raw: v }
+});
+
 
 
         return {
@@ -318,26 +327,41 @@ return (
   // 📅 Estilo visual
   // =======================
   eventDidMount={(info) => {
-    info.el.style.whiteSpace = 'pre-line';
-    info.el.style.lineHeight = '1.3';
-    info.el.style.padding = '4px';
-    info.el.style.borderRadius = '6px';
-    info.el.style.color = '#fff';
-  }}
+  const color = info.event.backgroundColor || '#3b82f6';
+  info.el.style.background = color;
+  info.el.style.color = '#fff';
+  info.el.style.padding = '6px';
+  info.el.style.borderRadius = '8px';
+  info.el.style.whiteSpace = 'pre-line';
+  info.el.style.lineHeight = '1.3';
+  info.el.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)';
+  info.el.style.fontSize = '0.85rem';
+  info.el.style.textAlign = 'left';
+}}
+
 
   // =======================
   // 🖱️ Clique em evento
   // =======================
-  eventClick={async (info) => {
-    const v = info.event.extendedProps?.raw;
-    if (!v || !v.id) return;
+  eventClick={(info) => {
+  const v = info.event.extendedProps?.raw;
+  if (!v) return;
 
-    const action = prompt(
-      `Visita de ${v.client?.name || 'cliente'}\n\n` +
-      `1️⃣ Digite "c" para marcar como concluída\n` +
-      `2️⃣ Digite "d" para excluir a visita\n` +
-      `3️⃣ Ou pressione Cancelar para sair.`
-    );
+  setForm({
+    id: v.id,
+    date: v.date ? new Date(v.date).toLocaleDateString('pt-BR') : '',
+    client_id: String(v.client_id || ''),
+    property_id: String(v.property_id || ''),
+    plot_id: String(v.plot_id || ''),
+    consultant_id: String(v.consultant_id || ''),
+    culture: v.culture || '',
+    variety: v.variety || '',
+    recommendation: v.recommendation || '',
+    genPheno: false,
+  });
+  setOpen(true);
+}}
+
 
     if (action?.toLowerCase() === 'c') {
       // ✅ Atualiza status para concluída
