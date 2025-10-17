@@ -227,15 +227,6 @@ if (form.genPheno && form.culture && PHENO[form.culture]) {
   consultant ? `👨‍🌾 ${consultant}` : '',
 ].filter(Boolean);
 
-evs.push({
-  id: `visit-${v.id}`,
-  title: titleLines.join('\n'),
-  start: v.date,
-  extendedProps: { type: 'visit', raw: v }
-});
-
-
-
         return {
           id: `visit-${v.id}`,
           title: titleLines.join('\n'),
