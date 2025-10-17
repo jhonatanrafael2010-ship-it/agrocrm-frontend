@@ -260,6 +260,7 @@ if (form.genPheno && form.culture && PHENO[form.culture]) {
 // 🔄 limpa o formulário e fecha o modal
 setOpen(false)
 setForm({
+  id: null,
   date: '',
   client_id: '',
   property_id: '',
@@ -270,6 +271,7 @@ setForm({
   variety: '',
   genPheno: true
 })
+
 
     } catch (err: any) {
       alert(err?.message || 'Erro ao criar visita')
