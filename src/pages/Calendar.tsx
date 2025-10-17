@@ -363,35 +363,6 @@ return (
   }}
 />
 
-
-
-    if (action?.toLowerCase() === 'c') {
-      // ✅ Atualiza status para concluída
-      await fetch(`${API_BASE}visits/${v.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'done' })
-      });
-      setEvents((prev) =>
-        prev.map(e =>
-          e.id === `visit-${v.id}`
-            ? { ...e, extendedProps: { ...e.extendedProps, raw: { ...v, status: 'done' } } }
-            : e
-        )
-      );
-      alert('✅ Visita marcada como concluída!');
-    }
-
-    if (action?.toLowerCase() === 'd') {
-      const confirmar = confirm('🗑 Deseja realmente excluir esta visita?');
-      if (!confirmar) return;
-      await fetch(`${API_BASE}visits/${v.id}`, { method: 'DELETE' });
-      setEvents((prev) => prev.filter(e => e.id !== `visit-${v.id}`));
-      alert('🗑 Visita excluída com sucesso!');
-    }
-  }}
-/>
-
     </div>
 
     {/* ✅ Modal precisa estar dentro do mesmo return */}
