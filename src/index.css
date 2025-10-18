@@ -284,3 +284,29 @@ label { color: var(--muted); font-size: 0.9rem; }
   .cards { grid-template-columns: repeat(2, 1fr); }
   .chart-row { flex-direction: column; }
 }
+.calendar-page .fc .fc-daygrid-event {
+  border: none !important;
+  background: transparent !important; /* o cartão é via eventContent */
+}
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  display: grid; place-items: center;
+  z-index: 50;
+}
+.modal {
+  background: #0d1f1b;
+  color: #cde5df;
+  border: 1px solid #20423b;
+  border-radius: 12px;
+  width: 520px; max-width: 95vw;
+  padding: 16px;
+}
+.form-row { display: grid; gap: 6px; margin: 10px 0; }
+.form-row input, .form-row select, .form-row textarea {
+  background: #0b1715; color: #eaf6f3; border: 1px solid #1e3a36; border-radius: 8px; padding: 8px;
+}
+.modal-actions .btn-cancel { background: #2b3b38; color: #fff; border-radius: 8px; padding: 8px 12px; border: none; }
+.modal-actions .btn-save { background: #31d0aa; color: #02251f; border-radius: 8px; padding: 8px 12px; border: none; font-weight: 700; }
+.modal-actions .btn-delete { background: #dc2626; color: #fff; border-radius: 8px; padding: 8px 12px; border: none; }

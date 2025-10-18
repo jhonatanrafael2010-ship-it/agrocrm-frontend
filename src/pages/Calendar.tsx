@@ -6,13 +6,27 @@ import interactionPlugin from '@fullcalendar/interaction'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import DarkSelect from '../components/DarkSelect'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api/'
+const API_BASE = (import.meta as any).env.VITE_API_URL || '/api/'
 
 type Client = { id: number; name: string }
 type Property = { id: number; client_id: number; name: string }
 type Plot = { id: number; property_id: number; name: string }
 type Culture = { id: number; name: string }
 type Variety = { id: number; name: string; culture: string }
+type Consultant = { id: number; name: string }
+
+type Visit = {
+  id: number
+  client_id: number
+  property_id: number
+  plot_id: number
+  consultant_id?: number | null
+  date: string
+  recommendation?: string
+  status?: 'planned' | 'done' | string
+  culture?: string
+  variety?: string
+}
 
 // ======== TABELAS FENOLÓGICAS (dias após plantio) ========
 const PHENO: Record<string, { code: string; name: string; days: number }[]> = {
@@ -49,113 +63,87 @@ const PHENO: Record<string, { code: string; name: string; days: number }[]> = {
   ]
 }
 
-// ============================================================
-// 🌾 Componente principal — CalendarCore
-// ============================================================
-const CalendarCore: React.FC = () => {
+const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const [events, setEvents] = useState<any[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [cultures, setCultures] = useState<Culture[]>([])
   const [varieties, setVarieties] = useState<Variety[]>([])
-  const [consultants, setConsultants] = useState<{ id: number; name: string }[]>([])
+  const [consultants, setConsultants] = useState<Consultant[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [plots, setPlots] = useState<Plot[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // filtro de agenda por consultor
+  const [selectedConsultant, setSelectedConsultant] = useState<string>('')
+
+  const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
     id: null as number | null,
     date: '',
     client_id: '',
     property_id: '',
-    consultant_id: '',
     plot_id: '',
-    recommendation: '',
+    consultant_id: '',
     culture: '',
     variety: '',
+    recommendation: '',
     genPheno: true
   })
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
 
-  // 🔹 Carrega dados iniciais
-  // 🔹 Carrega dados iniciais
-useEffect(() => {
-  console.log('🧠 Calendar montado')
-  setLoading(true)
+  // ==============================
+  // Load inicial
+  // ==============================
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      fetch(`${API_BASE}clients`).then(r => r.json()),
+      fetch(`${API_BASE}properties`).then(r => r.json()),
+      fetch(`${API_BASE}plots`).then(r => r.json()),
+      fetch(`${API_BASE}visits`).then(r => r.json()),
+      fetch(`${API_BASE}cultures`).then(r => r.json()),
+      fetch(`${API_BASE}varieties`).then(r => r.json()),
+      fetch(`${API_BASE}consultants`).then(r => r.json())
+    ])
+      .then(([cs, ps, pls, vs, cts, vars, cons]) => {
+        setClients(cs || [])
+        setProperties(ps || [])
+        setPlots(pls || [])
+        setCultures(cts || [])
+        setVarieties(vars || [])
+        setConsultants(cons || [])
 
-  Promise.all([
-    fetch(`${API_BASE}clients`).then(r => r.json()),
-    fetch(`${API_BASE}properties`).then(r => r.json()),
-    fetch(`${API_BASE}plots`).then(r => r.json()),
-    fetch(`${API_BASE}visits`).then(r => r.json()),
-  ])
-    .then(([cs, ps, pls, visits]) => {
-      const evs: any[] = []
+        // monta eventos padronizados
+        const evs = (vs || []).filter((v: Visit) => v.date).map((v: Visit) => {
+          const clientName = (cs || []).find((c: Client) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`
+          const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || ''
+          const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || ''
+          const consultant = (cons || []).find((x: Consultant) => x.id === v.consultant_id)?.name || ''
 
-      if (Array.isArray(visits)) {
-        visits.forEach((v: any) => {
-          if (v.date) {
-            const clientName =
-              cs.find((c: any) => c.id === v.client_id)?.name ||
-              `Cliente: ${v.client_id}`
-            evs.push({
-              id: `visit-${v.id}`,
-              title: clientName,
-              start: v.date,
-              extendedProps: { type: 'visit', raw: v },
-            })
+          const titleLines = [
+            `👤 ${clientName}`,
+            variety ? `🌱 ${variety}` : '',
+            stage ? `📍 ${stage}` : '',
+            consultant ? `👨‍🌾 ${consultant}` : '',
+          ].filter(Boolean)
+
+          return {
+            id: `visit-${v.id}`,
+            title: titleLines.join('\n'),
+            start: v.date,
+            extendedProps: { type: 'visit', raw: v }
           }
         })
-      }
+        setEvents(evs)
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
-      setEvents(evs)
-      setClients(cs || [])
-      setProperties(ps || [])
-      setPlots(pls || [])
-
-      // ✅ Agora carrega culturas e variedades separadamente
-      fetch(`${API_BASE}cultures`)
-        .then(r => r.ok ? r.json() : Promise.reject('Falha em /cultures'))
-        .then(data => setCultures(Array.isArray(data) ? data : []))
-        .catch(err => { console.error('Erro carregando culturas:', err); setCultures([]) })
-
-      fetch(`${API_BASE}varieties`)
-        .then(r => r.ok ? r.json() : Promise.reject('Falha em /varieties'))
-        .then(data => setVarieties(Array.isArray(data) ? data : []))
-        .catch(err => { console.error('Erro carregando variedades:', err); setVarieties([]) })
-
-      fetch(`${API_BASE}consultants`)
-  .then(r => r.ok ? r.json() : Promise.reject('Falha em /consultants'))
-  .then(data => setConsultants(Array.isArray(data) ? data : []))
-  .catch(err => { console.error('Erro carregando consultores:', err); setConsultants([]) })
-
-    })
-    .catch(err => console.error(err))
-    .finally(() => setLoading(false))
-
-  return () => {
-    const container = containerRef.current
-    if (container) container.innerHTML = ''
-    console.log('🧹 Calendar desmontado e container limpo')
-  }
-}, [])
-
-
-  // 🔹 Selecionar data
-  const handleDateSelect = (info: any) => {
-    const [y, m, d] = info.startStr.split('-')
-    setForm(f => ({ ...f, date: `${d}/${m}/${y}` }))
-    setOpen(true)
-  }
-
-  // 🔹 Alterações de formulário
-  const handleChange = (e: any) => {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }
-
-  // 🔹 Utilitário para adicionar dias
-  function addDaysISO(iso: string, days: number) {
+  // ==============================
+  // utils
+  // ==============================
+  const addDaysISO = (iso: string, days: number) => {
     const d = new Date(iso)
     d.setDate(d.getDate() + days)
     const yyyy = d.getFullYear()
@@ -164,350 +152,373 @@ useEffect(() => {
     return `${yyyy}-${mm}-${dd}`
   }
 
-  // 🔹 Criar visita
-  const handleCreateVisit = async () => {
-    if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
-      return alert('Data, cliente, propriedade e talhão são obrigatórios')
+  const colorFor = (dateISO: string, status?: string) => {
+    const today = new Date().toISOString().split('T')[0]
+    if (status === 'done') return '#16a34a'  // verde
+    if (dateISO < today) return '#dc2626'    // vermelho
+    return '#3b82f6'                          // azul
+  }
+
+  // ==============================
+  // handlers
+  // ==============================
+  const handleDateSelect = (info: any) => {
+    const [y, m, d] = info.startStr.split('-')
+    setForm(f => ({ ...f, date: `${d}/${m}/${y}`, id: null }))
+    setOpen(true)
+  }
+
+  const handleChange = (e: any) => {
+    const { name, value } = e.target
+    setForm(f => ({ ...f, [name]: value }))
+  }
+
+  const handleCreateOrUpdate = async () => {
+    if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
+      alert('Data, cliente, propriedade e talhão são obrigatórios'); return
+    }
+    const [d, m, y] = form.date.split('/')
+    const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+
+    const base = {
+      client_id: Number(form.client_id),
+      property_id: Number(form.property_id),
+      plot_id: Number(form.plot_id),
+      consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+      date: iso,
+      recommendation: form.recommendation || '',
+      status: 'planned'
+    }
 
     try {
-      const [d, m, y] = form.date.split('/')
-      const plantingISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
-
-      const baseVisit = {
-  client_id: Number(form.client_id),
-  property_id: Number(form.property_id),
-  plot_id: Number(form.plot_id),
-  consultant_id: form.consultant_id ? Number(form.consultant_id) : null
-}
-
-
-      // 1️⃣ Cria visita inicial
-      const firstRes = await fetch(`${API_BASE}visits`, {
+      // create
+      const createdRes = await fetch(`${API_BASE}visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...baseVisit, date: plantingISO, recommendation: form.recommendation })
+        body: JSON.stringify(base)
       })
-      const firstBody = await firstRes.json()
-      if (!firstRes.ok) throw new Error(firstBody.message || `status ${firstRes.status}`)
-      const created = firstBody.visit || firstBody
+      const createdBody = await createdRes.json()
+      if (!createdRes.ok) throw new Error(createdBody.message || 'Erro ao criar')
 
-      // ============================================================
-// 🧠 Atualização: geração de eventos + exibição detalhada
-// ============================================================
-if (form.genPheno && form.culture && PHENO[form.culture]) {
-  const items = PHENO[form.culture].map(stage => ({
-    ...baseVisit,
-    date: addDaysISO(plantingISO, stage.days),
-    recommendation: `${stage.code} — ${stage.name}${form.variety ? ` (${form.variety})` : ''}`
-  }))
-  const unique = items.filter(it => it.date !== plantingISO)
+      const created = createdBody.visit as Visit
 
-  if (unique.length) {
-    const bulkRes = await fetch(`${API_BASE}visits/bulk`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: unique })
-    })
-    const bulkBody = await bulkRes.json()
-    if (!bulkRes.ok) throw new Error(bulkBody.message || `status ${bulkRes.status}`)
+      // gerar fenologia (extra)
+      if (form.genPheno && form.culture && PHENO[form.culture]) {
+        const items = PHENO[form.culture].map(s => ({
+          client_id: base.client_id,
+          property_id: base.property_id,
+          plot_id: base.plot_id,
+          consultant_id: base.consultant_id,
+          date: addDaysISO(iso, s.days),
+          recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
+          status: 'planned'
+        })).filter(it => it.date !== iso)
 
-    const allCreated = [created, ...bulkBody]
-    setEvents(e => [
-      ...e,
-      ...allCreated.map(v => {
-        const clientName = clients.find(c => c.id === v.client_id)?.name || `Cliente ${v.client_id}`
-        const consultant = consultants.find(x => x.id === v.consultant_id)?.name || ''
-        const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
-        const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation
+        if (items.length) {
+          const bulk = await fetch(`${API_BASE}visits/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items })
+          })
+          const bulkBody = await bulk.json()
+          if (!bulk.ok) throw new Error(bulkBody.message || 'Erro em /visits/bulk')
 
-       const titleLines = [
-  `👤 ${clientName}`,
-  variety ? `🌱 ${variety}` : '',
-  stage ? `📍 ${stage}` : '',
-  consultant ? `👨‍🌾 ${consultant}` : '',
-].filter(Boolean);
+          const all = [created, ...bulkBody]
+          const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`
 
-        return {
-          id: `visit-${v.id}`,
-          title: titleLines.join('\n'),
-          start: v.date,
-          extendedProps: { type: 'visit', raw: v }
+          setEvents(prev => [
+            ...prev,
+            ...all.map((v: Visit) => {
+              const consultant = consultants.find(x => x.id === v.consultant_id)?.name || ''
+              const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
+              const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || ''
+              const titleLines = [
+                `👤 ${clientName}`,
+                variety ? `🌱 ${variety}` : '',
+                stage ? `📍 ${stage}` : '',
+                consultant ? `👨‍🌾 ${consultant}` : '',
+              ].filter(Boolean)
+              return {
+                id: `visit-${(v as any).id}`,
+                title: titleLines.join('\n'),
+                start: v.date,
+                backgroundColor: colorFor(v.date, v.status),
+                extendedProps: { type: 'visit', raw: v }
+              }
+            })
+          ])
         }
+      } else {
+        // só a individual
+        const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`
+        const consultant = consultants.find(x => x.id === base.consultant_id)?.name || ''
+        const variety = form.variety || ''
+        const stage = form.recommendation || ''
+        const titleLines = [
+          `👤 ${clientName}`,
+          variety ? `🌱 ${variety}` : '',
+          stage ? `📍 ${stage}` : '',
+          consultant ? `👨‍🌾 ${consultant}` : '',
+        ].filter(Boolean)
+
+        setEvents(prev => [
+          ...prev,
+          {
+            id: `visit-${created.id}`,
+            title: titleLines.join('\n'),
+            start: created.date,
+            backgroundColor: colorFor(created.date, created.status),
+            extendedProps: { type: 'visit', raw: created }
+          }
+        ])
+      }
+
+      // limpa
+      setOpen(false)
+      setForm({
+        id: null, date: '', client_id: '', property_id: '', plot_id: '',
+        consultant_id: '', culture: '', variety: '', recommendation: '', genPheno: true
       })
-    ])
-  }
-} else {
-  // ✅ caso sem geração fenológica
-  const clientName = clients.find(c => c.id === Number(form.client_id))?.name || `Cliente: ${form.client_id}`
-  const consultant = consultants.find(x => x.id === Number(form.consultant_id))?.name || ''
-  const variety = form.variety || ''
-  const stage = form.recommendation || ''
-
-  const titleLines = [clientName]
-  if (variety) titleLines.push(variety)
-  if (stage) titleLines.push(stage)
-  if (consultant) titleLines.push(`👨‍🌾 ${consultant}`)
-
-  setEvents(e => [
-    ...e,
-    {
-      id: `visit-${created.id}`,
-      title: titleLines.join('\n'),
-      start: created.date,
-      extendedProps: { type: 'visit', raw: created }
-    }
-  ])
-}
-
-// 🔄 limpa o formulário e fecha o modal
-setOpen(false)
-setForm({
-  id: null,
-  date: '',
-  client_id: '',
-  property_id: '',
-  plot_id: '',
-  consultant_id: '',
-  recommendation: '',
-  culture: '',
-  variety: '',
-  genPheno: true
-})
-
-
-    } catch (err: any) {
-      alert(err?.message || 'Erro ao criar visita')
+    } catch (e: any) {
+      alert(e?.message || 'Erro ao salvar visita')
     }
   }
 
-// ============================================================
-// 🗓️ Renderização do componente
-// ============================================================
-return (
-  <div className="calendar-page">
-    <h2>Calendário</h2>
-    {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
-
-    <div ref={containerRef} className="calendar-wrap">
-     <FullCalendar
-  ref={calendarRef}
-  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-  locales={[ptBrLocale]}
-  locale="pt-br"
-  initialView="dayGridMonth"
-  selectable
-  select={handleDateSelect}
-  events={events.map(ev => {
-    // 🧠 Define cor automática com base em status e data
-    const today = new Date().toISOString().split("T")[0];
-    let backgroundColor = "#3b82f6"; // azul = planejada
-
-    if (ev.extendedProps?.raw?.status === "done") {
-      backgroundColor = "#16a34a"; // verde = concluída
-    } else if (ev.start < today) {
-      backgroundColor = "#dc2626"; // vermelha = atrasada
+  const handleDelete = async () => {
+    if (!form.id) return
+    if (!confirm('🗑 Deseja realmente excluir esta visita?')) return
+    try {
+      const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE' })
+      if (!resp.ok) throw new Error('Erro HTTP ' + resp.status)
+      setEvents(prev => prev.filter(e => e.id !== `visit-${form.id}`))
+      setOpen(false)
+    } catch (e) {
+      alert('Erro ao excluir')
     }
+  }
 
-    return { ...ev, backgroundColor };
-  })}
-  height={650}
-  headerToolbar={{
-    left: "prev,next today",
-    center: "title",
-    right: "dayGridMonth,timeGridWeek,timeGridDay",
-  }}
-  // =======================
-  // 📅 Estilo visual do evento
-  // =======================
-  eventDidMount={(info) => {
-    const color = info.event.backgroundColor || "#3b82f6";
-    info.el.style.background = color;
-    info.el.style.color = "#fff";
-    info.el.style.padding = "6px";
-    info.el.style.borderRadius = "8px";
-    info.el.style.whiteSpace = "pre-line";
-    info.el.style.lineHeight = "1.3";
-    info.el.style.boxShadow = "0 2px 5px rgba(0,0,0,0.15)";
-    info.el.style.fontSize = "0.85rem";
-    info.el.style.textAlign = "left";
-  }}
-  // =======================
-  // 🖱️ Clique no evento
-  // =======================
-  eventClick={(info) => {
-    const v = info.event.extendedProps?.raw;
-    if (!v) return;
+  const markDone = async () => {
+    if (!form.id) return
+    try {
+      const r = await fetch(`${API_BASE}visits/${form.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+      })
+      if (!r.ok) throw new Error('Falha ao concluir')
+      setEvents(prev => prev.map(ev => {
+        if (ev.id === `visit-${form.id}`) {
+          const v = { ...ev.extendedProps.raw, status: 'done' }
+          return { ...ev, backgroundColor: colorFor(v.date, v.status), extendedProps: { ...ev.extendedProps, raw: v } }
+        }
+        return ev
+      }))
+      setOpen(false)
+    } catch (e) {
+      alert('Erro ao concluir')
+    }
+  }
 
-    setForm({
-      id: v.id,
-      date: v.date ? new Date(v.date).toLocaleDateString("pt-BR") : "",
-      client_id: String(v.client_id || ""),
-      property_id: String(v.property_id || ""),
-      plot_id: String(v.plot_id || ""),
-      consultant_id: String(v.consultant_id || ""),
-      culture: v.culture || "",
-      variety: v.variety || "",
-      recommendation: v.recommendation || "",
-      genPheno: false,
-    });
-    setOpen(true);
-  }}
-/>
+  // ==============================
+  // Render
+  // ==============================
+  return (
+    <div className="calendar-page">
+      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+        <h2 style={{ margin:0 }}>Agenda de Visitas</h2>
+        <select
+          value={selectedConsultant}
+          onChange={(e)=>setSelectedConsultant(e.target.value)}
+          style={{ marginLeft:'auto', padding:'6px 10px', borderRadius:8, background:'#0d1f1b', color:'#cde5df', border:'1px solid #234' }}
+        >
+          <option value="">Todos os consultores</option>
+          {consultants.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+        </select>
+      </div>
 
-    </div>
+      {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
-    {/* ✅ Modal precisa estar dentro do mesmo return */}
-    {open && (
-      <div className="modal-overlay">
-        <div className="modal">
-          <h3>Nova Visita</h3>
+      <FullCalendar
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        locales={[ptBrLocale]}
+        locale="pt-br"
+        initialView="dayGridMonth"
+        selectable
+        select={handleDateSelect}
+        events={events.filter(e => {
+          if (!selectedConsultant) return true
+          const cid = e.extendedProps?.raw?.consultant_id
+          return String(cid || '') === selectedConsultant
+        })}
+        height={650}
+        headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
+        eventContent={(arg) => {
+          // cartão visual
+          const v = arg.event.extendedProps?.raw as Visit
+          const bg = colorFor(v?.date || arg.event.startStr, v?.status)
+          return {
+            domNodes: [
+              (() => {
+                const div = document.createElement('div')
+                div.style.background = bg
+                div.style.color = '#fff'
+                div.style.padding = '6px 10px'
+                div.style.borderRadius = '8px'
+                div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)'
+                div.style.whiteSpace = 'pre-line'
+                div.style.lineHeight = '1.35'
+                div.style.fontSize = '0.85rem'
+                div.style.textAlign = 'left'
+                div.textContent = arg.event.title
+                return div
+              })()
+            ]
+          }
+        }}
+        eventClick={(info) => {
+          const v = info.event.extendedProps?.raw as Visit
+          if (!v) return
+          const d = v.date ? new Date(v.date) : null
+          setForm({
+            id: v.id,
+            date: d ? d.toLocaleDateString('pt-BR') : '',
+            client_id: String(v.client_id || ''),
+            property_id: String(v.property_id || ''),
+            plot_id: String(v.plot_id || ''),
+            consultant_id: String(v.consultant_id || ''),
+            culture: v.culture || '',
+            variety: v.variety || '',
+            recommendation: v.recommendation || '',
+            genPheno: false
+          })
+          setOpen(true)
+        }}
+      />
 
-          <div className="form-row">
-            <label>Data</label>
-            <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
-          </div>
+      {open && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>{form.id ? 'Editar Visita' : 'Nova Visita'}</h3>
 
-          <div className="form-row">
-            <label>Cliente</label>
-            <DarkSelect
-              name="client_id"
-              value={form.client_id}
-              placeholder="Selecione cliente"
-              options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-              onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
-            />
-          </div>
+            <div className="form-row">
+              <label>Data</label>
+              <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
+            </div>
 
-          <div className="form-row">
-            <label>Propriedade</label>
-            <DarkSelect
-              name="property_id"
-              value={form.property_id}
-              placeholder="Selecione propriedade"
-              options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
-              onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
-            />
-          </div>
+            <div className="form-row">
+              <label>Cliente</label>
+              <DarkSelect
+                name="client_id"
+                value={form.client_id}
+                placeholder="Selecione cliente"
+                options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
+                onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
+              />
+            </div>
 
-          <div className="form-row">
-            <label>Talhão</label>
-            <DarkSelect
-              name="plot_id"
-              value={form.plot_id}
-              placeholder="Selecione talhão"
-              options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
-              onChange={handleChange as any}
-            />
-          </div>
+            <div className="form-row">
+              <label>Propriedade</label>
+              <DarkSelect
+                name="property_id"
+                value={form.property_id}
+                placeholder="Selecione propriedade"
+                options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
+                onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
+              />
+            </div>
 
-          <div className="form-row">
-            <label>Cultura</label>
-            <select
-              name="culture"
-              value={form.culture}
-              onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
-            >
-              <option value="">Selecione</option>
-              {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </select>
-          </div>
+            <div className="form-row">
+              <label>Talhão</label>
+              <DarkSelect
+                name="plot_id"
+                value={form.plot_id}
+                placeholder="Selecione talhão"
+                options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
+                onChange={handleChange as any}
+              />
+            </div>
 
-          <div className="form-row">
-            <label>Variedade</label>
-            <select
-              name="variety"
-              value={form.variety}
-              onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
-              disabled={!form.culture}
-            >
-              <option value="">Selecione</option>
-              {varieties
-                .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
-                .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
-            </select>
-          </div>
+            <div className="form-row">
+              <label>Cultura</label>
+              <select
+                name="culture"
+                value={form.culture}
+                onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
+              >
+                <option value="">Selecione</option>
+                {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
 
-          <div className="form-row">
-            <label>Consultor</label>
-            <select
-              name="consultant_id"
-              value={form.consultant_id}
-              onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
-            >
-              <option value="">Selecione</option>
-              {consultants.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+            <div className="form-row">
+              <label>Variedade</label>
+              <select
+                name="variety"
+                value={form.variety}
+                onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
+                disabled={!form.culture}
+              >
+                <option value="">Selecione</option>
+                {varieties
+                  .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
+                  .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+              </select>
+            </div>
 
-          <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              id="genPheno"
-              type="checkbox"
-              checked={form.genPheno}
-              onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
-            />
-            <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
-          </div>
+            <div className="form-row">
+              <label>Consultor</label>
+              <select
+                name="consultant_id"
+                value={form.consultant_id}
+                onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
+              >
+                <option value="">Selecione</option>
+                {consultants.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
 
-          <div className="form-row">
-            <label>Recomendação</label>
-            <textarea
-              name="recommendation"
-              value={form.recommendation}
-              onChange={handleChange}
-              placeholder="Observações ou anotações técnicas..."
-            />
-          </div>
+            <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                id="genPheno"
+                type="checkbox"
+                checked={form.genPheno}
+                onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
+              />
+              <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
+            </div>
 
-          <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-            <button className="btn-cancel" onClick={() => setOpen(false)} style={{
-              flex: 1, background: 'var(--muted)', border: 'none', color: '#fff',
-              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer'
-            }}>Cancelar</button>
+            <div className="form-row">
+              <label>Recomendação</label>
+              <textarea
+                name="recommendation"
+                value={form.recommendation}
+                onChange={handleChange}
+                placeholder="Observações ou anotações técnicas..."
+              />
+            </div>
 
-            <button className="btn-save" onClick={handleCreateVisit} style={{
-              flex: 1, background: 'var(--accent)', border: 'none', color: '#02251f',
-              padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600
-            }}>Salvar</button>
+            <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+              <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
 
-            <button className="btn-delete"
-              onClick={async () => {
-                if (!form.id) return
-                const confirmar = confirm('🗑 Deseja realmente excluir esta visita?')
-                if (!confirmar) return
+              {!form.id && (
+                <button className="btn-save" onClick={handleCreateOrUpdate}>Salvar</button>
+              )}
 
-                try {
-                  const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
-                  if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`)
-                  setEvents(evts => evts.filter(e => e.id !== `visit-${form.id}`))
-                  alert('✅ Visita excluída com sucesso!')
-                  setOpen(false)
-                } catch (err) {
-                  console.error('Erro ao excluir visita:', err)
-                  alert('❌ Erro ao excluir visita.')
-                }
-              }}
-              style={{
-                flex: 1, background: '#c0392b', border: 'none', color: '#fff',
-                padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600
-              }}>Excluir</button>
+              {form.id && (
+                <>
+                  <button className="btn-save" onClick={markDone}>Marcar como Concluída</button>
+                  <button className="btn-delete" onClick={handleDelete}>Excluir</button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-       )}
-  </div>
-)   // 👈 esse fecha o return do CalendarCore
-}   // 👈 esse fecha o componente CalendarCore!
-
-// ============================================================
-// 🔁 Wrapper para controle de renderização
-// ============================================================
-const CalendarPage: React.FC = () => {
-  console.log('🔁 Calendar renderizado')
-  return <CalendarCore />
+      )}
+    </div>
+  )
 }
 
 export default CalendarPage
-
