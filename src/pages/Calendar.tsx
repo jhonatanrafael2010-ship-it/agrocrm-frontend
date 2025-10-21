@@ -222,9 +222,12 @@ function toYmdLocal(date: Date) {
   return corrected.toISOString().slice(0, 10)
 }
 
-// 🔍 Converte cultura ID → nome (caso venha como número)
-const cultureObj = cultures.find(c => c.id == form.culture)
-const cultureName = cultureObj ? cultureObj.name : form.culture
+// 🔍 Converte cultura ID → nome (compatível com string ou number)
+let cultureName = ''
+if (form.culture) {
+  const byId = cultures.find(c => String(c.id) === String(form.culture))
+  cultureName = byId ? byId.name : form.culture
+}
 
 // 📅 Converte a data digitada no formato brasileiro para ISO (corrigida)
 const iso = toYmdLocal(new Date(`${y}-${m}-${d}`))
