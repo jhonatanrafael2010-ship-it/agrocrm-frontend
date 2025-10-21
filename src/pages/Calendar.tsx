@@ -107,9 +107,13 @@ const CalendarPage: React.FC = () => {
         .filter((v) => v.date)
         .map((v) => {
           const clientName = cs.find((c) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`;
-          const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || '';
-          let stage = v.recommendation || ''
-stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim()  // remove "(AS 1820 PRO4)"
+          const variety = v.variety || v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
+          let stage = ''
+          if (v.recommendation) {
+            stage = v.recommendation.split('—').pop()?.trim() || v.recommendation
+            stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim()
+          }
+
           const consultant = cons.find((x) => x.id === v.consultant_id)?.name || '';
 
           const titleLines = [
