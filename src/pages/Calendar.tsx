@@ -207,17 +207,6 @@ stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim()  // remove "(AS 1820 PRO4)"
   }
 
 
-// ============================================================
-// 📆 Corrige fuso horário — converte Date para YYYY-MM-DD local
-// ============================================================
-function toYmdLocal(date: Date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-
   const handleCreateOrUpdate = async () => {
   if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
     alert('Data, cliente, propriedade e talhão são obrigatórios');
