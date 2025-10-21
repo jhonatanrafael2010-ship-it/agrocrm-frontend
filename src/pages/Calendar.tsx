@@ -216,64 +216,6 @@ function toYmdLocal(date: Date) {
   return `${y}-${m}-${d}`
 }
 
-// ============================================================
-// 🔁 Carrega visitas do backend e monta eventos no calendário
-// ============================================================
-const loadVisits = async () => {
-  try {
-    const res = await fetch(`${API_BASE}visits`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const vs: Visit[] = await res.json();
-
-    // Obtém listas auxiliares se existirem no estado
-    const cs = clients || [];
-    const cons = consultants || [];
-
-    // Monta eventos padronizados com tooltips
-    const evs = (vs || [])
-      .filter((v) => v.date)
-      .map((v) => {
-        const clientName =
-          cs.find((c) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`;
-        const variety =
-          v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || "";
-        const stage =
-          v.recommendation?.split("—")[1]?.trim() || v.recommendation || "";
-        const consultant =
-          cons.find((x) => x.id === v.consultant_id)?.name || "";
-
-        const titleLines = [
-          `👤 ${clientName}`,
-          variety ? `🌱 ${variety}` : "",
-          stage ? `📍 ${stage}` : "",
-          consultant ? `👨‍🌾 ${consultant}` : "",
-        ].filter(Boolean);
-
-        const tooltip = `
-👤 ${clientName}
-🌱 ${variety || "-"}
-📍 ${stage || "-"}
-👨‍🌾 ${consultant || "-"}
-        `.trim();
-
-        return {
-          id: `visit-${v.id}`,
-          title: titleLines.join("\n"),
-          start: v.date,
-          backgroundColor: colorFor(v.date, v.status),
-          extendedProps: { type: "visit", raw: v },
-          className: "visit-event",
-          dataTooltip: tooltip,
-        };
-      });
-
-    setEvents(evs);
-    console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
-  } catch (err) {
-    console.error("❌ Erro ao carregar visitas:", err);
-  }
-};
 
   const handleCreateOrUpdate = async () => {
   if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
