@@ -72,6 +72,7 @@ function toYmdLocal(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function addDaysISO(iso: string, days: number): string {
   const [y, m, d] = iso.split('-').map(Number)
   const base = new Date(y, m - 1, d)

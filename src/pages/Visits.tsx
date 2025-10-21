@@ -127,17 +127,15 @@ useEffect(() => {
       const res = await fetch(`${API_BASE}visits`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // 🔧 corrige o fuso horário sem deslocar o dia local
-          date:
-            form.date instanceof Date
-              ? form.date.toLocaleDateString('en-CA')
-              : new Date(form.date + 'T00:00:00').toLocaleDateString('en-CA'),
-
+          date: form.date
+            ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-CA')
+            : '',
           client_id: Number(form.client_id),
           property_id: Number(form.property_id),
           plot_id: Number(form.plot_id),
           recommendation: form.recommendation,
         })
+
 
       });
       const body = await res.json();
