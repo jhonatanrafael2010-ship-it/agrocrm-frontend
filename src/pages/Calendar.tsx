@@ -63,6 +63,24 @@ const PHENO: Record<string, { code: string; name: string; days: number }[]> = {
   ]
 }
 
+
+// 🧭 Funções utilitárias de data — DEFINITIVAS
+function toYmdLocal(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const base = new Date(y, m - 1, d)
+  base.setDate(base.getDate() + days)
+  return toYmdLocal(base)
+}
+
+
+
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null)
   const [events, setEvents] = useState<any[]>([])
@@ -219,13 +237,6 @@ const CalendarPage: React.FC = () => {
 
   const [d, m, y] = form.date.split('/')
 
-// 🔧 Corrige fuso horário local → UTC
-function toYmdLocal(date: Date) {
-  const offset = date.getTimezoneOffset()
-  const corrected = new Date(date.getTime() - offset * 60000)
-  return corrected.toISOString().slice(0, 10)
-}
-
 // 🔍 Converte cultura ID → nome (compatível com string ou number)
 let cultureName = ''
 if (form.culture) {
@@ -273,7 +284,7 @@ const base = {
           property_id: base.property_id,
           plot_id: base.plot_id,
           consultant_id: base.consultant_id,
-          date: addDaysISO(iso, s.days),
+          date: toYmdLocal(new Date(addDaysISO(iso, s.days))),
           recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
           status: 'planned'
         }))
