@@ -72,14 +72,6 @@ function toYmdLocal(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function addDaysISO(iso: string, days: number): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  const base = new Date(y, m - 1, d)
-  base.setDate(base.getDate() + days)
-  return toYmdLocal(base)
-}
-
 
 
 const CalendarPage: React.FC = () => {
@@ -285,7 +277,11 @@ const base = {
           property_id: base.property_id,
           plot_id: base.plot_id,
           consultant_id: base.consultant_id,
-          date: toYmdLocal(new Date(addDaysISO(iso, s.days))),
+          date: (() => {
+            const base = new Date(iso + 'T00:00:00')
+            base.setDate(base.getDate() + s.days)
+            return toYmdLocal(base)
+          })(),
           recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
           status: 'planned'
         }))
