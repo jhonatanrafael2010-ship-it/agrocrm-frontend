@@ -108,7 +108,8 @@ const CalendarPage: React.FC = () => {
         .map((v) => {
           const clientName = cs.find((c) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`;
           const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || '';
-          const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || '';
+          let stage = v.recommendation || ''
+stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim()  // remove "(AS 1820 PRO4)"
           const consultant = cons.find((x) => x.id === v.consultant_id)?.name || '';
 
           const titleLines = [
@@ -223,18 +224,35 @@ function toYmdLocal(date: Date) {
     return;
   }
 
-  const [d, m, y] = form.date.split('/');
-  const iso = toYmdLocal(new Date(`${y}-${m}-${d}`)); // ✅ Fuso horário corrigido
+  const [d, m, y] = form.date.split('/')
 
-  const base = {
-    client_id: Number(form.client_id),
-    property_id: Number(form.property_id),
-    plot_id: Number(form.plot_id),
-    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
-    date: iso,
-    recommendation: form.recommendation || '',
-    status: 'planned'
-  };
+// 🔧 Corrige fuso horário local → UTC
+function toYmdLocal(date: Date) {
+  const offset = date.getTimezoneOffset()
+  const corrected = new Date(date.getTime() - offset * 60000)
+  return corrected.toISOString().slice(0, 10)
+}
+
+// 🔍 Converte cultura ID → nome (caso venha como número)
+const cultureObj = cultures.find(c => c.id == form.culture)
+const cultureName = cultureObj ? cultureObj.name : form.culture
+
+// 📅 Converte a data digitada no formato brasileiro para ISO (corrigida)
+const iso = toYmdLocal(new Date(`${y}-${m}-${d}`))
+
+// 🧱 Monta objeto-base da visita
+const base = {
+  client_id: Number(form.client_id),
+  property_id: Number(form.property_id),
+  plot_id: Number(form.plot_id),
+  consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+  date: iso,
+  recommendation: form.recommendation || '',
+  culture: cultureName, // ✅ novo campo corrigido
+  variety: form.variety || '',
+  status: 'planned'
+};
+
 
   try {
     const res = await fetch(`${API_BASE}visits`, {
