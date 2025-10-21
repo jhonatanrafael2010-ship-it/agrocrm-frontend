@@ -114,27 +114,39 @@ const CalendarPage: React.FC = () => {
         setConsultants(cons || [])
 
         // monta eventos padronizados
-        const evs = (vs || []).filter((v: Visit) => v.date).map((v: Visit) => {
-          const clientName = (cs || []).find((c: Client) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`
-          const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || ''
-          const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || ''
-          const consultant = (cons || []).find((x: Consultant) => x.id === v.consultant_id)?.name || ''
+const evs = (vs || []).filter((v: Visit) => v.date).map((v: Visit) => {
+  const clientName = (cs || []).find((c: Client) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`;
+  const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || v.variety || '';
+  const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || '';
+  const consultant = (cons || []).find((x: Consultant) => x.id === v.consultant_id)?.name || '';
 
-          const titleLines = [
-            `👤 ${clientName}`,
-            variety ? `🌱 ${variety}` : '',
-            stage ? `📍 ${stage}` : '',
-            consultant ? `👨‍🌾 ${consultant}` : '',
-          ].filter(Boolean)
+  const titleLines = [
+    `👤 ${clientName}`,
+    variety ? `🌱 ${variety}` : '',
+    stage ? `📍 ${stage}` : '',
+    consultant ? `👨‍🌾 ${consultant}` : '',
+  ].filter(Boolean);
 
-          return {
-            id: `visit-${v.id}`,
-            title: titleLines.join('\n'),
-            start: v.date,
-            extendedProps: { type: 'visit', raw: v }
-          }
-        })
-        setEvents(evs)
+  const tooltip = `
+👤 ${clientName}
+🌱 ${variety || '-'}
+📍 ${stage || '-'}
+👨‍🌾 ${consultant || '-'}
+  `.trim();
+
+  return {
+    id: `visit-${v.id}`,
+    title: titleLines.join('\n'),
+    start: v.date,
+    extendedProps: { type: 'visit', raw: v },
+    className: 'visit-event',
+    backgroundColor: colorFor(v.date, v.status),
+    dataTooltip: tooltip, // 👈 Tooltip direto no DOM
+  };
+});
+
+setEvents(evs);
+
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -173,38 +185,56 @@ const CalendarPage: React.FC = () => {
     setForm(f => ({ ...f, [name]: value }))
   }
 
+
+// ============================================================
+// 📆 Corrige fuso horário — converte Date para YYYY-MM-DD local
+// ============================================================
+function toYmdLocal(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+
   const handleCreateOrUpdate = async () => {
-    if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
-      alert('Data, cliente, propriedade e talhão são obrigatórios'); return
+  if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
+    alert('Data, cliente, propriedade e talhão são obrigatórios');
+    return;
+  }
+
+  const [d, m, y] = form.date.split('/');
+  const iso = toYmdLocal(new Date(`${y}-${m}-${d}`)); // ✅ Fuso horário corrigido
+
+  const base = {
+    client_id: Number(form.client_id),
+    property_id: Number(form.property_id),
+    plot_id: Number(form.plot_id),
+    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+    date: iso,
+    recommendation: form.recommendation || '',
+    status: 'planned'
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}visits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(base),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(body || `Erro ${res.status}`);
     }
-    const [d, m, y] = form.date.split('/')
-    const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
 
-    const base = {
-      client_id: Number(form.client_id),
-      property_id: Number(form.property_id),
-      plot_id: Number(form.plot_id),
-      consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
-      date: iso,
-      recommendation: form.recommendation || '',
-      status: 'planned'
-    }
+    const createdBody = await res.json();
+    const created = createdBody.visit as Visit;
 
-    try {
-      // create
-      const createdRes = await fetch(`${API_BASE}visits`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(base)
-      })
-      const createdBody = await createdRes.json()
-      if (!createdRes.ok) throw new Error(createdBody.message || 'Erro ao criar')
-
-      const created = createdBody.visit as Visit
-
-      // gerar fenologia (extra)
-      if (form.genPheno && form.culture && PHENO[form.culture]) {
-        const items = PHENO[form.culture].map(s => ({
+    // 🌾 Gerar visitas fenológicas automáticas (extra)
+    if (form.genPheno && form.culture && PHENO[form.culture]) {
+      const items = PHENO[form.culture]
+        .map(s => ({
           client_id: base.client_id,
           property_id: base.property_id,
           plot_id: base.plot_id,
@@ -212,77 +242,90 @@ const CalendarPage: React.FC = () => {
           date: addDaysISO(iso, s.days),
           recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
           status: 'planned'
-        })).filter(it => it.date !== iso)
+        }))
+        .filter(it => it.date !== iso);
 
-        if (items.length) {
-          const bulk = await fetch(`${API_BASE}visits/bulk`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items })
-          })
-          const bulkBody = await bulk.json()
-          if (!bulk.ok) throw new Error(bulkBody.message || 'Erro em /visits/bulk')
+      if (items.length) {
+        const bulk = await fetch(`${API_BASE}visits/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        });
+        const bulkBody = await bulk.json();
+        if (!bulk.ok) throw new Error(bulkBody.message || 'Erro em /visits/bulk');
 
-          const all = [created, ...bulkBody]
-          const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`
-
-          setEvents(prev => [
-            ...prev,
-            ...all.map((v: Visit) => {
-              const consultant = consultants.find(x => x.id === v.consultant_id)?.name || ''
-              const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
-              const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || ''
-              const titleLines = [
-                `👤 ${clientName}`,
-                variety ? `🌱 ${variety}` : '',
-                stage ? `📍 ${stage}` : '',
-                consultant ? `👨‍🌾 ${consultant}` : '',
-              ].filter(Boolean)
-              return {
-                id: `visit-${(v as any).id}`,
-                title: titleLines.join('\n'),
-                start: v.date,
-                backgroundColor: colorFor(v.date, v.status),
-                extendedProps: { type: 'visit', raw: v }
-              }
-            })
-          ])
-        }
-      } else {
-        // só a individual
-        const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`
-        const consultant = consultants.find(x => x.id === base.consultant_id)?.name || ''
-        const variety = form.variety || ''
-        const stage = form.recommendation || ''
-        const titleLines = [
-          `👤 ${clientName}`,
-          variety ? `🌱 ${variety}` : '',
-          stage ? `📍 ${stage}` : '',
-          consultant ? `👨‍🌾 ${consultant}` : '',
-        ].filter(Boolean)
+        const all = [created, ...bulkBody];
+        const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`;
 
         setEvents(prev => [
           ...prev,
-          {
-            id: `visit-${created.id}`,
-            title: titleLines.join('\n'),
-            start: created.date,
-            backgroundColor: colorFor(created.date, created.status),
-            extendedProps: { type: 'visit', raw: created }
-          }
-        ])
+          ...all.map((v: Visit) => {
+            const consultant = consultants.find(x => x.id === v.consultant_id)?.name || '';
+            const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || '';
+            const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || '';
+            const titleLines = [
+              `👤 ${clientName}`,
+              variety ? `🌱 ${variety}` : '',
+              stage ? `📍 ${stage}` : '',
+              consultant ? `👨‍🌾 ${consultant}` : '',
+            ].filter(Boolean);
+            return {
+              id: `visit-${(v as any).id}`,
+              title: titleLines.join('\n'),
+              start: v.date,
+              backgroundColor: colorFor(v.date, v.status),
+              extendedProps: { type: 'visit', raw: v },
+            };
+          }),
+        ]);
       }
+    } else {
+      // 📌 Criação simples (sem fenologia)
+      const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`;
+      const consultant = consultants.find(x => x.id === base.consultant_id)?.name || '';
+      const variety = form.variety || '';
+      const stage = form.recommendation || '';
+      const titleLines = [
+        `👤 ${clientName}`,
+        variety ? `🌱 ${variety}` : '',
+        stage ? `📍 ${stage}` : '',
+        consultant ? `👨‍🌾 ${consultant}` : '',
+      ].filter(Boolean);
 
-      // limpa
-      setOpen(false)
-      setForm({
-        id: null, date: '', client_id: '', property_id: '', plot_id: '',
-        consultant_id: '', culture: '', variety: '', recommendation: '', genPheno: true
-      })
-    } catch (e: any) {
-      alert(e?.message || 'Erro ao salvar visita')
+      setEvents(prev => [
+        ...prev,
+        {
+          id: `visit-${created.id}`,
+          title: titleLines.join('\n'),
+          start: created.date,
+          backgroundColor: colorFor(created.date, created.status),
+          extendedProps: { type: 'visit', raw: created },
+        },
+      ]);
     }
+
+    // 🧹 Limpa formulário e atualiza calendário
+    setOpen(false);
+    setForm({
+      id: null,
+      date: '',
+      client_id: '',
+      property_id: '',
+      plot_id: '',
+      consultant_id: '',
+      culture: '',
+      variety: '',
+      recommendation: '',
+      genPheno: true,
+    });
+    await loadVisits();
+
+  } catch (e: any) {
+    console.error("❌ Erro ao salvar visita:", e);
+    alert(e?.message || 'Erro ao salvar visita');
   }
+};
+
 
   const handleDelete = async () => {
     if (!form.id) return
@@ -339,44 +382,47 @@ const CalendarPage: React.FC = () => {
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
       <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        locales={[ptBrLocale]}
-        locale="pt-br"
-        initialView="dayGridMonth"
-        selectable
-        select={handleDateSelect}
-        events={events.filter(e => {
-          if (!selectedConsultant) return true
-          const cid = e.extendedProps?.raw?.consultant_id
-          return String(cid || '') === selectedConsultant
-        })}
-        height={650}
-        headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
-        eventContent={(arg) => {
-          // cartão visual
-          const v = arg.event.extendedProps?.raw as Visit
-          const bg = colorFor(v?.date || arg.event.startStr, v?.status)
-          return {
-            domNodes: [
-              (() => {
-                const div = document.createElement('div')
-                div.style.background = bg
-                div.style.color = '#fff'
-                div.style.padding = '6px 10px'
-                div.style.borderRadius = '8px'
-                div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.15)'
-                div.style.whiteSpace = 'pre-line'
-                div.style.lineHeight = '1.35'
-                div.style.fontSize = '0.85rem'
-                div.style.textAlign = 'left'
-                div.textContent = arg.event.title
-                return div
-              })()
-            ]
-          }
-        }}
-        eventClick={(info) => {
+  ref={calendarRef}
+  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+  locales={[ptBrLocale]}
+  locale="pt-br"
+  initialView="dayGridMonth"
+  selectable
+  select={handleDateSelect}
+  events={events.filter(e => {
+    if (!selectedConsultant) return true;
+    const cid = e.extendedProps?.raw?.consultant_id;
+    return String(cid || '') === selectedConsultant;
+  })}
+  height={650}
+  headerToolbar={{
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+  }}
+  eventContent={(arg) => {
+    const v = arg.event.extendedProps?.raw as Visit;
+    const bg = colorFor(v?.date || arg.event.startStr, v?.status);
+    const lines = arg.event.title.split('\n');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.background = bg;
+    wrapper.style.color = '#fff';
+    wrapper.style.padding = '4px 6px';
+    wrapper.style.borderRadius = '8px';
+    wrapper.style.lineHeight = '1.25';
+    wrapper.style.fontSize = '0.8rem';
+    wrapper.style.whiteSpace = 'pre-line';
+    wrapper.style.overflow = 'hidden';
+    wrapper.style.textOverflow = 'ellipsis';
+    wrapper.style.maxHeight = '48px'; // mostra no máx. 3 linhas
+    wrapper.style.cursor = 'pointer';
+    wrapper.style.position = 'relative';
+    wrapper.textContent = lines.join('\n');
+
+    return { domNodes: [wrapper] };
+  }}
+  eventClick={(info) => {
           const v = info.event.extendedProps?.raw as Visit
           if (!v) return
           const d = v.date ? new Date(v.date) : null
