@@ -351,3 +351,64 @@ label { color: var(--muted); font-size: 0.9rem; }
 .fc-event:hover::after {
   opacity: 1;
 }
+/* =========================================================
+🎨 ESTILO APRIMORADO DO CALENDÁRIO — AGROCRM 2025
+========================================================= */
+
+.visit-event {
+  position: relative;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: #fff;
+  white-space: pre-line;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visit-event:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+.visit-event::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translate(-50%, -100%);
+  background: rgba(20, 30, 35, 0.95);
+  color: #e3f6f5;
+  white-space: pre;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #355;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  width: max-content;
+  max-width: 260px;
+}
+
+.visit-event:hover::after {
+  opacity: 1;
+}
+
+.fc .fc-toolbar-title {
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: capitalize;
+  color: var(--text);
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--text);
+  font-weight: 500;
+}
