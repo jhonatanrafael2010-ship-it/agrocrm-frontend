@@ -266,21 +266,20 @@ const base = {
 
     // 🌾 Gerar visitas fenológicas automáticas (extra)
     if (form.genPheno && form.culture && PHENO[form.culture]) {
-      const items = PHENO[form.culture]
-        .map(s => ({
+      const items = PHENO[form.culture].map(s => {
+        const baseDate = new Date(iso + 'T00:00:00');
+        baseDate.setDate(baseDate.getDate() + s.days);
+        return {
           client_id: base.client_id,
           property_id: base.property_id,
           plot_id: base.plot_id,
           consultant_id: base.consultant_id,
-          date: (() => {
-            const base = new Date(iso + 'T00:00:00')
-            base.setDate(base.getDate() + s.days)
-            return toYmdLocal(base)
-          })(),
+          date: toYmdLocal(baseDate),
           recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
           status: 'planned'
-        }))
-        .filter(it => it.date !== iso);
+        };
+      }).filter(it => it.date !== iso);
+
 
       if (items.length) {
         const bulk = await fetch(`${API_BASE}visits/bulk`, {
