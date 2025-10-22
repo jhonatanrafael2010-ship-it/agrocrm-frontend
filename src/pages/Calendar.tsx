@@ -217,37 +217,37 @@ const CalendarPage: React.FC = () => {
     return;
   }
 
-  const [d, m, y] = form.date.split('/')
+  const [d, m, y] = form.date.split('/');
+  // ✅ Garante que a data enviada para o backend é sempre o mesmo dia escolhido (sem deslocamento de fuso)
+  const iso = `${y}-${m}-${d}`; 
 
-// 🔍 Converte cultura ID → nome (compatível com string ou number)
-let cultureName = ''
-if (form.culture) {
-  const byId = cultures.find(c => String(c.id) === String(form.culture))
-  cultureName = byId ? byId.name : form.culture
-}
 
-// 📅 Converte a data digitada no formato brasileiro para ISO (corrigida)
-const iso = toYmdLocal(new Date(`${y}-${m}-${d}`))
+  // resolve nome da cultura
+  let cultureName = '';
+  if (form.culture) {
+    const byId = cultures.find(c => String(c.id) === String(form.culture));
+    cultureName = byId ? byId.name : form.culture;
+  }
 
-// 🧱 Monta objeto-base da visita
-const base = {
-  client_id: Number(form.client_id),
-  property_id: Number(form.property_id),
-  plot_id: Number(form.plot_id),
-  consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
-  date: iso,
-  recommendation: form.recommendation || '',
-  culture: cultureName, // ✅ novo campo corrigido
-  variety: form.variety || '',
-  status: 'planned'
-};
-
+  // monta payload completo
+  const payload = {
+    client_id: Number(form.client_id),
+    property_id: Number(form.property_id),
+    plot_id: Number(form.plot_id),
+    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+    date: iso,
+    status: 'planned',
+    generate_schedule: !!form.genPheno,
+    culture: cultureName || '',
+    variety: form.variety || '',
+    recommendation: form.genPheno ? '' : (form.recommendation || 'Plantio')
+  };
 
   try {
     const res = await fetch(`${API_BASE}visits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(base),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -255,86 +255,7 @@ const base = {
       throw new Error(body || `Erro ${res.status}`);
     }
 
-    const createdBody = await res.json();
-    const created = createdBody.visit as Visit;
-
-    // 🌾 Gerar visitas fenológicas automáticas (extra)
-    if (form.genPheno && form.culture && PHENO[form.culture]) {
-      const items = PHENO[form.culture].map(s => {
-        const baseDate = new Date(iso + 'T00:00:00');
-        baseDate.setDate(baseDate.getDate() + s.days);
-        return {
-          client_id: base.client_id,
-          property_id: base.property_id,
-          plot_id: base.plot_id,
-          consultant_id: base.consultant_id,
-          date: toYmdLocal(baseDate),
-          recommendation: `${s.code} — ${s.name}${form.variety ? ` (${form.variety})` : ''}`,
-          status: 'planned'
-        };
-      }).filter(it => it.date !== iso);
-
-
-      if (items.length) {
-        const bulk = await fetch(`${API_BASE}visits/bulk`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items })
-        });
-        const bulkBody = await bulk.json();
-        if (!bulk.ok) throw new Error(bulkBody.message || 'Erro em /visits/bulk');
-
-        const all = [created, ...bulkBody];
-        const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`;
-
-        setEvents(prev => [
-          ...prev,
-          ...all.map((v: Visit) => {
-            const consultant = consultants.find(x => x.id === v.consultant_id)?.name || '';
-            const variety = v.recommendation?.match(/\(([^)]+)\)/)?.[1] || '';
-            const stage = v.recommendation?.split('—')[1]?.trim() || v.recommendation || '';
-            const titleLines = [
-              `👤 ${clientName}`,
-              variety ? `🌱 ${variety}` : '',
-              stage ? `📍 ${stage}` : '',
-              consultant ? `👨‍🌾 ${consultant}` : '',
-            ].filter(Boolean);
-            return {
-              id: `visit-${(v as any).id}`,
-              title: titleLines.join('\n'),
-              start: v.date,
-              backgroundColor: colorFor(v.date, v.status),
-              extendedProps: { type: 'visit', raw: v },
-            };
-          }),
-        ]);
-      }
-    } else {
-      // 📌 Criação simples (sem fenologia)
-      const clientName = clients.find(c => c.id === base.client_id)?.name || `Cliente ${base.client_id}`;
-      const consultant = consultants.find(x => x.id === base.consultant_id)?.name || '';
-      const variety = form.variety || '';
-      const stage = form.recommendation || '';
-      const titleLines = [
-        `👤 ${clientName}`,
-        variety ? `🌱 ${variety}` : '',
-        stage ? `📍 ${stage}` : '',
-        consultant ? `👨‍🌾 ${consultant}` : '',
-      ].filter(Boolean);
-
-      setEvents(prev => [
-        ...prev,
-        {
-          id: `visit-${created.id}`,
-          title: titleLines.join('\n'),
-          start: created.date,
-          backgroundColor: colorFor(created.date, created.status),
-          extendedProps: { type: 'visit', raw: created },
-        },
-      ]);
-    }
-
-    // 🧹 Limpa formulário e atualiza calendário
+    // sucesso: limpa e recarrega
     setOpen(false);
     setForm({
       id: null,
@@ -349,12 +270,12 @@ const base = {
       genPheno: true,
     });
     await loadVisits();
-
   } catch (e: any) {
     console.error("❌ Erro ao salvar visita:", e);
     alert(e?.message || 'Erro ao salvar visita');
   }
 };
+
 
 
   const handleDelete = async () => {
