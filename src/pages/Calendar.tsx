@@ -28,51 +28,6 @@ type Visit = {
   variety?: string
 }
 
-// ======== TABELAS FENOLÓGICAS (dias após plantio) ========
-const PHENO: Record<string, { code: string; name: string; days: number }[]> = {
-  "Milho": [
-    { code: "Plantio", name: "Plantio", days: 0 },
-    { code: "VE", name: "Emergência", days: 5 },
-    { code: "V1", name: "1 folha verdadeira", days: 8 },
-    { code: "V4", name: "4 folhas verdadeiras", days: 20 },
-    { code: "VT", name: "Pendoamento", days: 54 },
-    { code: "R1", name: "Espiga com boneca", days: 55 },
-    { code: "R3", name: "Grão leitoso", days: 68 },
-    { code: "R6", name: "Maturação fisiológica", days: 100 },
-    { code: "Colh", name: "Colheita", days: 130 }
-  ],
-  "Soja": [
-    { code: "Plantio", name: "Plantio", days: 0 },
-    { code: "VE", name: "Emergência", days: 5 },
-    { code: "V1", name: "1º trifólio", days: 12 },
-    { code: "V4", name: "4º nó", days: 25 },
-    { code: "R1", name: "Início floração", days: 35 },
-    { code: "R3", name: "Vagens pequenas", days: 49 },
-    { code: "R5", name: "Granação", days: 65 },
-    { code: "R7", name: "Início maturação", days: 92 },
-    { code: "Colh", name: "Colheita", days: 115 }
-  ],
-  "Algodão": [
-    { code: "Plantio", name: "Plantio", days: 0 },
-    { code: "V1", name: "1 folha verdadeira", days: 14 },
-    { code: "V4", name: "4 folhas verdadeiras", days: 27 },
-    { code: "B1", name: "1º botão floral", days: 38 },
-    { code: "F1", name: "1ª flor aberta", days: 65 },
-    { code: "C1", name: "1º capulho aberto", days: 117 },
-    { code: "Colh", name: "Colheita", days: 165 }
-  ]
-}
-
-
-// 🧭 Funções utilitárias de data — DEFINITIVAS
-function toYmdLocal(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null)
