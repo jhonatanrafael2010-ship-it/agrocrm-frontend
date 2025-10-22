@@ -188,12 +188,6 @@ const CalendarPage: React.FC = () => {
   }, []);
 
 
-  (() => {
-  const base = new Date(iso + 'T00:00:00')
-  base.setDate(base.getDate() + s.days)
-  return toYmdLocal(base)
-})()
-
 
   const colorFor = (dateISO: string, status?: string) => {
     const today = new Date().toISOString().split('T')[0]
