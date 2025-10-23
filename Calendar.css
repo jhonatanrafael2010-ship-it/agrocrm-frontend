@@ -1,0 +1,214 @@
+/* ===========================
+   🌾 Estilo do Modal de Visitas
+   =========================== */
+
+.modal {
+  background: linear-gradient(160deg, #0f1a18, #1b2c28);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  padding: 22px 26px;
+  color: #e8f0ed;
+  max-width: 440px;
+  width: 95%;
+  transition: all 0.3s ease-in-out;
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/* -------------------------
+   🧾 Campos de formulário
+   ------------------------- */
+.form-row {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row label {
+  color: #b6ccc7;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  background: #101c1a;
+  color: #e8f0ed;
+  border: 1px solid #2d3d3f;
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: #239e86;
+}
+
+/* -------------------------
+   📸 Upload de fotos
+   ------------------------- */
+input[type="file"] {
+  padding: 6px;
+  border-radius: 8px;
+  background: #101c1a;
+  border: 1px solid #2d3d3f;
+  color: #d5e5e2;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  background: #1e7b6c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: #239e86;
+}
+
+/* -------------------------
+   🧑‍🌾 Lista de sugestões (autocomplete)
+   ------------------------- */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+ul li {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #cde5df;
+  transition: background 0.2s ease;
+}
+
+ul li:hover {
+  background: #244b41;
+}
+
+/* -------------------------
+   🧭 Botões de ação
+   ------------------------- */
+.btn-save,
+.btn-cancel,
+.btn-delete {
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-save {
+  background: #1e7b6c;
+  color: #fff;
+  border: none;
+}
+
+.btn-save:hover {
+  background: #239e86;
+}
+
+.btn-delete {
+  background: #b72e2e;
+  color: #fff;
+  border: none;
+}
+
+.btn-delete:hover {
+  background: #d44b4b;
+}
+
+.btn-cancel {
+  background: #2d3d3f;
+  color: #e0e7e5;
+  border: none;
+}
+
+.btn-cancel:hover {
+  background: #3b5250;
+}
+
+/* -------------------------
+   💫 Pequenas melhorias
+   ------------------------- */
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-row small {
+  color: #8fa9a3;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+/* ===========================
+   🖼️ Galeria de fotos no modal
+   =========================== */
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.photo-thumb {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0e1715;
+  border: 1px solid #2d3d3f;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 82px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-thumb button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.photo-thumb button:hover {
+  background: rgba(255, 0, 0, 0.6);
+}

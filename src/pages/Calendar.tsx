@@ -5,6 +5,8 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import DarkSelect from '../components/DarkSelect'
+import './Calendar.css'
+
 
 const API_BASE = (import.meta as any).env.VITE_API_URL || '/api/'
 
@@ -57,8 +59,11 @@ const CalendarPage: React.FC = () => {
     culture: '',
     variety: '',
     recommendation: '',
-    genPheno: true
+    genPheno: true,
+    photos: [] as FileList | null,
+    photoPreviews: [] as string[]
   })
+
 
   // ============================================================
   // 🔁 Função para carregar visitas e montar eventos
@@ -180,10 +185,11 @@ const CalendarPage: React.FC = () => {
 
 
   const handleCreateOrUpdate = async () => {
-  if (!form.date || !form.client_id || !form.property_id || !form.plot_id) {
-    alert('Data, cliente, propriedade e talhão são obrigatórios');
+  if (!form.date || !form.client_id) {
+    alert('Data e cliente são obrigatórios');
     return;
   }
+
 
   const [d, m, y] = form.date.split('/');
   // ✅ Garante que a data enviada para o backend é sempre o mesmo dia escolhido (sem deslocamento de fuso)
@@ -374,16 +380,78 @@ const CalendarPage: React.FC = () => {
               <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
             </div>
 
-            <div className="form-row">
-              <label>Cliente</label>
-              <DarkSelect
-                name="client_id"
-                value={form.client_id}
-                placeholder="Selecione cliente"
-                options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-                onChange={(e: any) => setForm(f => ({ ...f, client_id: e.target.value, property_id: '', plot_id: '' }))}
+            {/* 🧑‍🌾 Cliente com busca inteligente */}
+            <div className="form-row" style={{ position: 'relative' }}>
+              <label style={{ fontWeight: 600 }}>Cliente</label>
+              <input
+                type="text"
+                value={
+                  clients.find(c => String(c.id) === form.client_id)?.name ||
+                  form.clientSearch ||
+                  ''
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setForm(f => ({ ...f, clientSearch: value }));
+                }}
+                placeholder="Digite o nome do cliente..."
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid #2d3d3f',
+                  background: '#101c1a',
+                  color: '#d5e5e2',
+                }}
               />
+
+              {/* Lista suspensa com correspondências */}
+              {form.clientSearch && (
+                <ul
+                  style={{
+                    position: 'absolute',
+                    top: '70px',
+                    left: 0,
+                    right: 0,
+                    background: '#182825',
+                    border: '1px solid #234',
+                    borderRadius: '8px',
+                    maxHeight: '160px',
+                    overflowY: 'auto',
+                    zIndex: 10,
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: '4px 0'
+                  }}
+                >
+                  {clients
+                    .filter(c => c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase()))
+                    .map(c => (
+                      <li
+                        key={c.id}
+                        onClick={() => {
+                          setForm(f => ({
+                            ...f,
+                            client_id: String(c.id),
+                            clientSearch: c.name
+                          }));
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          cursor: 'pointer',
+                          color: '#cde5df',
+                          background: form.client_id === String(c.id) ? '#244b41' : 'transparent',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = '#244b41')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        {c.name}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
+
 
             <div className="form-row">
               <label>Propriedade</label>
@@ -467,6 +535,51 @@ const CalendarPage: React.FC = () => {
                 placeholder="Observações ou anotações técnicas..."
               />
             </div>
+            {/* 📸 Upload de fotos */}
+            <div className="form-row">
+              <label style={{ fontWeight: 600 }}>Fotos da Visita</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (!files) return;
+
+                  const previews = Array.from(files).map((f) => URL.createObjectURL(f));
+                  setForm((f) => ({
+                    ...f,
+                    photos: files,
+                    photoPreviews: previews
+                  }));
+                }}
+              />
+
+              {/* Miniaturas */}
+              {form.photoPreviews && form.photoPreviews.length > 0 && (
+                <div className="photo-gallery">
+                  {form.photoPreviews.map((src, i) => (
+                    <div key={i} className="photo-thumb">
+                      <img src={src} alt={`foto ${i + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = form.photoPreviews.filter((_, idx) => idx !== i);
+                          setForm((f) => ({ ...f, photoPreviews: updated }));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <small style={{ color: '#8fa9a3' }}>
+                Envie uma ou mais fotos (JPEG/PNG). Você pode removê-las antes de salvar.
+              </small>
+            </div>
+
 
             <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
               <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
