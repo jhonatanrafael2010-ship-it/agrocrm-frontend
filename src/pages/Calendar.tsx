@@ -234,17 +234,18 @@ const CalendarPage: React.FC = () => {
 
 
   const handleDelete = async () => {
-    if (!form.id) return
-    if (!confirm('🗑 Deseja realmente excluir esta visita?')) return
+    if (!form.id) return;
+    if (!confirm('🗑 Deseja realmente excluir esta visita?')) return;
     try {
-      const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE' })
-      if (!resp.ok) throw new Error('Erro HTTP ' + resp.status)
-      setEvents(prev => prev.filter(e => e.id !== `visit-${form.id}`))
-      setOpen(false)
+      const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE' });
+      if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+      // 🔁 Recarrega visitas para refletir exclusão em cascata
+      await loadVisits();
+      setOpen(false);
     } catch (e) {
-      alert('Erro ao excluir')
+      alert('Erro ao excluir');
     }
-  }
+  };
 
   const markDone = async () => {
     if (!form.id) return
