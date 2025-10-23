@@ -60,9 +60,11 @@ const CalendarPage: React.FC = () => {
     variety: '',
     recommendation: '',
     genPheno: true,
-    photos: [] as FileList | null,
-    photoPreviews: [] as string[]
-  })
+    photos: null as FileList | null,
+    photoPreviews: [] as string[],
+    clientSearch: ''  // ✅ novo campo para busca digitável
+  });
+
 
 
   // ============================================================
@@ -242,6 +244,9 @@ const CalendarPage: React.FC = () => {
       variety: '',
       recommendation: '',
       genPheno: true,
+      photos: null,
+      photoPreviews: [],
+      clientSearch: ''
     });
     await loadVisits();
   } catch (e: any) {
@@ -364,8 +369,11 @@ const CalendarPage: React.FC = () => {
             culture: v.culture || '',
             variety: v.variety || '',
             recommendation: v.recommendation || '',
-            genPheno: false
-          })
+            genPheno: false,
+            photos: null,
+            photoPreviews: [],
+            clientSearch: ''
+          });
           setOpen(true)
         }}
       />
