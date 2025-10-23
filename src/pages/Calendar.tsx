@@ -322,7 +322,7 @@ const CalendarPage: React.FC = () => {
     wrapper.style.whiteSpace = 'pre-line';
     wrapper.style.overflow = 'hidden';
     wrapper.style.textOverflow = 'ellipsis';
-    wrapper.style.maxHeight = '48px'; // mostra no máx. 3 linhas
+    wrapper.style.maxHeight = '84px'; // agora permite até 5 linhas
     wrapper.style.cursor = 'pointer';
     wrapper.style.position = 'relative';
     wrapper.textContent = lines.join('\n');
