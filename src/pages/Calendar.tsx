@@ -72,15 +72,25 @@ const CalendarPage: React.FC = () => {
       const evs = (vs || [])
         .filter((v) => v.date)
         .map((v) => {
-          const clientName = cs.find((c) => c.id === v.client_id)?.name || `Cliente ${v.client_id}`;
-          const variety = v.variety || v.recommendation?.match(/\(([^)]+)\)/)?.[1] || ''
-          let stage = ''
-          if (v.recommendation) {
-            stage = v.recommendation.split('—').pop()?.trim() || v.recommendation
-            stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim()
-          }
+          // ✅ Agora prioriza os nomes vindos do backend
+          const clientName =
+            v.client_name ||
+            cs.find((c) => c.id === v.client_id)?.name ||
+            `Cliente ${v.client_id}`;
 
-          const consultant = cons.find((x) => x.id === v.consultant_id)?.name || '';
+          const consultant =
+            v.consultant_name ||
+            cons.find((x) => x.id === v.consultant_id)?.name ||
+            '';
+
+          const variety =
+            v.variety || v.recommendation?.match(/\(([^)]+)\)/)?.[1] || '';
+
+          let stage = '';
+          if (v.recommendation) {
+            stage = v.recommendation.split('—').pop()?.trim() || v.recommendation;
+            stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim();
+          }
 
           const titleLines = [
             `👤 ${clientName}`,
@@ -90,10 +100,10 @@ const CalendarPage: React.FC = () => {
           ].filter(Boolean);
 
           const tooltip = `
-👤 ${clientName}
-🌱 ${variety || '-'}
-📍 ${stage || '-'}
-👨‍🌾 ${consultant || '-'}
+      👤 ${clientName}
+      🌱 ${variety || '-'}
+      📍 ${stage || '-'}
+      👨‍🌾 ${consultant || '-'}
           `.trim();
 
           return {
