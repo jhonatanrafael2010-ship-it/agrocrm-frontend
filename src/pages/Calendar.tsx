@@ -318,17 +318,19 @@ const CalendarPage: React.FC = () => {
     wrapper.style.padding = '4px 6px';
     wrapper.style.borderRadius = '8px';
     wrapper.style.lineHeight = '1.25';
-    wrapper.style.fontSize = '0.8rem';
+    wrapper.style.fontSize = '0.78rem';
     wrapper.style.whiteSpace = 'pre-line';
     wrapper.style.overflow = 'hidden';
     wrapper.style.textOverflow = 'ellipsis';
+    wrapper.style.display = 'block';
+    wrapper.style.minHeight = '60px';
     wrapper.style.maxHeight = '84px'; // agora permite até 5 linhas
     wrapper.style.cursor = 'pointer';
-    wrapper.style.position = 'relative';
     wrapper.textContent = lines.join('\n');
 
     return { domNodes: [wrapper] };
   }}
+
   eventClick={(info) => {
           const v = info.event.extendedProps?.raw as Visit
           if (!v) return
