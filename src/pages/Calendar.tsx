@@ -26,7 +26,10 @@ type Visit = {
   status?: 'planned' | 'done' | string
   culture?: string
   variety?: string
+  client_name?: string        // ✅ nome vindo do backend
+  consultant_name?: string    // ✅ nome vindo do backend
 }
+
 
 
 const CalendarPage: React.FC = () => {
