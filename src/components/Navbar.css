@@ -78,3 +78,15 @@
   .sidebar { position: relative; width: 100%; height: auto; }
 }
 /* Responsive */
+.theme-toggle {
+  background: transparent;
+  border: none;
+  color: #cde5df;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.theme-toggle:hover {
+  color: #37b67a;
+  transform: scale(1.1);
+}

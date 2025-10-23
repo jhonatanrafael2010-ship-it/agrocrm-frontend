@@ -1,19 +1,27 @@
-/* ==============================================
-   Layout geral do modal de Nova Visita
-   ============================================== */
+/* =====================================================
+   🌾 MODAL — Nova Visita (estilo dashboard agronômico)
+   ===================================================== */
 .modal {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* duas colunas iguais */
-  gap: 20px;
-  background: #0e1816;
-  color: #e5f0ed;
-  padding: 24px;
-  border-radius: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: rgba(10, 20, 18, 0.9);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(80, 200, 160, 0.25);
+  border-radius: 18px;
+  padding: 28px;
   max-width: 90vw;
-  max-height: 85vh;
+  max-height: 88vh;
   overflow-y: auto;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  color: #e9f4f1;
   scrollbar-width: thin;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .modal h3 {
@@ -21,8 +29,16 @@
   text-align: center;
   margin-top: 0;
   margin-bottom: 12px;
-  font-size: 1.3rem;
-  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(60, 255, 200, 0.2);
+  position: sticky;
+  top: 0;
+  background: rgba(10, 20, 18, 0.85);
+  padding: 8px 0;
+  z-index: 5;
+  border-bottom: 1px solid rgba(60, 255, 200, 0.1);
 }
 
 /* Campos */
@@ -34,7 +50,7 @@
 
 .form-row label {
   font-weight: 600;
-  color: #cde5df;
+  color: #cfeae2;
 }
 
 .form-row input,
@@ -42,17 +58,26 @@
 .form-row textarea {
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #234;
-  background: #152420;
-  color: #e8f0ed;
+  border: 1px solid #2a3f3a;
+  background: rgba(18, 32, 29, 0.95);
+  color: #ecf8f5;
   font-size: 0.9rem;
+  transition: 0.2s ease;
 }
 
-/* Caixa de upload e miniaturas */
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: #37b67a;
+  box-shadow: 0 0 0 1px #37b67a;
+}
+
+/* Upload e fotos */
 .photo-gallery {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   margin-top: 8px;
 }
 
@@ -60,9 +85,10 @@
   position: relative;
   width: 90px;
   height: 90px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid #333;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #111;
 }
 
 .photo-thumb img {
@@ -75,72 +101,77 @@
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   color: #fff;
-  border-radius: 4px;
-  width: 20px;
-  height: 20px;
+  border-radius: 5px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
-/* Ações no final */
+/* Ações (botões finais) */
 .modal-actions {
   grid-column: span 2;
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-top: 16px;
 }
 
 .btn-save,
 .btn-cancel,
 .btn-delete {
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 9px 16px;
+  border-radius: 10px;
   border: none;
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
 }
 
 .btn-save {
-  background: #3b82f6;
+  background: linear-gradient(90deg, #2dd4bf, #14b8a6);
   color: #fff;
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.4);
 }
 .btn-save:hover {
-  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.6);
 }
 
 .btn-cancel {
-  background: #374151;
-  color: #fff;
+  background: #3a3f45;
+  color: #f0f0f0;
 }
 .btn-cancel:hover {
-  background: #4b5563;
+  background: #4b545b;
 }
 
 .btn-delete {
-  background: #dc2626;
+  background: linear-gradient(90deg, #ef4444, #dc2626);
   color: #fff;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 .btn-delete:hover {
-  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
 }
 
-/* Scrollbar leve */
+/* Scrollbar */
 .modal::-webkit-scrollbar {
   width: 6px;
 }
 .modal::-webkit-scrollbar-thumb {
-  background: #2c403d;
+  background: #2d4843;
   border-radius: 4px;
 }
 
-/* Responsivo: volta a 1 coluna no mobile */
+/* Responsivo */
 @media (max-width: 900px) {
   .modal {
     grid-template-columns: 1fr;

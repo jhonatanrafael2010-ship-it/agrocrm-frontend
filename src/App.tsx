@@ -7,6 +7,8 @@ import OpportunitiesPage from './pages/Opportunities'
 import Dashboard from './pages/Dashboard'
 import VisitsPage from './pages/Visits'
 import './App.css'
+import { Moon, SunMedium } from "lucide-react";
+
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>('Dashboard')
@@ -33,13 +35,14 @@ console.log('📦 App renderizou com rota:', route)
   return (
     <>
       {/* 🌗 Botão flutuante de modo claro/escuro */}
-      <button
-        onClick={toggleTheme}
-        className="theme-toggle-btn"
-        title="Alternar tema"
-      >
-        {theme === 'dark' ? '🌞' : '🌙'}
+      <button onClick={toggleTheme} className="theme-toggle">
+        {theme === 'dark' ? (
+          <Moon size={20} strokeWidth={1.6} />
+        ) : (
+          <SunMedium size={20} strokeWidth={1.6} />
+        )}
       </button>
+
 
       {/* Estrutura principal */}
       <Navbar activeItem={route} onNavigate={setRoute} />
