@@ -27,6 +27,12 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
+  
+  // ❌ Evita cachear requisições não-GET (PUT, POST, DELETE, etc)
+  if (req.method !== "GET") {
+    return;
+  }
+
 
   // ⚙️ Se for navegação (React Router)
   if (req.mode === "navigate") {
