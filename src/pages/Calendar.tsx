@@ -331,72 +331,73 @@ const CalendarPage: React.FC = () => {
     }
   }
 
-  // ==============================
+    // ==============================
   // Render
   // ==============================
   return (
     <div className="calendar-page">
-      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
-        <h2 style={{ margin:0 }}>Agenda de Visitas</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>Agenda de Visitas</h2>
         <select
           value={selectedConsultant}
-          onChange={(e)=>setSelectedConsultant(e.target.value)}
-          style={{ marginLeft:'auto', padding:'6px 10px', borderRadius:8, background:'#0d1f1b', color:'#cde5df', border:'1px solid #234' }}
+          onChange={(e) => setSelectedConsultant(e.target.value)}
+          style={{ marginLeft: 'auto', padding: '6px 10px', borderRadius: 8, background: '#0d1f1b', color: '#cde5df', border: '1px solid #234' }}
         >
           <option value="">Todos os consultores</option>
-          {consultants.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+          {consultants.map(c => (
+            <option key={c.id} value={String(c.id)}>{c.name}</option>
+          ))}
         </select>
       </div>
 
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
 
       <FullCalendar
-  ref={calendarRef}
-  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-  locales={[ptBrLocale]}
-  locale="pt-br"
-  initialView="dayGridMonth"
-  selectable
-  select={handleDateSelect}
-  events={events.filter(e => {
-    if (!selectedConsultant) return true;
-    const cid = e.extendedProps?.raw?.consultant_id;
-    return String(cid || '') === selectedConsultant;
-  })}
-  height={650}
-  headerToolbar={{
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-  }}
-  eventContent={(arg) => {
-    const v = arg.event.extendedProps?.raw as Visit;
-    const bg = colorFor(v?.date || arg.event.startStr, v?.status);
-    const lines = arg.event.title.split('\n');
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        locales={[ptBrLocale]}
+        locale="pt-br"
+        initialView="dayGridMonth"
+        selectable
+        select={handleDateSelect}
+        events={events.filter(e => {
+          if (!selectedConsultant) return true;
+          const cid = e.extendedProps?.raw?.consultant_id;
+          return String(cid || '') === selectedConsultant;
+        })}
+        height={650}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        }}
+        eventContent={(arg) => {
+          const v = arg.event.extendedProps?.raw as Visit;
+          const bg = colorFor(v?.date || arg.event.startStr, v?.status);
+          const lines = arg.event.title.split('\n');
 
-    const wrapper = document.createElement('div');
-    wrapper.style.background = bg;
-    wrapper.style.color = '#fff';
-    wrapper.style.padding = '4px 6px';
-    wrapper.style.borderRadius = '8px';
-    wrapper.style.lineHeight = '1.25';
-    wrapper.style.fontSize = '0.78rem';
-    wrapper.style.whiteSpace = 'pre-line';
-    wrapper.style.overflow = 'hidden';
-    wrapper.style.textOverflow = 'ellipsis';
-    wrapper.style.display = 'block';
-    wrapper.style.minHeight = '60px';
-    wrapper.style.maxHeight = '84px'; // agora permite até 5 linhas
-    wrapper.style.cursor = 'pointer';
-    wrapper.textContent = lines.join('\n');
+          const wrapper = document.createElement('div');
+          wrapper.style.background = bg;
+          wrapper.style.color = '#fff';
+          wrapper.style.padding = '4px 6px';
+          wrapper.style.borderRadius = '8px';
+          wrapper.style.lineHeight = '1.25';
+          wrapper.style.fontSize = '0.78rem';
+          wrapper.style.whiteSpace = 'pre-line';
+          wrapper.style.overflow = 'hidden';
+          wrapper.style.textOverflow = 'ellipsis';
+          wrapper.style.display = 'block';
+          wrapper.style.minHeight = '60px';
+          wrapper.style.maxHeight = '84px';
+          wrapper.style.cursor = 'pointer';
+          wrapper.textContent = lines.join('\n');
 
-    return { domNodes: [wrapper] };
-  }}
-
-  eventClick={(info) => {
-          const v = info.event.extendedProps?.raw as Visit
-          if (!v) return
-          const d = v.date ? new Date(v.date) : null
+          return { domNodes: [wrapper] };
+        }}
+        eventClick={(info) => {
+          const v = info.event.extendedProps?.raw as Visit;
+          if (!v) return;
+          const d = v.date ? new Date(v.date) : null;
           setForm({
             id: v.id,
             date: d ? d.toLocaleDateString('pt-BR') : '',
@@ -412,7 +413,7 @@ const CalendarPage: React.FC = () => {
             photoPreviews: [],
             clientSearch: ''
           });
-          setOpen(true)
+          setOpen(true);
         }}
       />
 
@@ -431,14 +432,14 @@ const CalendarPage: React.FC = () => {
               <label style={{ fontWeight: 600 }}>Cliente</label>
               <input
                 type="text"
-                value={form.clientSearch}
+                value={
+                  clients.find(c => String(c.id) === form.client_id)?.name ||
+                  form.clientSearch ||
+                  ''
+                }
                 onChange={(e) => {
                   const value = e.target.value;
-                  setForm(f => ({
-                    ...f,
-                    clientSearch: value,
-                    client_id: '' // limpa ID ao digitar manualmente
-                  }));
+                  setForm(f => ({ ...f, clientSearch: value, client_id: '' }));
                 }}
                 placeholder="Digite o nome do cliente..."
                 style={{
@@ -450,9 +451,6 @@ const CalendarPage: React.FC = () => {
                   color: '#d5e5e2',
                 }}
               />
-
-
-              {/* Lista suspensa com correspondências */}
               {form.clientSearch && (
                 <ul
                   style={{
@@ -499,7 +497,6 @@ const CalendarPage: React.FC = () => {
               )}
             </div>
 
-
             <div className="form-row">
               <label>Propriedade</label>
               <DarkSelect
@@ -530,7 +527,9 @@ const CalendarPage: React.FC = () => {
                 onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
               >
                 <option value="">Selecione</option>
-                {cultures.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                {cultures.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
 
@@ -582,7 +581,8 @@ const CalendarPage: React.FC = () => {
                 placeholder="Observações ou anotações técnicas..."
               />
             </div>
-                        {/* 📸 Upload de fotos */}
+
+            {/* 📸 Upload de fotos */}
             <div className="form-row">
               <label style={{ fontWeight: 600 }}>Fotos da Visita</label>
               <input
@@ -592,7 +592,6 @@ const CalendarPage: React.FC = () => {
                 onChange={(e) => {
                   const files = e.target.files;
                   if (!files) return;
-
                   const previews = Array.from(files).map((f) => URL.createObjectURL(f));
                   setForm((f) => ({
                     ...f,
@@ -647,7 +646,7 @@ const CalendarPage: React.FC = () => {
                             ✕
                           </button>
                         </div>
-                      ))} {/* ✅ fecha .map corretamente */}
+                      ))}
                   </div>
 
                   <button
@@ -665,7 +664,7 @@ const CalendarPage: React.FC = () => {
                     📸 Ver todas as fotos da visita
                   </button>
                 </div>
-              )} {/* ✅ fecha condicional das fotos existentes */}
+              )}
 
               {/* Miniaturas de novas fotos */}
               {form.photoPreviews && form.photoPreviews.length > 0 && (
@@ -692,7 +691,6 @@ const CalendarPage: React.FC = () => {
               </small>
             </div>
 
-            {/* Ações do modal */}
             <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
               <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
 
@@ -715,4 +713,3 @@ const CalendarPage: React.FC = () => {
 };
 
 export default CalendarPage;
-
