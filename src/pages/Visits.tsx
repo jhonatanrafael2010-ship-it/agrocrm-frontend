@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import DarkSelect from '../components/DarkSelect'
-import { openDB } from 'idb'
 import { saveVisitOffline } from '../utils/offlineSync'
 
 
