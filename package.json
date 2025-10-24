@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
+    "@capacitor/camera": "^7.0.2",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
+    "@capacitor/geolocation": "^7.1.5",
     "@fullcalendar/core": "^6.1.8",
     "@fullcalendar/daygrid": "^6.1.8",
     "@fullcalendar/interaction": "^6.1.8",
