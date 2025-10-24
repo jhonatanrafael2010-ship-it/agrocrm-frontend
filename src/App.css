@@ -133,3 +133,259 @@ h1 {
   padding: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+/* =========================================================
+   🌿 Layout responsivo para APK (telas pequenas)
+   ========================================================= */
+@media (max-width: 768px) {
+  /* Corrige margens e paddings gerais */
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: #111a20;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 1rem !important;
+    width: 100%;
+  }
+
+  /* Sidebar vira topo recolhido */
+  .sidebar {
+    width: 100% !important;
+    height: auto !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #15232e;
+    padding: 0.8rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .sidebar .brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .sidebar nav {
+    display: none; /* oculta o menu lateral */
+  }
+
+  /* Cabeçalhos */
+  .clients-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .clients-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .btn-new {
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Cartões e tabelas */
+  .clients-card {
+    padding: 0;
+    margin-top: 10px;
+  }
+
+  table.clients-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  table.clients-table th,
+  table.clients-table td {
+    padding: 6px 4px;
+    text-align: left;
+    border-bottom: 1px solid #2a3b47;
+  }
+
+  table.clients-table th {
+    background-color: #1d2b36;
+    color: #a9c4d0;
+  }
+
+  /* Modal */
+  .modal {
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background-color: #18242e;
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .form-row label {
+    margin-bottom: 4px;
+    color: #9fb3b6;
+  }
+
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    width: 100%;
+    font-size: 1rem;
+    background-color: #16222a;
+    color: #e2e8f0;
+    border: 1px solid #253544;
+    border-radius: 6px;
+    padding: 8px;
+  }
+
+  .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  /* Corrige a barra de filtros */
+  .visits-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .visits-filter-bar label {
+    font-size: 0.85rem;
+  }
+
+  /* Reduz sombras e bordas em telas menores */
+  .clients-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+/* =========================================================
+   📱 Mobile layout com menu sanduíche e tema AgroCRM
+   ========================================================= */
+@media (max-width: 768px) {
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #111a20;
+    color: #e2e8f0;
+  }
+
+  main {
+    padding: 0.8rem;
+    margin: 0;
+  }
+
+  /* Cabeçalho superior com botão sanduíche */
+  .mobile-menu {
+    background: #15232e;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #1f3a48;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .menu-header .brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1db954;
+  }
+
+  .menu-toggle {
+    font-size: 1.6rem;
+    color: #e2e8f0;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Dropdown do menu */
+  .menu-dropdown {
+    display: flex;
+    flex-direction: column;
+    background: #18242e;
+    border-radius: 8px;
+    margin-top: 0.6rem;
+    padding: 0.4rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+
+  .menu-dropdown a {
+    color: #cfe3e0;
+    text-decoration: none;
+    padding: 10px 16px;
+    font-size: 1rem;
+    transition: background 0.2s ease;
+  }
+
+  .menu-dropdown a:hover {
+    background: #1db95433;
+  }
+
+  /* Remove o sidebar lateral */
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Área principal adaptada */
+  .clients-container, .dashboard-container {
+    background: #18242e;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+
+  .clients-header h2 {
+    color: #1db954;
+    font-size: 1.3rem;
+  }
+
+  .btn-new {
+    background-color: #1db954;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+    width: 100%;
+  }
+
+  .clients-table th {
+    background: #22343d;
+    color: #cfe3e0;
+  }
+
+  .modal {
+    background: #18242e;
+    color: #e2e8f0;
+  }
+}

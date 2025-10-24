@@ -9,6 +9,8 @@ import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from './utils/offlineSync'
+import MobileMenu from './components/MobileMenu';
+
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>('Dashboard')
@@ -50,41 +52,52 @@ const App: React.FC = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
   }
 
-  console.log('📦 App renderizou com rota:', route)
+console.log('📦 App renderizou com rota:', route)
 
-  return (
-    <>
-      {/* 🌗 Botão flutuante de modo claro/escuro */}
-      <button onClick={toggleTheme} className="theme-toggle">
-        {theme === 'dark' ? (
-          <Moon size={20} strokeWidth={1.6} />
-        ) : (
-          <SunMedium size={20} strokeWidth={1.6} />
-        )}
-      </button>
+return (
+  <>
+    {/* 🔝 Menu mobile no topo */}
+    <MobileMenu />
 
-      {/* Estrutura principal */}
-      <Navbar activeItem={route} onNavigate={setRoute} />
-      <main
-        key={route}
-        style={{
-          padding: '2.5rem 1rem 2rem',
-          maxWidth: 1100,
-          margin: '0 auto',
-          marginLeft: 240,
-          transition: 'background-color 0.3s ease, color 0.3s ease'
-        }}
-      >
-        {route === 'Clientes' ? <Clients />
-          : route === 'Propriedades' ? <PropertiesPage />
-          : route === 'Calendário' ? <CalendarPage />
-          : route === 'Oportunidades' ? <OpportunitiesPage />
-          : route === 'Acompanhamentos' ? <VisitsPage />
-          : route === 'Dashboard' ? <Dashboard />
-          : <Clients />}
-      </main>
-    </>
-  )
+    {/* 🌗 Botão flutuante de modo claro/escuro */}
+    <button onClick={toggleTheme} className="theme-toggle">
+      {theme === 'dark' ? (
+        <Moon size={20} strokeWidth={1.6} />
+      ) : (
+        <SunMedium size={20} strokeWidth={1.6} />
+      )}
+    </button>
+
+    {/* Estrutura principal */}
+    <Navbar activeItem={route} onNavigate={setRoute} />
+    <main
+      key={route}
+      style={{
+        padding: '2.5rem 1rem 2rem',
+        maxWidth: 1100,
+        margin: '0 auto',
+        marginLeft: 240,
+        transition: 'background-color 0.3s ease, color 0.3s ease',
+      }}
+    >
+      {route === 'Clientes' ? (
+        <Clients />
+      ) : route === 'Propriedades' ? (
+        <PropertiesPage />
+      ) : route === 'Calendário' ? (
+        <CalendarPage />
+      ) : route === 'Oportunidades' ? (
+        <OpportunitiesPage />
+      ) : route === 'Acompanhamentos' ? (
+        <VisitsPage />
+      ) : route === 'Dashboard' ? (
+        <Dashboard />
+      ) : (
+        <Clients />
+      )}
+    </main>
+  </>
+)
 }
 
 export default App
