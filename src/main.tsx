@@ -69,3 +69,16 @@ import App from './App.tsx'
 
 // ⚠️ StrictMode removido — evita re-render duplo no dev
 createRoot(document.getElementById('root')!).render(<App />)
+
+// ==============================
+// 🧭 Registro do Service Worker PWA
+// ==============================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then(() => console.log("✅ Service Worker registrado com sucesso"))
+      .catch((err) => console.error("❌ Falha ao registrar Service Worker:", err));
+  });
+}
+

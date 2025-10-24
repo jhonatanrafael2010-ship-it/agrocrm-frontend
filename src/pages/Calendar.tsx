@@ -269,6 +269,20 @@ const CalendarPage: React.FC = () => {
       }
     }
 
+    // Captura coordenadas GPS (se o usuário permitir)
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      console.log("📍 Localização:", pos.coords.latitude, pos.coords.longitude);
+      // Exemplo: adicionar no payload
+      payload["latitude"] = pos.coords.latitude;
+      payload["longitude"] = pos.coords.longitude;
+    },
+    (err) => console.warn("⚠️ Sem permissão para GPS:", err)
+  );
+}
+
+
     // ✅ Limpa formulário e recarrega visitas
     setOpen(false);
     setForm({

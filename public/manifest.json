@@ -1,0 +1,21 @@
+{
+  "name": "AgroCRM",
+  "short_name": "AgroCRM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1620",
+  "theme_color": "#1f453e",
+  "description": "CRM técnico para o agronegócio - gestão de visitas, plantios e oportunidades.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
