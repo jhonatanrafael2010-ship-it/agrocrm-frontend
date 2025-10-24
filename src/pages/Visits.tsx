@@ -312,69 +312,95 @@ async function handleGetLocation() {
         </div>
       )}
 
-      {open && (
-  <div className="modal-overlay" role="dialog" aria-modal="true">
-    <div className="modal">
-      <h3>Nova Visita</h3>
+          {open && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal">
+            <h3>Nova Visita</h3>
 
-      <div className="form-row">
-        <label>Data</label>
-        <input name="date" type="date" value={form.date} onChange={handleChange} />
-      </div>
+            <div className="form-row">
+              <label>Data</label>
+              <input
+                name="date"
+                type="date"
+                value={form.date}
+                onChange={handleChange}
+              />
+            </div>
 
-      <div className="form-row">
-        <label>Cliente</label>
-        <DarkSelect
-          name="client_id"
-          value={form.client_id}
-          placeholder="Selecione cliente"
-          options={[{ value: '', label: 'Selecione cliente' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
-          onChange={handleChange as any}
-        />
-      </div>
+            <div className="form-row">
+              <label>Cliente</label>
+              <DarkSelect
+                name="client_id"
+                value={form.client_id}
+                placeholder="Selecione cliente"
+                options={[
+                  { value: "", label: "Selecione cliente" },
+                  ...clients.map((c) => ({
+                    value: String(c.id),
+                    label: c.name,
+                  })),
+                ]}
+                onChange={handleChange as any}
+              />
+            </div>
 
-      <div className="form-row">
-        <label>Cultura</label>
-        <select
-          value={visitForm.culture || ''}
-          onChange={(e) => setVisitForm({ ...visitForm, culture: e.target.value, variety: '' })}
-        >
-          <option value="">Selecione</option>
-          <option value="Milho">Milho</option>
-          <option value="Soja">Soja</option>
-          <option value="Algodão">Algodão</option>
-        </select>
-      </div>
+            {/* 📸 & 📍 Botões da câmera e GPS */}
+            <div
+              className="form-row"
+              style={{
+                display: "flex",
+                gap: "10px",
+                justifyContent: "space-between",
+                marginTop: 10,
+              }}
+            >
+              <button
+                type="button"
+                className="btn-new"
+                onClick={handleTakePhoto}
+              >
+                📸 Tirar Foto
+              </button>
+              <button
+                type="button"
+                className="btn-new"
+                onClick={handleGetLocation}
+              >
+                📍 Capturar Localização
+              </button>
+            </div>
 
-      {/* 📸 & 📍 Botões da câmera e GPS */}
-      <div className="form-row" style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', marginTop: 10 }}>
-        <button type="button" className="btn-new" onClick={handleTakePhoto}>📸 Tirar Foto</button>
-        <button type="button" className="btn-new" onClick={handleGetLocation}>📍 Capturar Localização</button>
-      </div>
+            <div className="form-row">
+              <label>Recomendação</label>
+              <textarea
+                name="recommendation"
+                value={form.recommendation}
+                onChange={handleChange}
+              />
+            </div>
 
-      <div className="form-row">
-        <label>Propriedade</label>
-        <DarkSelect name="property_id" value={form.property_id} placeholder="Selecione propriedade" options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]} onChange={handleChange as any} />
-      </div>
-
-      <div className="form-row">
-        <label>Talhão</label>
-        <DarkSelect name="plot_id" value={form.plot_id} placeholder="Selecione talhão" options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(p => ({ value: String(p.id), label: p.name }))]} onChange={handleChange as any} />
-      </div>
-
-      <div className="form-row">
-        <label>Recomendação</label>
-        <textarea name="recommendation" value={form.recommendation} onChange={handleChange} />
-      </div>
-
-      <div className="modal-actions">
-        <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
-        <button className="btn-save" onClick={handleSave} disabled={submitting}>
-          {submitting ? 'Salvando...' : 'Salvar'}
-        </button>
-      </div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setOpen(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-save"
+                onClick={handleSave}
+                disabled={submitting}
+              >
+                {submitting ? "Salvando..." : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+            )}
     </div>
-  </div>
-)}
+    {/* ✅ fecha .clients-container */}
+  );
+};
 
-export default VisitsPage
+export default VisitsPage;
+
+
+
+
