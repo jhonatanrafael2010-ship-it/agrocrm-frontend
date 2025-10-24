@@ -140,8 +140,8 @@ useEffect(() => {
   };
 
   try {
-    // Se estiver online → envia direto
     if (navigator.onLine) {
+      // 🌐 Envia direto para o backend se estiver online
       const res = await fetch(`${API_BASE}visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,20 +155,12 @@ useEffect(() => {
       setVisits(v => [created, ...v]);
       console.log('✅ Visita enviada online');
     } else {
-      // Se estiver offline → salva no IndexedDB
-      const db = await openDB('agrocrm', 1, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains('pendingVisits')) {
-            db.createObjectStore('pendingVisits', { keyPath: 'id', autoIncrement: true });
-          }
-        },
-      });
-      await db.put('pendingVisits', visitData);
-      alert('📴 Sem internet — visita salva localmente e será enviada quando a conexão voltar.');
-      console.log('💾 Visita armazenada offline:', visitData);
+      // 📴 Offline → salva no IndexedDB através da função utilitária
+      await saveVisitOffline(visitData);
+      alert('📴 Sem conexão — visita salva localmente e será enviada quando a conexão voltar.');
     }
 
-    // Reseta formulário
+    // ♻️ Reseta formulário
     setOpen(false);
     setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' });
   } catch (err: any) {

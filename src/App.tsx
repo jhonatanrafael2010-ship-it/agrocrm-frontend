@@ -9,7 +9,7 @@ import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
 import { openDB } from 'idb';
-import { saveVisitOffline, syncPendingVisits } from './utils/offlineSync'
+import { syncPendingVisits } from './utils/offlineSync'
 
 
 
