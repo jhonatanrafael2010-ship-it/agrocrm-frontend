@@ -9,6 +9,8 @@ import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
 import { openDB } from 'idb';
+import { saveVisitOffline, syncPendingVisits } from './utils/offlineSync'
+
 
 
 
@@ -79,6 +81,11 @@ useEffect(() => {
   };
 }, []);
 
+useEffect(() => {
+  window.addEventListener('online', () => syncPendingVisits('/api/'))
+  if (navigator.onLine) syncPendingVisits('/api/')
+  return () => window.removeEventListener('online', () => syncPendingVisits('/api/'))
+}, [])
 
   // Alterna tema manualmente
   function toggleTheme() {
