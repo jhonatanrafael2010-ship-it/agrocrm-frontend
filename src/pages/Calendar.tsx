@@ -287,12 +287,11 @@ const CalendarPage: React.FC = () => {
       clientSearch: ''
     });
     await loadVisits();
-  } catch (e: any) {
-    console.error("❌ Erro ao salvar visita:", e);
-    alert(e?.message || 'Erro ao salvar visita');
-  }
-
-
+    } catch (e: any) {
+      console.error("❌ Erro ao salvar visita:", e);
+      alert(e?.message || 'Erro ao salvar visita');
+    }
+  }; // ✅ <-- ESTA LINHA FECHA handleCreateOrUpdate CORRETAMENTE
 
 
   const handleDelete = async () => {
