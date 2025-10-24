@@ -234,7 +234,9 @@ const CalendarPage: React.FC = () => {
     generate_schedule: !!form.genPheno,
     culture: cultureName || '',
     variety: form.variety || '',
-    recommendation: form.genPheno ? '' : (form.recommendation || 'Plantio')
+    recommendation: form.genPheno ? '' : (form.recommendation || 'Plantio'),
+    latitude: (form as any).latitude || null,
+    longitude: (form as any).longitude || null,
   };
 
   try {
