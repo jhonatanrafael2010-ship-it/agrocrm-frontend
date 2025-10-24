@@ -1,5 +1,14 @@
 const CACHE_NAME = "agrocrm-cache-v1";
-const URLS_TO_CACHE = ["/", "/index.html", "/manifest.json"];
+const URLS_TO_CACHE = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/src/main.tsx",
+  "/src/App.tsx",
+  "/style.css",
+  "/logo192.png",
+  "/logo512.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
