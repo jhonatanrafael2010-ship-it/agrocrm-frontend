@@ -175,10 +175,28 @@ const CalendarPage: React.FC = () => {
   // handlers
   // ==============================
   const handleDateSelect = (info: any) => {
-    const [y, m, d] = info.startStr.split('-')
-    setForm(f => ({ ...f, date: `${d}/${m}/${y}`, id: null }))
-    setOpen(true)
-  }
+    const [y, m, d] = info.startStr.split('-');
+
+    // 🧹 limpa tudo ao abrir "Nova Visita"
+    setForm({
+      id: null,
+      date: `${d}/${m}/${y}`,
+      client_id: '',
+      property_id: '',
+      plot_id: '',
+      consultant_id: '',
+      culture: '',
+      variety: '',
+      recommendation: '',
+      genPheno: true,
+      photos: null,
+      photoPreviews: [],
+      clientSearch: ''
+    });
+    
+    setOpen(true);
+  };
+
 
   const handleChange = (e: any) => {
     const { name, value } = e.target
@@ -231,7 +249,27 @@ const CalendarPage: React.FC = () => {
       throw new Error(body || `Erro ${res.status}`);
     }
 
-    // sucesso: limpa e recarrega
+    // ✅ Captura o ID da nova visita criada
+    const data = await res.json();
+    const newVisitId = data.visit?.id;
+
+    // ✅ Se há fotos, envia ao backend
+    if (newVisitId && form.photos && form.photos.length > 0) {
+      const fd = new FormData();
+      Array.from(form.photos).forEach((file) => fd.append("photos", file));
+
+      try {
+        await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+        console.log("📸 Fotos enviadas com sucesso!");
+      } catch (err) {
+        console.error("Erro ao enviar fotos:", err);
+      }
+    }
+
+    // ✅ Limpa formulário e recarrega visitas
     setOpen(false);
     setForm({
       id: null,
@@ -253,7 +291,7 @@ const CalendarPage: React.FC = () => {
     console.error("❌ Erro ao salvar visita:", e);
     alert(e?.message || 'Erro ao salvar visita');
   }
-};
+
 
 
 
@@ -393,14 +431,14 @@ const CalendarPage: React.FC = () => {
               <label style={{ fontWeight: 600 }}>Cliente</label>
               <input
                 type="text"
-                value={
-                  clients.find(c => String(c.id) === form.client_id)?.name ||
-                  form.clientSearch ||
-                  ''
-                }
+                value={form.clientSearch}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setForm(f => ({ ...f, clientSearch: value }));
+                  setForm(f => ({
+                    ...f,
+                    clientSearch: value,
+                    client_id: '' // limpa ID ao digitar manualmente
+                  }));
                 }}
                 placeholder="Digite o nome do cliente..."
                 style={{
@@ -412,6 +450,7 @@ const CalendarPage: React.FC = () => {
                   color: '#d5e5e2',
                 }}
               />
+
 
               {/* Lista suspensa com correspondências */}
               {form.clientSearch && (
@@ -562,6 +601,71 @@ const CalendarPage: React.FC = () => {
                   }));
                 }}
               />
+
+              {/* 🔍 Fotos existentes da visita */}
+{form.id && form.photoPreviews.length === 0 && (
+  <div className="form-row">
+    <label>Fotos salvas</label>
+    <div className="photo-gallery">
+      {events
+        .find(ev => ev.extendedProps?.raw?.id === form.id)
+        ?.extendedProps?.raw?.photos?.map((p: any, i: number) => (
+          <div key={i} className="photo-thumb" style={{ position: 'relative' }}>
+            <img src={p.url} alt={`foto ${i + 1}`} />
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirm('Excluir esta foto?')) return;
+                try {
+                  const res = await fetch(`${API_BASE}photos/${p.id}`, { method: 'DELETE' });
+                  if (res.ok) {
+                    alert('Foto excluída com sucesso!');
+                    await loadVisits(); // 🔁 recarrega a lista de visitas e fotos
+                    setForm(f => ({ ...f })); // força re-render
+                  } else {
+                    alert('Falha ao excluir a foto.');
+                  }
+                } catch (err) {
+                  console.error('Erro ao excluir foto:', err);
+                  alert('Erro ao excluir.');
+                }
+              }}
+              style={{
+                position: 'absolute',
+                top: '4px',
+                right: '4px',
+                background: 'rgba(0,0,0,0.6)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                width: '22px',
+                height: '22px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+    </div>
+    <button
+      onClick={() => window.open(`/api/visits/${form.id}/photos`, '_blank')}
+      style={{
+        background: 'linear-gradient(90deg, #2563eb, #38bdf8)',
+        border: 'none',
+        padding: '8px 14px',
+        borderRadius: '8px',
+        marginTop: '6px',
+        color: '#fff',
+        cursor: 'pointer'
+      }}
+    >
+      📸 Ver todas as fotos da visita
+    </button>
+  </div>
+)}
+
 
               {/* Miniaturas */}
               {form.photoPreviews && form.photoPreviews.length > 0 && (
