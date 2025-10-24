@@ -312,91 +312,126 @@ async function handleGetLocation() {
         </div>
       )}
 
-          {open && (
-        <div className="modal-overlay" role="dialog" aria-modal="true">
-          <div className="modal">
-            <h3>Nova Visita</h3>
+{open && (
+  <div className="modal-overlay" role="dialog" aria-modal="true">
+    <div className="modal">
+      <h3>Nova Visita</h3>
 
-            <div className="form-row">
-              <label>Data</label>
-              <input
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-              />
-            </div>
+      <div className="form-row">
+        <label>Data</label>
+        <input
+          name="date"
+          type="date"
+          value={form.date}
+          onChange={handleChange}
+        />
+      </div>
 
-            <div className="form-row">
-              <label>Cliente</label>
-              <DarkSelect
-                name="client_id"
-                value={form.client_id}
-                placeholder="Selecione cliente"
-                options={[
-                  { value: "", label: "Selecione cliente" },
-                  ...clients.map((c) => ({
-                    value: String(c.id),
-                    label: c.name,
-                  })),
-                ]}
-                onChange={handleChange as any}
-              />
-            </div>
+      <div className="form-row">
+        <label>Cliente</label>
+        <DarkSelect
+          name="client_id"
+          value={form.client_id}
+          placeholder="Selecione cliente"
+          options={[
+            { value: '', label: 'Selecione cliente' },
+            ...clients.map((c) => ({
+              value: String(c.id),
+              label: c.name,
+            })),
+          ]}
+          onChange={handleChange as any}
+        />
+      </div>
 
-            {/* 📸 & 📍 Botões da câmera e GPS */}
-            <div
-              className="form-row"
-              style={{
-                display: "flex",
-                gap: "10px",
-                justifyContent: "space-between",
-                marginTop: 10,
-              }}
-            >
-              <button
-                type="button"
-                className="btn-new"
-                onClick={handleTakePhoto}
-              >
-                📸 Tirar Foto
-              </button>
-              <button
-                type="button"
-                className="btn-new"
-                onClick={handleGetLocation}
-              >
-                📍 Capturar Localização
-              </button>
-            </div>
+      {/* 🌾 Cultura */}
+      <div className="form-row">
+        <label>Cultura</label>
+        <select
+          name="culture"
+          value={visitForm.culture}
+          onChange={(e) =>
+            setVisitForm((prev) => ({
+              ...prev,
+              culture: e.target.value,
+              variety: '',
+            }))
+          }
+        >
+          <option value="">Selecione a cultura</option>
+          {[...new Set(varieties.map((v) => v.culture))].map((culture) => (
+            <option key={culture} value={culture}>
+              {culture}
+            </option>
+          ))}
+        </select>
+      </div>
 
-            <div className="form-row">
-              <label>Recomendação</label>
-              <textarea
-                name="recommendation"
-                value={form.recommendation}
-                onChange={handleChange}
-              />
-            </div>
+      {/* 🌱 Variedade */}
+      <div className="form-row">
+        <label>Variedade</label>
+        <select
+          name="variety"
+          value={visitForm.variety}
+          onChange={(e) =>
+            setVisitForm((prev) => ({
+              ...prev,
+              variety: e.target.value,
+            }))
+          }
+          disabled={!visitForm.culture}
+        >
+          <option value="">Selecione a variedade</option>
+          {varieties
+            .filter((v) => v.culture === visitForm.culture)
+            .map((v) => (
+              <option key={v.id} value={v.name}>
+                {v.name}
+              </option>
+            ))}
+        </select>
+      </div>
 
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setOpen(false)}>
-                Cancelar
-              </button>
-              <button
-                className="btn-save"
-                onClick={handleSave}
-                disabled={submitting}
-              >
-                {submitting ? "Salvando..." : "Salvar"}
-              </button>
-            </div>
-          </div>
-        </div>
-            )}
+      {/* 📸 & 📍 Botões */}
+      <div
+        className="form-row"
+        style={{
+          display: 'flex',
+          gap: '10px',
+          justifyContent: 'space-between',
+          marginTop: 10,
+        }}
+      >
+        <button type="button" className="btn-new" onClick={handleTakePhoto}>
+          📸 Tirar Foto
+        </button>
+        <button type="button" className="btn-new" onClick={handleGetLocation}>
+          📍 Capturar Localização
+        </button>
+      </div>
+
+      <div className="form-row">
+        <label>Recomendação</label>
+        <textarea
+          name="recommendation"
+          value={form.recommendation}
+          onChange={handleChange}
+        />
+      </div>
+
+      <div className="modal-actions">
+        <button className="btn-cancel" onClick={() => setOpen(false)}>
+          Cancelar
+        </button>
+        <button className="btn-save" onClick={handleSave} disabled={submitting}>
+          {submitting ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
     </div>
-    {/* ✅ fecha .clients-container */}
-  );
+  </div>
+)}
+</div>
+);
 };
 
 export default VisitsPage;
