@@ -647,7 +647,7 @@ const CalendarPage: React.FC = () => {
               ✕
             </button>
           </div>
-        ))}
+        ))} {/* ✅ fecha .map() corretamente */}
     </div>
     <button
       onClick={() => window.open(`/api/visits/${form.id}/photos`, '_blank')}
@@ -664,7 +664,7 @@ const CalendarPage: React.FC = () => {
       📸 Ver todas as fotos da visita
     </button>
   </div>
-)}
+)} {/* ✅ fecha o if principal */}
 
 
               {/* Miniaturas */}
