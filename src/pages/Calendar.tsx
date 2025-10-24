@@ -325,26 +325,55 @@ if ("geolocation" in navigator) {
   };
 
   const markDone = async () => {
-    if (!form.id) return
+    if (!form.id) return;
     try {
+      // ✅ 1. Atualiza o status da visita
       const r = await fetch(`${API_BASE}visits/${form.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'done' })
-      })
-      if (!r.ok) throw new Error('Falha ao concluir')
-      setEvents(prev => prev.map(ev => {
-        if (ev.id === `visit-${form.id}`) {
-          const v = { ...ev.extendedProps.raw, status: 'done' }
-          return { ...ev, backgroundColor: colorFor(v.date, v.status), extendedProps: { ...ev.extendedProps, raw: v } }
+        body: JSON.stringify({ status: 'done' }),
+      });
+      if (!r.ok) throw new Error('Falha ao concluir');
+
+      // ✅ 2. Se há fotos novas, envia agora
+      if (form.photos && form.photos.length > 0) {
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file) => fd.append('photos', file));
+
+        try {
+          await fetch(`${API_BASE}visits/${form.id}/photos`, {
+            method: 'POST',
+            body: fd,
+          });
+          console.log('📸 Fotos adicionais enviadas ao concluir!');
+        } catch (err) {
+          console.error('Erro ao enviar fotos ao concluir:', err);
         }
-        return ev
-      }))
-      setOpen(false)
-    } catch (e) {
-      alert('Erro ao concluir')
-    }
+      }
+
+    // ✅ 3. Atualiza status no calendário
+    setEvents((prev) =>
+      prev.map((ev) => {
+        if (ev.id === `visit-${form.id}`) {
+          const v = { ...ev.extendedProps.raw, status: 'done' };
+          return {
+            ...ev,
+            backgroundColor: colorFor(v.date, v.status),
+            extendedProps: { ...ev.extendedProps, raw: v },
+          };
+        }
+        return ev;
+      })
+    );
+
+    await loadVisits(); // 🔁 garante recarregar fotos novas
+    setOpen(false);
+  } catch (e) {
+    console.error('Erro ao concluir:', e);
+    alert('Erro ao concluir');
   }
+};
+
 
     // ==============================
   // Render
