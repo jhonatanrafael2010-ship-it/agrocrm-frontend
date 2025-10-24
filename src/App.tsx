@@ -8,16 +8,12 @@ import Dashboard from './pages/Dashboard'
 import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
-import { openDB } from 'idb';
+import { openDB } from 'idb'
 import { syncPendingVisits } from './utils/offlineSync'
-
-
-
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>('Dashboard')
   const [theme, setTheme] = useState(() => {
-    // Lê do localStorage ou do tema do sistema
     const stored = localStorage.getItem('theme')
     if (stored) return stored
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -30,68 +26,32 @@ const App: React.FC = () => {
     localStorage.setItem('theme', theme)
   }, [theme])
 
-
   // --------------------------------------------------------------------
-// 🔄 Sincronização offline → online
-// --------------------------------------------------------------------
-useEffect(() => {
-  // Função para salvar visitas offline
-  async function saveVisitOffline(visit: any) {
-    const db = await openDB('agrocrm', 1, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('pendingVisits')) {
-          db.createObjectStore('pendingVisits', { keyPath: 'id', autoIncrement: true });
-        }
-      },
-    });
-    await db.put('pendingVisits', visit);
-  }
-
-  // Função que envia as visitas pendentes ao backend
-  async function syncPendingVisits() {
-    const db = await openDB('agrocrm', 1);
-    const all = await db.getAll('pendingVisits');
-
-    for (const visit of all) {
+  // 🔄 Sincronização offline → online
+  // --------------------------------------------------------------------
+  useEffect(() => {
+    async function syncPending() {
       try {
-        const resp = await fetch('/api/visits', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(visit),
-        });
-        if (resp.ok) {
-          await db.delete('pendingVisits', visit.id);
-          console.log('✅ Visita sincronizada:', visit);
-        }
+        await syncPendingVisits('/api/')
       } catch (err) {
-        console.log('⚠️ Ainda offline:', err);
+        console.warn('⚠️ Erro ao tentar sincronizar:', err)
       }
     }
-  }
 
-  // Tenta sincronizar ao voltar a ficar online
-  window.addEventListener('online', syncPendingVisits);
+    window.addEventListener('online', syncPending)
+    if (navigator.onLine) syncPending()
 
-  // Sincroniza imediatamente se já estiver online
-  if (navigator.onLine) syncPendingVisits();
-
-  // Cleanup do event listener
-  return () => {
-    window.removeEventListener('online', syncPendingVisits);
-  };
-}, []);
-
-useEffect(() => {
-  window.addEventListener('online', () => syncPendingVisits('/api/'))
-  if (navigator.onLine) syncPendingVisits('/api/')
-  return () => window.removeEventListener('online', () => syncPendingVisits('/api/'))
-}, [])
+    return () => {
+      window.removeEventListener('online', syncPending)
+    }
+  }, [])
 
   // Alterna tema manualmente
   function toggleTheme() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
   }
-console.log('📦 App renderizou com rota:', route)
+
+  console.log('📦 App renderizou com rota:', route)
 
   return (
     <>
@@ -104,11 +64,10 @@ console.log('📦 App renderizou com rota:', route)
         )}
       </button>
 
-
       {/* Estrutura principal */}
       <Navbar activeItem={route} onNavigate={setRoute} />
       <main
-       key={route}
+        key={route}
         style={{
           padding: '2.5rem 1rem 2rem',
           maxWidth: 1100,
