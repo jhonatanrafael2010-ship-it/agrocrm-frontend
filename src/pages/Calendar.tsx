@@ -618,7 +618,7 @@ const CalendarPage: React.FC = () => {
                     {events
                       .find(ev => ev.extendedProps?.raw?.id === form.id)
                       ?.extendedProps?.raw?.photos?.map((p: any, i: number) => (
-                        <div key={i} className="photo-thumb" style={{ position: 'relative' }}>
+                        <div key={i} className="photo-thumb">
                           <img src={p.url} alt={`foto ${i + 1}`} />
                           <button
                             type="button"
