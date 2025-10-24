@@ -419,7 +419,17 @@ const CalendarPage: React.FC = () => {
       {open && (
         <div className="modal-overlay">
           <div className="modal">
+            {/* 🔘 Botão de Fechar */}
+            <button
+              className="modal-close"
+              onClick={() => setOpen(false)}
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+
             <h3>{form.id ? 'Editar Visita' : 'Nova Visita'}</h3>
+
 
             <div className="form-row">
               <label>Data</label>

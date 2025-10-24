@@ -5,15 +5,18 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  background: rgba(10, 20, 18, 0.9);
+  background: rgba(10, 20, 18, 0.92);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid rgba(80, 200, 160, 0.25);
   border-radius: 18px;
   padding: 28px;
-  max-width: 90vw;
-  max-height: 88vh;
+  width: 95vw;                /* ocupa quase toda a largura visível */
+  max-width: 1200px;          /* evita estourar telas muito grandes */
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  overflow-x: hidden;         /* 🚫 remove rolagem lateral */
+  margin: 0 auto;
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.6);
   color: #e9f4f1;
   scrollbar-width: thin;
   animation: fadeIn 0.25s ease;
@@ -24,6 +27,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Cabeçalho */
 .modal h3 {
   grid-column: span 2;
   text-align: center;
@@ -171,14 +175,69 @@
   border-radius: 4px;
 }
 
-/* Responsivo */
+/* =====================================================
+   📱 RESPONSIVIDADE
+   ===================================================== */
+@media (max-width: 1150px) {
+  .modal {
+    max-width: 96vw;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+}
+
 @media (max-width: 900px) {
   .modal {
-    grid-template-columns: 1fr;
-    max-height: 90vh;
+    grid-template-columns: 1fr; /* 📱 Vira 1 coluna */
+    width: 95vw;
+    max-height: 92vh;
+    padding: 20px;
   }
+
+  .modal h3 {
+    grid-column: 1;
+    font-size: 1.2rem;
+  }
+
   .modal-actions {
     grid-column: 1;
     justify-content: center;
   }
+
+  .photo-thumb {
+    width: 80px;
+    height: 80px;
+  }
+}
+/* =====================================================
+   ❌ BOTÃO DE FECHAR MODAL
+   ===================================================== */
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  line-height: 30px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 15;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.modal {
+  position: relative; /* ⚙️ necessário para posicionar o botão dentro */
 }
