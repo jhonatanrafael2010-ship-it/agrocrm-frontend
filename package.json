@@ -16,6 +16,7 @@
     "@fullcalendar/react": "^6.1.8",
     "@fullcalendar/timegrid": "^6.1.8",
     "@hello-pangea/dnd": "^18.0.1",
+    "idb": "^8.0.3",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

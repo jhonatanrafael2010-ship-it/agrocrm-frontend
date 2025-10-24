@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard'
 import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
+import { openDB } from 'idb';
+
 
 
 const App: React.FC = () => {
@@ -25,6 +27,58 @@ const App: React.FC = () => {
     document.body.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+
+  // --------------------------------------------------------------------
+// 🔄 Sincronização offline → online
+// --------------------------------------------------------------------
+useEffect(() => {
+  // Função para salvar visitas offline
+  async function saveVisitOffline(visit: any) {
+    const db = await openDB('agrocrm', 1, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('pendingVisits')) {
+          db.createObjectStore('pendingVisits', { keyPath: 'id', autoIncrement: true });
+        }
+      },
+    });
+    await db.put('pendingVisits', visit);
+  }
+
+  // Função que envia as visitas pendentes ao backend
+  async function syncPendingVisits() {
+    const db = await openDB('agrocrm', 1);
+    const all = await db.getAll('pendingVisits');
+
+    for (const visit of all) {
+      try {
+        const resp = await fetch('/api/visits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(visit),
+        });
+        if (resp.ok) {
+          await db.delete('pendingVisits', visit.id);
+          console.log('✅ Visita sincronizada:', visit);
+        }
+      } catch (err) {
+        console.log('⚠️ Ainda offline:', err);
+      }
+    }
+  }
+
+  // Tenta sincronizar ao voltar a ficar online
+  window.addEventListener('online', syncPendingVisits);
+
+  // Sincroniza imediatamente se já estiver online
+  if (navigator.onLine) syncPendingVisits();
+
+  // Cleanup do event listener
+  return () => {
+    window.removeEventListener('online', syncPendingVisits);
+  };
+}, []);
+
 
   // Alterna tema manualmente
   function toggleTheme() {

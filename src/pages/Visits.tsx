@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import DarkSelect from '../components/DarkSelect'
+import { openDB } from 'idb'
+
 
 type Visit = {
   id: number
@@ -121,33 +123,60 @@ useEffect(() => {
   }
 
   async function handleSave() {
-    if (!form.date || !form.client_id || !form.property_id || !form.plot_id) return alert('Data, cliente, propriedade e talhão são obrigatórios')
-    setSubmitting(true)
-    try {
+  if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
+    return alert('Data, cliente, propriedade e talhão são obrigatórios');
+
+  setSubmitting(true);
+
+  // Monta o objeto de visita
+  const visitData = {
+    date: form.date ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-CA') : '',
+    client_id: Number(form.client_id),
+    property_id: Number(form.property_id),
+    plot_id: Number(form.plot_id),
+    recommendation: form.recommendation,
+  };
+
+  try {
+    // Se estiver online → envia direto
+    if (navigator.onLine) {
       const res = await fetch(`${API_BASE}visits`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: form.date
-            ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-CA')
-            : '',
-          client_id: Number(form.client_id),
-          property_id: Number(form.property_id),
-          plot_id: Number(form.plot_id),
-          recommendation: form.recommendation,
-        })
-
-
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(visitData),
       });
+
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+
       const created: Visit = body.visit || body;
-      setVisits(v => [created, ...v])
-      setOpen(false)
-      setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' })
-    } catch (err: any) {
-      alert(err?.message || 'Erro ao criar acompanhamento')
-    } finally { setSubmitting(false) }
+      setVisits(v => [created, ...v]);
+      console.log('✅ Visita enviada online');
+    } else {
+      // Se estiver offline → salva no IndexedDB
+      const db = await openDB('agrocrm', 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains('pendingVisits')) {
+            db.createObjectStore('pendingVisits', { keyPath: 'id', autoIncrement: true });
+          }
+        },
+      });
+      await db.put('pendingVisits', visitData);
+      alert('📴 Sem internet — visita salva localmente e será enviada quando a conexão voltar.');
+      console.log('💾 Visita armazenada offline:', visitData);
+    }
+
+    // Reseta formulário
+    setOpen(false);
+    setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' });
+  } catch (err: any) {
+    console.error('Erro ao salvar visita:', err);
+    alert(err?.message || 'Erro ao criar acompanhamento');
+  } finally {
+    setSubmitting(false);
   }
+}
+
 
   async function handleDelete(id?: number) {
     if (!id) return
