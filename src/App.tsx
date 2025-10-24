@@ -8,7 +8,6 @@ import Dashboard from './pages/Dashboard'
 import VisitsPage from './pages/Visits'
 import './App.css'
 import { Moon, SunMedium } from "lucide-react";
-import { openDB } from 'idb'
 import { syncPendingVisits } from './utils/offlineSync'
 
 const App: React.FC = () => {
