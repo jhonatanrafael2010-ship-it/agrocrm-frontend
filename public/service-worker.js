@@ -6,10 +6,8 @@ self.addEventListener("install", (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll([
         OFFLINE_URL,
-        "/manifest.json",
-        "/icons/icon-192.png",
-        "/icons/icon-512.png",
-      ]);
+        "/manifest.json"
+        ]).catch(err => console.warn("⚠️ Cache parcial: alguns arquivos offline não foram adicionados", err));
     })
   );
   self.skipWaiting();
@@ -27,7 +25,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
-  
+
   // ❌ Evita cachear requisições não-GET (PUT, POST, DELETE, etc)
   if (req.method !== "GET") {
     return;
