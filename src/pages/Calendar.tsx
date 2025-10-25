@@ -164,12 +164,27 @@ const CalendarPage: React.FC = () => {
 
 
 
-  const colorFor = (dateISO: string, status?: string) => {
-    const today = new Date().toISOString().split('T')[0]
-    if (status === 'done') return '#16a34a'  // verde
-    if (dateISO < today) return '#dc2626'    // vermelho
-    return '#3b82f6'                          // azul
-  }
+ // =============================================================
+// 🎨 Função de cor sólida para eventos (sem faixas nem degradê)
+// =============================================================
+  const colorFor = (dateISO?: string, status?: string): string => {
+    const s = (status || '').toLowerCase();
+
+    // Cores fixas por status
+    if (s.includes('conclu')) return '#16a34a';     // verde — concluído
+    if (s.includes('pendente')) return '#f59e0b';   // amarelo — pendente
+    if (s.includes('atras')) return '#dc2626';      // vermelho — atrasado
+    if (s.includes('planejado')) return '#2563eb';  // azul — planejado
+
+    // Fallback baseado na data (para variedade)
+    if (dateISO) {
+      const hash = [...dateISO].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+      const palette = ['#2dd36f', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
+      return palette[hash % palette.length];
+    }
+
+    return '#6b7280'; // cinza neutro
+  };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target
