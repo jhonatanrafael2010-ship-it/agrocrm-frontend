@@ -1,6 +1,8 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import './styles/theme-agrocrm.css';
+
 
 // 🧹 Script automático para limpar cache ao detectar nova versão
 ;(async () => {

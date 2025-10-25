@@ -92,7 +92,7 @@
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #111;
+  background: var(--panel);
 }
 
 .photo-thumb img {
@@ -149,11 +149,11 @@
 }
 
 .btn-cancel {
-  background: #3a3f45;
-  color: #f0f0f0;
+  background: var(--panel);
+  color: var(--text);
 }
 .btn-cancel:hover {
-  background: #4b545b;
+  background: var(--panel);
 }
 
 .btn-delete {
@@ -171,7 +171,7 @@
   width: 6px;
 }
 .modal::-webkit-scrollbar-thumb {
-  background: #2d4843;
+  background: var(--panel);
   border-radius: 4px;
 }
 
