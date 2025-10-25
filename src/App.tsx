@@ -54,29 +54,47 @@ const App: React.FC = () => {
 
 console.log('📦 App renderizou com rota:', route)
 
+const [menuOpen, setMenuOpen] = useState(false);
+
 return (
-  <>
-    {/* 🔝 Menu mobile no topo */}
-    <MobileMenu onNavigate={setRoute} />
+  <div className="app">
+    {/* 🔝 Cabeçalho fixo com menu e botão de tema */}
+    <header className="app-header">
+      {/* ☰ Botão de menu (controla exibição do MobileMenu) */}
+      <button
+        className="menu-toggle"
+        onClick={() => setMenuOpen((prev) => !prev)}
+        aria-label="Abrir menu"
+      >
+        ☰
+      </button>
 
-    {/* 🌗 Botão flutuante de modo claro/escuro */}
-    <button onClick={toggleTheme} className="theme-toggle">
-      {theme === 'dark' ? (
-        <Moon size={20} strokeWidth={1.6} />
-      ) : (
-        <SunMedium size={20} strokeWidth={1.6} />
-      )}
-    </button>
+      <h1 className="app-title">AgroCRM</h1>
 
-    {/* Estrutura principal */}
+      {/* 🌗 Botão de alternar tema claro/escuro */}
+      <button onClick={toggleTheme} className="theme-toggle-btn">
+        {theme === 'dark' ? (
+          <Moon size={18} strokeWidth={1.6} />
+        ) : (
+          <SunMedium size={18} strokeWidth={1.6} />
+        )}
+      </button>
+    </header>
+
+    {/* 📱 Menu mobile (abre ao clicar no botão ☰) */}
+    {menuOpen && <MobileMenu onNavigate={(r) => { setRoute(r); setMenuOpen(false); }} />}
+
+    {/* 🧭 Navbar lateral (mantém no desktop) */}
     <Navbar activeItem={route} onNavigate={setRoute} />
+
+    {/* 🧱 Conteúdo principal */}
     <main
       key={route}
       style={{
-        padding: '2.5rem 1rem 2rem',
+        padding: '1.5rem 1rem 2rem',
         maxWidth: 1100,
         margin: '0 auto',
-        marginLeft: 240,
+        marginLeft: window.innerWidth > 768 ? 240 : 0,
         transition: 'background-color 0.3s ease, color 0.3s ease',
       }}
     >
@@ -96,8 +114,8 @@ return (
         <Clients />
       )}
     </main>
-  </>
-)
-}
+  </div>
+);
+};
 
-export default App
+export default App;

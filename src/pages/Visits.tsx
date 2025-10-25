@@ -215,6 +215,12 @@ async function handleGetLocation() {
     }
   }
 
+  useEffect(() => {
+  if (open) document.body.style.overflow = "hidden";
+  else document.body.style.overflow = "";
+}, [open]);
+
+ 
   return (
     <div className="clients-container">
       <div className="clients-header">
