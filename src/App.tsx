@@ -55,6 +55,26 @@ const App: React.FC = () => {
 console.log('📦 App renderizou com rota:', route)
 
 const [menuOpen, setMenuOpen] = useState(false);
+// Detecta se o usuário está em modo APK (tela pequena ou userAgent)
+const [isMobileApp, setIsMobileApp] = useState(false);
+
+useEffect(() => {
+  const detect = () => {
+    const isSmallScreen = window.innerWidth <= 900;
+    const ua = navigator.userAgent.toLowerCase();
+    const runningInApk =
+      ua.includes('wv') || ua.includes('android') || ua.includes('agrocrm-apk');
+
+    const mobile = isSmallScreen || runningInApk;
+    setIsMobileApp(mobile);
+    document.body.setAttribute('data-platform', mobile ? 'mobile' : 'desktop');
+  };
+
+  detect(); // roda já na montagem
+  window.addEventListener('resize', detect);
+  return () => window.removeEventListener('resize', detect);
+}, []);
+
 
 return (
   <div className="app">
@@ -82,17 +102,22 @@ return (
       </button>
     </header>
 
-    {/* 📱 Menu mobile (renderiza fora do header, apenas quando aberto) */}
-    {menuOpen && (
-      <div className="mobile-overlay">
-        <MobileMenu
-          onNavigate={(r) => {
-            setRoute(r);
-            setMenuOpen(false);
-          }}
-        />
-      </div>
+    {/* Menus */}
+    {isMobileApp ? (
+      menuOpen && (
+        <div className="mobile-overlay">
+          <MobileMenu
+            onNavigate={(r) => {
+              setRoute(r);
+              setMenuOpen(false);
+            }}
+          />
+        </div>
+      )
+    ) : (
+      <Navbar activeItem={route} onNavigate={setRoute} />
     )}
+
 
     {/* 🧭 Navbar lateral (somente desktop) */}
     {window.innerWidth > 900 && (
