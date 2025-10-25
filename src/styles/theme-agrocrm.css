@@ -1,581 +1,404 @@
 /* ===========================
-   AgroCRM Theme Pack (mobile-first)
+   🌿 AgroCRM Theme Pack (mobile-first)
    =========================== */
 
-/* Paleta base (claro) */
-:root{
-  --bg:#f7f9fb;
-  --panel:#ffffff;
-  --text:#101418;
-  --muted:#444a52;
-  --accent:#2dd36f;
-  --border:rgba(0,0,0,0.08);
-  --shadow:rgba(0,0,0,0.10);
+/* ---------- Paleta base (claro) ---------- */
+:root {
+  --bg: #f7f9fb;
+  --panel: #ffffff;
+  --text: #101418;
+  --muted: #444a52;
+  --accent: #2dd36f;
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0, 0, 0, 0.10);
 }
 
-/* Paleta base (escuro) */
-[data-theme="dark"]{
-  --bg:#0b1620;
-  --panel:#0e1c27;
-  --text:#dfeff0;
-  --muted:#9fb3b6;
-  --accent:#2dd36f;
-  --border:rgba(255,255,255,0.06);
-  --shadow:rgba(0,0,0,0.45);
+/* ---------- Paleta base (escuro) ---------- */
+[data-theme="dark"] {
+  --bg: #0b1620;
+  --panel: #0e1c27;
+  --text: #dfeff0;
+  --muted: #9fb3b6;
+  --accent: #2dd36f;
+  --border: rgba(255, 255, 255, 0.06);
+  --shadow: rgba(0, 0, 0, 0.45);
 }
 
-/* Reset suave + tipografia fluida */
-html,body{
-  margin:0; padding:0;
-  background:var(--bg); color:var(--text);
+/* ---------- Reset e tipografia ---------- */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  line-height:1.45;
-  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Raiz do app: sem limitar largura no APK */
-#root{ max-width:none; margin:0; padding:0; }
-
-/* Tamanhos fluidos (desktop ok / mobile reduzido) */
-h1{ font-size:clamp(1.4rem, 3.5vw, 2.2rem); margin:.8rem 0 .6rem; }
-h2{ font-size:clamp(1.15rem, 3vw, 1.6rem); margin:.7rem 0 .5rem; }
-h3{ font-size:clamp(1rem, 2.6vw, 1.3rem); margin:.6rem 0 .4rem; }
-p,table,li,button,input,select,textarea{ font-size:clamp(.92rem, 2.8vw, 1rem); }
-
-/* Ícones muito grandes → limita globalmente */
-svg, i { width:auto; height:auto; max-width:22px; max-height:22px; }
-
-/* Botão do tema (menor no celular) */
-.theme-toggle, .theme-toggle-btn{
-  position:fixed; top:12px; right:12px;
-  width:42px; height:42px; border-radius:50%;
-  background:var(--panel); color:var(--text);
-  border:1px solid var(--border);
-  box-shadow:0 2px 10px var(--shadow);
-  display:flex; align-items:center; justify-content:center;
-  z-index:1000;
+#root {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
-/* Layout principal */
-.app{ background:var(--bg); min-height:100vh; }
-main{
-  width:100%;
-  margin:0; padding:clamp(.8rem, 2.5vw, 1.25rem);
+/* ---------- Títulos e tamanhos fluidos ---------- */
+h1 { font-size: clamp(1.4rem, 3.5vw, 2.2rem); margin: .8rem 0 .6rem; }
+h2 { font-size: clamp(1.15rem, 3vw, 1.6rem); margin: .7rem 0 .5rem; }
+h3 { font-size: clamp(1rem, 2.6vw, 1.3rem); margin: .6rem 0 .4rem; }
+p, table, li, button, input, select, textarea {
+  font-size: clamp(.92rem, 2.8vw, 1rem);
+}
+svg, i { max-width: 22px; max-height: 22px; }
+
+/* ---------- Botão de alternar tema ---------- */
+.theme-toggle, .theme-toggle-btn {
+  position: fixed; top: 12px; right: 12px;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
 }
 
-/* Cards/containers */
-.clients-container, .dashboard-container, .calendar-wrap, .clients-card, .card{
-  background:var(--panel); color:var(--text);
-  border:1px solid var(--border);
-  border-radius:12px;
-  box-shadow:0 2px 8px var(--shadow);
-  padding:clamp(.8rem, 2.5vw, 1.25rem);
+/* ---------- Layout principal ---------- */
+.app { background: var(--bg); min-height: 100vh; }
+main { width: 100%; margin: 0; padding: clamp(.8rem, 2.5vw, 1.25rem); }
+
+/* ---------- Containers e cards ---------- */
+.clients-container, .dashboard-container, .calendar-wrap, .clients-card, .card {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow);
+  padding: clamp(.8rem, 2.5vw, 1.25rem);
 }
 
-/* Header das páginas */
-.clients-header{
-  display:flex; align-items:center; justify-content:space-between;
-  gap:.75rem; margin-bottom:.75rem;
+/* ---------- Cabeçalhos ---------- */
+.clients-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; margin-bottom: .75rem;
 }
-.clients-header h2{ color:var(--accent); }
+.clients-header h2 { color: var(--accent); }
 
-/* Botões */
-button, .btn-new, .btn-save, .btn-cancel, .btn-action, .btn-primary{
-  font-weight:600; border-radius:10px; border:1px solid transparent;
-  cursor:pointer; transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+/* ---------- Botões ---------- */
+button, .btn-new, .btn-save, .btn-cancel, .btn-action, .btn-primary {
+  font-weight: 600; border-radius: 10px; border: 1px solid transparent;
+  cursor: pointer; transition: transform .12s, box-shadow .12s, background .12s;
 }
-.btn-new, .btn-save, .btn-primary{ background:var(--accent); color:#03261f; padding:.65rem .9rem; }
-.btn-action{ background:transparent; color:var(--text); border:1px solid var(--border); padding:.45rem .7rem; }
-.btn-cancel{ background:var(--muted); color:#fff; padding:.55rem .9rem; }
-button:active{ transform:scale(.98); }
+.btn-new, .btn-save, .btn-primary { background: var(--accent); color: #03261f; padding: .65rem .9rem; }
+.btn-action { background: transparent; color: var(--text); border: 1px solid var(--border); padding: .45rem .7rem; }
+.btn-cancel { background: var(--muted); color: #fff; padding: .55rem .9rem; }
+button:active { transform: scale(.98); }
 
-/* Inputs */
-.form-row{ display:grid; gap:.45rem; margin:.6rem 0; }
-.form-row label{ color:var(--muted); font-weight:600; font-size:.92em; }
-input, select, textarea{
-  background:var(--panel); color:var(--text);
-  border:1px solid var(--border); border-radius:10px;
-  padding:.55rem .65rem;
-}
-
-/* Tabelas mais compactas */
-.clients-card{ overflow:auto; }
-.clients-table{
-  width:100%; border-collapse:collapse; min-width:640px;
-  font-size:clamp(.9rem, 2.6vw, .98rem);
-}
-.clients-table th, .clients-table td{
-  border-top:1px solid var(--border);
-  padding:.55rem .6rem;
-}
-.clients-table thead th{
-  background:rgba(0,0,0,0.04);
-  color:var(--text);
+/* ---------- Inputs e formulários ---------- */
+.form-row { display: grid; gap: .45rem; margin: .6rem 0; }
+.form-row label { color: var(--muted); font-weight: 600; font-size: .92em; }
+input, select, textarea {
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: .55rem .65rem;
 }
 
-/* Modal */
-.modal-overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.45);
-  display:grid; place-items:center; z-index:200;
+/* ---------- Tabelas ---------- */
+.clients-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.clients-table th, .clients-table td {
+  border-top: 1px solid var(--border); padding: .55rem .6rem;
 }
-.modal{
-  width:min(92vw, 520px);
-  background:var(--panel); color:var(--text);
-  border:1px solid var(--border); border-radius:14px;
-  padding:1rem; box-shadow:0 10px 40px var(--shadow);
+.clients-table thead th { background: rgba(0,0,0,0.04); color: var(--text); }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: grid; place-items: center; z-index: 3000;
 }
-.modal-actions{ display:flex; gap:.6rem; justify-content:flex-end; flex-wrap:wrap; }
+.modal {
+  width: min(92vw, 520px);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+  box-shadow: 0 10px 40px var(--shadow);
+  position: relative;
+  z-index: 3100;
+}
+.modal-actions { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
 
-/* Navbar/Sidebar — esconda no mobile; use seu MobileMenu */
-.navbar, .sidebar{ display:block; }
-@media (max-width: 900px){
-  .navbar, .sidebar{ display:none !important; }
+/* =========================================
+🧭 Navbar e Sidebar — desktop e mobile
+========================================= */
+.navbar,
+.sidebar {
+  display: block;
+  visibility: visible;
+  z-index: 100;
 }
 
-/* Mobile-only refinamentos */
-@media (max-width: 768px){
-  /* Ícones ainda menores */
-  svg, i { max-width:20px; max-height:20px; }
-
-  /* Botões 100% onde fizer sentido */
-  .btn-new, .btn-save, .btn-cancel{ width:100%; }
-
-  /* Filtros em coluna */
-  .visits-filter-bar{
-    display:flex; flex-direction:column; align-items:stretch; gap:.6rem;
-    background:var(--panel); border:1px solid var(--border);
-    border-radius:10px; padding:.8rem;
+/* 🚫 Evita duplicação de menus no mobile */
+@media (max-width: 900px) {
+  /* Desativa completamente menus desktop */
+  .navbar,
+  .sidebar {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  /* Cards mais colados no topo */
-  .clients-container, .dashboard-container, .calendar-wrap{
-    margin-top:.6rem;
+  /* Garante que apenas o menu mobile fique ativo */
+  .mobile-menu {
+    display: block !important;
+    visibility: visible !important;
+    z-index: 9999 !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 }
+
+
 /* =========================================================
-   🔧 Ajuste fino visual para telas pequenas (APK)
-   ========================================================= */
+🌞 TEMA CLARO REFINADO
+========================================================= */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --text: #1a1a1a;
+  --muted: #4b5563;
+  --accent: #16a34a;
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .modal {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+[data-theme="light"] .form-row label { color: var(--muted); }
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #f9fafb;
+  color: #111;
+  border: 1px solid #ccc;
+}
+
+/* =========================================================
+📱 Mobile — menus, layout e calendário
+========================================================= */
 @media (max-width: 768px) {
-  html {
-    font-size: 87.5%; /* reduz tudo ~12% */
-  }
 
-  body {
-    transform-origin: top center;
-    transform: scale(0.95);
-  }
+  html { font-size: 87.5%; }
+  body { transform-origin: top center; transform: scale(0.97); }
 
-  /* 🪶 Ícones e textos */
-  svg, i {
-    max-width: 20px !important;
-    max-height: 20px !important;
-  }
-
-  button, input, select, textarea {
-    font-size: 0.9rem !important;
-    line-height: 1.3 !important;
-  }
-
-  h1 { font-size: 1.3rem !important; }
-  h2 { font-size: 1.1rem !important; }
-  h3 { font-size: 1rem !important; }
-
-  /* 🔝 Botão do tema (mantém visível e clicável) */
   .theme-toggle, .theme-toggle-btn {
-    top: 8px !important;
-    right: 8px !important;
+    top: 8px !important; right: 8px !important;
     transform: scale(0.8) !important;
   }
 
-  /* ☰ Menu mobile — corrige posicionamento */
-  .mobile-menu {
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 100%;
-    z-index: 9999;
-  }
-
-  .menu-header .brand {
-    font-size: 1.05rem !important;
-  }
-
-  .menu-toggle {
-    font-size: 1.4rem !important;
-  }
-
-  /* 🌗 Corrige contraste das cores de tema */
-  [data-theme="light"] {
-    --bg: #f9fafb;
-    --panel: #ffffff;
-    --text: #121416;
-    --muted: #5a6169;
-    --accent: #1db954;
-  }
-
-  [data-theme="dark"] {
-    --bg: #0c151d;
-    --panel: #14232e;
-    --text: #d9e6eb;
-    --muted: #8ca3af;
-    --accent: #1db954;
-  }
-
-  /* 🧱 Containers mais leves */
-  .clients-container, .dashboard-container, .calendar-wrap {
-    padding: 0.8rem !important;
-    border-radius: 10px !important;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.25) !important;
-  }
-
-  .card, .clients-card {
-    padding: 0.8rem !important;
-    border-radius: 10px !important;
-  }
-}
-/* =========================================================
-📱 Menu Mobile — versão otimizada para APK
-========================================================= */
-@media (max-width: 768px) {
+  /* MENU SUPERIOR */
   .mobile-menu {
     background: var(--panel);
     border-bottom: 1px solid var(--border);
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    position: fixed; /* ← fixo no topo */
-    top: env(safe-area-inset-top, 0); /* respeita área segura */
-    left: 0;
-    right: 0;
+    position: fixed;
+    top: 0; left: 0; right: 0;
     z-index: 9998;
     padding: 0.7rem 1rem;
   }
-
   .menu-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex; justify-content: space-between; align-items: center;
   }
-
   .menu-header .brand {
-    color: var(--accent);
-    font-size: 1.1rem;
-    font-weight: 700;
+    color: var(--accent); font-size: 1.1rem; font-weight: 700;
   }
-
   .menu-toggle {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.6rem;
-    cursor: pointer;
-    z-index: 10000;
+    background: none; border: none; color: var(--text);
+    font-size: 1.6rem; cursor: pointer; z-index: 10000;
   }
-
   .menu-dropdown {
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.5rem;
-    background: var(--panel);
-    border-radius: 10px;
+    display: flex; flex-direction: column; margin-top: 0.5rem;
+    background: var(--panel); border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.25);
     overflow: hidden;
-    position: relative;
-    z-index: 9999;
   }
-
   .menu-dropdown button {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 0.95rem;
-    font-weight: 500;
-    padding: 10px 12px;
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: background 0.2s ease;
+    background: none; border: none; color: var(--text);
+    font-size: 0.95rem; font-weight: 500; padding: 10px 12px;
+    text-align: left; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; transition: background 0.2s ease;
   }
+  .menu-dropdown button:hover { background: rgba(45,211,111,0.1); }
 
-  .menu-dropdown button:hover {
-    background: rgba(45, 211, 111, 0.1);
+  /* CALENDÁRIO */
+  .calendar-wrap, .dashboard-container, .clients-container {
+    width: 100% !important; padding: 1rem !important;
+    border-radius: 12px; box-sizing: border-box;
   }
-
-  .menu-dropdown .logout {
-    color: #ef4444;
-  }
-
-  svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  /* 🌗 Botão tema — canto superior direito, clicável */
-  .theme-toggle,
-  .theme-toggle-btn {
-    position: fixed !important;
-    top: calc(env(safe-area-inset-top, 0) + 10px) !important;
-    right: 10px !important;
-    z-index: 10001 !important;
-    width: 42px;
-    height: 42px;
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    transform: none !important;
-  }
-
-  /* 🔧 Ajuste extra — reduz margens e escala geral */
-  body {
-    transform: none !important;
-    padding-top: calc(env(safe-area-inset-top, 0) + 56px);
-  }
-
-  main {
-    padding-top: 0.8rem !important;
-  }
-}
-/* =========================================================
-📏 Ajuste de layout — caixas fluidas no APK
-========================================================= */
-@media (max-width: 768px) {
-  .calendar-wrap,
-  .dashboard-container,
-  .clients-container,
-  .clients-card,
-  .card {
-    width: 100% !important;
-    min-width: auto !important;
-    padding: 1rem !important;
-    border-radius: 12px;
-    box-sizing: border-box;
-  }
-
-  /* 🗓️ FullCalendar responsivo */
   .fc {
     font-size: 0.85rem !important;
   }
-
   .fc-toolbar {
     flex-wrap: wrap;
     gap: 6px;
     justify-content: center !important;
   }
-
   .fc .fc-daygrid-day {
     min-height: 80px !important;
   }
-
-  .fc .fc-daygrid-day-number {
-    font-size: 0.85rem !important;
-    padding: 2px 4px !important;
-  }
-
   .fc .fc-event {
     font-size: 0.75rem !important;
-    line-height: 1.2 !important;
-    padding: 2px 4px !important;
+    line-height: 1.25 !important;
+    border-radius: 6px !important;
+    padding: 4px 6px !important;
+    white-space: normal !important;
   }
+
+  /* BOTÃO FLUTUANTE */
+  .fab-new-visit {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #2dd36f, #1db954);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 500;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    z-index: 2000;
+    transition: all 0.2s ease-in-out;
+  }
+  .fab-new-visit:hover { transform: scale(1.08); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
+  .fab-new-visit:active { transform: scale(0.96); }
+}
+
+/* =========================================================
+🎨 Campos de formulário uniformes
+========================================================= */
+.modal .form-row {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px;
+}
+.modal .form-row label {
+  font-size: 0.9rem; font-weight: 600; color: var(--muted);
+}
+.modal .form-row input,
+.modal .form-row select,
+.modal .form-row textarea {
+  border-radius: 8px; border: 1px solid var(--border);
+  padding: 10px 12px; font-size: 0.95rem;
+  background: var(--panel); color: var(--text);
+}
+.modal .form-row input:focus,
+.modal .form-row select:focus,
+.modal .form-row textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+  background-color: rgba(45, 211, 111, 0.05);
+}
+/* =========================================
+🎨 Corrige cor sólida dos eventos no calendário
+========================================= */
+.fc-event {
+  border: none !important;
+  background-color: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 4px 6px !important;
+  line-height: 1.25 !important;
+  white-space: pre-line !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* Mantém cor personalizada se definida inline */
+.fc-event[style*="background"] {
+  background-color: inherit !important;
 }
 /* =========================================================
-📅 FullCalendar — Ajustes para celular (APK)
+📅 FULLCALENDAR — AJUSTES FINAIS (APK + DESKTOP)
 ========================================================= */
+
+/* Remove as faixas coloridas (usa fundo sólido dos eventos) */
+.fc-event,
+.fc-h-event,
+.fc-v-event {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  background: none !important; /* ⚠️ necessário para liberar JS pintar o fundo */
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+/* Permite o fundo colorido do JS (eventContent) aparecer corretamente */
+.fc-event div {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Layout compacto e legível */
+.fc-daygrid-day {
+  min-height: 80px !important;
+  vertical-align: top !important;
+}
+
+.fc-daygrid-day-frame {
+  padding: 2px !important;
+}
+
+.fc-daygrid-day-number {
+  font-weight: 600;
+  padding: 2px 4px !important;
+  font-size: 0.85rem !important;
+}
+
+/* Título centralizado */
+.fc-toolbar-title {
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.5px;
+}
+
+/* 📱 Mobile */
 @media (max-width: 768px) {
-  /* 🧱 Contêiner principal */
-  .calendar-page {
-    padding: 0.6rem !important;
-  }
-
-  /* 🔹 Área do calendário em si */
   .fc {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
   }
 
-  /* 🔹 Cabeçalho do calendário */
-  .fc-header-toolbar {
-    flex-direction: column !important;
-    gap: 6px !important;
-  }
-
-  .fc-toolbar-title {
-    font-size: 1.1rem !important;
-    text-align: center;
-  }
-
-  /* 🔹 Botões de navegação */
-  .fc-button {
-    font-size: 0.8rem !important;
-    padding: 4px 8px !important;
-    border-radius: 6px !important;
-  }
-
-  /* 🔹 Altura e rolagem */
-  .fc-view-harness {
-    min-height: 60vh !important;
-    max-height: 75vh !important;
-    overflow-y: auto !important;
-  }
-
-  /* 🔹 Células do calendário */
   .fc-daygrid-day {
-    min-height: 58px !important;
-    cursor: pointer !important;
+    min-height: 68px !important;
   }
 
-  /* 🔹 Eventos */
+  .fc-daygrid-day-frame {
+    padding: 1px 2px !important;
+  }
+
+  .fc-daygrid-day-number {
+    font-size: 0.8rem !important;
+  }
+
   .fc-event {
     font-size: 0.75rem !important;
-    padding: 2px 4px !important;
-    border-radius: 6px !important;
-  }
-
-  /* 🔹 Tooltips e textos */
-  .visit-event {
-    white-space: pre-line !important;
     line-height: 1.25 !important;
-  }
-}
-/* =========================================================
-🌿 UI Modernizada — AgroCRM (Dark + Mobile)
-========================================================= */
-
-/* ---------- HEADER ---------- */
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-/* ---------- BOTÕES ---------- */
-.menu-toggle {
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-.theme-toggle-btn {
-  width: 38px;
-  height: 38px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-/* ---------- MOBILE MENU ---------- */
-.mobile-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 9999;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 60px;
-}
-
-.mobile-menu {
-  width: 92%;
-  background: var(--panel);
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  animation: fadeIn 0.25s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---------- MAIN CONTENT ---------- */
-.main-content {
-  padding: 1.5rem 1rem 2rem;
-  max-width: 1100px;
-  margin: 0 auto;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* ---------- CARDS ---------- */
-.clients-container,
-.dashboard-container,
-.calendar-wrap,
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* ---------- MOBILE REFINES ---------- */
-@media (max-width: 768px) {
-  .app-header {
-    padding: 8px 12px;
+    white-space: pre-line !important;
   }
 
-  .app-title {
-    font-size: 1rem;
+  /* Evita esticamento lateral — rolagem horizontal suave */
+  .fc-view-harness {
+    overflow-x: auto !important;
   }
 
-  .mobile-menu {
-    width: 94%;
-    font-size: 0.9rem;
-  }
-
-  .main-content {
-    padding: 1rem 0.8rem 3.5rem;
-  }
-
-  .clients-container,
-  .dashboard-container,
-  .calendar-wrap {
-    padding: 0.8rem !important;
-  }
-
-  /* Botão do tema menor */
-  .theme-toggle-btn {
-    width: 32px;
-    height: 32px;
-    transform: scale(0.95);
-  }
-
-  /* Ícones menores */
-  svg {
-    width: 18px !important;
-    height: 18px !important;
+  .fc-scrollgrid {
+    min-width: 600px !important;
   }
 }

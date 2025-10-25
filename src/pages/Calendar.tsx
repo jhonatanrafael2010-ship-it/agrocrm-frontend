@@ -409,19 +409,51 @@ if ("geolocation" in navigator) {
         }}
         eventContent={(arg) => {
           const v = arg.event.extendedProps?.raw;
+
+          // Cor sólida de fundo (sem faixas)
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
-          const lines = arg.event.title.split('\n');
+          console.log("🎨 Fundo aplicado:", bg);
+
+
+          // Cria o wrapper principal
           const wrapper = document.createElement('div');
-          wrapper.style.background = bg;
+          wrapper.style.backgroundColor = bg;
           wrapper.style.color = '#fff';
-          wrapper.style.padding = '4px 6px';
-          wrapper.style.borderRadius = '8px';
-          wrapper.style.lineHeight = '1.25';
-          wrapper.style.fontSize = '0.78rem';
+          wrapper.style.padding = '6px 8px';
+          wrapper.style.borderRadius = '10px';
+          wrapper.style.display = 'flex';
+          wrapper.style.flexDirection = 'column';
+          wrapper.style.alignItems = 'flex-start';
+          wrapper.style.justifyContent = 'center';
+          wrapper.style.fontSize = window.innerWidth < 768 ? '0.8rem' : '0.85rem';
+          wrapper.style.lineHeight = '1.3';
+          wrapper.style.wordBreak = 'break-word';
           wrapper.style.whiteSpace = 'pre-line';
-          wrapper.textContent = lines.join('\n');
+          wrapper.style.textAlign = 'left';
+          wrapper.style.boxSizing = 'border-box';
+          wrapper.style.border = 'none'; // 🚫 remove bordas laterais
+          wrapper.style.outline = 'none'; // 🚫 garante fundo limpo
+          wrapper.style.minHeight = '52px';
+
+          // Cria linhas bem organizadas (sem emojis)
+          const infoLines = [
+            `Cliente: ${v?.client_name || '-'}`,
+            `Variedade: ${v?.variety || '-'}`,
+            `Fenologia: ${v?.recommendation?.split('—').pop()?.trim() || '-'}`,
+            `Consultor: ${v?.consultant_name || '-'}`,
+          ];
+
+          infoLines.forEach((line) => {
+            const p = document.createElement('div');
+            p.textContent = line;
+            p.style.margin = '1px 0';
+            wrapper.appendChild(p);
+          });
+
           return { domNodes: [wrapper] };
         }}
+
+
         eventClick={(info) => {
           const v = info.event.extendedProps?.raw;
           if (!v) return;
@@ -445,6 +477,32 @@ if ("geolocation" in navigator) {
         }}
       />
 
+      {/* ➕ Botão flutuante (após o FullCalendar, ainda dentro do return) */}
+      {window.innerWidth <= 768 && (
+        <button
+          className="fab-new-visit"
+          onClick={() => {
+            setForm({
+              id: null,
+              date: new Date().toLocaleDateString('pt-BR'),
+              client_id: '',
+              property_id: '',
+              plot_id: '',
+              consultant_id: '',
+              culture: '',
+              variety: '',
+              recommendation: '',
+              genPheno: true,
+              photos: null,
+              photoPreviews: [],
+              clientSearch: '',
+            });
+            setOpen(true);
+          }}
+        >
+          +
+        </button>
+      )}
 
       {open && (
         <div className="modal-overlay">
