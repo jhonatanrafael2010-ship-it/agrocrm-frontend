@@ -451,6 +451,8 @@ if ("geolocation" in navigator) {
           wrapper.style.border = 'none'; // 🚫 remove bordas laterais
           wrapper.style.outline = 'none'; // 🚫 garante fundo limpo
           wrapper.style.minHeight = '52px';
+          wrapper.classList.add('visit-card');
+          wrapper.setAttribute('data-tooltip', arg.event.extendedProps?.dataTooltip || '');
 
           // Cria linhas bem organizadas (sem emojis)
           const infoLines = [

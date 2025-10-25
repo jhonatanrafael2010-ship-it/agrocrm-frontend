@@ -40,20 +40,25 @@
 /* =========================================================
 🎨 Corrige exibição das cores sólidas dos eventos (Calendar.tsx)
 ========================================================= */
-.fc-event div {
-  background-color: inherit !important;
-  border-radius: 10px !important;
-  padding: 4px 6px !important;
+.calendar-page .fc .fc-daygrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.fc-event,
-.fc-h-event,
-.fc-v-event {
-  border: none !important;
-  overflow: hidden !important;
-  box-shadow: none !important;
-  background-color: transparent !important;
-  color: #fff !important;
+.fc-event .fc-event-main,
+.fc-h-event .fc-event-main,
+.fc-v-event .fc-event-main {
+  background: transparent !important;
+}
+
+.visit-event,
+.visit-card {
+  color: #fff;
+  border-radius: 10px;
+  border: 0;
 }
 
 /* =========================================================
@@ -129,7 +134,10 @@ body[data-platform="mobile"] .app-header {
 
 body[data-platform="mobile"] .menu-toggle {
   margin-top: 2px;
+  transform: translateY(6px);
+  font-size: 1.6rem;
 }
+
 
 /* Garantia visual — fundo uniforme */
 body[data-platform="mobile"] .calendar-wrap {
@@ -137,3 +145,35 @@ body[data-platform="mobile"] .calendar-wrap {
   border-radius: 10px;
   padding: 10px;
 }
+.calendar-page .fc .fc-daygrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event { background: transparent !important; border:none !important; box-shadow:none !important; }
+
+.fc-event .fc-event-main,
+.fc-h-event .fc-event-main,
+.fc-v-event .fc-event-main { background: transparent !important; }
+
+.visit-event, .visit-card { color:#fff; border-radius:10px; border:0; }
+
+/* Rolagem horizontal onde preciso */
+.dashboard-container, .clients-card { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+/* APK – posicionamento do menu e modal menor */
+body[data-platform="mobile"] .menu-toggle { transform: translateY(6px); }
+
+/* Rolagem horizontal onde preciso */
+.dashboard-container,
+.clients-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+@media (max-width:768px){
+  .modal {
+    width: min(92vw, 480px);
+    max-height: 85vh;
+    overflow: auto;
+  }
+}
+
