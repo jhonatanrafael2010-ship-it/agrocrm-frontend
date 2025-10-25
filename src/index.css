@@ -91,13 +91,13 @@ html, body {
 /* 🌗 Botão de alternância de tema */
 /* ============================= */
 [data-theme='light'] .theme-toggle-btn {
-  background: #fff7d1;
-  color: #e39b00;
+  background: var(--panel);
+  color: var(--text);
 }
 
 [data-theme='dark'] .theme-toggle-btn {
-  background: #1e1e1e;
-  color: #c2d1ff;
+  background: var(--panel);
+  color: var(--text);
 }
 
 
@@ -159,8 +159,8 @@ button, .btn-new, .btn-save, .btn-primary, .btn-action {
 }
 
 .btn-new, .btn-save, .btn-primary {
-  background: var(--accent);
-  color: #02251f;
+  background: var(--panel);
+  color: var(--text);
   padding: 8px 12px;
 }
 
@@ -207,7 +207,7 @@ label { color: var(--muted); font-size: 0.9rem; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: var(--panel);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -245,12 +245,12 @@ label { color: var(--muted); font-size: 0.9rem; }
 .fc .fc-toolbar-title { color: var(--text); }
 .fc .fc-button {
   background: var(--accent);
-  color: #02251f;
+  color: var(--text);
   border: none;
 }
 .fc .fc-daygrid-event {
   background: var(--accent);
-  color: #02251f;
+  color: var(--text);
 }
 
 /* ------------------ */
@@ -291,13 +291,13 @@ label { color: var(--muted); font-size: 0.9rem; }
 
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.5);
+  background: var(--panel);
   display: grid; place-items: center;
   z-index: 50;
 }
 .modal {
-  background: #0d1f1b;
-  color: #cde5df;
+  background: var(--panel);
+  color: var(--text);
   border: 1px solid #20423b;
   border-radius: 12px;
   width: 520px; max-width: 95vw;
@@ -305,11 +305,11 @@ label { color: var(--muted); font-size: 0.9rem; }
 }
 .form-row { display: grid; gap: 6px; margin: 10px 0; }
 .form-row input, .form-row select, .form-row textarea {
-  background: #0b1715; color: #eaf6f3; border: 1px solid #1e3a36; border-radius: 8px; padding: 8px;
+  background: var(--panel); color: var(--text); border: 1px solid #1e3a36; border-radius: 8px; padding: 8px;
 }
-.modal-actions .btn-cancel { background: #2b3b38; color: #fff; border-radius: 8px; padding: 8px 12px; border: none; }
-.modal-actions .btn-save { background: #31d0aa; color: #02251f; border-radius: 8px; padding: 8px 12px; border: none; font-weight: 700; }
-.modal-actions .btn-delete { background: #dc2626; color: #fff; border-radius: 8px; padding: 8px 12px; border: none; }
+.modal-actions .btn-cancel { background: var(--panel); color: var(--text); border-radius: 8px; padding: 8px 12px; border: none; }
+.modal-actions .btn-save { background: var(--panel); color: var(--text); border-radius: 8px; padding: 8px 12px; border: none; font-weight: 700; }
+.modal-actions .btn-delete {background: var(--panel); color: var(--text); border-radius: 8px; padding: 8px 12px; border: none; }
 /* ============================================================
    🧾 Tooltip e layout compacto no calendário
    ============================================================ */
@@ -333,8 +333,8 @@ label { color: var(--muted); font-size: 0.9rem; }
   top: -6px;
   left: 50%;
   transform: translate(-50%, -100%);
-  background: rgba(0, 0, 0, 0.9);
-  color: #fff;
+  background: var(--panel);
+  color: var(--text);
   padding: 6px 8px;
   border-radius: 8px;
   font-size: 12px;
@@ -381,8 +381,8 @@ label { color: var(--muted); font-size: 0.9rem; }
   left: 50%;
   top: -6px;
   transform: translate(-50%, -100%);
-  background: rgba(20, 30, 35, 0.95);
-  color: #e3f6f5;
+  background: var(--panel);
+  color: var(--text);
   white-space: pre;
   font-size: 0.78rem;
   line-height: 1.3;
@@ -411,4 +411,20 @@ label { color: var(--muted); font-size: 0.9rem; }
 .fc .fc-daygrid-day-number {
   color: var(--text);
   font-weight: 500;
+}
+/* =========================================================
+   🌿 Ajustes visuais globais para APK
+   ========================================================= */
+@media (max-width: 768px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+  button, input, select, textarea {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .card, .clients-card {
+    padding: 1rem;
+    border-radius: 10px;
+  }
 }

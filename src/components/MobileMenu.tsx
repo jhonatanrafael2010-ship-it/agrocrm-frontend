@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 
-const MobileMenu: React.FC = () => {
+interface MobileMenuProps {
+  onNavigate: (route: string) => void;
+}
+
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate }) => {
   const [open, setOpen] = useState(false);
+
+  const handleNavigate = (route: string) => {
+    onNavigate(route);
+    setOpen(false);
+  };
 
   return (
     <div className="mobile-menu">
@@ -9,7 +18,7 @@ const MobileMenu: React.FC = () => {
         <span className="brand">AgroCRM</span>
         <button
           className="menu-toggle"
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={() => setOpen(!open)}
           aria-label="Abrir menu"
         >
           ☰
@@ -18,12 +27,13 @@ const MobileMenu: React.FC = () => {
 
       {open && (
         <nav className="menu-dropdown">
-          <a href="#dashboard" onClick={() => setOpen(false)}>📊 Dashboard</a>
-          <a href="#clients" onClick={() => setOpen(false)}>👨‍🌾 Clientes</a>
-          <a href="#fields" onClick={() => setOpen(false)}>🌱 Talhões</a>
-          <a href="#calendar" onClick={() => setOpen(false)}>🗓️ Calendário</a>
-          <a href="#visits" onClick={() => setOpen(false)}>🚜 Visitas</a>
-          <a href="#logout" onClick={() => setOpen(false)}>🚪 Sair</a>
+          <button onClick={() => handleNavigate('Dashboard')}>📊 Dashboard</button>
+          <button onClick={() => handleNavigate('Clientes')}>👨‍🌾 Clientes</button>
+          <button onClick={() => handleNavigate('Propriedades')}>🏡 Propriedades</button>
+          <button onClick={() => handleNavigate('Calendário')}>🗓️ Calendário</button>
+          <button onClick={() => handleNavigate('Acompanhamentos')}>🚜 Acompanhamentos</button>
+          <button onClick={() => handleNavigate('Oportunidades')}>💼 Oportunidades</button>
+          <button onClick={() => alert('🚪 Logout realizado!')}>🚪 Sair</button>
         </nav>
       )}
     </div>

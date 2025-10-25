@@ -57,7 +57,7 @@ console.log('📦 App renderizou com rota:', route)
 return (
   <>
     {/* 🔝 Menu mobile no topo */}
-    <MobileMenu />
+    <MobileMenu onNavigate={setRoute} />
 
     {/* 🌗 Botão flutuante de modo claro/escuro */}
     <button onClick={toggleTheme} className="theme-toggle">
