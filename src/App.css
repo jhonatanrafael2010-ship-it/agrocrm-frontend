@@ -109,3 +109,188 @@ h1 {
   padding: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
+/* =========================================================
+🌿 BASE DO APLICATIVO (Desktop + APK)
+========================================================= */
+
+.app {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ----------------------------------------
+🧭 Cabeçalho superior
+---------------------------------------- */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 6px var(--shadow);
+  height: 58px;
+  padding: 0 1rem;
+  z-index: 100;
+  position: relative;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+/* ----------------------------------------
+🌗 Botão de alternar tema
+---------------------------------------- */
+.theme-toggle-btn {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--shadow);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.theme-toggle-btn:hover {
+  background: rgba(45, 211, 111, 0.1);
+}
+
+/* ----------------------------------------
+☰ Botão de menu mobile
+---------------------------------------- */
+.menu-toggle {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 10000;
+  padding: 0;
+  margin: 0;
+}
+
+/* ----------------------------------------
+📄 Conteúdo principal
+---------------------------------------- */
+.main-content {
+  flex: 1;
+  width: 100%;
+  margin-left: 240px;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  transition: margin 0.3s ease;
+}
+
+/* Quando a sidebar estiver oculta ou no mobile */
+body[data-platform="mobile"] .main-content {
+  margin-left: 0 !important;
+  padding-top: 70px !important; /* evita sobreposição com header fixo */
+  padding-bottom: 70px !important;
+}
+
+/* ----------------------------------------
+📱 Layout Mobile (APK)
+---------------------------------------- */
+body[data-platform="mobile"] .app-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  height: 56px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
+body[data-platform="mobile"] .app-title {
+  font-size: 1.1rem;
+}
+
+body[data-platform="mobile"] .menu-toggle {
+  font-size: 1.9rem;
+}
+
+/* Corrige sobreposição e largura no mobile */
+body[data-platform="mobile"] {
+  overflow-x: hidden !important;
+}
+
+/* ----------------------------------------
+🧭 Overlay do menu mobile
+---------------------------------------- */
+.mobile-overlay {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9998;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Dropdown interno do menu mobile */
+.menu-dropdown {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+  width: 88%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.menu-dropdown button {
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.menu-dropdown button:hover {
+  background: rgba(45, 211, 111, 0.1);
+}
+
+/* ----------------------------------------
+💻 Desktop refinado
+---------------------------------------- */
+@media (min-width: 901px) {
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+
+  .main-content {
+    margin-left: 240px !important;
+    padding-top: 1.5rem;
+  }
+}

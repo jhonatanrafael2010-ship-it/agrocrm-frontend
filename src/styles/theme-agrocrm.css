@@ -312,19 +312,6 @@ input, select, textarea {
   outline: none;
   background-color: rgba(45, 211, 111, 0.05);
 }
-/* =========================================
-🎨 Corrige cor sólida dos eventos no calendário
-========================================= */
-.fc-event {
-  border: none !important;
-  background-color: var(--accent) !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  padding: 4px 6px !important;
-  line-height: 1.25 !important;
-  white-space: pre-line !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
 
 /* =========================================================
 📅 FULLCALENDAR — AJUSTES FINAIS (APK + DESKTOP)
@@ -401,4 +388,98 @@ input, select, textarea {
   .fc-scrollgrid {
     min-width: 600px !important;
   }
+}
+/* =========================================================
+📱 CORREÇÕES FINAIS — LAYOUT APK (sem interferir desktop)
+========================================================= */
+body[data-platform="mobile"] {
+  overflow-x: hidden !important;
+}
+
+/* HEADER SUPERIOR FIXO E CLICÁVEL */
+body[data-platform="mobile"] .app-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* TÍTULO E MENU SUPERIOR */
+body[data-platform="mobile"] .app-title {
+  font-size: 1.1rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0;
+}
+
+body[data-platform="mobile"] .menu-toggle {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 10000;
+  padding: 0;
+  margin: 0;
+}
+
+/* RECUO DO CONTEÚDO PRINCIPAL PARA NÃO FICAR SOB O HEADER */
+body[data-platform="mobile"] .main-content {
+  padding-top: 70px !important;
+  padding-bottom: 70px !important;
+  margin-left: 0 !important;
+}
+
+/* AJUSTA OS CARDS DO DASHBOARD */
+body[data-platform="mobile"] .cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+body[data-platform="mobile"] .clients-card,
+body[data-platform="mobile"] .dashboard-section {
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+/* EVITA LARGURA MAIOR QUE A TELA */
+body[data-platform="mobile"] main,
+body[data-platform="mobile"] .dashboard-container,
+body[data-platform="mobile"] .clients-container {
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  padding: 0.8rem !important;
+}
+
+/* MENU MOBILE OVERLAY */
+body[data-platform="mobile"] .mobile-overlay {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9998;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* DROPDOWN DO MENU */
+body[data-platform="mobile"] .menu-dropdown {
+  margin-top: 1rem;
+  width: 90%;
+  border-radius: 12px;
+  overflow: hidden;
 }

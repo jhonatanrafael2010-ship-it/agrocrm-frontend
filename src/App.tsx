@@ -119,10 +119,6 @@ return (
     )}
 
 
-    {/* 🧭 Navbar lateral (somente desktop) */}
-    {window.innerWidth > 900 && (
-      <Navbar activeItem={route} onNavigate={setRoute} />
-    )}
 
     {/* 📄 Conteúdo principal */}
     <main
