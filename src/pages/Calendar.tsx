@@ -443,7 +443,9 @@ if ("geolocation" in navigator) {
           wrapper.style.fontSize = window.innerWidth < 768 ? '0.8rem' : '0.85rem';
           wrapper.style.lineHeight = '1.3';
           wrapper.style.wordBreak = 'break-word';
-          wrapper.style.whiteSpace = 'pre-line';
+          wrapper.style.whiteSpace = 'normal';
+          wrapper.style.wordBreak = 'break-word';
+          wrapper.style.textAlign = 'left';
           wrapper.style.textAlign = 'left';
           wrapper.style.boxSizing = 'border-box';
           wrapper.style.border = 'none'; // 🚫 remove bordas laterais

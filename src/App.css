@@ -78,37 +78,6 @@ h1 {
   color: var(--text);
 }
 
-/* ====== Calendário (FullCalendar) ====== */
-.fc-toolbar-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.fc .fc-col-header-cell-cushion,
-.fc .fc-daygrid-day-number {
-  font-weight: 500;
-  text-transform: lowercase;
-  padding: 2px 4px;
-}
-
-/* remove duplicações visuais */
-.fc .fc-toolbar-chunk > .fc-toolbar-title + .fc-toolbar-title {
-  display: none !important;
-}
-
-/* mantém espaçamento consistente */
-.calendar-page {
-  color: var(--text);
-  padding-top: 8px;
-}
-
-.calendar-wrap {
-  background: var(--panel);
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
 /* =========================================================
 🌿 BASE DO APLICATIVO (Desktop + APK)
 ========================================================= */
@@ -210,18 +179,23 @@ body[data-platform="mobile"] .main-content {
 ---------------------------------------- */
 body[data-platform="mobile"] .app-header {
   position: fixed !important;
-  top: 0;
+  top: 6px;
   left: 0;
   right: 0;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
-  height: 56px;
+  height: 54px;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
 }
+
+body[data-platform="mobile"] .menu-toggle {
+  margin-top: 2px;
+}
+
 
 body[data-platform="mobile"] .app-title {
   font-size: 1.1rem;
