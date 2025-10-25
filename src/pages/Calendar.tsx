@@ -171,33 +171,6 @@ const CalendarPage: React.FC = () => {
     return '#3b82f6'                          // azul
   }
 
-  // ==============================
-  // handlers
-  // ==============================
-  const handleDateSelect = (info: any) => {
-    const [y, m, d] = info.startStr.split('-');
-
-    // 🧹 limpa tudo ao abrir "Nova Visita"
-    setForm({
-      id: null,
-      date: `${d}/${m}/${y}`,
-      client_id: '',
-      property_id: '',
-      plot_id: '',
-      consultant_id: '',
-      culture: '',
-      variety: '',
-      recommendation: '',
-      genPheno: true,
-      photos: null,
-      photoPreviews: [],
-      clientSearch: ''
-    });
-    
-    setOpen(true);
-  };
-
-
   const handleChange = (e: any) => {
     const { name, value } = e.target
     setForm(f => ({ ...f, [name]: value }))
@@ -402,24 +375,42 @@ if ("geolocation" in navigator) {
         locales={[ptBrLocale]}
         locale="pt-br"
         initialView="dayGridMonth"
-        selectable
-        select={handleDateSelect}
+        height={window.innerWidth < 768 ? 'auto' : 650}
+        expandRows={true}
+        dateClick={(info) => {
+          const dateStr = info.dateStr;
+          const [y, m, d] = dateStr.split('-');
+          setForm({
+            id: null,
+            date: `${d}/${m}/${y}`,
+            client_id: '',
+            property_id: '',
+            plot_id: '',
+            consultant_id: '',
+            culture: '',
+            variety: '',
+            recommendation: '',
+            genPheno: true,
+            photos: null,
+            photoPreviews: [],
+            clientSearch: ''
+          });
+          setOpen(true);
+        }}
         events={events.filter(e => {
           if (!selectedConsultant) return true;
           const cid = e.extendedProps?.raw?.consultant_id;
           return String(cid || '') === selectedConsultant;
         })}
-        height={650}
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
         eventContent={(arg) => {
-          const v = arg.event.extendedProps?.raw as Visit;
+          const v = arg.event.extendedProps?.raw;
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
           const lines = arg.event.title.split('\n');
-
           const wrapper = document.createElement('div');
           wrapper.style.background = bg;
           wrapper.style.color = '#fff';
@@ -428,18 +419,11 @@ if ("geolocation" in navigator) {
           wrapper.style.lineHeight = '1.25';
           wrapper.style.fontSize = '0.78rem';
           wrapper.style.whiteSpace = 'pre-line';
-          wrapper.style.overflow = 'hidden';
-          wrapper.style.textOverflow = 'ellipsis';
-          wrapper.style.display = 'block';
-          wrapper.style.minHeight = '60px';
-          wrapper.style.maxHeight = '84px';
-          wrapper.style.cursor = 'pointer';
           wrapper.textContent = lines.join('\n');
-
           return { domNodes: [wrapper] };
         }}
         eventClick={(info) => {
-          const v = info.event.extendedProps?.raw as Visit;
+          const v = info.event.extendedProps?.raw;
           if (!v) return;
           const d = v.date ? new Date(v.date) : null;
           setForm({
@@ -460,6 +444,7 @@ if ("geolocation" in navigator) {
           setOpen(true);
         }}
       />
+
 
       {open && (
         <div className="modal-overlay">

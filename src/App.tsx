@@ -58,20 +58,21 @@ const [menuOpen, setMenuOpen] = useState(false);
 
 return (
   <div className="app">
-    {/* 🔝 Cabeçalho fixo com menu e botão de tema */}
+    {/* 🔝 Cabeçalho fixo com título e botões */}
     <header className="app-header">
-      {/* ☰ Botão de menu (controla exibição do MobileMenu) */}
-      <button
-        className="menu-toggle"
-        onClick={() => setMenuOpen((prev) => !prev)}
-        aria-label="Abrir menu"
-      >
-        ☰
-      </button>
+      <div className="header-left">
+        {/* ☰ Botão de menu mobile */}
+        <button
+          className="menu-toggle"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Abrir menu"
+        >
+          ☰
+        </button>
+        <h1 className="app-title">AgroCRM</h1>
+      </div>
 
-      <h1 className="app-title">AgroCRM</h1>
-
-      {/* 🌗 Botão de alternar tema claro/escuro */}
+      {/* 🌗 Alternar tema claro/escuro */}
       <button onClick={toggleTheme} className="theme-toggle-btn">
         {theme === 'dark' ? (
           <Moon size={18} strokeWidth={1.6} />
@@ -81,21 +82,29 @@ return (
       </button>
     </header>
 
-    {/* 📱 Menu mobile (abre ao clicar no botão ☰) */}
-    {menuOpen && <MobileMenu onNavigate={(r) => { setRoute(r); setMenuOpen(false); }} />}
+    {/* 📱 Menu mobile (renderiza fora do header, apenas quando aberto) */}
+    {menuOpen && (
+      <div className="mobile-overlay">
+        <MobileMenu
+          onNavigate={(r) => {
+            setRoute(r);
+            setMenuOpen(false);
+          }}
+        />
+      </div>
+    )}
 
-    {/* 🧭 Navbar lateral (mantém no desktop) */}
-    <Navbar activeItem={route} onNavigate={setRoute} />
+    {/* 🧭 Navbar lateral (somente desktop) */}
+    {window.innerWidth > 900 && (
+      <Navbar activeItem={route} onNavigate={setRoute} />
+    )}
 
-    {/* 🧱 Conteúdo principal */}
+    {/* 📄 Conteúdo principal */}
     <main
       key={route}
+      className="main-content"
       style={{
-        padding: '1.5rem 1rem 2rem',
-        maxWidth: 1100,
-        margin: '0 auto',
-        marginLeft: window.innerWidth > 768 ? 240 : 0,
-        transition: 'background-color 0.3s ease, color 0.3s ease',
+        marginLeft: window.innerWidth > 900 ? 240 : 0,
       }}
     >
       {route === 'Clientes' ? (
