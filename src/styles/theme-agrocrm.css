@@ -152,3 +152,83 @@ input, select, textarea{
     margin-top:.6rem;
   }
 }
+/* =========================================================
+   🔧 Ajuste fino visual para telas pequenas (APK)
+   ========================================================= */
+@media (max-width: 768px) {
+  html {
+    font-size: 87.5%; /* reduz tudo ~12% */
+  }
+
+  body {
+    transform-origin: top center;
+    transform: scale(0.95);
+  }
+
+  /* 🪶 Ícones e textos */
+  svg, i {
+    max-width: 20px !important;
+    max-height: 20px !important;
+  }
+
+  button, input, select, textarea {
+    font-size: 0.9rem !important;
+    line-height: 1.3 !important;
+  }
+
+  h1 { font-size: 1.3rem !important; }
+  h2 { font-size: 1.1rem !important; }
+  h3 { font-size: 1rem !important; }
+
+  /* 🔝 Botão do tema (mantém visível e clicável) */
+  .theme-toggle, .theme-toggle-btn {
+    top: 8px !important;
+    right: 8px !important;
+    transform: scale(0.8) !important;
+  }
+
+  /* ☰ Menu mobile — corrige posicionamento */
+  .mobile-menu {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100%;
+    z-index: 9999;
+  }
+
+  .menu-header .brand {
+    font-size: 1.05rem !important;
+  }
+
+  .menu-toggle {
+    font-size: 1.4rem !important;
+  }
+
+  /* 🌗 Corrige contraste das cores de tema */
+  [data-theme="light"] {
+    --bg: #f9fafb;
+    --panel: #ffffff;
+    --text: #121416;
+    --muted: #5a6169;
+    --accent: #1db954;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0c151d;
+    --panel: #14232e;
+    --text: #d9e6eb;
+    --muted: #8ca3af;
+    --accent: #1db954;
+  }
+
+  /* 🧱 Containers mais leves */
+  .clients-container, .dashboard-container, .calendar-wrap {
+    padding: 0.8rem !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.25) !important;
+  }
+
+  .card, .clients-card {
+    padding: 0.8rem !important;
+    border-radius: 10px !important;
+  }
+}
