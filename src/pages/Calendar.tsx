@@ -486,42 +486,73 @@ const markDone = async () => {
             (v?.recommendation?.split('—').pop() || v?.recommendation || '') + ''
           ).trim() || '-';
 
-          // Cartão colorido
-          const wrapper = document.createElement('div');
-          wrapper.className = 'visit-card';
-          wrapper.style.backgroundColor = bg;
-          wrapper.style.color = '#fff';
-          wrapper.style.display = 'block';
-          wrapper.style.width = '100%';
-          wrapper.style.padding = '6px 8px';
-          wrapper.style.borderRadius = '10px';
-          wrapper.style.boxSizing = 'border-box';
-          wrapper.style.textAlign = 'left';
-          wrapper.style.lineHeight = '1.35';
-          wrapper.style.fontSize = (window.innerWidth < 420) ? '0.8rem' : '0.85rem';
+         // Cartão colorido
+        const wrapper = document.createElement('div');
+        wrapper.className = 'visit-card';
+        wrapper.style.backgroundColor = bg;
+        wrapper.style.color = '#fff';
+        wrapper.style.padding = '6px 8px';
+        wrapper.style.borderRadius = '10px';
+        wrapper.style.boxSizing = 'border-box';
 
-          // ⚠️ Nada de “anywhere” (isso causava quebra por letra)
-          wrapper.style.whiteSpace = 'normal';
-          wrapper.style.wordBreak = 'normal';
-          wrapper.style.overflowWrap = 'break-word';
+        // 🔹 Tamanho e espaçamento dinâmico
+        wrapper.style.fontSize = window.innerWidth < 420 ? '0.8rem' : '0.9rem';
+        wrapper.style.lineHeight = '1.35';
 
-          const addRow = (text: string) => {
-            const row = document.createElement('div');
-            row.textContent = text;
-            row.style.margin = '1px 0';
-            row.style.whiteSpace = 'normal';
-            row.style.wordBreak = 'normal';
-            row.style.overflow = 'visible';
-            row.style.textOverflow = 'clip';
-            wrapper.appendChild(row);
-          };
+        // 🔹 Layout vertical dentro do cartão
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.alignItems = 'flex-start';
+        wrapper.style.justifyContent = 'center';
 
-          addRow(`👤 ${v?.client_name || '-'}`);
-          addRow(`🌱 ${v?.variety || '-'}`);
-          addRow(`📍 ${stage}`);
-          addRow(`👨‍🌾 ${v?.consultant_name || '-'}`);
+        // 🔹 Permitir deslizar lateralmente se o texto for grande
+        wrapper.style.width = 'max-content';
+        wrapper.style.minWidth = '90px';
+        wrapper.style.maxWidth = '140px';
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.overflowY = 'hidden';
+        wrapper.style.scrollbarWidth = 'none';
+        (wrapper.style as any).msOverflowStyle = 'none';
 
-          return { domNodes: [wrapper] };
+        // 🔹 Remove barras e quebras erradas
+        wrapper.style.whiteSpace = 'nowrap';
+        wrapper.style.wordBreak = 'keep-all';
+        wrapper.style.textAlign = 'left';
+        wrapper.style.boxShadow = 'none';
+        wrapper.style.border = 'none';
+        wrapper.style.outline = 'none';
+
+        // 🔹 Oculta barra de rolagem visual (mobile)
+        wrapper.addEventListener('wheel', (e) => e.stopPropagation());
+        wrapper.addEventListener('touchmove', (e) => e.stopPropagation());
+        wrapper.addEventListener('scroll', (e) => {
+          const el = e.currentTarget as HTMLElement | null;
+          if (el) el.style.scrollbarWidth = 'none';
+        });
+
+        // =====================================================
+        // 🧩 Função de adicionar linhas (uma linha por campo)
+        // =====================================================
+        const addRow = (text: string) => {
+          const row = document.createElement('div');
+          row.textContent = text;
+          row.style.margin = '2px 0';
+          row.style.whiteSpace = 'nowrap';
+          row.style.wordBreak = 'keep-all';
+          row.style.overflow = 'visible';
+          row.style.textOverflow = 'clip';
+          wrapper.appendChild(row);
+        };
+
+        // =====================================================
+        // 🧾 Conteúdo da visita (1 linha por informação)
+        // =====================================================
+        addRow(`👤 ${v?.client_name || '-'}`);
+        addRow(`🌱 ${v?.variety || '-'}`);
+        addRow(`📍 ${stage}`);
+        addRow(`👨‍🌾 ${v?.consultant_name || '-'}`);
+
+        return { domNodes: [wrapper] };
         }}
 
 
