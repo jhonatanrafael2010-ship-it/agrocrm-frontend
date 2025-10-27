@@ -1,5 +1,5 @@
 /* =========================================================
-🌿 THEME-AGROCRM.CSS — Atualizado e Validado
+🌿 THEME-AGROCRM.CSS — Versão Desktop Only (2025)
 ========================================================= */
 
 /* ---------- Paleta base (claro) ---------- */
@@ -36,11 +36,11 @@
   background: #0e1c27 !important;
   border-color: #1f2d36 !important;
 }
+
 /* =========================================================
 🎨 FullCalendar — Cores sólidas das visitas
 ========================================================= */
 
-/* container do evento sem paddings/bordas que criam “faixas” */
 .calendar-page .fc-daygrid-event,
 .calendar-page .fc-timegrid-event,
 .calendar-page .fc-h-event,
@@ -53,15 +53,11 @@
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
-  outline: none !important;
   padding: 0 !important;
   border-radius: 0 !important;
 }
 
-/* camadas internas do FullCalendar também sem fundo */
 .calendar-page .fc-event-main,
-.calendar-page .fc-event-main-frame,
-.calendar-page .fc-event-title-container,
 .fc-event-main,
 .fc-event-main-frame,
 .fc-event-title-container {
@@ -85,8 +81,6 @@
   line-height: 1.35 !important;
   text-align: left !important;
   box-sizing: border-box !important;
-
-  /* texto em 4 linhas, sem truncar/letras cortadas */
   white-space: normal !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
@@ -94,32 +88,26 @@
   font-weight: 500 !important;
 }
 
-/* cada linha interna do cartão */
 .calendar-page .visit-card > div {
   margin: 1px 0;
   white-space: normal !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
-  text-overflow: clip !important;
-  overflow: visible !important;
 }
 
-/* ===== APK apenas ===== */
-body[data-platform="mobile"] .calendar-page .fc-view-harness {
-  overflow-x: auto !important; /* rolagem horizontal no APK */
-}
-body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
-  min-width: 600px !important; /* evita “apertar” o mês no APK */
-}
-
-/* tipografia um pouco menor no APK */
-body[data-platform="mobile"] .calendar-page .visit-card {
-  font-size: 0.85rem;
-  line-height: 1.35;
-}
-
-/* No site (desktop), limpe qualquer ajuste de min-width/overflow */
+/* =========================================================
+💻 Ajustes específicos para desktop
+========================================================= */
 @media (min-width: 901px) {
-  .calendar-page .fc-view-harness { overflow: visible !important; }
-  .calendar-page .fc-scrollgrid { min-width: auto !important; }
+  body {
+    overflow-x: hidden;
+  }
+
+  .calendar-page .fc {
+    font-size: 0.95rem;
+  }
+
+  .visit-card {
+    max-width: 95%;
+  }
 }

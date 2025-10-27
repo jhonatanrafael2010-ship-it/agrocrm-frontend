@@ -1,7 +1,15 @@
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './styles/index.css'
 import App from './App.tsx'
 import './styles/theme-agrocrm.css';
+
+
+// 📱 Detecta automaticamente se é versão mobile (APK)
+if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
+  document.body.setAttribute('data-platform', 'mobile');
+} else {
+  document.body.setAttribute('data-platform', 'desktop');
+}
 
 
 // 🧹 Script automático para limpar cache ao detectar nova versão

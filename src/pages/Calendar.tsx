@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import DarkSelect from '../components/DarkSelect'
-import './Calendar.css'
+import '../styles/Calendar.css'
 import { Camera, CameraResultType } from '@capacitor/camera'
 import { Geolocation } from '@capacitor/geolocation'
 

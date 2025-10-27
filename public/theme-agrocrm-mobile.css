@@ -1,0 +1,149 @@
+/* =========================================================
+📱 THEME-AGROCRM-MOBILE.CSS — Layout com Modo Escuro Dinâmico
+Ativado quando body[data-platform="mobile"]
+========================================================= */
+
+/* ---------- Tema claro ---------- */
+body[data-platform="mobile"][data-theme="light"],
+@media (prefers-color-scheme: light) {
+  --bg-mobile: #f7f9fb;
+  --panel-mobile: #ffffff;
+  --text-mobile: #101418;
+  --muted-mobile: #444a52;
+  --accent-mobile: #2dd36f;
+  --border-mobile: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- Tema escuro ---------- */
+body[data-platform="mobile"][data-theme="dark"],
+@media (prefers-color-scheme: dark) {
+  --bg-mobile: #0b1620;
+  --panel-mobile: #0e1c27;
+  --text-mobile: #dfeff0;
+  --muted-mobile: #9fb3b6;
+  --accent-mobile: #2dd36f;
+  --border-mobile: rgba(255, 255, 255, 0.06);
+}
+
+/* =========================================================
+🎨 Estrutura geral mobile
+========================================================= */
+body[data-platform="mobile"],
+body[data-platform="mobile"] .app,
+body[data-platform="mobile"] .main {
+  background: var(--bg-mobile) !important;
+  color: var(--text-mobile) !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+  font-family: "Inter", sans-serif !important;
+}
+
+/* Header */
+body[data-platform="mobile"] .app-header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  background: var(--panel-mobile) !important;
+  border-bottom: 1px solid var(--border-mobile);
+  color: var(--text-mobile) !important;
+  z-index: 9999;
+}
+
+body[data-platform="mobile"] .app-title {
+  font-size: 1.05rem !important;
+  font-weight: 700;
+  color: var(--accent-mobile) !important;
+}
+
+/* Ícones e botões */
+body[data-platform="mobile"] .menu-toggle {
+  font-size: 1.6rem !important;
+  margin-top: 2px;
+}
+
+body[data-platform="mobile"] .theme-toggle-btn {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 1.4rem !important;
+}
+
+/* Cards e painéis */
+body[data-platform="mobile"] .card,
+body[data-platform="mobile"] .panel,
+body[data-platform="mobile"] .box {
+  background: var(--panel-mobile) !important;
+  border: 1px solid var(--border-mobile) !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  margin: 6px 0 !important;
+  color: var(--text-mobile) !important;
+}
+
+/* Inputs e selects */
+body[data-platform="mobile"] input,
+body[data-platform="mobile"] select,
+body[data-platform="mobile"] textarea {
+  height: 34px !important;
+  font-size: 0.85rem !important;
+  border-radius: 8px !important;
+  background: var(--panel-mobile) !important;
+  border: 1px solid var(--border-mobile) !important;
+  color: var(--text-mobile) !important;
+}
+
+/* Botões e tabs */
+body[data-platform="mobile"] button,
+body[data-platform="mobile"] .btn,
+body[data-platform="mobile"] .tab {
+  font-size: 0.8rem !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  color: var(--text-mobile) !important;
+}
+
+/* Ajustes de conteúdo principal */
+body[data-platform="mobile"] .main-content {
+  padding-top: 64px !important;
+  padding-bottom: 64px !important;
+}
+
+/* FullCalendar */
+body[data-platform="mobile"] .calendar-page .fc-view-harness {
+  overflow-x: auto !important;
+}
+
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
+  min-width: 600px !important;
+}
+
+body[data-platform="mobile"] .calendar-page .visit-card {
+  font-size: 0.78rem !important;
+  line-height: 1.25 !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+}
+
+/* Scroll */
+body[data-platform="mobile"] ::-webkit-scrollbar {
+  width: 4px;
+}
+body[data-platform="mobile"] ::-webkit-scrollbar-thumb {
+  background: var(--border-mobile);
+  border-radius: 4px;
+}
+
+/* Modal */
+body[data-platform="mobile"] .modal {
+  grid-template-columns: 1fr !important;
+  width: 94vw !important;
+  max-height: 90vh !important;
+  padding: 20px !important;
+  background: var(--panel-mobile) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border-mobile) !important;
+}
