@@ -36,201 +36,56 @@
   background: #0e1c27 !important;
   border-color: #1f2d36 !important;
 }
-
 /* =========================================================
 🎨 Corrige exibição das cores sólidas dos eventos (Calendar.tsx)
 ========================================================= */
-.calendar-page .fc .fc-daygrid-event,
-.calendar-page .fc-h-event,
-.calendar-page .fc-v-event {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
 
-.fc-event .fc-event-main,
-.fc-h-event .fc-event-main,
-.fc-v-event .fc-event-main {
-  background: transparent !important;
-}
-
-.visit-event,
-.visit-card {
-  color: #fff;
-  border-radius: 10px;
-  border: 0;
-}
-
-
-/* Remove qualquer borda ou faixa em volta dos eventos */
+/* Zera qualquer fundo ou borda do container padrão do evento */
 .fc-event,
 .fc-h-event,
-.fc-v-event {
-  border: none !important;
-  outline: none !important;
+.fc-v-event,
+.fc-daygrid-event,
+.fc-timegrid-event {
   background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove frame/borda internos que o FullCalendar injeta */
+.fc-event-main,
+.fc-event-main-frame,
+.fc-event-title-container {
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
 }
 
-/* Garante que a cor sólida JS seja visível */
-.fc-event .fc-event-main-frame,
-.fc-event .fc-event-title-container {
-  background: none !important;
+/* Evento customizado (classe atribuída em eventContent) */
+.visit-event {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* =========================================================
-📅 FullCalendar — ajustes finos
-========================================================= */
-.fc-daygrid-day {
-  min-height: 80px !important;
-  vertical-align: top !important;
+/* Cartão interno renderizado via eventContent: cor sólida aqui */
+.visit-card {
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  font-weight: 500;
+  padding: 2px 4px;
+  background-clip: padding-box !important;
+  box-shadow: none !important;
 }
 
-.fc-daygrid-day-frame {
-  padding: 2px !important;
-}
-
-.fc-daygrid-day-number {
-  font-weight: 600;
-  padding: 2px 4px !important;
-  font-size: 0.85rem !important;
-}
-
-/* Título centralizado */
-.fc-toolbar-title {
-  font-weight: 700 !important;
-  font-size: 1.1rem !important;
-  letter-spacing: 0.5px;
-}
-
-/* 📱 Mobile */
-@media (max-width: 768px) {
-  .fc {
-    font-size: 0.82rem !important;
-  }
-
-  .fc-daygrid-day {
-    min-height: 68px !important;
-  }
-
-  .fc-daygrid-day-frame {
-    padding: 1px 2px !important;
-  }
-
-  .fc-daygrid-day-number {
-    font-size: 0.8rem !important;
-  }
-
-  .fc-event {
-    font-size: 0.75rem !important;
-    line-height: 1.25 !important;
-    white-space: normal !important;
-  }
-
-  /* Evita esticamento lateral — rolagem horizontal suave */
-  .fc-view-harness {
-    overflow-x: auto !important;
-  }
-
-  .fc-scrollgrid {
-    min-width: 600px !important;
-  }
-}
-
-/* =========================================================
-📱 Correções extras — Layout APK
-========================================================= */
-body[data-platform="mobile"] {
-  overflow-x: hidden !important;
-}
-
-body[data-platform="mobile"] .app-header {
-  top: 6px;
-  height: 54px;
-}
-
-body[data-platform="mobile"] .menu-toggle {
-  margin-top: 2px;
-  transform: translateY(6px);
-  font-size: 1.6rem;
-}
-
-
-/* Garantia visual — fundo uniforme */
-body[data-platform="mobile"] .calendar-wrap {
-  background: var(--panel);
-  border-radius: 10px;
-  padding: 10px;
-}
-.calendar-page .fc .fc-daygrid-event,
-.calendar-page .fc-h-event,
-.calendar-page .fc-v-event { background: transparent !important; border:none !important; box-shadow:none !important; }
-
+/* Garante que nenhuma cor “vaze” do wrapper */
 .fc-event .fc-event-main,
-.fc-h-event .fc-event-main,
-.fc-v-event .fc-event-main { background: transparent !important; }
-
-.visit-event, .visit-card { color:#fff; border-radius:10px; border:0; }
-
-/* Rolagem horizontal onde preciso */
-.dashboard-container, .clients-card { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-
-/* APK – posicionamento do menu e modal menor */
-body[data-platform="mobile"] .menu-toggle { transform: translateY(6px); }
-
-/* Rolagem horizontal onde preciso */
-.dashboard-container,
-.clients-card {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.fc-event .fc-event-main-frame,
+.fc-event .fc-event-title-container,
+.fc-daygrid-event .fc-event-main {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
-
-
-@media (max-width:768px){
-  .modal {
-    width: min(92vw, 480px);
-    max-height: 85vh;
-    overflow: auto;
-  }
-}
-/* =========================================================
-💾 Restaura estilos dos botões principais
-========================================================= */
-button,
-.btn,
-input[type="submit"] {
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease-in-out;
-}
-
-button:hover,
-.btn:hover {
-  opacity: 0.9;
-}
-
-/* Botões padrões */
-.btn-primary {
-  background: #3b82f6 !important; /* azul */
-  color: #fff !important;
-}
-
-.btn-success {
-  background: #16a34a !important; /* verde */
-  color: #fff !important;
-}
-
-.btn-danger {
-  background: #dc2626 !important; /* vermelho */
-  color: #fff !important;
-}
-
-/* Botões dentro de modais */
-.modal button {
-  min-width: 120px;
-  padding: 0.6rem 1rem;
-  margin: 4px;
-}
-

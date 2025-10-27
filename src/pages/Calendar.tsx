@@ -125,7 +125,7 @@ const CalendarPage: React.FC = () => {
             start: v.date,
             backgroundColor: colorFor(v.date, v.status),
             extendedProps: { type: 'visit', raw: v },
-            className: 'visit-event',
+            classNames: ['visit-event'],
             dataTooltip: tooltip,
           };
         });
@@ -167,27 +167,34 @@ const CalendarPage: React.FC = () => {
 
 
 
- // =============================================================
-// 🎨 Função de cor sólida para eventos (sem faixas nem degradê)
 // =============================================================
-  const colorFor = (dateISO?: string, status?: string): string => {
-    const s = (status || '').toLowerCase();
+// 🎨 Função de cor sólida para eventos (status + data)
+//  - done/concluído  → verde
+//  - não concluído & data < hoje → vermelho (atrasado)
+//  - não concluído & data >= hoje → azul (planejado)
+// =============================================================
+const colorFor = (dateISO?: string, status?: string): string => {
+  const s = (status || '').toLowerCase();
 
-    // Cores fixas por status
-    if (s.includes('conclu')) return '#16a34a';     // verde — concluído
-    if (s.includes('pendente')) return '#f59e0b';   // amarelo — pendente
-    if (s.includes('atras')) return '#dc2626';      // vermelho — atrasado
-    if (s.includes('planejado')) return '#2563eb';  // azul — planejado
+  // concluído (aceita "done" ou "conclu")
+  if (s.includes('done') || s.includes('conclu')) return '#16a34a';
 
-    // Fallback baseado na data (para variedade)
-    if (dateISO) {
-      const hash = [...dateISO].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-      const palette = ['#2dd36f', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
-      return palette[hash % palette.length];
-    }
+  // normaliza data
+  let d: Date | null = null;
+  if (dateISO) {
+    // garante meia-noite local para evitar fuso aplicar vermelho/azul errado
+    const [y, m, day] = dateISO.split('-'); // espera YYYY-MM-DD
+    if (y && m && day) d = new Date(Number(y), Number(m) - 1, Number(day), 0, 0, 0, 0);
+    else d = new Date(dateISO); // fallback
+  }
 
-    return '#6b7280'; // cinza neutro
-  };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (d && d.getTime() < today.getTime()) return '#dc2626'; // atrasado
+  return '#2563eb'; // planejado
+};
+
 
   const handleChange = (e: any) => {
     const { name, value } = e.target
@@ -469,55 +476,39 @@ const markDone = async () => {
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
         eventContent={(arg) => {
-          const v = arg.event.extendedProps?.raw;
-
-          // Cor sólida de fundo (sem faixas)
+          const v = arg.event.extendedProps?.raw || {};
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
-          console.log("🎨 Fundo aplicado:", bg);
+          console.log("🎨 Fundo aplicado:", bg, v?.status, v?.date);
 
-
-          // Cria o wrapper principal
-          const wrapper = document.createElement('div');
-          wrapper.style.backgroundColor = bg;
-          wrapper.style.color = '#fff';
-          wrapper.style.padding = '6px 8px';
-          wrapper.style.borderRadius = '10px';
-          wrapper.style.display = 'flex';
-          wrapper.style.flexDirection = 'column';
-          wrapper.style.alignItems = 'flex-start';
-          wrapper.style.justifyContent = 'center';
-          wrapper.style.fontSize = window.innerWidth < 768 ? '0.8rem' : '0.85rem';
-          wrapper.style.lineHeight = '1.3';
-          wrapper.style.wordBreak = 'break-word';
-          wrapper.style.whiteSpace = 'normal';
-          wrapper.style.wordBreak = 'break-word';
-          wrapper.style.textAlign = 'left';
-          wrapper.style.textAlign = 'left';
-          wrapper.style.boxSizing = 'border-box';
-          wrapper.style.border = 'none'; // 🚫 remove bordas laterais
-          wrapper.style.outline = 'none'; // 🚫 garante fundo limpo
-          wrapper.style.minHeight = '52px';
-          wrapper.classList.add('visit-card');
-          wrapper.setAttribute('data-tooltip', arg.event.extendedProps?.dataTooltip || '');
-
-          // Cria linhas bem organizadas (sem emojis)
-          const infoLines = [
-            `Cliente: ${v?.client_name || '-'}`,
-            `Variedade: ${v?.variety || '-'}`,
-            `Fenologia: ${v?.recommendation?.split('—').pop()?.trim() || '-'}`,
-            `Consultor: ${v?.consultant_name || '-'}`,
-          ];
-
-          infoLines.forEach((line) => {
-            const p = document.createElement('div');
-            p.textContent = line;
-            p.style.margin = '1px 0';
-            wrapper.appendChild(p);
-          });
-
-          return { domNodes: [wrapper] };
+          return (
+            <div
+              className="visit-card"
+              style={{
+                backgroundColor: bg,
+                color: '#fff',
+                padding: '6px 8px',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                fontSize: window.innerWidth < 768 ? '0.8rem' : '0.85rem',
+                lineHeight: 1.3,
+                wordBreak: 'break-word',
+                whiteSpace: 'normal',
+                boxSizing: 'border-box',
+                border: 'none',
+                outline: 'none',
+                minHeight: '52px',
+              }}
+            >
+              <div><b>Cliente:</b> {v?.client_name || '-'}</div>
+              <div><b>Variedade:</b> {v?.variety || '-'}</div>
+              <div><b>Fenologia:</b> {v?.recommendation?.split('—').pop()?.trim() || '-'}</div>
+              <div><b>Consultor:</b> {v?.consultant_name || '-'}</div>
+            </div>
+          );
         }}
-
 
         eventClick={(info) => {
           const v = info.event.extendedProps?.raw;
