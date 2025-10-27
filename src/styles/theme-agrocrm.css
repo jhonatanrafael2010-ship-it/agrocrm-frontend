@@ -41,6 +41,10 @@
 ========================================================= */
 
 /* container do evento sem paddings/bordas que criam “faixas” */
+.calendar-page .fc-daygrid-event,
+.calendar-page .fc-timegrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event,
 .fc-daygrid-event,
 .fc-timegrid-event,
 .fc-event,
@@ -50,48 +54,72 @@
   border: 0 !important;
   box-shadow: none !important;
   outline: none !important;
-  padding: 0 !important;            /* ✅ remove espaço que criava borda/“faixa” */
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
 
 /* camadas internas do FullCalendar também sem fundo */
+.calendar-page .fc-event-main,
+.calendar-page .fc-event-main-frame,
+.calendar-page .fc-event-title-container,
 .fc-event-main,
 .fc-event-main-frame,
 .fc-event-title-container {
   background: transparent !important;
   border: 0 !important;
+  padding: 0 !important;
   box-shadow: none !important;
 }
 
-/* nossa caixinha colorida */
-.visit-card {
+/* nosso cartão colorido e sólido */
+.calendar-page .visit-card {
   display: block !important;
   width: 100% !important;
-  color: #fff !important;
   border: 0 !important;
   border-radius: 10px !important;
-  box-shadow: none !important;
+  color: #fff !important;
   padding: 6px 8px !important;
+  box-shadow: none !important;
   background-clip: padding-box !important;
   overflow: hidden !important;
   line-height: 1.35 !important;
   text-align: left !important;
   box-sizing: border-box !important;
+
+  /* texto em 4 linhas, sem truncar/letras cortadas */
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  font-weight: 500 !important;
 }
 
-/* ✅ cada linha interna pode quebrar; nunca use “...” */
-.visit-card > div {
+/* cada linha interna do cartão */
+.calendar-page .visit-card > div {
+  margin: 1px 0;
   white-space: normal !important;
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
   text-overflow: clip !important;
   overflow: visible !important;
 }
 
+/* ===== APK apenas ===== */
+body[data-platform="mobile"] .calendar-page .fc-view-harness {
+  overflow-x: auto !important; /* rolagem horizontal no APK */
+}
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
+  min-width: 600px !important; /* evita “apertar” o mês no APK */
+}
 
-/* Ajuste fino mobile */
-@media (max-width: 420px) {
-  .visit-card {
-    font-size: 0.78rem !important;
-    line-height: 1.3 !important;
-  }
+/* tipografia um pouco menor no APK */
+body[data-platform="mobile"] .calendar-page .visit-card {
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+/* No site (desktop), limpe qualquer ajuste de min-width/overflow */
+@media (min-width: 901px) {
+  .calendar-page .fc-view-harness { overflow: visible !important; }
+  .calendar-page .fc-scrollgrid { min-width: auto !important; }
 }

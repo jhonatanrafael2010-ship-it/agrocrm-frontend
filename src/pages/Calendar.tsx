@@ -484,8 +484,20 @@ const markDone = async () => {
             (v?.recommendation?.split('—').pop() || v?.recommendation || '')
               ?.toString()
               ?.trim() || '-';
+          
+          // ✅ Zera estilos do container padrão do FullCalendar (com cast seguro)
+          const el = (arg as any).el as HTMLElement;
+          if (el) {
+            el.style.padding = '0';
+            el.style.background = 'transparent';
+            el.style.border = '0';
+            el.style.borderRadius = '0';
+            el.style.boxShadow = 'none';
+          }
 
-          // Bloco principal
+
+
+          // Bloco principal (o cartão colorido)
           const wrapper = document.createElement('div');
           wrapper.className = 'visit-card';
           wrapper.style.backgroundColor = bg;
@@ -498,44 +510,39 @@ const markDone = async () => {
           wrapper.style.display = 'block';
           wrapper.style.width = '100%';
           wrapper.style.textAlign = 'left';
-
-          // ⚙️ Correções fundamentais:
-          wrapper.style.whiteSpace = 'normal';       // permite várias linhas completas
-          wrapper.style.wordBreak = 'break-word';    // quebra a linha sem truncar
-          wrapper.style.overflowWrap = 'anywhere';   // quebra mesmo dentro de palavras longas
-          wrapper.style.overflow = 'visible';        // evita corte do texto
-          wrapper.style.textOverflow = 'clip';       // remove os "..." automáticos
-
+          wrapper.style.whiteSpace = 'normal';
+          wrapper.style.wordBreak = 'normal';
+          wrapper.style.overflowWrap = 'break-word';
+          wrapper.style.hyphens = 'auto';
           wrapper.style.boxShadow = 'none';
           wrapper.style.border = 'none';
           wrapper.style.outline = 'none';
 
 
-          // Conteúdo formatado — uma linha por item
-          const lines = [
-            `👤 ${v?.client_name || '-'}`,
-            `🌱 ${v?.variety || '-'}`,
-            `📍 ${stage}`,
-            `👨‍🌾 ${v?.consultant_name || '-'}`,
-          ];
 
-          lines.forEach((txt) => {
-            const p = document.createElement('div');
-            p.textContent = txt;
+          // ✅ Gera cada linha corretamente (sem truncar texto)
+          const makeRow = (text: string) => {
+            const row = document.createElement('div');
+            row.textContent = text;
+            row.style.margin = '2px 0';
+            row.style.display = 'block';
+            row.style.whiteSpace = 'normal';
+            row.style.wordBreak = 'normal';
+            row.style.overflowWrap = 'break-word';
+            row.style.textOverflow = 'clip';
+            row.style.overflow = 'visible';
+            return row;
+          };
 
-            // ✅ MOSTRAR o texto inteiro (sem “...”)
-            p.style.margin = '2px 0';
-            p.style.whiteSpace = 'normal';
-            p.style.wordBreak = 'break-word';
-            p.style.overflowWrap = 'anywhere';
-            p.style.overflow = 'visible';
-            p.style.textOverflow = 'clip';
+          // Adiciona as 4 linhas formatadas
+          wrapper.appendChild(makeRow(`👤 ${v?.client_name || '-'}`));
+          wrapper.appendChild(makeRow(`🌱 ${v?.variety || '-'}`));
+          wrapper.appendChild(makeRow(`📍 ${stage}`));
+          wrapper.appendChild(makeRow(`👨‍🌾 ${v?.consultant_name || '-'}`));
 
-            wrapper.appendChild(p);
-          });
-
-
+          // ✅ Retorna o nó completo do evento
           return { domNodes: [wrapper] };
+
         }}
 
 
