@@ -40,20 +40,20 @@
 🎨 FullCalendar — Cores sólidas das visitas
 ========================================================= */
 
-/* Remove qualquer fundo e borda automáticos do FullCalendar */
+/* container do evento sem paddings/bordas que criam “faixas” */
+.fc-daygrid-event,
+.fc-timegrid-event,
 .fc-event,
 .fc-h-event,
-.fc-v-event,
-.fc-daygrid-event,
-.fc-timegrid-event {
+.fc-v-event {
   background: transparent !important;
   border: 0 !important;
-  outline: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  outline: none !important;
+  padding: 0 !important;            /* ✅ remove espaço que criava borda/“faixa” */
 }
 
-/* Remove camadas internas que causam a faixa */
+/* camadas internas do FullCalendar também sem fundo */
 .fc-event-main,
 .fc-event-main-frame,
 .fc-event-title-container {
@@ -62,23 +62,31 @@
   box-shadow: none !important;
 }
 
-/* O bloco real do evento (nossa caixinha colorida) */
+/* nossa caixinha colorida */
 .visit-card {
   display: block !important;
   width: 100% !important;
   color: #fff !important;
-  border: none !important;
+  border: 0 !important;
   border-radius: 10px !important;
   box-shadow: none !important;
   padding: 6px 8px !important;
   background-clip: padding-box !important;
   overflow: hidden !important;
   line-height: 1.35 !important;
-  word-break: keep-all !important;
-  white-space: normal !important;
   text-align: left !important;
   box-sizing: border-box !important;
 }
+
+/* ✅ cada linha interna pode quebrar; nunca use “...” */
+.visit-card > div {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
 
 /* Ajuste fino mobile */
 @media (max-width: 420px) {

@@ -498,12 +498,18 @@ const markDone = async () => {
           wrapper.style.display = 'block';
           wrapper.style.width = '100%';
           wrapper.style.textAlign = 'left';
-          wrapper.style.whiteSpace = 'normal';
-          wrapper.style.wordBreak = 'keep-all';
-          wrapper.style.overflowWrap = 'break-word';
+
+          // ⚙️ Correções fundamentais:
+          wrapper.style.whiteSpace = 'normal';       // permite várias linhas completas
+          wrapper.style.wordBreak = 'break-word';    // quebra a linha sem truncar
+          wrapper.style.overflowWrap = 'anywhere';   // quebra mesmo dentro de palavras longas
+          wrapper.style.overflow = 'visible';        // evita corte do texto
+          wrapper.style.textOverflow = 'clip';       // remove os "..." automáticos
+
           wrapper.style.boxShadow = 'none';
           wrapper.style.border = 'none';
           wrapper.style.outline = 'none';
+
 
           // Conteúdo formatado — uma linha por item
           const lines = [
@@ -516,12 +522,18 @@ const markDone = async () => {
           lines.forEach((txt) => {
             const p = document.createElement('div');
             p.textContent = txt;
-            p.style.margin = '1px 0';
-            p.style.overflow = 'hidden';
-            p.style.textOverflow = 'ellipsis';
-            p.style.whiteSpace = 'nowrap';
+
+            // ✅ MOSTRAR o texto inteiro (sem “...”)
+            p.style.margin = '2px 0';
+            p.style.whiteSpace = 'normal';
+            p.style.wordBreak = 'break-word';
+            p.style.overflowWrap = 'anywhere';
+            p.style.overflow = 'visible';
+            p.style.textOverflow = 'clip';
+
             wrapper.appendChild(p);
           });
+
 
           return { domNodes: [wrapper] };
         }}
