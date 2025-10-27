@@ -478,37 +478,61 @@ const markDone = async () => {
         eventContent={(arg) => {
           const v = arg.event.extendedProps?.raw || {};
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
-          console.log("🎨 Fundo aplicado:", bg, v?.status, v?.date);
+
+          // Deriva estágio/fenologia a partir da recommendation (se vier com "—")
+          const stage =
+            (v?.recommendation?.split('—').pop() || v?.recommendation || '')
+              ?.toString()
+              ?.trim() || '-';
+
+          // componente de linha com ícone + texto em uma linha (ellipsis em telas estreitas)
+          const Row = ({ icon, text }: { icon: string; text: string }) => (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              width: '100%',
+            }}>
+              <span aria-hidden="true">{icon}</span>
+              <span
+                style={{
+                  flex: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={text} // tooltip com o conteúdo completo
+              >
+                {text || '-'}
+              </span>
+            </div>
+          );
 
           return (
             <div
               className="visit-card"
               style={{
-                backgroundColor: bg,
+                backgroundColor: bg,         // fundo sólido pela cor do status
                 color: '#fff',
+                borderRadius: 10,
                 padding: '6px 8px',
-                borderRadius: '10px',
+                boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
+                gap: 2,
+                lineHeight: 1.25,
                 fontSize: window.innerWidth < 768 ? '0.8rem' : '0.85rem',
-                lineHeight: 1.3,
-                wordBreak: 'break-word',
-                whiteSpace: 'normal',
-                boxSizing: 'border-box',
-                border: 'none',
-                outline: 'none',
-                minHeight: '52px',
+                width: '100%',
               }}
             >
-              <div><b>Cliente:</b> {v?.client_name || '-'}</div>
-              <div><b>Variedade:</b> {v?.variety || '-'}</div>
-              <div><b>Fenologia:</b> {v?.recommendation?.split('—').pop()?.trim() || '-'}</div>
-              <div><b>Consultor:</b> {v?.consultant_name || '-'}</div>
+              <Row icon="👤" text={v?.client_name || '-'} />
+              <Row icon="🌱" text={v?.variety || '-'} />
+              <Row icon="📍" text={stage} />
+              <Row icon="👨‍🌾" text={v?.consultant_name || '-'} />
             </div>
           );
         }}
+
 
         eventClick={(info) => {
           const v = info.event.extendedProps?.raw;

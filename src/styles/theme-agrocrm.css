@@ -37,55 +37,57 @@
   border-color: #1f2d36 !important;
 }
 /* =========================================================
-🎨 Corrige exibição das cores sólidas dos eventos (Calendar.tsx)
+🎨 FullCalendar — Cores sólidas das visitas
 ========================================================= */
 
-/* Zera qualquer fundo ou borda do container padrão do evento */
+/* 1️⃣ Zera QUALQUER borda, sombra ou fundo automático */
 .fc-event,
 .fc-h-event,
 .fc-v-event,
 .fc-daygrid-event,
 .fc-timegrid-event {
   background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  border: 0 !important;
   outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-/* Remove frame/borda internos que o FullCalendar injeta */
+/* 2️⃣ Remove fundos internos que o FullCalendar injeta */
 .fc-event-main,
 .fc-event-main-frame,
-.fc-event-title-container {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Evento customizado (classe atribuída em eventContent) */
-.visit-event {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Cartão interno renderizado via eventContent: cor sólida aqui */
-.visit-card {
-  border: 0 !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-  font-weight: 500;
-  padding: 2px 4px;
-  background-clip: padding-box !important;
-  box-shadow: none !important;
-}
-
-/* Garante que nenhuma cor “vaze” do wrapper */
-.fc-event .fc-event-main,
-.fc-event .fc-event-main-frame,
-.fc-event .fc-event-title-container,
+.fc-event-title-container,
 .fc-daygrid-event .fc-event-main {
   background: transparent !important;
-  border: none !important;
+  border: 0 !important;
   box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* 3️⃣ Nosso cartão interno (criado via eventContent) é a CAIXA sólida */
+.visit-card {
+  background-clip: padding-box !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25 !important;
+  padding: 6px 8px !important;
+  font-weight: 500;
+  width: 100%;
+  word-break: keep-all !important;
+  white-space: normal !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 4️⃣ Ajusta tamanho da fonte no celular */
+@media (max-width: 420px) {
+  .visit-card {
+    font-size: 0.78rem !important;
+  }
 }
