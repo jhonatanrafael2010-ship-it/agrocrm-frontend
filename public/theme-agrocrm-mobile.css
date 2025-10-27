@@ -269,3 +269,82 @@ body[data-platform="mobile"] img {
   max-width: 100%;
   border-radius: 8px;
 }
+/* =========================================================
+🧩 COMPLEMENTOS DE AJUSTE — MOBILE (corrige calendário, modais e espaçamento)
+========================================================= */
+
+/* ---------- Modais em colunas ---------- */
+body[data-platform="mobile"] .form-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important; /* 1 coluna no APK */
+  gap: 10px !important;
+}
+
+@media (min-width: 901px) {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colunas no desktop */
+    gap: 16px;
+  }
+}
+
+/* Mantém cada campo com largura total */
+body[data-platform="mobile"] .form-grid .form-row {
+  width: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ações do modal centralizadas */
+body[data-platform="mobile"] .modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin-top: 12px;
+}
+
+/* ---------- Calendário (corrige faixas e quebras de texto) ---------- */
+body[data-platform="mobile"] .calendar-page .visit-shell,
+body[data-platform="mobile"] .calendar-page .fc-daygrid-event,
+body[data-platform="mobile"] .calendar-page .fc-h-event,
+body[data-platform="mobile"] .calendar-page .fc-v-event {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+body[data-platform="mobile"] .calendar-page .visit-card {
+  font-size: 0.82rem !important;
+  line-height: 1.25 !important;
+  padding: 6px 8px !important;
+  border-radius: 10px !important;
+  background-clip: padding-box !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Remove faixas brancas */
+body[data-platform="mobile"] .calendar-page .fc,
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid,
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid table,
+body[data-platform="mobile"] .calendar-page .fc-theme-standard td,
+body[data-platform="mobile"] .calendar-page .fc-theme-standard th {
+  background: var(--panel-mobile) !important;
+  border-color: var(--border-mobile) !important;
+}
+
+/* ---------- Ajustes de ergonomia geral ---------- */
+body[data-platform="mobile"] .btn,
+body[data-platform="mobile"] button {
+  padding: 8px 12px !important;
+  font-size: 0.85rem !important;
+}
+
+body[data-platform="mobile"] input,
+body[data-platform="mobile"] select {
+  height: 36px !important;
+  font-size: 0.9rem !important;
+}

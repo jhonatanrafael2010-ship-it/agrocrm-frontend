@@ -111,3 +111,49 @@
     max-width: 95%;
   }
 }
+/* ====== Calendário (desktop) ====== */
+.calendar-page .visit-shell,
+.calendar-page .fc-daygrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.calendar-page .fc-event-main,
+.calendar-page .fc-event-main-frame,
+.calendar-page .fc-event-title-container {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.calendar-page .visit-card {
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  background-clip: padding-box !important;
+  overflow: hidden !important;
+}
+
+.calendar-page .visit-card > div {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Tira “faixas brancas” na grid */
+.calendar-page .fc,
+.calendar-page .fc-scrollgrid,
+.calendar-page .fc-scrollgrid table,
+.calendar-page .fc-theme-standard td,
+.calendar-page .fc-theme-standard th,
+.calendar-page .fc-daygrid-day,
+.calendar-page .calendar-wrap {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+}

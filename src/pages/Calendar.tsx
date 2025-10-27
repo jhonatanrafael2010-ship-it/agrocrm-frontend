@@ -475,75 +475,55 @@ const markDone = async () => {
           center: 'title',
           right: 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
+        eventClassNames={() => ['visit-shell']}
+
         eventContent={(arg) => {
-          const v = arg.event.extendedProps?.raw || {};
+          const v = (arg.event.extendedProps?.raw as any) || {};
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
 
-          // Deriva a fenologia
-          const stage =
-            (v?.recommendation?.split('—').pop() || v?.recommendation || '')
-              ?.toString()
-              ?.trim() || '-';
-          
-          // ✅ Zera estilos do container padrão do FullCalendar (com cast seguro)
-          const el = (arg as any).el as HTMLElement;
-          if (el) {
-            el.style.padding = '0';
-            el.style.background = 'transparent';
-            el.style.border = '0';
-            el.style.borderRadius = '0';
-            el.style.boxShadow = 'none';
-          }
+          // Deriva fenologia
+          const stage = (
+            (v?.recommendation?.split('—').pop() || v?.recommendation || '') + ''
+          ).trim() || '-';
 
-
-
-          // Bloco principal (o cartão colorido)
+          // Cartão colorido
           const wrapper = document.createElement('div');
           wrapper.className = 'visit-card';
           wrapper.style.backgroundColor = bg;
           wrapper.style.color = '#fff';
+          wrapper.style.display = 'block';
+          wrapper.style.width = '100%';
           wrapper.style.padding = '6px 8px';
           wrapper.style.borderRadius = '10px';
           wrapper.style.boxSizing = 'border-box';
-          wrapper.style.fontSize = window.innerWidth < 768 ? '0.8rem' : '0.85rem';
-          wrapper.style.lineHeight = '1.35';
-          wrapper.style.display = 'block';
-          wrapper.style.width = '100%';
           wrapper.style.textAlign = 'left';
+          wrapper.style.lineHeight = '1.35';
+          wrapper.style.fontSize = (window.innerWidth < 420) ? '0.8rem' : '0.85rem';
+
+          // ⚠️ Nada de “anywhere” (isso causava quebra por letra)
           wrapper.style.whiteSpace = 'normal';
           wrapper.style.wordBreak = 'normal';
           wrapper.style.overflowWrap = 'break-word';
-          wrapper.style.hyphens = 'auto';
-          wrapper.style.boxShadow = 'none';
-          wrapper.style.border = 'none';
-          wrapper.style.outline = 'none';
 
-
-
-          // ✅ Gera cada linha corretamente (sem truncar texto)
-          const makeRow = (text: string) => {
+          const addRow = (text: string) => {
             const row = document.createElement('div');
             row.textContent = text;
-            row.style.margin = '2px 0';
-            row.style.display = 'block';
+            row.style.margin = '1px 0';
             row.style.whiteSpace = 'normal';
             row.style.wordBreak = 'normal';
-            row.style.overflowWrap = 'break-word';
-            row.style.textOverflow = 'clip';
             row.style.overflow = 'visible';
-            return row;
+            row.style.textOverflow = 'clip';
+            wrapper.appendChild(row);
           };
 
-          // Adiciona as 4 linhas formatadas
-          wrapper.appendChild(makeRow(`👤 ${v?.client_name || '-'}`));
-          wrapper.appendChild(makeRow(`🌱 ${v?.variety || '-'}`));
-          wrapper.appendChild(makeRow(`📍 ${stage}`));
-          wrapper.appendChild(makeRow(`👨‍🌾 ${v?.consultant_name || '-'}`));
+          addRow(`👤 ${v?.client_name || '-'}`);
+          addRow(`🌱 ${v?.variety || '-'}`);
+          addRow(`📍 ${stage}`);
+          addRow(`👨‍🌾 ${v?.consultant_name || '-'}`);
 
-          // ✅ Retorna o nó completo do evento
           return { domNodes: [wrapper] };
-
         }}
+
 
 
 
@@ -612,10 +592,16 @@ const markDone = async () => {
             <h3>{form.id ? 'Editar Visita' : 'Nova Visita'}</h3>
 
 
-            <div className="form-row">
-              <label>Data</label>
-              <input name="date" value={form.date} onChange={handleChange} placeholder="dd/mm/aaaa" />
-            </div>
+            <div className="form-grid">
+              <div className="form-row">
+                <label>Data</label>
+                <input
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  placeholder="dd/mm/aaaa"
+                />
+              </div>
 
             {/* 🧑‍🌾 Cliente com busca inteligente */}
             <div className="form-row" style={{ position: 'relative' }}>
@@ -899,6 +885,8 @@ const markDone = async () => {
                 Envie uma ou mais fotos (JPEG/PNG). Você pode removê-las antes de salvar.
               </small>
             </div>
+
+          </div>
 
             <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
               <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
