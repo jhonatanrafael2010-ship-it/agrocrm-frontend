@@ -40,7 +40,7 @@
 🎨 FullCalendar — Cores sólidas das visitas
 ========================================================= */
 
-/* 1️⃣ Zera QUALQUER borda, sombra ou fundo automático */
+/* Remove qualquer fundo e borda automáticos do FullCalendar */
 .fc-event,
 .fc-h-event,
 .fc-v-event,
@@ -53,41 +53,37 @@
   padding: 0 !important;
 }
 
-/* 2️⃣ Remove fundos internos que o FullCalendar injeta */
+/* Remove camadas internas que causam a faixa */
 .fc-event-main,
 .fc-event-main-frame,
-.fc-event-title-container,
-.fc-daygrid-event .fc-event-main {
+.fc-event-title-container {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
-  padding: 0 !important;
 }
 
-/* 3️⃣ Nosso cartão interno (criado via eventContent) é a CAIXA sólida */
+/* O bloco real do evento (nossa caixinha colorida) */
 .visit-card {
-  background-clip: padding-box !important;
-  border: 0 !important;
-  outline: none !important;
-  box-shadow: none !important;
-  border-radius: 10px !important;
+  display: block !important;
+  width: 100% !important;
   color: #fff !important;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  line-height: 1.25 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
   padding: 6px 8px !important;
-  font-weight: 500;
-  width: 100%;
+  background-clip: padding-box !important;
+  overflow: hidden !important;
+  line-height: 1.35 !important;
   word-break: keep-all !important;
   white-space: normal !important;
-  overflow: hidden;
-  box-sizing: border-box;
+  text-align: left !important;
+  box-sizing: border-box !important;
 }
 
-/* 4️⃣ Ajusta tamanho da fonte no celular */
+/* Ajuste fino mobile */
 @media (max-width: 420px) {
   .visit-card {
     font-size: 0.78rem !important;
+    line-height: 1.3 !important;
   }
 }

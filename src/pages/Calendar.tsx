@@ -479,59 +479,53 @@ const markDone = async () => {
           const v = arg.event.extendedProps?.raw || {};
           const bg = colorFor(v?.date || arg.event.startStr, v?.status);
 
-          // Deriva estágio/fenologia a partir da recommendation (se vier com "—")
+          // Deriva a fenologia
           const stage =
             (v?.recommendation?.split('—').pop() || v?.recommendation || '')
               ?.toString()
               ?.trim() || '-';
 
-          // componente de linha com ícone + texto em uma linha (ellipsis em telas estreitas)
-          const Row = ({ icon, text }: { icon: string; text: string }) => (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              width: '100%',
-            }}>
-              <span aria-hidden="true">{icon}</span>
-              <span
-                style={{
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-                title={text} // tooltip com o conteúdo completo
-              >
-                {text || '-'}
-              </span>
-            </div>
-          );
+          // Bloco principal
+          const wrapper = document.createElement('div');
+          wrapper.className = 'visit-card';
+          wrapper.style.backgroundColor = bg;
+          wrapper.style.color = '#fff';
+          wrapper.style.padding = '6px 8px';
+          wrapper.style.borderRadius = '10px';
+          wrapper.style.boxSizing = 'border-box';
+          wrapper.style.fontSize = window.innerWidth < 768 ? '0.8rem' : '0.85rem';
+          wrapper.style.lineHeight = '1.35';
+          wrapper.style.display = 'block';
+          wrapper.style.width = '100%';
+          wrapper.style.textAlign = 'left';
+          wrapper.style.whiteSpace = 'normal';
+          wrapper.style.wordBreak = 'keep-all';
+          wrapper.style.overflowWrap = 'break-word';
+          wrapper.style.boxShadow = 'none';
+          wrapper.style.border = 'none';
+          wrapper.style.outline = 'none';
 
-          return (
-            <div
-              className="visit-card"
-              style={{
-                backgroundColor: bg,         // fundo sólido pela cor do status
-                color: '#fff',
-                borderRadius: 10,
-                padding: '6px 8px',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-                lineHeight: 1.25,
-                fontSize: window.innerWidth < 768 ? '0.8rem' : '0.85rem',
-                width: '100%',
-              }}
-            >
-              <Row icon="👤" text={v?.client_name || '-'} />
-              <Row icon="🌱" text={v?.variety || '-'} />
-              <Row icon="📍" text={stage} />
-              <Row icon="👨‍🌾" text={v?.consultant_name || '-'} />
-            </div>
-          );
+          // Conteúdo formatado — uma linha por item
+          const lines = [
+            `👤 ${v?.client_name || '-'}`,
+            `🌱 ${v?.variety || '-'}`,
+            `📍 ${stage}`,
+            `👨‍🌾 ${v?.consultant_name || '-'}`,
+          ];
+
+          lines.forEach((txt) => {
+            const p = document.createElement('div');
+            p.textContent = txt;
+            p.style.margin = '1px 0';
+            p.style.overflow = 'hidden';
+            p.style.textOverflow = 'ellipsis';
+            p.style.whiteSpace = 'nowrap';
+            wrapper.appendChild(p);
+          });
+
+          return { domNodes: [wrapper] };
         }}
+
 
 
         eventClick={(info) => {
