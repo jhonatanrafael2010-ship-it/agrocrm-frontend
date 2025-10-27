@@ -581,6 +581,7 @@ const markDone = async () => {
         }}
       />
 
+
       {/* ➕ Botão flutuante (após o FullCalendar, ainda dentro do return) */}
       {window.innerWidth <= 768 && (
         <button
