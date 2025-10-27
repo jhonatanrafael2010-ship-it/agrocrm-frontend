@@ -1,19 +1,19 @@
 /* =========================================================
-📱 THEME-AGROCRM-MOBILE.CSS — UX Profissional + Modo Escuro Dinâmico
+📱 THEME-AGROCRM-MOBILE.CSS — AgroCRM Material 3 (Android UX)
 ========================================================= */
 
-/* ---------- Tema claro ---------- */
+/* ---------- Tema base ---------- */
 body[data-platform="mobile"][data-theme="light"],
 @media (prefers-color-scheme: light) {
-  --bg-mobile: #f8fafb;
+  --bg-mobile: #f7f9fb;
   --panel-mobile: #ffffff;
   --text-mobile: #101418;
   --muted-mobile: #444a52;
   --accent-mobile: #2dd36f;
-  --border-mobile: rgba(0, 0, 0, 0.1);
+  --border-mobile: rgba(0, 0, 0, 0.08);
+  --shadow-mobile: rgba(0, 0, 0, 0.12);
 }
 
-/* ---------- Tema escuro ---------- */
 body[data-platform="mobile"][data-theme="dark"],
 @media (prefers-color-scheme: dark) {
   --bg-mobile: #0b1620;
@@ -21,18 +21,18 @@ body[data-platform="mobile"][data-theme="dark"],
   --text-mobile: #e2ecec;
   --muted-mobile: #9fb3b6;
   --accent-mobile: #2dd36f;
-  --border-mobile: rgba(255, 255, 255, 0.06);
+  --border-mobile: rgba(255, 255, 255, 0.08);
+  --shadow-mobile: rgba(0, 0, 0, 0.6);
 }
 
 /* =========================================================
-📱 Estrutura geral
+🌿 Estrutura e comportamento
 ========================================================= */
-
 body[data-platform="mobile"] {
   background: var(--bg-mobile);
   color: var(--text-mobile);
   font-family: "Inter", sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   line-height: 1.45;
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -42,186 +42,230 @@ body[data-platform="mobile"] {
   touch-action: pan-y pinch-zoom;
 }
 
-/* Remover restrição de zoom */
-html, body {
-  overscroll-behavior-y: contain;
-  touch-action: manipulation;
-}
-
 /* =========================================================
-🔹 Header e navegação
+🧭 Header superior
 ========================================================= */
 body[data-platform="mobile"] .app-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  height: 58px;
   background: var(--panel-mobile);
-  color: var(--text-mobile);
-  padding: 10px 14px;
-  font-weight: 700;
-  font-size: 1rem;
   border-bottom: 1px solid var(--border-mobile);
-  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 14px;
+  box-shadow: 0 2px 8px var(--shadow-mobile);
+  z-index: 9998;
 }
 
-body[data-platform="mobile"] .menu-toggle {
-  font-size: 1.5rem !important;
+body[data-platform="mobile"] .app-title {
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--accent-mobile);
 }
 
+body[data-platform="mobile"] .menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  color: var(--accent-mobile);
+  cursor: pointer;
+}
+
 /* =========================================================
-🔹 Painéis e abas
+🏗️ Conteúdo principal
 ========================================================= */
-body[data-platform="mobile"] .sidebar {
-  display: none !important;
-}
-
-body[data-platform="mobile"] .main {
-  padding: 10px 12px !important;
+body[data-platform="mobile"] .main-content {
+  padding-top: 70px !important;
+  padding-bottom: 80px !important; /* espaço p/ nav bar */
   overflow-y: auto !important;
-  height: auto !important;
   min-height: 100vh;
-  background: var(--bg-mobile) !important;
-}
-
-/* Tabs menores e intuitivas */
-body[data-platform="mobile"] .tab {
-  font-size: 0.82rem !important;
-  padding: 6px 8px !important;
-  border-radius: 8px !important;
+  background: var(--bg-mobile);
 }
 
 /* =========================================================
-🔹 Botões e formulários
+🧭 Bottom Navigation (barra inferior)
+========================================================= */
+body[data-platform="mobile"] .bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel-mobile);
+  border-top: 1px solid var(--border-mobile);
+  height: 64px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.25);
+  z-index: 9999;
+}
+
+body[data-platform="mobile"] .bottom-nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-mobile);
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  cursor: pointer;
+}
+
+body[data-platform="mobile"] .bottom-nav button.active {
+  color: var(--accent-mobile);
+  font-weight: 600;
+}
+
+/* ripple effect */
+body[data-platform="mobile"] .bottom-nav button::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  background: var(--accent-mobile);
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+body[data-platform="mobile"] .bottom-nav button:active::after {
+  opacity: 0.3;
+  transform: scale(12);
+}
+
+/* =========================================================
+➕ Botão Flutuante (FAB)
+========================================================= */
+body[data-platform="mobile"] .fab {
+  position: fixed;
+  bottom: 78px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: var(--accent-mobile);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+body[data-platform="mobile"] .fab:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================
+📋 Modais (layout vertical)
+========================================================= */
+body[data-platform="mobile"] .modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+body[data-platform="mobile"] .modal form,
+body[data-platform="mobile"] .modal-content {
+  width: 92vw !important;
+  max-height: 88vh !important;
+  background: var(--panel-mobile);
+  color: var(--text-mobile);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================================
+🔘 Botões e Inputs
 ========================================================= */
 body[data-platform="mobile"] button,
 body[data-platform="mobile"] .btn {
-  font-size: 0.85rem !important;
-  padding: 8px 14px !important;
-  border-radius: 8px !important;
-  background: var(--accent-mobile) !important;
-  color: #fff !important;
-  border: none !important;
-  transition: background 0.2s ease;
+  background: var(--accent-mobile);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.25s ease;
 }
 
 body[data-platform="mobile"] button:hover {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 body[data-platform="mobile"] input,
 body[data-platform="mobile"] select,
 body[data-platform="mobile"] textarea {
-  width: 100% !important;
-  font-size: 0.9rem !important;
-  padding: 6px 8px !important;
-  margin: 4px 0 !important;
-  border-radius: 8px !important;
-  background: var(--panel-mobile) !important;
-  border: 1px solid var(--border-mobile) !important;
-  color: var(--text-mobile) !important;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-mobile);
+  background: var(--panel-mobile);
+  color: var(--text-mobile);
+  font-size: 0.9rem;
 }
 
 /* =========================================================
-🔹 Modais — responsivos e roláveis
-========================================================= */
-body[data-platform="mobile"] .modal {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background: rgba(0, 0, 0, 0.65) !important;
-  backdrop-filter: blur(4px);
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 0 !important;
-}
-
-body[data-platform="mobile"] .modal-content {
-  background: var(--panel-mobile) !important;
-  color: var(--text-mobile) !important;
-  border-radius: 16px !important;
-  padding: 16px !important;
-  width: 94vw !important;
-  max-height: 90vh !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
-/* =========================================================
-🔹 FullCalendar Mobile
+📅 Calendário e Tabelas
 ========================================================= */
 body[data-platform="mobile"] .calendar-page .fc {
   font-size: 0.85rem !important;
-  background: var(--bg-mobile) !important;
+  background: var(--bg-mobile);
 }
 
-body[data-platform="mobile"] .calendar-page .fc-view-harness {
-  overflow-x: auto !important;
+body[data-platform="mobile"] table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
-  min-width: 620px !important;
-}
-
-body[data-platform="mobile"] .calendar-page .visit-card {
-  font-size: 0.78rem !important;
-  line-height: 1.25 !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-}
-
-/* =========================================================
-🔹 Cards / containers
-========================================================= */
-body[data-platform="mobile"] .card,
-body[data-platform="mobile"] .panel,
-body[data-platform="mobile"] .box {
-  background: var(--panel-mobile);
-  border: 1px solid var(--border-mobile);
-  border-radius: 12px;
-  padding: 10px;
-  margin: 8px 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+body[data-platform="mobile"] th,
+body[data-platform="mobile"] td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-mobile);
+  text-align: left;
+  font-size: 0.82rem;
 }
 
 /* =========================================================
-🔹 Scroll suave
+🪶 Scroll e imagens
 ========================================================= */
 body[data-platform="mobile"] ::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 body[data-platform="mobile"] ::-webkit-scrollbar-thumb {
   background: var(--border-mobile);
   border-radius: 4px;
 }
 
-/* =========================================================
-🔹 Melhorias extras
-========================================================= */
 body[data-platform="mobile"] img {
   max-width: 100%;
-  height: auto;
   border-radius: 8px;
-}
-
-body[data-platform="mobile"] .section-title {
-  font-size: 1.1rem !important;
-  color: var(--accent-mobile);
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-/* Scroll vertical garantido no conteúdo */
-body[data-platform="mobile"] .content,
-body[data-platform="mobile"] .main-content {
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  padding-bottom: 80px !important;
 }
