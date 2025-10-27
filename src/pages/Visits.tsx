@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import DarkSelect from '../components/DarkSelect'
-import { saveVisitOffline } from '../utils/offlineSync'
-import { Camera, CameraResultType } from '@capacitor/camera';
-import { Geolocation } from '@capacitor/geolocation';
-
-
 
 type Visit = {
   id: number
@@ -16,6 +11,7 @@ type Visit = {
   diagnosis?: string
   recommendation?: string
 }
+
 type Client = { id: number; name: string }
 type Property = { id: number; name: string }
 type Plot = { id: number; name: string }
@@ -23,37 +19,6 @@ type Plot = { id: number; name: string }
 const API_BASE = import.meta.env.VITE_API_URL || '/api/'
 
 const VisitsPage: React.FC = () => {
- // Tipos
-interface Variety {
-  id: number;
-  name: string;
-  culture: string;
-}
-
-interface Variety {
-  id: number;
-  name: string;
-  culture: string;
-}
-
-const [visitForm, setVisitForm] = useState<{ culture: string; variety: string }>({
-  culture: '',
-  variety: '',
-});
-
-const [varieties, setVarieties] = useState<Variety[]>([]);
-
-
-useEffect(() => {
-  fetch(`${API_BASE}varieties`)
-    .then((r) => (r.ok ? r.json() : []))
-    .then((data: Variety[]) => {
-      if (Array.isArray(data)) setVarieties(data)
-      else setVarieties([])
-    })
-    .catch(() => setVarieties([]))
-}, [])
-
   const [visits, setVisits] = useState<Visit[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [properties, setProperties] = useState<Property[]>([])
@@ -61,31 +26,22 @@ useEffect(() => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // filters (default: last 5 years until today)
+  // filtros padrão: últimos 5 anos
   const today = new Date()
   const todayISO = today.toISOString().slice(0, 10)
   const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate())
   const fiveYearsISO = fiveYearsAgo.toISOString().slice(0, 10)
+
   const [filterStart, setFilterStart] = useState<string>(fiveYearsISO)
   const [filterEnd, setFilterEnd] = useState<string>(todayISO)
   const [filterClient, setFilterClient] = useState('')
-
-  const [open, setOpen] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-
-  const [form, setForm] = useState({
-    date: '',
-    client_id: '',
-    property_id: '',
-    plot_id: '',
-    recommendation: '',
-  })
   const [viewOpen, setViewOpen] = useState(false)
   const [activeVisit, setActiveVisit] = useState<Visit | null>(null)
 
   useEffect(() => {
     let mounted = true
     setLoading(true)
+
     Promise.all([
       fetch(`${API_BASE}visits`).then(r => r.ok ? r.json() : []),
       fetch(`${API_BASE}clients`).then(r => r.ok ? r.json() : []),
@@ -99,51 +55,22 @@ useEffect(() => {
         setProperties(ps || [])
         setPlots(pls || [])
       })
-      .catch(err => { console.error(err); setError('Erro ao carregar acompanhamentos') })
+      .catch(err => {
+        console.error(err)
+        setError('Erro ao carregar acompanhamentos')
+      })
       .finally(() => setLoading(false))
 
     return () => { mounted = false }
   }, [])
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }
-
-  async function handleTakePhoto() {
-  try {
-    const image = await Camera.getPhoto({
-      quality: 80,
-      allowEditing: false,
-      resultType: CameraResultType.Base64,
-    });
-    setForm(f => ({ ...f, photo: image.base64String }));
-    alert('📸 Foto capturada com sucesso!');
-  } catch (err) {
-    console.error('Erro ao tirar foto:', err);
-  }
-}
-
-async function handleGetLocation() {
-  try {
-    const position = await Geolocation.getCurrentPosition();
-    const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
-    setForm(f => ({ ...f, gps: coords }));
-    alert(`📍 Localização salva: ${coords}`);
-  } catch (err) {
-    console.error('Erro ao obter localização:', err);
-  }
-}
-
-
   function formatDateBR(dateStr?: string) {
-    if (!dateStr) return '--';
-    // Espera YYYY-MM-DD
-    const parts = String(dateStr).split('-');
+    if (!dateStr) return '--'
+    const parts = String(dateStr).split('-')
     if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`
     }
-    return String(dateStr);
+    return String(dateStr)
   }
 
   function openView(v: Visit) {
@@ -151,57 +78,10 @@ async function handleGetLocation() {
     setViewOpen(true)
   }
 
-  async function handleSave() {
-  if (!form.date || !form.client_id || !form.property_id || !form.plot_id)
-    return alert('Data, cliente, propriedade e talhão são obrigatórios');
-
-  setSubmitting(true);
-
-  // Monta o objeto de visita
-  const visitData = {
-    date: form.date ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-CA') : '',
-    client_id: Number(form.client_id),
-    property_id: Number(form.property_id),
-    plot_id: Number(form.plot_id),
-    recommendation: form.recommendation,
-  };
-
-  try {
-    if (navigator.onLine) {
-      // 🌐 Envia direto para o backend se estiver online
-      const res = await fetch(`${API_BASE}visits`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(visitData),
-      });
-
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-
-      const created: Visit = body.visit || body;
-      setVisits(v => [created, ...v]);
-      console.log('✅ Visita enviada online');
-    } else {
-      // 📴 Offline → salva no IndexedDB através da função utilitária
-      await saveVisitOffline(visitData);
-      alert('📴 Sem conexão — visita salva localmente e será enviada quando a conexão voltar.');
-    }
-
-    // ♻️ Reseta formulário
-    setOpen(false);
-    setForm({ date: '', client_id: '', property_id: '', plot_id: '', recommendation: '' });
-  } catch (err: any) {
-    console.error('Erro ao salvar visita:', err);
-    alert(err?.message || 'Erro ao criar acompanhamento');
-  } finally {
-    setSubmitting(false);
-  }
-}
-
-
   async function handleDelete(id?: number) {
     if (!id) return
     if (!confirm('Deseja excluir esta visita?')) return
+
     try {
       const res = await fetch(`${API_BASE}visits/${id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -210,41 +90,101 @@ async function handleGetLocation() {
       }
       setVisits(list => list.filter(v => v.id !== id))
     } catch (err: any) {
-      console.error('delete visit err', err)
+      console.error('Erro ao excluir visita', err)
       alert(err?.message || 'Erro ao excluir visita')
     }
   }
 
-  useEffect(() => {
-  if (open) document.body.style.overflow = "hidden";
-  else document.body.style.overflow = "";
-}, [open]);
-
- 
   return (
     <div className="clients-container">
       <div className="clients-header">
         <h2>Acompanhamentos</h2>
-        <button className="btn-new" onClick={() => setOpen(true)}>Nova Visita</button>
       </div>
 
-      {/* Improved filter bar above table */}
-      <div className="visits-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, background: 'rgba(20,32,40,0.9)', borderRadius: 8, padding: '12px 18px', boxShadow: '0 2px 8px #0002' }}>
+      {/* Filtros */}
+      <div
+        className="visits-filter-bar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          marginBottom: 18,
+          background: 'rgba(20,32,40,0.9)',
+          borderRadius: 8,
+          padding: '12px 18px',
+          boxShadow: '0 2px 8px #0002',
+        }}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 110 }}>
           <label style={{ fontSize: 13, color: '#9fb3b6', marginBottom: 2 }}>Início</label>
-          <input type="date" value={filterStart} onChange={e => setFilterStart(e.target.value)} style={{ background: '#16222a', color: '#e2e8f0', border: '1px solid #253544', borderRadius: 5, padding: '4px 8px', fontSize: 15 }} />
+          <input
+            type="date"
+            value={filterStart}
+            onChange={e => setFilterStart(e.target.value)}
+            style={{
+              background: '#16222a',
+              color: '#e2e8f0',
+              border: '1px solid #253544',
+              borderRadius: 5,
+              padding: '4px 8px',
+              fontSize: 15,
+            }}
+          />
         </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 110 }}>
           <label style={{ fontSize: 13, color: '#9fb3b6', marginBottom: 2 }}>Fim</label>
-          <input type="date" value={filterEnd} onChange={e => setFilterEnd(e.target.value)} style={{ background: '#16222a', color: '#e2e8f0', border: '1px solid #253544', borderRadius: 5, padding: '4px 8px', fontSize: 15 }} />
+          <input
+            type="date"
+            value={filterEnd}
+            onChange={e => setFilterEnd(e.target.value)}
+            style={{
+              background: '#16222a',
+              color: '#e2e8f0',
+              border: '1px solid #253544',
+              borderRadius: 5,
+              padding: '4px 8px',
+              fontSize: 15,
+            }}
+          />
         </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 140 }}>
           <label style={{ fontSize: 13, color: '#9fb3b6', marginBottom: 2 }}>Cliente</label>
-          <DarkSelect name="filterClient" value={filterClient} options={[{ value: '', label: 'Todos' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]} onChange={(e: any) => setFilterClient(e.target.value)} placeholder="Todos" />
+          <DarkSelect
+            name="filterClient"
+            value={filterClient}
+            options={[{ value: '', label: 'Todos' }, ...clients.map(c => ({ value: String(c.id), label: c.name }))]}
+            onChange={(e: any) => setFilterClient(e.target.value)}
+            placeholder="Todos"
+          />
         </div>
-        <button className="btn-new" style={{ marginLeft: 12, height: 36, fontWeight: 500, fontSize: 15, background: '#1db954', color: '#fff', borderRadius: 6, border: 'none', padding: '0 18px', cursor: 'pointer' }} onClick={() => { setFilterStart(''); setFilterEnd(''); setFilterClient('') }}>Limpar filtros</button>
+
+        <button
+          className="btn-new"
+          style={{
+            marginLeft: 12,
+            height: 36,
+            fontWeight: 500,
+            fontSize: 15,
+            background: '#1db954',
+            color: '#fff',
+            borderRadius: 6,
+            border: 'none',
+            padding: '0 18px',
+            cursor: 'pointer',
+          }}
+          onClick={() => {
+            setFilterStart(fiveYearsISO)
+            setFilterEnd(todayISO)
+            setFilterClient('')
+          }}
+        >
+          Limpar filtros
+        </button>
       </div>
 
+      {/* Tabela de visitas */}
       <div className="clients-card">
         {loading ? (
           <div style={{ padding: 20, color: '#9fb3b6' }}>Carregando...</div>
@@ -258,50 +198,48 @@ async function handleGetLocation() {
                 <th>Cliente</th>
                 <th>Fazenda</th>
                 <th>Talhão</th>
-                <th>Cultura</th>
                 <th>Recomendação</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {(
-                // apply filters and sort by date ascending (nearest first)
-                visits
-                  .filter(v => {
-                    if (filterClient && String(v.client_id) !== filterClient) return false
-                    if (filterStart && v.date && v.date < filterStart) return false
-                    if (filterEnd && v.date && v.date > filterEnd) return false
-                    return true
-                  })
-                  .sort((a, b) => {
-                    if (!a.date) return 1
-                    if (!b.date) return -1
-                    const ta = new Date(a.date).getTime()
-                    const tb = new Date(b.date).getTime()
-                    return ta - tb
-                  })
-                  .map(v => (
-                    <tr key={v.id}>
-                      <td>{formatDateBR(v.date)}</td>
-                      <td>{clients.find(c => c.id === v.client_id)?.name ?? v.client_id}</td>
-                      <td>{properties.find(p => p.id === v.property_id)?.name ?? v.property_id}</td>
-                      <td>{plots.find(p => p.id === v.plot_id)?.name ?? v.plot_id}</td>
-                      <td>{'--'}</td>
-                      <td>{v.recommendation ?? '--'}</td>
-                      <td>
-                        <button className="btn-action" onClick={() => openView(v)}>Ver</button>
-                        <button className="btn-action btn-delete" onClick={() => handleDelete(v.id)} style={{ marginLeft: 8 }}>Excluir</button>
-                      </td>
-                    </tr>
-                  ))
-              )}
+              {visits
+                .filter(v => {
+                  if (filterClient && String(v.client_id) !== filterClient) return false
+                  if (filterStart && v.date && v.date < filterStart) return false
+                  if (filterEnd && v.date && v.date > filterEnd) return false
+                  return true
+                })
+                .sort((a, b) => {
+                  if (!a.date) return 1
+                  if (!b.date) return -1
+                  return new Date(a.date).getTime() - new Date(b.date).getTime()
+                })
+                .map(v => (
+                  <tr key={v.id}>
+                    <td>{formatDateBR(v.date)}</td>
+                    <td>{clients.find(c => c.id === v.client_id)?.name ?? v.client_id}</td>
+                    <td>{properties.find(p => p.id === v.property_id)?.name ?? v.property_id}</td>
+                    <td>{plots.find(p => p.id === v.plot_id)?.name ?? v.plot_id}</td>
+                    <td>{v.recommendation ?? '--'}</td>
+                    <td>
+                      <button className="btn-action" onClick={() => openView(v)}>Ver</button>
+                      <button
+                        className="btn-action btn-delete"
+                        onClick={() => handleDelete(v.id)}
+                        style={{ marginLeft: 8 }}
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         )}
       </div>
 
-
-      {/* View modal */}
+      {/* Modal de visualização */}
       {viewOpen && activeVisit && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal">
@@ -317,131 +255,8 @@ async function handleGetLocation() {
           </div>
         </div>
       )}
-
-{open && (
-  <div className="modal-overlay" role="dialog" aria-modal="true">
-    <div className="modal">
-      <h3>Nova Visita</h3>
-
-      <div className="form-row">
-        <label>Data</label>
-        <input
-          name="date"
-          type="date"
-          value={form.date}
-          onChange={handleChange}
-        />
-      </div>
-
-      <div className="form-row">
-        <label>Cliente</label>
-        <DarkSelect
-          name="client_id"
-          value={form.client_id}
-          placeholder="Selecione cliente"
-          options={[
-            { value: '', label: 'Selecione cliente' },
-            ...clients.map((c) => ({
-              value: String(c.id),
-              label: c.name,
-            })),
-          ]}
-          onChange={handleChange as any}
-        />
-      </div>
-
-      {/* 🌾 Cultura */}
-      <div className="form-row">
-        <label>Cultura</label>
-        <select
-          name="culture"
-          value={visitForm.culture}
-          onChange={(e) =>
-            setVisitForm((prev) => ({
-              ...prev,
-              culture: e.target.value,
-              variety: '',
-            }))
-          }
-        >
-          <option value="">Selecione a cultura</option>
-          {[...new Set(varieties.map((v) => v.culture))].map((culture) => (
-            <option key={culture} value={culture}>
-              {culture}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* 🌱 Variedade */}
-      <div className="form-row">
-        <label>Variedade</label>
-        <select
-          name="variety"
-          value={visitForm.variety}
-          onChange={(e) =>
-            setVisitForm((prev) => ({
-              ...prev,
-              variety: e.target.value,
-            }))
-          }
-          disabled={!visitForm.culture}
-        >
-          <option value="">Selecione a variedade</option>
-          {varieties
-            .filter((v) => v.culture === visitForm.culture)
-            .map((v) => (
-              <option key={v.id} value={v.name}>
-                {v.name}
-              </option>
-            ))}
-        </select>
-      </div>
-
-      {/* 📸 & 📍 Botões */}
-      <div
-        className="form-row"
-        style={{
-          display: 'flex',
-          gap: '10px',
-          justifyContent: 'space-between',
-          marginTop: 10,
-        }}
-      >
-        <button type="button" className="btn-new" onClick={handleTakePhoto}>
-          📸 Tirar Foto
-        </button>
-        <button type="button" className="btn-new" onClick={handleGetLocation}>
-          📍 Capturar Localização
-        </button>
-      </div>
-
-      <div className="form-row">
-        <label>Recomendação</label>
-        <textarea
-          name="recommendation"
-          value={form.recommendation}
-          onChange={handleChange}
-        />
-      </div>
-
-      <div className="modal-actions">
-        <button className="btn-cancel" onClick={() => setOpen(false)}>
-          Cancelar
-        </button>
-        <button className="btn-save" onClick={handleSave} disabled={submitting}>
-          {submitting ? 'Salvando...' : 'Salvar'}
-        </button>
-      </div>
     </div>
-  </div>
-)}
-</div>
-);
-};
+  )
+}
 
-export default VisitsPage;
-
-
-
-
+export default VisitsPage

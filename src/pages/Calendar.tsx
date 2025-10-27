@@ -6,6 +6,9 @@ import interactionPlugin from '@fullcalendar/interaction'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import DarkSelect from '../components/DarkSelect'
 import './Calendar.css'
+import { Camera, CameraResultType } from '@capacitor/camera'
+import { Geolocation } from '@capacitor/geolocation'
+
 
 
 const API_BASE = (import.meta as any).env.VITE_API_URL || '/api/'
@@ -312,56 +315,99 @@ if ("geolocation" in navigator) {
     }
   };
 
-  const markDone = async () => {
-    if (!form.id) return;
-    try {
-      // ✅ 1. Atualiza o status da visita
-      const r = await fetch(`${API_BASE}visits/${form.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'done' }),
-      });
-      if (!r.ok) throw new Error('Falha ao concluir');
 
-      // ✅ 2. Se há fotos novas, envia agora
-      if (form.photos && form.photos.length > 0) {
-        const fd = new FormData();
-        Array.from(form.photos).forEach((file) => fd.append('photos', file));
+  // ============================================================
+// 📸 Tirar Foto diretamente do app
+// ============================================================
+const handleTakePhoto = async () => {
+  try {
+    const image = await Camera.getPhoto({
+      quality: 85,
+      allowEditing: false,
+      resultType: CameraResultType.Base64,
+    });
 
-        try {
-          await fetch(`${API_BASE}visits/${form.id}/photos`, {
-            method: 'POST',
-            body: fd,
-          });
-          console.log('📸 Fotos adicionais enviadas ao concluir!');
-        } catch (err) {
-          console.error('Erro ao enviar fotos ao concluir:', err);
-        }
-      }
+    if (image.base64String) {
+      const base64 = `data:image/jpeg;base64,${image.base64String}`;
+      setForm((f) => ({
+        ...f,
+        photoPreviews: [...(f.photoPreviews || []), base64],
+      }));
+      alert('📸 Foto capturada com sucesso!');
+    }
+  } catch (err) {
+    console.error('Erro ao tirar foto:', err);
+    alert('Erro ao capturar foto');
+  }
+};
 
-    // ✅ 3. Atualiza status no calendário
+// ============================================================
+// 📍 Capturar localização GPS do dispositivo
+// ============================================================
+const handleGetLocation = async () => {
+  try {
+    const position = await Geolocation.getCurrentPosition();
+    const { latitude, longitude } = position.coords;
+    setForm((f) => ({
+      ...f,
+      latitude,
+      longitude,
+    }));
+    alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+  } catch (err) {
+    console.error('Erro ao obter localização:', err);
+    alert('Erro ao capturar localização');
+  }
+};
+
+
+// ============================================================
+// ✅ Marcar visita como concluída
+// ============================================================
+const markDone = async () => {
+  if (!form.id) return;
+  try {
+    const r = await fetch(`${API_BASE}visits/${form.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    });
+
+    if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+
+    // ✅ Atualiza o calendário visualmente
+    const calendarApi = calendarRef.current?.getApi();
+
     setEvents((prev) =>
       prev.map((ev) => {
         if (ev.id === `visit-${form.id}`) {
-          const v = { ...ev.extendedProps.raw, status: 'done' };
+          const updatedVisit = { ...ev.extendedProps.raw, status: 'done' };
+          const newBg = colorFor(updatedVisit.date, updatedVisit.status);
+          const existingEvent = calendarApi?.getEventById(ev.id);
+
+          if (existingEvent) {
+            existingEvent.setExtendedProp('status', 'done');
+            existingEvent.setProp('backgroundColor', newBg);
+            existingEvent.setProp('borderColor', newBg);
+          }
+
           return {
             ...ev,
-            backgroundColor: colorFor(v.date, v.status),
-            extendedProps: { ...ev.extendedProps, raw: v },
+            backgroundColor: newBg,
+            extendedProps: { ...ev.extendedProps, raw: updatedVisit },
           };
         }
         return ev;
       })
     );
 
-    await loadVisits(); // 🔁 garante recarregar fotos novas
+    await loadVisits();
     setOpen(false);
   } catch (e) {
     console.error('Erro ao concluir:', e);
     alert('Erro ao concluir');
   }
 };
-
 
     // ==============================
   // Render
@@ -687,6 +733,25 @@ if ("geolocation" in navigator) {
               />
               <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
             </div>
+
+            {/* 📸 & 📍 Botões para captura rápida */}
+            <div
+              className="form-row"
+              style={{
+                display: 'flex',
+                gap: '10px',
+                justifyContent: 'space-between',
+                marginTop: 10,
+              }}
+            >
+              <button type="button" className="btn-new" onClick={handleTakePhoto}>
+                📸 Tirar Foto
+              </button>
+              <button type="button" className="btn-new" onClick={handleGetLocation}>
+                📍 Capturar Localização
+              </button>
+            </div>
+
 
             <div className="form-row">
               <label>Recomendação</label>

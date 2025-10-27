@@ -61,6 +61,23 @@
   border: 0;
 }
 
+
+/* Remove qualquer borda ou faixa em volta dos eventos */
+.fc-event,
+.fc-h-event,
+.fc-v-event {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Garante que a cor sólida JS seja visível */
+.fc-event .fc-event-main-frame,
+.fc-event .fc-event-title-container {
+  background: none !important;
+}
+
 /* =========================================================
 📅 FullCalendar — ajustes finos
 ========================================================= */
@@ -175,5 +192,45 @@ body[data-platform="mobile"] .menu-toggle { transform: translateY(6px); }
     max-height: 85vh;
     overflow: auto;
   }
+}
+/* =========================================================
+💾 Restaura estilos dos botões principais
+========================================================= */
+button,
+.btn,
+input[type="submit"] {
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+}
+
+button:hover,
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* Botões padrões */
+.btn-primary {
+  background: #3b82f6 !important; /* azul */
+  color: #fff !important;
+}
+
+.btn-success {
+  background: #16a34a !important; /* verde */
+  color: #fff !important;
+}
+
+.btn-danger {
+  background: #dc2626 !important; /* vermelho */
+  color: #fff !important;
+}
+
+/* Botões dentro de modais */
+.modal button {
+  min-width: 120px;
+  padding: 0.6rem 1rem;
+  margin: 4px;
 }
 
