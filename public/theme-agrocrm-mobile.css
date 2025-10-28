@@ -466,3 +466,221 @@ body[data-platform="mobile"] .btn-save {
 body[data-platform="mobile"] .btn:hover {
   opacity: 0.9 !important;
 }
+
+/* =========================================================
+🧭 CORREÇÃO FINAL DE LAYOUT — COLUNAS + CENTRALIZAÇÃO
+========================================================= */
+
+/* 🔹 Permite deslizar lateralmente no modo mês e semana */
+body[data-platform="mobile"] .calendar-page .fc-scroller,
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  display: block !important;
+  width: 100% !important;
+  overscroll-behavior-x: contain !important;
+}
+
+/* 🔹 Define uma largura mínima confortável para cada dia */
+body[data-platform="mobile"] .fc-daygrid-day {
+  min-width: 240px !important;
+  flex: 0 0 240px !important;
+  vertical-align: top !important;
+}
+
+/* 🔹 Garante que os eventos fiquem centralizados na célula */
+body[data-platform="mobile"] .fc-daygrid-day-events {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  overflow: visible !important;
+}
+
+/* 🔹 Modo semana/timegrid — centraliza e ajusta largura */
+body[data-platform="mobile"] .fc-timegrid-event {
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  width: 95% !important;
+  max-width: 320px !important;
+  border-radius: 10px !important;
+  overflow: visible !important;
+}
+
+/* 🔹 Altura mínima das células (para não colarem entre si) */
+body[data-platform="mobile"] .fc-daygrid-day-frame {
+  min-height: 140px !important;
+}
+
+/* 🔹 Rolagem horizontal suave */
+body[data-platform="mobile"] .calendar-page {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+/* =========================================================
+✨ VISUAL MAIS LIMPO NOS CARDS DE VISITA
+========================================================= */
+body[data-platform="mobile"] .visit-card {
+  font-size: 0.88rem !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  box-shadow: 0 0 6px rgba(0,0,0,0.25) !important;
+  font-weight: 500 !important;
+}
+
+body[data-platform="mobile"] .visit-card div {
+  margin: 2px 0 !important;
+}
+/* =========================================================
+🗓️ CABEÇALHO E TÍTULOS DO CALENDÁRIO
+========================================================= */
+body[data-platform="mobile"] .calendar-page h2 {
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  color: var(--accent-mobile) !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+}
+
+body[data-platform="mobile"] .fc-toolbar-title {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: var(--text-mobile) !important;
+  text-transform: capitalize !important;
+  white-space: nowrap !important;
+}
+
+/* 🔹 Alinha “Agenda de visitas” e data na horizontal */
+body[data-platform="mobile"] .calendar-page .fc-toolbar-chunk:first-child {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+
+body[data-platform="mobile"] .calendar-page .fc-toolbar-chunk:first-child h2 {
+  margin-right: 12px !important;
+}
+/* =========================================================
+🎛️ FILTROS (CONSULTOR + VARIEDADE)
+========================================================= */
+body[data-platform="mobile"] .calendar-page select {
+  font-size: 0.9rem !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  background: #0d1f1b !important;
+  color: #cde5df !important;
+  border: 1px solid #234 !important;
+}
+
+/* 🔹 Empilha os filtros no mobile quando faltar espaço */
+@media (max-width: 480px) {
+  body[data-platform="mobile"] .calendar-page > div:first-child {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+}
+/* =========================================================
+✨ VISUAL DOS TEXTOS NOS CARDS
+========================================================= */
+body[data-platform="mobile"] .visit-card {
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  line-height: 1.4 !important;
+  padding: 8px 10px !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+body[data-platform="mobile"] .visit-card div {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+/* =========================================================
+📅 CORREÇÃO FINAL — LARGURA DAS COLUNAS (SEMANA/MÊS)
+========================================================= */
+
+/* 🔹 Garante que o calendário use largura automática */
+body[data-platform="mobile"] .calendar-page .fc .fc-view-harness,
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
+  width: auto !important;
+  min-width: 100% !important;
+  overflow-x: auto !important;
+  display: block !important;
+  scroll-behavior: smooth !important;
+}
+
+/* 🔹 Força as colunas a respeitarem um tamanho mínimo confortável */
+body[data-platform="mobile"] .calendar-page .fc-daygrid-body,
+body[data-platform="mobile"] .calendar-page .fc-timegrid-body {
+  min-width: 1800px !important; /* largura total para rolar horizontalmente */
+}
+
+/* 🔹 Cada dia ocupa um espaço fixo e proporcional */
+body[data-platform="mobile"] .calendar-page .fc-daygrid-day,
+body[data-platform="mobile"] .calendar-page .fc-timegrid-col {
+  min-width: 200px !important;  /* largura ideal por dia */
+  max-width: 200px !important;
+  flex: 0 0 200px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  vertical-align: top !important;
+}
+
+/* 🔹 Permite rolagem lateral fluida sem quebra */
+body[data-platform="mobile"] .calendar-page .fc-daygrid,
+body[data-platform="mobile"] .calendar-page .fc-timegrid {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x proximity !important;
+}
+
+/* 🔹 Centraliza eventos no meio da célula */
+body[data-platform="mobile"] .calendar-page .fc-daygrid-day-events {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+}
+
+/* 🔹 Alinha o calendário com os botões "Mês | Semana | Dia" */
+body[data-platform="mobile"] .calendar-page .fc-toolbar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  margin-top: 10px !important;
+  margin-bottom: 6px !important;
+}
+
+body[data-platform="mobile"] .calendar-page .fc-toolbar-chunk {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* 🔹 Faz os botões ficarem na mesma linha do título */
+body[data-platform="mobile"] .calendar-page .fc-toolbar-chunk:last-child {
+  margin-left: auto !important;
+}
+body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}

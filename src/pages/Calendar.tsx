@@ -50,6 +50,8 @@ const CalendarPage: React.FC = () => {
 
   // filtro de agenda por consultor
   const [selectedConsultant, setSelectedConsultant] = useState<string>('')
+  // filtro adicional por variedade
+  const [selectedVariety, setSelectedVariety] = useState<string>('');
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
@@ -433,6 +435,24 @@ const markDone = async () => {
             <option key={c.id} value={String(c.id)}>{c.name}</option>
           ))}
         </select>
+        <select
+        value={selectedVariety}
+        onChange={(e) => setSelectedVariety(e.target.value)}
+        style={{
+          background: '#101c1a',
+          color: '#d5e5e2',
+          border: '1px solid #2d3d3f',
+          borderRadius: '8px',
+          padding: '6px 10px',
+          marginLeft: '10px'
+        }}
+      >
+        <option value="">Todas as variedades</option>
+        {varieties.map(v => (
+          <option key={v.id} value={v.name}>{v.name}</option>
+        ))}
+      </select>
+
       </div>
 
       {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
@@ -466,10 +486,18 @@ const markDone = async () => {
           setOpen(true);
         }}
         events={events.filter(e => {
-          if (!selectedConsultant) return true;
-          const cid = e.extendedProps?.raw?.consultant_id;
-          return String(cid || '') === selectedConsultant;
-        })}
+        const cid = e.extendedProps?.raw?.consultant_id;
+        const variety = e.extendedProps?.raw?.variety || e.extendedProps?.raw?.variedade || '';
+
+        const matchesConsultant =
+          !selectedConsultant || String(cid || '') === selectedConsultant;
+
+        const matchesVariety =
+          !selectedVariety || String(variety).toLowerCase().includes(selectedVariety.toLowerCase());
+
+        return matchesConsultant && matchesVariety;
+      })}
+
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
