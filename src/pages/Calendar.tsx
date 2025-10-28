@@ -466,6 +466,11 @@ const markDone = async () => {
         height={window.innerWidth < 768 ? 'auto' : 650}
         expandRows={true}
         dateClick={(info) => {
+          // ⚙️ Detecta se está em modo mobile (APK)
+          const isMobile = window.innerWidth <= 768 || document.body.dataset.platform === "mobile";
+          if (isMobile) return; // no mobile, não abre o modal
+
+          // 💻 Mantém comportamento normal no desktop
           const dateStr = info.dateStr;
           const [y, m, d] = dateStr.split('-');
           setForm({
@@ -580,11 +585,16 @@ const markDone = async () => {
       />
 
 
-      {/* ➕ Botão flutuante (após o FullCalendar, ainda dentro do return) */}
+      {/* ➕ Botão flutuante (fica sempre visível no mobile) */}
       {window.innerWidth <= 768 && (
         <button
-          className="fab-new-visit"
+          className="fab"
           onClick={() => {
+            const btn = document.querySelector('.fab');
+            if (btn) {
+              btn.classList.add('pressed');
+              setTimeout(() => btn.classList.remove('pressed'), 180);
+            }
             setForm({
               id: null,
               date: new Date().toLocaleDateString('pt-BR'),
@@ -606,6 +616,7 @@ const markDone = async () => {
           +
         </button>
       )}
+
 
       {open && (
         <div className="modal-overlay">

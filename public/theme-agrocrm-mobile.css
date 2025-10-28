@@ -684,3 +684,37 @@ body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
+/* =========================================================
+➕ BOTÃO FLUTUANTE DE NOVA VISITA (MOBILE)
+========================================================= */
+
+body[data-platform="mobile"] .fab {
+  position: fixed !important;
+  bottom: 80px !important;
+  right: 20px !important;
+  width: 68px !important;
+  height: 68px !important;
+  border-radius: 50% !important;
+  background: var(--accent-mobile, #2dd36f) !important;
+  color: #fff !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4) !important;
+  z-index: 99999 !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+/* Efeito de clique */
+body[data-platform="mobile"] .fab:active {
+  transform: scale(0.93) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+body[data-platform="mobile"] .fab.pressed {
+  transform: scale(0.9);
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
