@@ -718,3 +718,67 @@ body[data-platform="mobile"] .fab.pressed {
   opacity: 0.8;
   transition: all 0.2s ease;
 }
+/* =========================================================
+🌟 ESTILO UNIVERSAL DE BOTÕES (TOM "BOTÃO DE ACESSO")
+========================================================= */
+
+button,
+.btn,
+input[type="button"],
+input[type="submit"] {
+  background: linear-gradient(180deg, #4af67d, #1cc155) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease-in-out !important;
+  padding: 10px 16px !important;
+  text-align: center !important;
+}
+
+/* Efeito hover e clique */
+button:hover,
+.btn:hover {
+  filter: brightness(1.15) !important;
+  box-shadow: 0 0 12px rgba(72, 255, 160, 0.6) !important;
+}
+
+button:active,
+.btn:active {
+  transform: scale(0.95) !important;
+  filter: brightness(0.9) !important;
+}
+
+/* Cores secundárias (Cancelar / Excluir) com tom suave */
+button.cancelar,
+.btn-cancelar {
+  background: linear-gradient(180deg, #8a8f96, #4f545b) !important;
+}
+
+button.excluir,
+.btn-excluir {
+  background: linear-gradient(180deg, #ff6b6b, #c43d3d) !important;
+}
+
+/* Adapta os botões flutuantes */
+.fab {
+  background: radial-gradient(circle at 30% 30%, #50f57a, #1fc15b) !important;
+}
+
+.fab:active {
+  background: radial-gradient(circle at 70% 70%, #3abf63, #169e4a) !important;
+  transform: scale(0.92) !important;
+}
+.modal,
+.dialog {
+  background-color: #0e1815 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.7) !important;
+}
+
+.modal-header h2,
+.dialog-title {
+  color: #bfffd2 !important;
+  text-shadow: 0 0 6px rgba(72, 255, 160, 0.5) !important;
+}

@@ -285,8 +285,31 @@ if ("geolocation" in navigator) {
 }
 
 
-    // ✅ Limpa formulário e recarrega visitas
+    // ✅ Aguarda o upload das fotos antes de atualizar a lista
+    if (newVisitId && form.photos && form.photos.length > 0) {
+      const fd = new FormData();
+      Array.from(form.photos).forEach((file) => fd.append("photos", file));
+
+      try {
+        const uploadResp = await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+
+        if (uploadResp.ok) {
+          console.log("📸 Fotos enviadas com sucesso!");
+        } else {
+          console.warn("⚠️ Falha no upload de fotos:", uploadResp.status);
+        }
+      } catch (err) {
+        console.error("Erro ao enviar fotos:", err);
+      }
+    }
+
+    // ✅ Só depois de tudo, fecha o modal e recarrega
     setOpen(false);
+    await loadVisits();
+
     setForm({
       id: null,
       date: '',
@@ -302,6 +325,7 @@ if ("geolocation" in navigator) {
       photoPreviews: [],
       clientSearch: ''
     });
+
     await loadVisits();
     } catch (e: any) {
       console.error("❌ Erro ao salvar visita:", e);
