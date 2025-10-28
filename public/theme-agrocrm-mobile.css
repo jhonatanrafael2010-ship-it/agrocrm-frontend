@@ -361,8 +361,8 @@ body[data-platform="mobile"] .visit-card {
   border-radius: 10px !important;
   color: #fff !important;
   background-clip: padding-box !important;
-  white-space: nowrap !important;
-  word-break: keep-all !important;
+  white-space: normal !important;
+  word-break: break-word !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   text-align: left !important;
