@@ -481,12 +481,11 @@ const markDone = async () => {
         const v = (arg.event.extendedProps?.raw as any) || {};
         const bg = colorFor(v?.date || arg.event.startStr, v?.status);
 
-        // Deriva fenologia
         const stage = (
           (v?.recommendation?.split('—').pop() || v?.recommendation || '') + ''
         ).trim() || '-';
 
-        // Cartão colorido
+        // Cartão
         const wrapper = document.createElement('div');
         wrapper.className = 'visit-card';
         wrapper.style.backgroundColor = bg;
@@ -495,34 +494,30 @@ const markDone = async () => {
         wrapper.style.borderRadius = '10px';
         wrapper.style.boxSizing = 'border-box';
 
-        // 🔹 Layout vertical
+        // layout vertical simples, sem forçar quebras
         wrapper.style.display = 'flex';
         wrapper.style.flexDirection = 'column';
         wrapper.style.alignItems = 'flex-start';
         wrapper.style.justifyContent = 'center';
 
-        // 🔹 Permite scroll suave apenas quando necessário
-        wrapper.addEventListener('wheel', (e) => e.stopPropagation());
-        wrapper.addEventListener('touchmove', (e) => e.stopPropagation());
+        // 🔑 largura cheia da célula e scroll horizontal se precisar
+        wrapper.style.width = '100%';
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.overflowY = 'hidden';
+        // não force white-space aqui; deixe a linha decidir
 
-        // =====================================================
-        // 🧩 Função de adicionar linhas (uma linha por campo)
-        // =====================================================
         const addRow = (text: string) => {
           const row = document.createElement('div');
-          row.textContent = text;
+          row.textContent = text || '-';
           row.style.margin = '2px 0';
-          // 🔹 Permitir quebra natural e leitura completa
-          row.style.whiteSpace = 'normal';
-          row.style.wordBreak = 'break-word';
-          row.style.overflow = 'visible';
+          // 🔑 cada linha vira “uma linha” e rola pro lado se passar
+          row.style.whiteSpace = 'normal';    // ✅ permite múltiplas linhas
+          row.style.wordBreak  = 'break-word'; // ✅ quebra palavras longas
+          row.style.overflow   = 'visible';
           row.style.textOverflow = 'clip';
           wrapper.appendChild(row);
         };
 
-        // =====================================================
-        // 🧾 Conteúdo da visita (1 linha por informação)
-        // =====================================================
         addRow(`👤 ${v?.client_name || '-'}`);
         addRow(`🌱 ${v?.variety || '-'}`);
         addRow(`📍 ${stage}`);
@@ -530,8 +525,6 @@ const markDone = async () => {
 
         return { domNodes: [wrapper] };
       }}
-
-
 
 
 
@@ -600,7 +593,7 @@ const markDone = async () => {
 
             <h3>{form.id ? 'Editar Visita' : 'Nova Visita'}</h3>
 
-
+          <div className="modal-body">
             <div className="form-grid">
               <div className="form-row">
                 <label>Data</label>
@@ -894,7 +887,7 @@ const markDone = async () => {
                 Envie uma ou mais fotos (JPEG/PNG). Você pode removê-las antes de salvar.
               </small>
             </div>
-
+            </div>
           </div>
 
             <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
