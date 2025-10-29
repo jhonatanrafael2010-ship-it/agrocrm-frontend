@@ -1,51 +1,83 @@
-import React from 'react'
-import './Navbar.css'
+import React from "react";
+import {
+  Home,
+  Users,
+  Map,
+  Calendar,
+  ClipboardList,
+  Briefcase,
+  LogOut,
+} from "lucide-react";
+import "./Navbar.css";
 
 type Props = {
-  activeItem?: string
-  onNavigate?: (item: string) => void
-}
+  activeItem?: string;
+  onNavigate?: (item: string) => void;
+};
 
-const links = ['Dashboard', 'Clientes', 'Propriedades', 'Calendário', 'Acompanhamentos', 'Oportunidades']
+const Navbar: React.FC<Props> = ({
+  activeItem = "Dashboard",
+  onNavigate = () => {},
+}) => {
+  const links = [
+    { label: "Dashboard", icon: <Home size={18} /> },
+    { label: "Clientes", icon: <Users size={18} /> },
+    { label: "Propriedades", icon: <Map size={18} /> },
+    { label: "Calendário", icon: <Calendar size={18} /> },
+    { label: "Acompanhamentos", icon: <ClipboardList size={18} /> },
+    { label: "Oportunidades", icon: <Briefcase size={18} /> },
+  ];
 
-const Navbar: React.FC<Props> = ({ activeItem = 'Dashboard', onNavigate = () => {} }) => {
   return (
-    <aside className="sidebar" aria-label="Primary">
-      <div className="sidebar__inner">
-        <div className="sidebar__brand">
-          <a
-            href="#"
-            onClick={e => {
-              e.preventDefault()
-              if (activeItem !== 'Dashboard') onNavigate('Dashboard') // ✅ só muda se for diferente
-            }}
-          >
-            AgroCRM
-          </a>
-        </div>
+    <aside
+      className="d-flex flex-column bg-dark text-light border-end border-secondary h-100 p-3"
+      style={{ width: 240 }}
+    >
+      {/* 🔹 Logo / Marca */}
+      <div className="mb-4 text-center">
+        <span
+          className="fw-bold fs-5 text-success"
+          style={{ letterSpacing: "0.5px", cursor: "pointer" }}
+          onClick={() => onNavigate("Dashboard")}
+        >
+          AgroCRM
+        </span>
+      </div>
 
-        <nav className="sidebar__nav" role="navigation">
-          {links.map(l => (
-            <a
-              key={l}
-              className={`sidebar__link ${l === activeItem ? 'active' : ''}`}
-              href="#"
-              onClick={e => {
-                e.preventDefault()
-                if (activeItem !== l) onNavigate(l) // ✅ evita setRoute repetido
+      {/* 🔹 Navegação */}
+      <nav className="flex-grow-1">
+        <div className="list-group list-group-flush">
+          {links.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => onNavigate(item.label)}
+              className={`list-group-item list-group-item-action d-flex align-items-center gap-2 ${
+                activeItem === item.label
+                  ? "active bg-success border-success text-white"
+                  : "bg-transparent text-light border-0"
+              }`}
+              style={{
+                transition: "background 0.2s ease, color 0.2s ease",
               }}
             >
-              {l}
-            </a>
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
           ))}
-        </nav>
-
-        <div className="sidebar__footer">
-          <button className="sidebar__logout">Sair</button>
         </div>
+      </nav>
+
+      {/* 🔹 Rodapé (Logout) */}
+      <div className="mt-auto pt-3 border-top border-secondary">
+        <button
+          className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+          onClick={() => alert("🚪 Logout realizado!")}
+        >
+          <LogOut size={18} /> Sair
+        </button>
       </div>
     </aside>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

@@ -7,103 +7,109 @@
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "acef85df",
+      "fileHash": "35bf1819",
       "needsInterop": true
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "9bb03264",
+      "fileHash": "9f910c15",
       "needsInterop": true
     },
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "075ca5e7",
+      "fileHash": "d7d0bba5",
       "needsInterop": true
     },
     "react/jsx-runtime": {
       "src": "../../node_modules/react/jsx-runtime.js",
       "file": "react_jsx-runtime.js",
-      "fileHash": "e391540f",
+      "fileHash": "f4e12bd5",
       "needsInterop": true
     },
     "@capacitor/camera": {
       "src": "../../node_modules/@capacitor/camera/dist/esm/index.js",
       "file": "@capacitor_camera.js",
-      "fileHash": "7f8452fc",
+      "fileHash": "9a7cbe46",
       "needsInterop": false
     },
     "@capacitor/geolocation": {
       "src": "../../node_modules/@capacitor/geolocation/dist/esm/index.js",
       "file": "@capacitor_geolocation.js",
-      "fileHash": "cdb49859",
+      "fileHash": "fcd0685e",
       "needsInterop": false
     },
     "@fullcalendar/core/locales/pt-br": {
       "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
       "file": "@fullcalendar_core_locales_pt-br.js",
-      "fileHash": "909cfcb0",
+      "fileHash": "a30e1e8a",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "72187b40",
+      "fileHash": "0f244c04",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "53fb46fd",
+      "fileHash": "8f6721a1",
       "needsInterop": false
     },
     "@fullcalendar/react": {
       "src": "../../node_modules/@fullcalendar/react/dist/index.js",
       "file": "@fullcalendar_react.js",
-      "fileHash": "d1412182",
+      "fileHash": "320d6ddc",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "86995ec8",
+      "fileHash": "1b32dbae",
       "needsInterop": false
     },
     "@hello-pangea/dnd": {
       "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
       "file": "@hello-pangea_dnd.js",
-      "fileHash": "c8ecb77d",
+      "fileHash": "cd59de8f",
       "needsInterop": false
     },
     "bootstrap/dist/js/bootstrap.bundle.min.js": {
       "src": "../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
       "file": "bootstrap_dist_js_bootstrap__bundle__min__js.js",
-      "fileHash": "781e2475",
+      "fileHash": "810d1464",
       "needsInterop": true
     },
     "idb": {
       "src": "../../node_modules/idb/build/index.js",
       "file": "idb.js",
-      "fileHash": "aad7be5a",
+      "fileHash": "11c0b2e0",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "0fdedb38",
+      "fileHash": "81a41fe6",
       "needsInterop": false
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "af07c318",
+      "fileHash": "59c44fdf",
       "needsInterop": true
     }
   },
   "chunks": {
     "web-RWGO5ROS": {
       "file": "web-RWGO5ROS.js"
+    },
+    "chunk-FUPQPBBX": {
+      "file": "chunk-FUPQPBBX.js"
+    },
+    "chunk-O4N2BAMV": {
+      "file": "chunk-O4N2BAMV.js"
     },
     "chunk-OUWKCDPP": {
       "file": "chunk-OUWKCDPP.js"
@@ -113,12 +119,6 @@
     },
     "chunk-RQHQO3DB": {
       "file": "chunk-RQHQO3DB.js"
-    },
-    "chunk-FUPQPBBX": {
-      "file": "chunk-FUPQPBBX.js"
-    },
-    "chunk-O4N2BAMV": {
-      "file": "chunk-O4N2BAMV.js"
     },
     "chunk-G3PMV62Z": {
       "file": "chunk-G3PMV62Z.js"
