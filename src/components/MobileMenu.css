@@ -1,0 +1,30 @@
+/* 🌑 Tema escuro do menu mobile (Bootstrap 5 offcanvas) */
+
+.offcanvas {
+  background-color: #0a141a !important;
+  color: #e5e7eb;
+}
+
+.offcanvas-title {
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+
+.list-group-item {
+  font-weight: 500;
+  border-radius: 6px !important;
+}
+
+.list-group-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+.btn-outline-danger {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-outline-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+}

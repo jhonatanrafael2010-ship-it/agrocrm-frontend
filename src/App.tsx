@@ -10,6 +10,8 @@ import "./styles/App.css";
 import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
+import "./MobileMenu.css";
+
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
@@ -46,7 +48,6 @@ const App: React.FC = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [isMobileApp, setIsMobileApp] = useState(false);
 
   useEffect(() => {
@@ -75,11 +76,14 @@ const App: React.FC = () => {
             {/* ☰ Botão de menu mobile */}
             <button
               className="btn btn-outline-light d-lg-none"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label="Abrir menu"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#mobileMenu"
+              aria-controls="mobileMenu"
             >
               ☰
             </button>
+
             <span className="navbar-brand fw-bold">AgroCRM</span>
           </div>
 
@@ -104,16 +108,7 @@ const App: React.FC = () => {
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
-          menuOpen && (
-            <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-75 z-3">
-              <MobileMenu
-                onNavigate={(r) => {
-                  setRoute(r);
-                  setMenuOpen(false);
-                }}
-              />
-            </div>
-          )
+          <MobileMenu onNavigate={(r) => setRoute(r)} />
         ) : (
           <div className="d-none d-lg-block bg-dark border-end border-secondary" style={{ width: 240 }}>
             <Navbar activeItem={route} onNavigate={setRoute} />
