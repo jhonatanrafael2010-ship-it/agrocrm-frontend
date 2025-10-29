@@ -400,6 +400,7 @@ const handleGetLocation = async () => {
 const markDone = async () => {
   if (!form.id) return;
   try {
+    // Atualiza o status da visita no backend
     const r = await fetch(`${API_BASE}visits/${form.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -407,6 +408,63 @@ const markDone = async () => {
     });
 
     if (!r.ok) throw new Error('Erro HTTP ' + r.status);
+
+    // ✅ Envia fotos também ao marcar como concluída
+    if (form.photos && form.photos.length > 0) {
+      const fd = new FormData();
+      Array.from(form.photos).forEach((file) => fd.append('photos', file));
+
+      try {
+        const uploadResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+          method: 'POST',
+          body: fd,
+        });
+
+        if (uploadResp.ok) {
+          console.log('📸 Fotos enviadas com sucesso ao concluir!');
+        } else {
+          console.warn('⚠️ Falha ao enviar fotos ao concluir:', uploadResp.status);
+        }
+      } catch (err) {
+        console.error('Erro ao enviar fotos ao concluir:', err);
+      }
+    }
+
+    // ✅ Atualiza o calendário visualmente
+    const calendarApi = calendarRef.current?.getApi();
+
+    setEvents((prev) =>
+      prev.map((ev) => {
+        if (ev.id === `visit-${form.id}`) {
+          const updatedVisit = { ...ev.extendedProps.raw, status: 'done' };
+          const newBg = colorFor(updatedVisit.date, updatedVisit.status);
+          const existingEvent = calendarApi?.getEventById(ev.id);
+
+          if (existingEvent) {
+            existingEvent.setExtendedProp('status', 'done');
+            existingEvent.setProp('backgroundColor', newBg);
+            existingEvent.setProp('borderColor', newBg);
+          }
+
+          return {
+            ...ev,
+            backgroundColor: newBg,
+            extendedProps: { ...ev.extendedProps, raw: updatedVisit },
+          };
+        }
+        return ev;
+      })
+    );
+
+    await loadVisits();
+    setOpen(false);
+  } catch (e) {
+    console.error('Erro ao concluir:', e);
+    alert('Erro ao concluir');
+  }
+};
+
+
 
     // ✅ Atualiza o calendário visualmente
     const calendarApi = calendarRef.current?.getApi();
