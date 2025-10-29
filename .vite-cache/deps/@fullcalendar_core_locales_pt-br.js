@@ -1,4 +1,4 @@
-import "./chunk-5WRI5ZAA.js";
+import "./chunk-G3PMV62Z.js";
 
 // node_modules/@fullcalendar/core/locales/pt-br.js
 var l57 = {

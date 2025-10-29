@@ -1,82 +1,118 @@
 {
-  "hash": "8ac4785d",
-  "configHash": "10286a53",
-  "lockfileHash": "35b370fd",
-  "browserHash": "009730dc",
+  "hash": "307215a2",
+  "configHash": "99f45bfe",
+  "lockfileHash": "68d9fd12",
+  "browserHash": "859a377f",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "1f8a4085",
+      "fileHash": "2c8a5041",
       "needsInterop": true
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "891213b3",
+      "fileHash": "044e53cb",
       "needsInterop": true
     },
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "8d37565d",
+      "fileHash": "9de59af0",
       "needsInterop": true
     },
     "react/jsx-runtime": {
       "src": "../../node_modules/react/jsx-runtime.js",
       "file": "react_jsx-runtime.js",
-      "fileHash": "f5d60885",
+      "fileHash": "6eb81c07",
       "needsInterop": true
+    },
+    "@capacitor/camera": {
+      "src": "../../node_modules/@capacitor/camera/dist/esm/index.js",
+      "file": "@capacitor_camera.js",
+      "fileHash": "1d98ed9f",
+      "needsInterop": false
+    },
+    "@capacitor/geolocation": {
+      "src": "../../node_modules/@capacitor/geolocation/dist/esm/index.js",
+      "file": "@capacitor_geolocation.js",
+      "fileHash": "390f73a0",
+      "needsInterop": false
     },
     "@fullcalendar/core/locales/pt-br": {
       "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
       "file": "@fullcalendar_core_locales_pt-br.js",
-      "fileHash": "940947fb",
+      "fileHash": "9b8e118e",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "0126f365",
+      "fileHash": "321a49eb",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "e70e0c52",
+      "fileHash": "2e2232a3",
       "needsInterop": false
     },
     "@fullcalendar/react": {
       "src": "../../node_modules/@fullcalendar/react/dist/index.js",
       "file": "@fullcalendar_react.js",
-      "fileHash": "bf8180d4",
+      "fileHash": "6ffe0619",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "5e5f0712",
+      "fileHash": "f05aea17",
       "needsInterop": false
     },
     "@hello-pangea/dnd": {
       "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
       "file": "@hello-pangea_dnd.js",
-      "fileHash": "74b9cd27",
+      "fileHash": "3fd324f2",
+      "needsInterop": false
+    },
+    "bootstrap/dist/js/bootstrap.bundle.min.js": {
+      "src": "../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
+      "file": "bootstrap_dist_js_bootstrap__bundle__min__js.js",
+      "fileHash": "c40af7ba",
+      "needsInterop": true
+    },
+    "idb": {
+      "src": "../../node_modules/idb/build/index.js",
+      "file": "idb.js",
+      "fileHash": "aa09a6e3",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "9d443aab",
       "needsInterop": false
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "6c13a0af",
+      "fileHash": "c38b6681",
       "needsInterop": true
     }
   },
   "chunks": {
-    "chunk-FKRRNJA4": {
-      "file": "chunk-FKRRNJA4.js"
+    "web-RWGO5ROS": {
+      "file": "web-RWGO5ROS.js"
     },
-    "chunk-UNLUE3XC": {
-      "file": "chunk-UNLUE3XC.js"
+    "chunk-OUWKCDPP": {
+      "file": "chunk-OUWKCDPP.js"
+    },
+    "chunk-4BPZ7PBZ": {
+      "file": "chunk-4BPZ7PBZ.js"
+    },
+    "chunk-RQHQO3DB": {
+      "file": "chunk-RQHQO3DB.js"
     },
     "chunk-FUPQPBBX": {
       "file": "chunk-FUPQPBBX.js"
@@ -84,8 +120,8 @@
     "chunk-O4N2BAMV": {
       "file": "chunk-O4N2BAMV.js"
     },
-    "chunk-5WRI5ZAA": {
-      "file": "chunk-5WRI5ZAA.js"
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
     }
   }
 }

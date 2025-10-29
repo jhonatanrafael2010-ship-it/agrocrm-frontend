@@ -465,41 +465,6 @@ const markDone = async () => {
 };
 
 
-
-    // ✅ Atualiza o calendário visualmente
-    const calendarApi = calendarRef.current?.getApi();
-
-    setEvents((prev) =>
-      prev.map((ev) => {
-        if (ev.id === `visit-${form.id}`) {
-          const updatedVisit = { ...ev.extendedProps.raw, status: 'done' };
-          const newBg = colorFor(updatedVisit.date, updatedVisit.status);
-          const existingEvent = calendarApi?.getEventById(ev.id);
-
-          if (existingEvent) {
-            existingEvent.setExtendedProp('status', 'done');
-            existingEvent.setProp('backgroundColor', newBg);
-            existingEvent.setProp('borderColor', newBg);
-          }
-
-          return {
-            ...ev,
-            backgroundColor: newBg,
-            extendedProps: { ...ev.extendedProps, raw: updatedVisit },
-          };
-        }
-        return ev;
-      })
-    );
-
-    await loadVisits();
-    setOpen(false);
-  } catch (e) {
-    console.error('Erro ao concluir:', e);
-    alert('Erro ao concluir');
-  }
-};
-
     // ==============================
   // Render
   // ==============================
@@ -701,36 +666,48 @@ const markDone = async () => {
 
 
       {open && (
-        <div className="modal-overlay">
-          <div className="modal">
-            {/* 🔘 Botão de Fechar */}
-            <button
-              className="modal-close"
-              onClick={() => setOpen(false)}
-              aria-label="Fechar"
-            >
-              ✕
-            </button>
+  <div
+    className="modal fade show d-block"
+    tabIndex={-1}
+    role="dialog"
+    style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+  >
+    <div className="modal-dialog modal-dialog-centered modal-xl" role="document">
+      <div className="modal-content bg-dark text-light border-0 shadow-lg">
+        {/* Cabeçalho */}
+        <div className="modal-header border-0">
+          <h5 className="modal-title">
+            {form.id ? 'Editar Visita' : 'Nova Visita'}
+          </h5>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            aria-label="Fechar"
+            onClick={() => setOpen(false)}
+          ></button>
+        </div>
 
-            <h3>{form.id ? 'Editar Visita' : 'Nova Visita'}</h3>
+        {/* Corpo */}
+        <div className="modal-body">
+          <div className="row g-3">
+            {/* Data */}
+            <div className="col-md-4">
+              <label className="form-label fw-semibold">Data</label>
+              <input
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                placeholder="dd/mm/aaaa"
+                className="form-control bg-dark text-light border-secondary"
+              />
+            </div>
 
-          <div className="modal-body">
-            <div className="form-grid">
-              <div className="form-row">
-                <label>Data</label>
-                <input
-                  name="date"
-                  value={form.date}
-                  onChange={handleChange}
-                  placeholder="dd/mm/aaaa"
-                />
-              </div>
-
-            {/* 🧑‍🌾 Cliente com busca inteligente */}
-            <div className="form-row" style={{ position: 'relative' }}>
-              <label style={{ fontWeight: 600 }}>Cliente</label>
+            {/* Cliente */}
+            <div className="col-12 position-relative">
+              <label className="form-label fw-semibold">Cliente</label>
               <input
                 type="text"
+                className="form-control bg-dark text-light border-secondary"
                 value={
                   clients.find(c => String(c.id) === form.client_id)?.name ||
                   form.clientSearch ||
@@ -741,53 +718,38 @@ const markDone = async () => {
                   setForm(f => ({ ...f, clientSearch: value, client_id: '' }));
                 }}
                 placeholder="Digite o nome do cliente..."
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #2d3d3f',
-                  background: '#101c1a',
-                  color: '#d5e5e2',
-                }}
               />
               {form.clientSearch && (
                 <ul
+                  className="list-group position-absolute w-100 mt-1"
                   style={{
-                    position: 'absolute',
-                    top: '70px',
-                    left: 0,
-                    right: 0,
-                    background: '#182825',
-                    border: '1px solid #234',
-                    borderRadius: '8px',
-                    maxHeight: '160px',
+                    maxHeight: '150px',
                     overflowY: 'auto',
-                    zIndex: 10,
-                    listStyle: 'none',
-                    margin: 0,
-                    padding: '4px 0'
+                    zIndex: 20,
                   }}
                 >
                   {clients
-                    .filter(c => c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase()))
+                    .filter(c =>
+                      c.name
+                        .toLowerCase()
+                        .startsWith(form.clientSearch.toLowerCase())
+                    )
                     .map(c => (
                       <li
                         key={c.id}
+                        className={`list-group-item list-group-item-action ${
+                          form.client_id === String(c.id)
+                            ? 'active bg-success text-white'
+                            : 'bg-dark text-light'
+                        }`}
                         onClick={() => {
                           setForm(f => ({
                             ...f,
                             client_id: String(c.id),
-                            clientSearch: c.name
+                            clientSearch: c.name,
                           }));
                         }}
-                        style={{
-                          padding: '6px 10px',
-                          cursor: 'pointer',
-                          color: '#cde5df',
-                          background: form.client_id === String(c.id) ? '#244b41' : 'transparent',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = '#244b41')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        style={{ cursor: 'pointer' }}
                       >
                         {c.name}
                       </li>
@@ -796,239 +758,215 @@ const markDone = async () => {
               )}
             </div>
 
-            <div className="form-row">
-              <label>Propriedade</label>
+            {/* Propriedade */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Propriedade</label>
               <DarkSelect
                 name="property_id"
                 value={form.property_id}
                 placeholder="Selecione propriedade"
-                options={[{ value: '', label: 'Selecione propriedade' }, ...properties.map(p => ({ value: String(p.id), label: p.name }))]}
-                onChange={(e: any) => setForm(f => ({ ...f, property_id: e.target.value, plot_id: '' }))}
+                options={[
+                  { value: '', label: 'Selecione propriedade' },
+                  ...properties.map(p => ({
+                    value: String(p.id),
+                    label: p.name,
+                  })),
+                ]}
+                onChange={(e: any) =>
+                  setForm(f => ({
+                    ...f,
+                    property_id: e.target.value,
+                    plot_id: '',
+                  }))
+                }
               />
             </div>
 
-            <div className="form-row">
-              <label>Talhão</label>
+            {/* Talhão */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Talhão</label>
               <DarkSelect
                 name="plot_id"
                 value={form.plot_id}
                 placeholder="Selecione talhão"
-                options={[{ value: '', label: 'Selecione talhão' }, ...plots.map(pl => ({ value: String(pl.id), label: pl.name }))]}
+                options={[
+                  { value: '', label: 'Selecione talhão' },
+                  ...plots.map(pl => ({
+                    value: String(pl.id),
+                    label: pl.name,
+                  })),
+                ]}
                 onChange={handleChange as any}
               />
             </div>
 
-            <div className="form-row">
-              <label>Cultura</label>
+            {/* Cultura */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Cultura</label>
               <select
                 name="culture"
                 value={form.culture}
-                onChange={(e) => setForm(f => ({ ...f, culture: e.target.value, variety: '' }))}
+                onChange={(e) =>
+                  setForm(f => ({ ...f, culture: e.target.value, variety: '' }))
+                }
+                className="form-select bg-dark text-light border-secondary"
               >
                 <option value="">Selecione</option>
                 {cultures.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <div className="form-row">
-              <label>Variedade</label>
+            {/* Variedade */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Variedade</label>
               <select
                 name="variety"
                 value={form.variety}
-                onChange={(e) => setForm(f => ({ ...f, variety: e.target.value }))}
+                onChange={(e) =>
+                  setForm(f => ({ ...f, variety: e.target.value }))
+                }
                 disabled={!form.culture}
+                className="form-select bg-dark text-light border-secondary"
               >
                 <option value="">Selecione</option>
                 {varieties
-                  .filter(v => v.culture.toLowerCase() === (form.culture || '').toLowerCase())
-                  .map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+                  .filter(
+                    v =>
+                      v.culture.toLowerCase() ===
+                      (form.culture || '').toLowerCase()
+                  )
+                  .map(v => (
+                    <option key={v.id} value={v.name}>
+                      {v.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
-            <div className="form-row">
-              <label>Consultor</label>
+            {/* Consultor */}
+            <div className="col-md-6">
+              <label className="form-label fw-semibold">Consultor</label>
               <select
                 name="consultant_id"
                 value={form.consultant_id}
-                onChange={(e) => setForm(f => ({ ...f, consultant_id: e.target.value }))}
+                onChange={(e) =>
+                  setForm(f => ({ ...f, consultant_id: e.target.value }))
+                }
+                className="form-select bg-dark text-light border-secondary"
               >
                 <option value="">Selecione</option>
                 {consultants.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
 
-            <div className="form-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Checkbox */}
+            <div className="col-12 form-check mt-3">
               <input
                 id="genPheno"
                 type="checkbox"
+                className="form-check-input"
                 checked={form.genPheno}
-                onChange={e => setForm(f => ({ ...f, genPheno: e.target.checked }))}
+                onChange={e =>
+                  setForm(f => ({ ...f, genPheno: e.target.checked }))
+                }
               />
-              <label htmlFor="genPheno">Gerar cronograma fenológico (milho/soja/algodão)</label>
+              <label htmlFor="genPheno" className="form-check-label ms-2">
+                Gerar cronograma fenológico (milho/soja/algodão)
+              </label>
             </div>
 
-            {/* 📸 & 📍 Botões para captura rápida */}
-            <div
-              className="form-row"
-              style={{
-                display: 'flex',
-                gap: '10px',
-                justifyContent: 'space-between',
-                marginTop: 10,
-              }}
-            >
-              <button type="button" className="btn-new" onClick={handleTakePhoto}>
+            {/* Botões de captura */}
+            <div className="col-12 d-flex justify-content-between mt-3">
+              <button
+                type="button"
+                className="btn btn-outline-light"
+                onClick={handleTakePhoto}
+              >
                 📸 Tirar Foto
               </button>
-              <button type="button" className="btn-new" onClick={handleGetLocation}>
+              <button
+                type="button"
+                className="btn btn-outline-info"
+                onClick={handleGetLocation}
+              >
                 📍 Capturar Localização
               </button>
             </div>
 
-
-            <div className="form-row">
-              <label>Recomendação</label>
+            {/* Recomendação */}
+            <div className="col-12">
+              <label className="form-label fw-semibold">Recomendação</label>
               <textarea
                 name="recommendation"
                 value={form.recommendation}
                 onChange={handleChange}
                 placeholder="Observações ou anotações técnicas..."
+                className="form-control bg-dark text-light border-secondary"
               />
             </div>
 
-            {/* 📸 Upload de fotos */}
-            <div className="form-row">
-              <label style={{ fontWeight: 600 }}>Fotos da Visita</label>
+            {/* Upload de fotos */}
+            <div className="col-12">
+              <label className="form-label fw-semibold">Fotos da Visita</label>
               <input
                 type="file"
                 multiple
                 accept="image/*"
+                className="form-control bg-dark text-light border-secondary"
                 onChange={(e) => {
                   const files = e.target.files;
                   if (!files) return;
-                  const previews = Array.from(files).map((f) => URL.createObjectURL(f));
+                  const previews = Array.from(files).map((f) =>
+                    URL.createObjectURL(f)
+                  );
                   setForm((f) => ({
                     ...f,
                     photos: files,
-                    photoPreviews: previews
+                    photoPreviews: previews,
                   }));
                 }}
               />
-
-              {/* 🔍 Fotos existentes da visita */}
-              {form.id && form.photoPreviews.length === 0 && (
-                <div className="form-row">
-                  <label>Fotos salvas</label>
-                  <div className="photo-gallery">
-                    {events
-                      .find(ev => ev.extendedProps?.raw?.id === form.id)
-                      ?.extendedProps?.raw?.photos?.map((p: any, i: number) => (
-                        <div key={i} className="photo-thumb">
-                          <img src={p.url} alt={`foto ${i + 1}`} />
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (!confirm('Excluir esta foto?')) return;
-                              try {
-                                const res = await fetch(`${API_BASE}photos/${p.id}`, { method: 'DELETE' });
-                                if (res.ok) {
-                                  alert('Foto excluída com sucesso!');
-                                  await loadVisits();
-                                  setForm(f => ({ ...f }));
-                                } else {
-                                  alert('Falha ao excluir a foto.');
-                                }
-                              } catch (err) {
-                                console.error('Erro ao excluir foto:', err);
-                                alert('Erro ao excluir.');
-                              }
-                            }}
-                            style={{
-                              position: 'absolute',
-                              top: '4px',
-                              right: '4px',
-                              background: 'rgba(0,0,0,0.6)',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '22px',
-                              height: '22px',
-                              cursor: 'pointer',
-                              fontWeight: 'bold'
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-
-                  <button
-                    onClick={() => window.open(`/api/visits/${form.id}/photos`, '_blank')}
-                    style={{
-                      background: 'linear-gradient(90deg, #2563eb, #38bdf8)',
-                      border: 'none',
-                      padding: '8px 14px',
-                      borderRadius: '8px',
-                      marginTop: '6px',
-                      color: '#fff',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    📸 Ver todas as fotos da visita
-                  </button>
-                </div>
-              )}
-
-              {/* Miniaturas de novas fotos */}
-              {form.photoPreviews && form.photoPreviews.length > 0 && (
-                <div className="photo-gallery">
-                  {form.photoPreviews.map((src, i) => (
-                    <div key={i} className="photo-thumb">
-                      <img src={src} alt={`foto ${i + 1}`} />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = form.photoPreviews.filter((_, idx) => idx !== i);
-                          setForm((f) => ({ ...f, photoPreviews: updated }));
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <small style={{ color: '#8fa9a3' }}>
-                Envie uma ou mais fotos (JPEG/PNG). Você pode removê-las antes de salvar.
-              </small>
-            </div>
-            </div>
-          </div>
-
-            <div className="modal-actions" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-              <button className="btn-cancel" onClick={() => setOpen(false)}>Cancelar</button>
-
-              {!form.id && (
-                <button className="btn-save" onClick={handleCreateOrUpdate}>Salvar</button>
-              )}
-
-              {form.id && (
-                <>
-                  <button className="btn-save" onClick={markDone}>Marcar como Concluída</button>
-                  <button className="btn-delete" onClick={handleDelete}>Excluir</button>
-                </>
-              )}
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Rodapé */}
+        <div className="modal-footer border-0">
+          <button className="btn btn-secondary" onClick={() => setOpen(false)}>
+            Cancelar
+          </button>
+
+          {!form.id && (
+            <button className="btn btn-success" onClick={handleCreateOrUpdate}>
+              💾 Salvar
+            </button>
+          )}
+
+          {form.id && (
+            <>
+              <button className="btn btn-success" onClick={markDone}>
+                ✅ Concluir
+              </button>
+              <button className="btn btn-danger" onClick={handleDelete}>
+                🗑 Excluir
+              </button>
+            </>
+          )}
+        </div>
+      </div> 
+    </div> 
+  </div> 
+)} 
+
+    </div> 
   );
 };
 
