@@ -7,97 +7,97 @@
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "2c8a5041",
+      "fileHash": "acef85df",
       "needsInterop": true
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "044e53cb",
+      "fileHash": "9bb03264",
       "needsInterop": true
     },
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "9de59af0",
+      "fileHash": "075ca5e7",
       "needsInterop": true
     },
     "react/jsx-runtime": {
       "src": "../../node_modules/react/jsx-runtime.js",
       "file": "react_jsx-runtime.js",
-      "fileHash": "6eb81c07",
+      "fileHash": "e391540f",
       "needsInterop": true
     },
     "@capacitor/camera": {
       "src": "../../node_modules/@capacitor/camera/dist/esm/index.js",
       "file": "@capacitor_camera.js",
-      "fileHash": "1d98ed9f",
+      "fileHash": "7f8452fc",
       "needsInterop": false
     },
     "@capacitor/geolocation": {
       "src": "../../node_modules/@capacitor/geolocation/dist/esm/index.js",
       "file": "@capacitor_geolocation.js",
-      "fileHash": "390f73a0",
+      "fileHash": "cdb49859",
       "needsInterop": false
     },
     "@fullcalendar/core/locales/pt-br": {
       "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
       "file": "@fullcalendar_core_locales_pt-br.js",
-      "fileHash": "9b8e118e",
+      "fileHash": "909cfcb0",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "321a49eb",
+      "fileHash": "72187b40",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "2e2232a3",
+      "fileHash": "53fb46fd",
       "needsInterop": false
     },
     "@fullcalendar/react": {
       "src": "../../node_modules/@fullcalendar/react/dist/index.js",
       "file": "@fullcalendar_react.js",
-      "fileHash": "6ffe0619",
+      "fileHash": "d1412182",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "f05aea17",
+      "fileHash": "86995ec8",
       "needsInterop": false
     },
     "@hello-pangea/dnd": {
       "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
       "file": "@hello-pangea_dnd.js",
-      "fileHash": "3fd324f2",
+      "fileHash": "c8ecb77d",
       "needsInterop": false
     },
     "bootstrap/dist/js/bootstrap.bundle.min.js": {
       "src": "../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
       "file": "bootstrap_dist_js_bootstrap__bundle__min__js.js",
-      "fileHash": "c40af7ba",
+      "fileHash": "781e2475",
       "needsInterop": true
     },
     "idb": {
       "src": "../../node_modules/idb/build/index.js",
       "file": "idb.js",
-      "fileHash": "aa09a6e3",
+      "fileHash": "aad7be5a",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "9d443aab",
+      "fileHash": "0fdedb38",
       "needsInterop": false
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "c38b6681",
+      "fileHash": "af07c318",
       "needsInterop": true
     }
   },
