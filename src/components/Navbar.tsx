@@ -9,6 +9,8 @@ import {
   LogOut,
 } from "lucide-react";
 import "./Navbar.css";
+import ThemeToggle from "../components/ThemeToggle";
+
 
 type Props = {
   activeItem?: string;
@@ -67,17 +69,22 @@ const Navbar: React.FC<Props> = ({
         </div>
       </nav>
 
-      {/* 🔹 Rodapé (Logout) */}
+      {/* 🔹 Rodapé (Tema + Logout) */}
       <div className="mt-auto pt-3 border-top border-secondary">
+        {/* 🌗 Alternar tema (claro/escuro) */}
+        <ThemeToggle />
+
+        {/* 🚪 Botão de sair */}
         <button
-          className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+          className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 mt-3"
           onClick={() => alert("🚪 Logout realizado!")}
         >
           <LogOut size={18} /> Sair
         </button>
       </div>
-    </aside>
-  );
-};
+
+          </aside>
+        );
+      };
 
 export default Navbar;
