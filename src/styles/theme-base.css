@@ -53,46 +53,41 @@
 /* =========================================================
 🧭 Sidebar e Navegação
 ========================================================= */
+/* =========================================================
+🧭 Sidebar e Navegação — Corrigido (somente o ativo verde)
+========================================================= */
 .sidebar {
   background: var(--bg) !important;
   color: var(--text) !important;
   font-family: var(--font-family);
 }
 
-/* Links da sidebar — padrão neutro */
 .sidebar nav a {
-  background: transparent !important;
-  color: var(--text) !important;
-  border-radius: 8px;
-  padding: 10px 14px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: var(--font-weight-medium);
+  border-radius: 8px;
+  padding: 10px 14px;
   margin-bottom: 6px;
-  transition: background 0.2s ease, color 0.2s ease;
+  font-weight: var(--font-weight-medium);
+  color: var(--text) !important;
+  background: transparent !important;
+  transition: all 0.25s ease;
 }
 
-/* Hover — leve realce */
 .sidebar nav a:hover {
   background: rgba(45, 211, 111, 0.1) !important;
   color: var(--accent) !important;
 }
 
-/* Ativo — verde AgroCRM */
 .sidebar nav a.active {
-  background: var(--accent) !important;
+  background: #1fa75d !important; /* verde escuro fixo */
   color: #fff !important;
+  box-shadow: 0 0 8px rgba(31, 167, 93, 0.35);
 }
 
-
-.sidebar nav a:hover {
-  background: var(--accent-hover) !important;
-}
-
-.sidebar nav a.active {
-  background: var(--accent-hover) !important;
-  color: #fff !important;
+.sidebar nav a svg {
+  color: currentColor !important;
 }
 
 /* =========================================================

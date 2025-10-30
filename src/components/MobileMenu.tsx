@@ -16,9 +16,10 @@ declare const bootstrap: any;
 
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
+  activeItem?: string; // ✅ nova prop
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
   // Fecha o menu automaticamente quando navega
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
@@ -63,7 +64,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate }) => {
           {links.map((item) => (
             <button
               key={item.label}
-              className="list-group-item list-group-item-action d-flex align-items-center gap-2 bg-transparent text-light border-0"
+              className={`list-group-item list-group-item-action d-flex align-items-center gap-2 border-0 ${
+                activeItem === item.label
+                  ? "active bg-success text-white"
+                  : "bg-transparent text-light"
+              }`}
               onClick={() => {
                 onNavigate(item.label);
                 const offcanvasEl = document.getElementById("mobileMenu");

@@ -496,28 +496,35 @@ const CalendarPage: React.FC = () => {
             setOpen(true);
           }}
           eventClick={(info) => {
-            const v = info.event.extendedProps?.raw as Visit | undefined;
-            if (!v) return;
-            const d = v.date ? new Date(v.date) : null;
-            setForm({
-              id: v.id,
-              date: d ? d.toLocaleDateString("pt-BR") : "",
-              client_id: String(v.client_id || ""),
-              property_id: String(v.property_id || ""),
-              plot_id: String(v.plot_id || ""),
-              consultant_id: String(v.consultant_id || ""),
-              culture: v.culture || "",
-              variety: v.variety || "",
-              recommendation: v.recommendation || "",
-              genPheno: false,
-              photos: null,
-              photoPreviews: [],
-              clientSearch: "",
-              latitude: null,
-              longitude: null,
-            });
-            setOpen(true);
-          }}
+          const v = info.event.extendedProps?.raw as Visit | undefined;
+          if (!v) return;
+          const d = v.date ? new Date(v.date) : null;
+
+          const clientName =
+            v.client_name ||
+            clients.find((c) => c.id === v.client_id)?.name ||
+            "";
+
+          setForm({
+            id: v.id,
+            date: d ? d.toLocaleDateString("pt-BR") : "",
+            client_id: String(v.client_id || ""),
+            property_id: String(v.property_id || ""),
+            plot_id: String(v.plot_id || ""),
+            consultant_id: String(v.consultant_id || ""),
+            culture: v.culture || "",
+            variety: v.variety || "",
+            recommendation: v.recommendation || "",
+            genPheno: false,
+            photos: null,
+            photoPreviews: [],
+            clientSearch: clientName, // ✅ agora mantém o nome correto no input
+            latitude: null,
+            longitude: null,
+          });
+          setOpen(true);
+        }}
+
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};
             const bg = colorFor(v?.date || arg.event.startStr, v?.status);

@@ -110,7 +110,7 @@ const App: React.FC = () => {
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
-          <MobileMenu onNavigate={(r) => setRoute(r)} />
+          <MobileMenu onNavigate={(r) => setRoute(r)} activeItem={route} />
         ) : (
           <div className="d-none d-lg-block bg-dark border-end border-secondary" style={{ width: 240 }}>
             <Navbar activeItem={route} onNavigate={setRoute} />

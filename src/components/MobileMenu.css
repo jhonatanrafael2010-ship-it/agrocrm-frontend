@@ -1,9 +1,10 @@
-/* 🌑 Tema escuro do menu mobile (Bootstrap 5 offcanvas) */
-
 .offcanvas {
-  background-color: #0a141a !important;
-  color: #e5e7eb;
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  z-index: 2000 !important;
+  border-right: 1px solid var(--border);
 }
+
 
 .offcanvas-title {
   font-size: 1.2rem;

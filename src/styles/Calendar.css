@@ -408,3 +408,16 @@ body[data-theme='light'] .calendar-shell .fc {
 .calendar-page .modal {
   z-index: 1055 !important; /* acima da toolbar */
 }
+/* =========================================================
+🚫 Correção de sobreposição da barra de filtros sobre modal
+========================================================= */
+.calendar-header-sticky {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.calendar-page .modal,
+.modal.show {
+  z-index: 2000 !important;
+  position: relative !important;
+}
