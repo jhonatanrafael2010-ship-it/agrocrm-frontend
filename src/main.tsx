@@ -4,7 +4,9 @@ import App from './App.tsx'
 import { getDB } from './db';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-
+import './styles/theme-base.css';
+import './styles/theme-agrocrm.css';
+import './styles/theme-agrocrm-mobile.css';
 
 
 getDB().then(() => console.log('✅ IndexedDB pronta'));
@@ -85,6 +87,43 @@ if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
 
 // ⚠️ StrictMode removido — evita re-render duplo no dev
 createRoot(document.getElementById('root')!).render(<App />)
+
+
+// ============================================================
+// 🔁 Relacionamento em cascata do modal (corrige sombra duplicada)
+// ============================================================
+document.addEventListener("change", (ev) => {
+  const target = ev.target as HTMLSelectElement;
+  if (!target) return;
+
+  if (
+    target.matches("#visitClient, #cliente, select[name='cliente']")
+  ) {
+    const propSel = document.querySelector(
+      "#visitProperty, #propriedade, select[name='propriedade']"
+    ) as HTMLSelectElement | null;
+    const talhaoSel = document.querySelector(
+      "#visitPlot, #talhao, select[name='talhao']"
+    ) as HTMLSelectElement | null;
+
+    if (propSel) {
+      propSel.value = "";
+      propSel.selectedIndex = 0;
+      propSel.dispatchEvent(new Event("change"));
+    }
+    if (talhaoSel) {
+      talhaoSel.value = "";
+      talhaoSel.selectedIndex = 0;
+    }
+
+    const propWrapper = propSel
+      ? (propSel.closest(".form-row, .input-wrapper, .field") as HTMLElement)
+      : null;
+    if (propWrapper) {
+      propWrapper.classList.remove("has-value");
+    }
+  }
+});
 
 // ==============================
 // 🧭 Registro do Service Worker PWA

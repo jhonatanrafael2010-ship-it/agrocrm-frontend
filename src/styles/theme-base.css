@@ -1,0 +1,259 @@
+/* =========================================================
+🌿 THEME-BASE.CSS — AgroCRM Global Theme (Desktop + Mobile)
+========================================================= */
+
+/* =========================================================
+🎨 Cores principais e variáveis globais
+========================================================= */
+:root {
+  /* ---- Cores primárias ---- */
+  --accent: #26b96a;            /* 🌿 Verde AgroCRM */
+  --accent-hover: #1fa75d;      /* Hover escurecido */
+  --accent-light: #36c97a;      /* Versão clara */
+  --danger: #e43f3f;            /* Excluir */
+  --cancel: #4b5563;            /* Cancelar */
+  --white: #ffffff;
+  --black: #000000;
+  --shadow: rgba(0, 0, 0, 0.15);
+
+  /* ---- Tipografia ---- */
+  --font-family: "Inter", sans-serif;
+  --font-size-base: 0.94rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+}
+
+/* =========================================================
+🌞 Tema Claro
+========================================================= */
+:root[data-theme='light'],
+[data-theme='light'] {
+  --bg: #f7f9fb;
+  --panel: #ffffff;
+  --text: #101418;
+  --muted: #444a52;
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================================
+🌙 Tema Escuro
+========================================================= */
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  --bg: #0b1620;
+  --panel: #0e1c27;
+  --text: #dfeff0;
+  --muted: #9fb3b6;
+  --border: rgba(255, 255, 255, 0.06);
+  --shadow: rgba(0, 0, 0, 0.45);
+}
+
+/* =========================================================
+🧭 Sidebar e Navegação
+========================================================= */
+.sidebar {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  font-family: var(--font-family);
+}
+
+.sidebar nav a {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 6px;
+  transition: background 0.2s ease;
+}
+
+.sidebar nav a:hover {
+  background: var(--accent-hover) !important;
+}
+
+.sidebar nav a.active {
+  background: var(--accent-hover) !important;
+  color: #fff !important;
+}
+
+/* =========================================================
+🎨 Botões Globais
+========================================================= */
+button,
+.btn {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-weight: var(--font-weight-bold) !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 6px var(--shadow) !important;
+}
+
+button:hover,
+.btn:hover {
+  background: var(--accent-hover) !important;
+  filter: brightness(1.05);
+}
+
+button:active,
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* Botões específicos */
+.btn-cancel {
+  background: var(--cancel) !important;
+}
+.btn-delete {
+  background: var(--danger) !important;
+}
+.btn-save {
+  background: var(--accent) !important;
+}
+
+/* Botão flutuante (FAB) */
+.fab {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+.fab:hover {
+  background: var(--accent-hover) !important;
+}
+
+/* =========================================================
+📋 Modais e Cabeçalhos
+========================================================= */
+.modal,
+.dialog {
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-family);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4);
+  border-radius: 14px !important;
+}
+
+.modal-header,
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2,
+.dialog-title {
+  color: var(--accent) !important;
+  font-weight: var(--font-weight-bold);
+}
+
+.modal-header .close-btn {
+  background: transparent !important;
+  color: var(--white) !important;
+  border: none !important;
+  font-size: 1.3rem;
+  opacity: 0.8;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.modal-header .close-btn:hover {
+  opacity: 1;
+  color: var(--accent) !important;
+}
+
+/* =========================================================
+📊 Dashboard e Calendário
+========================================================= */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--accent) !important;
+  font-family: var(--font-family);
+}
+
+.calendar-page h2,
+.fc-toolbar-title {
+  color: var(--accent) !important;
+  font-weight: 700;
+}
+
+.calendar-page .fc-button,
+.fc-button-primary {
+  background: var(--accent) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.calendar-page .fc-button:hover {
+  background: var(--accent-hover) !important;
+}
+
+/* =========================================================
+🧩 Inputs e Selects
+========================================================= */
+input,
+select,
+textarea {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+  font-size: 0.9rem !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  font-family: var(--font-family);
+}
+
+/* =========================================================
+✨ Ícones & Detalhes
+========================================================= */
+i,
+svg {
+  color: var(--accent) !important;
+}
+
+/* =========================================================
+📱 Integração com Mobile
+========================================================= */
+body[data-platform='mobile'] {
+  --bg-mobile: var(--bg);
+  --panel-mobile: var(--panel);
+  --text-mobile: var(--text);
+  --muted-mobile: var(--muted);
+  --accent-mobile: var(--accent);
+  --border-mobile: var(--border);
+  --shadow-mobile: var(--shadow);
+}
+/* limpa visual de selects depois de resetar dependências */
+.select-wrapper.has-value select,
+.form-row.has-value select {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+/* =========================================================
+🟩 FullCalendar + Bootstrap look (verde AgroCRM)
+========================================================= */
+.fc .fc-button,
+.calendar-page .fc-button {
+  background: var(--accent) !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 4px 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.fc .fc-button:hover,
+.calendar-page .fc-button:hover {
+  background: var(--accent-hover) !important;
+}
+
+.fc .fc-button.fc-button-active,
+.calendar-page .fc-button.fc-button-active {
+  background: #0f172a !important; /* fundo escuro pra mostrar selecionado */
+  color: #fff !important;
+  border-color: rgba(0,0,0,0.25) !important;
+}

@@ -379,12 +379,13 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   return (
     <div className="calendar-page">
-      {/* barra de topo com filtros */}
-      <div className="calendar-toolbar">
-        <h2 className="mb-0">Agenda de Visitas</h2>
+      {/* 🔹 Cabeçalho fixo da agenda */}
+      <div className="calendar-header-sticky">
+        <div className="title-row">
+          <h2 className="mb-0">Agenda de Visitas</h2>
+        </div>
 
-        <div className="d-flex gap-2 ms-auto align-items-center">
-          {/* filtro consultor */}
+        <div className="filters-row">
           <select
             value={selectedConsultant}
             onChange={(e) => setSelectedConsultant(e.target.value)}
@@ -398,7 +399,6 @@ const CalendarPage: React.FC = () => {
             ))}
           </select>
 
-          {/* filtro variedade */}
           <select
             value={selectedVariety}
             onChange={(e) => setSelectedVariety(e.target.value)}
@@ -413,6 +413,7 @@ const CalendarPage: React.FC = () => {
           </select>
         </div>
       </div>
+
 
       {loading && <div className="text-muted mb-2">Carregando...</div>}
 

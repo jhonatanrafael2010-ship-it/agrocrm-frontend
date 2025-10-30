@@ -1,62 +1,52 @@
 /* =========================================================
-🌿 THEME-AGROCRM.CSS — Versão Desktop (2025)
+🌿 THEME-AGROCRM.CSS — Versão Desktop Only (2025, revisada)
+Herdando de theme-base.css
+========================================================= */
+
+@import './theme-base.css';
+
+/* =========================================================
+🎨 Paleta herdada e ajustes locais
 ========================================================= */
 
 /* ---------- Paleta base (claro) ---------- */
 :root {
-  --bg: #f7f9fb;
-  --panel: #ffffff;
-  --text: #101418;
-  --muted: #444a52;
-  --accent: #26b96a;
-  --border: rgba(0, 0, 0, 0.08);
-  --shadow: rgba(0, 0, 0, 0.1);
+  --bg: var(--bg);
+  --panel: var(--panel);
+  --text: var(--text);
+  --muted: var(--muted);
+  --accent: var(--accent); /* verde AgroCRM */
+  --border: var(--border);
+  --shadow: var(--shadow);
 }
 
 /* ---------- Paleta base (escuro) ---------- */
 [data-theme="dark"] {
-  --bg: #0b1620;
-  --panel: #0e1c27;
-  --text: #dfeff0;
-  --muted: #9fb3b6;
-  --accent: #26b96a;
-  --border: rgba(255, 255, 255, 0.06);
-  --shadow: rgba(0, 0, 0, 0.45);
+  --bg: var(--bg);
+  --panel: var(--panel);
+  --text: var(--text);
+  --muted: var(--muted);
+  --accent: var(--accent);
+  --border: var(--border);
+  --shadow: var(--shadow);
 }
 
 /* =========================================================
-🖤 Fundo e estrutura base
+🖤 Remove faixas e partes brancas no tema escuro
 ========================================================= */
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Inter", sans-serif;
-  transition: background 0.25s ease, color 0.25s ease;
-}
-
-/* Remove faixas brancas no tema escuro */
 [data-theme="dark"] .calendar-wrap,
 [data-theme="dark"] .fc,
 [data-theme="dark"] .fc-daygrid-day-frame,
 [data-theme="dark"] .fc-view-harness,
 [data-theme="dark"] .fc-scrollgrid,
 [data-theme="dark"] .fc-daygrid-day {
-  background: #0e1c27 !important;
+  background: var(--panel) !important;
   border-color: #1f2d36 !important;
 }
 
 /* =========================================================
-🎨 FullCalendar — Cores e estrutura dos eventos
+🎨 FullCalendar — Cores sólidas das visitas (inalteradas)
 ========================================================= */
-.calendar-page .fc,
-.calendar-page .fc-scrollgrid,
-.calendar-page .fc-daygrid-day,
-.calendar-page .fc-theme-standard td,
-.calendar-page .fc-theme-standard th {
-  background: var(--panel) !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
-}
 
 .calendar-page .fc-daygrid-event,
 .calendar-page .fc-timegrid-event,
@@ -74,77 +64,149 @@ body {
   border-radius: 0 !important;
 }
 
+.calendar-page .fc-event-main,
+.fc-event-main,
+.fc-event-main-frame,
+.fc-event-title-container {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+/* nosso cartão colorido e sólido */
 .calendar-page .visit-card {
-  display: block;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  padding: 6px 8px;
-  line-height: 1.35;
-  text-align: left;
-  font-weight: 500;
-  background-clip: padding-box;
-  overflow-wrap: break-word;
-  box-sizing: border-box;
+  display: block !important;
+  width: 100% !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  padding: 6px 8px !important;
+  box-shadow: none !important;
+  background-clip: padding-box !important;
+  overflow: hidden !important;
+  line-height: 1.35 !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  font-weight: 500 !important;
 }
 
 .calendar-page .visit-card > div {
-  margin: 2px 0;
+  margin: 1px 0;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
 /* =========================================================
-💻 Ajustes específicos Desktop
+💻 Ajustes específicos para desktop
 ========================================================= */
 @media (min-width: 901px) {
-  body { overflow-x: hidden; }
-  .calendar-page .fc { font-size: 0.95rem; }
-  .visit-card { max-width: 95%; }
+  body {
+    overflow-x: hidden;
+  }
+
+  .calendar-page .fc {
+    font-size: 0.95rem;
+  }
+
+  .visit-card {
+    max-width: 95%;
+  }
 }
 
-/* =========================================================
-🧩 Botões e modais
-========================================================= */
-.btn,
-button,
-input[type="button"],
-input[type="submit"] {
-  background: var(--accent) !important;
-  border: none !important;
-  color: #fff !important;
+/* ====== Calendário (desktop) ====== */
+.calendar-page .visit-shell,
+.calendar-page .fc-daygrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.calendar-page .fc-event-main,
+.calendar-page .fc-event-main-frame,
+.calendar-page .fc-event-title-container {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.calendar-page .visit-card {
+  border: 0 !important;
   border-radius: 10px !important;
-  font-weight: 600 !important;
-  transition: all 0.2s ease-in-out !important;
+  color: #fff !important;
+  background-clip: padding-box !important;
+  overflow: hidden !important;
 }
 
-.btn:hover,
-button:hover {
-  filter: brightness(1.1) !important;
-}
-
-.btn:active,
-button:active {
-  transform: scale(0.97) !important;
-}
-
-/* Botões específicos */
-.btn-cancel,
-button.cancelar {
-  background: #4b5563 !important;
-}
-.btn-delete,
-button.excluir {
-  background: #e43f3f !important;
-}
-.btn-save {
-  background: #26b96a !important;
+.calendar-page .visit-card > div {
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
 /* =========================================================
-🗓️ Títulos do calendário
+🧩 Correções visuais gerais (mantendo layout original)
 ========================================================= */
-.calendar-page h2,
-.fc-toolbar-title {
+
+/* Tira “faixas brancas” na grid */
+.calendar-page .fc,
+.calendar-page .fc-scrollgrid,
+.calendar-page .fc-scrollgrid table,
+.calendar-page .fc-theme-standard td,
+.calendar-page .fc-theme-standard th,
+.calendar-page .fc-daygrid-day,
+.calendar-page .calendar-wrap {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+}
+
+/* =========================================================
+🎨 Botões globais do desktop
+========================================================= */
+
+button,
+.btn {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+}
+
+button:hover,
+.btn:hover {
+  background: var(--accent-hover) !important;
+}
+
+.btn-save {
+  background: var(--accent) !important;
+}
+
+.btn-delete {
+  background: var(--danger) !important;
+}
+
+.btn-cancel {
+  background: var(--cancel) !important;
+}
+
+.modal-header .close-btn {
+  background: transparent !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.modal-header .close-btn:hover {
   color: var(--accent) !important;
-  font-weight: 700 !important;
 }
