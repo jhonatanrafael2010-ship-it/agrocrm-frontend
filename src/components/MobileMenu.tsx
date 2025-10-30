@@ -13,10 +13,9 @@ import "./MobileMenu.css";
 // @ts-ignore
 declare const bootstrap: any;
 
-
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
-  activeItem?: string; // ✅ nova prop
+  activeItem?: string; // ✅ permite destacar o item atual
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
@@ -47,7 +46,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
       aria-labelledby="mobileMenuLabel"
     >
       <div className="offcanvas-header border-bottom border-secondary">
-        <h5 className="offcanvas-title text-success fw-bold" id="mobileMenuLabel">
+        <h5
+          className="offcanvas-title text-success fw-bold"
+          id="mobileMenuLabel"
+        >
           AgroCRM
         </h5>
         <button
@@ -61,27 +63,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
       <div className="offcanvas-body d-flex flex-column justify-content-between p-3">
         {/* 🔹 Navegação */}
         <div className="list-group list-group-flush">
-          {links.map((item) => (
-            <button
-              key={item.label}
-              className={`list-group-item list-group-item-action d-flex align-items-center gap-2 border-0 ${
-                activeItem === item.label
-                  ? "active bg-success text-white"
-                  : "bg-transparent text-light"
-              }`}
-              onClick={() => {
-                onNavigate(item.label);
-                const offcanvasEl = document.getElementById("mobileMenu");
-                if (offcanvasEl) {
-                  const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
-                  bsOffcanvas?.hide();
-                }
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
+          {links.map((item) => {
+            const isActive = activeItem === item.label;
+            return (
+              <button
+                key={item.label}
+                className={`list-group-item d-flex align-items-center gap-2 ${
+                  isActive
+                    ? "active"
+                    : "bg-transparent text-light"
+                }`}
+                onClick={() => {
+                  onNavigate(item.label);
+                  const offcanvasEl = document.getElementById("mobileMenu");
+                  if (offcanvasEl) {
+                    const bsOffcanvas =
+                      bootstrap.Offcanvas.getInstance(offcanvasEl);
+                    bsOffcanvas?.hide();
+                  }
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* 🔹 Rodapé (Logout) */}

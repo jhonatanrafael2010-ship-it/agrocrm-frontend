@@ -1,7 +1,19 @@
 /* =====================================================
-   🌾 MODAL — Nova Visita (estilo dashboard agronômico)
-   ===================================================== */
+   🔝 MODAL SOBRE O CALENDÁRIO
+===================================================== */
 .modal {
+  z-index: 20000 !important;
+  position: relative;
+}
+
+.modal-backdrop {
+  z-index: 19999 !important;
+}
+
+/* =====================================================
+   🌾 MODAL — Nova Visita (estilo dashboard agronômico)
+===================================================== */
+.modal-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
@@ -10,11 +22,11 @@
   border: 1px solid rgba(80, 200, 160, 0.25);
   border-radius: 18px;
   padding: 28px;
-  width: 95vw;                /* ocupa quase toda a largura visível */
-  max-width: 1200px;          /* evita estourar telas muito grandes */
+  width: 95vw;
+  max-width: 1200px;
   max-height: 90vh;
   overflow-y: auto;
-  overflow-x: hidden;         /* 🚫 remove rolagem lateral */
+  overflow-x: hidden;
   margin: 0 auto;
   box-shadow: 0 0 28px rgba(0, 0, 0, 0.6);
   color: #e9f4f1;
@@ -23,8 +35,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Cabeçalho */
@@ -153,7 +171,7 @@
   color: var(--text);
 }
 .btn-cancel:hover {
-  background: var(--panel);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .btn-delete {
@@ -167,29 +185,20 @@
 }
 
 /* Scrollbar */
-.modal::-webkit-scrollbar {
+.modal-content::-webkit-scrollbar {
   width: 6px;
 }
-.modal::-webkit-scrollbar-thumb {
+.modal-content::-webkit-scrollbar-thumb {
   background: var(--panel);
   border-radius: 4px;
 }
 
 /* =====================================================
    📱 RESPONSIVIDADE
-   ===================================================== */
-@media (max-width: 1150px) {
-  .modal {
-    max-width: 96vw;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    padding: 20px;
-  }
-}
-
+===================================================== */
 @media (max-width: 900px) {
-  .modal {
-    grid-template-columns: 1fr; /* 📱 Vira 1 coluna */
+  .modal-content {
+    grid-template-columns: 1fr;
     width: 95vw;
     max-height: 92vh;
     padding: 20px;
@@ -210,9 +219,10 @@
     height: 80px;
   }
 }
+
 /* =====================================================
    ❌ BOTÃO DE FECHAR MODAL
-   ===================================================== */
+===================================================== */
 .modal-close {
   position: absolute;
   top: 16px;
@@ -230,7 +240,6 @@
   transition: all 0.2s ease;
   z-index: 15;
 }
-
 .modal-close:hover {
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
@@ -238,12 +247,9 @@
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
-.modal {
-  position: relative; /* ⚙️ necessário para posicionar o botão dentro */
-}
 /* =====================================================
    📅 FULLCALENDAR — Repaginado estilo Bootstrap 5
-   ===================================================== */
+===================================================== */
 
 /* container geral */
 .calendar-page {
@@ -262,6 +268,8 @@
   border-radius: 12px;
   padding: 10px 14px;
   backdrop-filter: blur(6px);
+  position: relative !important;
+  z-index: 5 !important;
 }
 
 /* filtros */
@@ -292,7 +300,7 @@
   font-weight: 600;
 }
 
-/* botões Bootstrap-like */
+/* botões estilo Bootstrap */
 .fc .fc-button {
   background: #102329;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -310,7 +318,7 @@
   color: #081317;
 }
 
-/* células do mês */
+/* células */
 .fc .fc-daygrid-day {
   background: rgba(3, 8, 12, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -319,7 +327,7 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   background: #fff;
 }
 
-/* remove azul e sublinhado das datas */
+/* número da data */
 .fc .fc-daygrid-day-number {
   color: inherit;
   text-decoration: none;
@@ -359,68 +367,44 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   word-break: break-word;
 }
 
-/* botão flutuante (mobile) */
+/* botão flutuante */
 .fab {
   position: fixed;
-  bottom: 18px;
-  right: 16px;
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-  background: #2dd36f;
+  bottom: 24px;
+  right: 24px;
+  background: #1fa75d;
+  color: #fff;
+  font-size: 2rem;
   border: none;
-  color: #021;
-  font-size: 30px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 10px 30px rgba(3, 122, 63, 0.5);
-  z-index: 999;
-  transition: transform 0.15s ease;
+  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1500;
+  transition: transform 0.25s ease;
 }
-.fab.pressed {
-  transform: scale(0.94);
-}
-
-/* tema claro */
-body[data-theme='light'] .calendar-toolbar {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.035);
-}
-body[data-theme='light'] .calendar-filter {
-  background: #fff;
-  color: #134;
-}
-body[data-theme='light'] .calendar-shell .fc {
-  background: #fff;
-}
-<<<<<<< HEAD
-/* ================================================
-🧭 Barra superior do calendário — posição e z-index
-================================================ */
-.calendar-toolbar {
-  position: relative !important;
-  z-index: 1 !important;
-  background: var(--panel);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+.fab:hover {
+  transform: scale(1.1);
 }
 
-.calendar-page .modal {
-  z-index: 1055 !important; /* acima da toolbar */
-}
-/* =========================================================
-🚫 Correção de sobreposição da barra de filtros sobre modal
-========================================================= */
-.calendar-header-sticky {
-  position: relative !important;
-  z-index: 1 !important;
-}
+/* 📱 mobile */
+@media (max-width: 768px) {
+  .calendar-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px;
+  }
 
-.calendar-page .modal,
-.modal.show {
-  z-index: 2000 !important;
-  position: relative !important;
+  .fc-header-toolbar {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 4px;
+  }
+
+  .calendar-toolbar select {
+    width: 100% !important;
+  }
 }
-=======
->>>>>>> parent of 5f6a33f (Layout calendario Bom)

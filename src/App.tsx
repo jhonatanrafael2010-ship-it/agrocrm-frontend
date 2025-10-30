@@ -11,10 +11,6 @@ import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
 
-
-
-
-
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
   const [theme, setTheme] = useState(() => {
@@ -69,6 +65,15 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", detect);
   }, []);
 
+  // ✅ Força fechamento da offcanvas quando muda de rota
+  useEffect(() => {
+    const offcanvasEl = document.getElementById("mobileMenu");
+    if (offcanvasEl) {
+      const bsOffcanvas = (window as any).bootstrap?.Offcanvas.getInstance(offcanvasEl);
+      bsOffcanvas?.hide();
+    }
+  }, [route]);
+
   return (
     <div className="app d-flex flex-column vh-100">
       {/* 🔝 Cabeçalho fixo (Bootstrap Navbar) */}
@@ -86,7 +91,12 @@ const App: React.FC = () => {
               ☰
             </button>
 
-            <span className="navbar-brand fw-bold">AgroCRM</span>
+            <span
+              className="navbar-brand fw-bold"
+              style={{ letterSpacing: "0.5px" }}
+            >
+              AgroCRM
+            </span>
           </div>
 
           {/* 🌗 Alternar tema claro/escuro */}
@@ -110,9 +120,12 @@ const App: React.FC = () => {
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
-          <MobileMenu onNavigate={(r) => setRoute(r)} activeItem={route} />
+          <MobileMenu onNavigate={setRoute} activeItem={route} />
         ) : (
-          <div className="d-none d-lg-block bg-dark border-end border-secondary" style={{ width: 240 }}>
+          <div
+            className="d-none d-lg-block bg-dark border-end border-secondary"
+            style={{ width: 240 }}
+          >
             <Navbar activeItem={route} onNavigate={setRoute} />
           </div>
         )}
