@@ -1,115 +1,109 @@
 {
-  "hash": "307215a2",
+  "hash": "1513b39a",
   "configHash": "99f45bfe",
-  "lockfileHash": "68d9fd12",
-  "browserHash": "859a377f",
+  "lockfileHash": "85a4b298",
+  "browserHash": "37a97720",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "35bf1819",
+      "fileHash": "6e053e6f",
       "needsInterop": true
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "9f910c15",
+      "fileHash": "e4fba52c",
       "needsInterop": true
     },
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "d7d0bba5",
+      "fileHash": "c2258dc1",
       "needsInterop": true
     },
     "react/jsx-runtime": {
       "src": "../../node_modules/react/jsx-runtime.js",
       "file": "react_jsx-runtime.js",
-      "fileHash": "f4e12bd5",
+      "fileHash": "cbd54722",
       "needsInterop": true
     },
     "@capacitor/camera": {
       "src": "../../node_modules/@capacitor/camera/dist/esm/index.js",
       "file": "@capacitor_camera.js",
-      "fileHash": "9a7cbe46",
+      "fileHash": "7989ef8e",
       "needsInterop": false
     },
     "@capacitor/geolocation": {
       "src": "../../node_modules/@capacitor/geolocation/dist/esm/index.js",
       "file": "@capacitor_geolocation.js",
-      "fileHash": "fcd0685e",
+      "fileHash": "059302de",
       "needsInterop": false
     },
     "@fullcalendar/core/locales/pt-br": {
       "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
       "file": "@fullcalendar_core_locales_pt-br.js",
-      "fileHash": "a30e1e8a",
+      "fileHash": "6b0bbcd7",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "0f244c04",
+      "fileHash": "fa46692e",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "8f6721a1",
+      "fileHash": "c1addd4e",
       "needsInterop": false
     },
     "@fullcalendar/react": {
       "src": "../../node_modules/@fullcalendar/react/dist/index.js",
       "file": "@fullcalendar_react.js",
-      "fileHash": "320d6ddc",
+      "fileHash": "1c320fa2",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "1b32dbae",
+      "fileHash": "9d5b041e",
       "needsInterop": false
     },
     "@hello-pangea/dnd": {
       "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
       "file": "@hello-pangea_dnd.js",
-      "fileHash": "cd59de8f",
+      "fileHash": "fe982a95",
       "needsInterop": false
     },
     "bootstrap/dist/js/bootstrap.bundle.min.js": {
       "src": "../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
       "file": "bootstrap_dist_js_bootstrap__bundle__min__js.js",
-      "fileHash": "810d1464",
+      "fileHash": "ec8c87b2",
       "needsInterop": true
     },
     "idb": {
       "src": "../../node_modules/idb/build/index.js",
       "file": "idb.js",
-      "fileHash": "11c0b2e0",
+      "fileHash": "369f52b2",
       "needsInterop": false
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "81a41fe6",
+      "fileHash": "35ce1433",
       "needsInterop": false
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "59c44fdf",
+      "fileHash": "4bd91f89",
       "needsInterop": true
     }
   },
   "chunks": {
     "web-RWGO5ROS": {
       "file": "web-RWGO5ROS.js"
-    },
-    "chunk-FUPQPBBX": {
-      "file": "chunk-FUPQPBBX.js"
-    },
-    "chunk-O4N2BAMV": {
-      "file": "chunk-O4N2BAMV.js"
     },
     "chunk-OUWKCDPP": {
       "file": "chunk-OUWKCDPP.js"
@@ -119,6 +113,12 @@
     },
     "chunk-RQHQO3DB": {
       "file": "chunk-RQHQO3DB.js"
+    },
+    "chunk-FUPQPBBX": {
+      "file": "chunk-FUPQPBBX.js"
+    },
+    "chunk-O4N2BAMV": {
+      "file": "chunk-O4N2BAMV.js"
     },
     "chunk-G3PMV62Z": {
       "file": "chunk-G3PMV62Z.js"
