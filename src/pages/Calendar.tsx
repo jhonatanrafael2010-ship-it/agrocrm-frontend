@@ -158,22 +158,6 @@ const CalendarPage: React.FC = () => {
       });
   }, []);
 
-
-  // ============================================================
-  // 🔁 Limpa propriedade e talhão ao trocar cliente
-  // ============================================================
-  useEffect(() => {
-    if (!form.client_id) return;
-
-    // Sempre que o cliente mudar, resetamos os selects dependentes
-    setForm((f) => ({
-      ...f,
-      property_id: "",
-      plot_id: "",
-    }));
-  }, [form.client_id]);
-
-
   // ============================================================
   // 🎨 Cor dos eventos
   // ============================================================
@@ -635,7 +619,12 @@ const CalendarPage: React.FC = () => {
                     <input
                       type="text"
                       className="form-control bg-dark text-light border-secondary"
-                      value={form.clientSearch}
+                      value={
+                        clients.find((c) => String(c.id) === form.client_id)
+                          ?.name ||
+                        form.clientSearch ||
+                        ""
+                      }
                       onChange={(e) => {
                         const value = e.target.value;
                         setForm((f) => ({
@@ -646,7 +635,6 @@ const CalendarPage: React.FC = () => {
                       }}
                       placeholder="Digite o nome do cliente..."
                     />
-
                     {form.clientSearch && (
                       <ul
                         className="list-group position-absolute w-100 mt-1"
@@ -658,7 +646,9 @@ const CalendarPage: React.FC = () => {
                       >
                         {clients
                           .filter((c) =>
-                            c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase())
+                            c.name
+                              .toLowerCase()
+                              .startsWith(form.clientSearch.toLowerCase())
                           )
                           .map((c) => (
                             <li
@@ -672,7 +662,7 @@ const CalendarPage: React.FC = () => {
                                 setForm((f) => ({
                                   ...f,
                                   client_id: String(c.id),
-                                  clientSearch: c.name, // mantém apenas o nome selecionado
+                                  clientSearch: c.name,
                                 }));
                               }}
                               style={{ cursor: "pointer" }}
@@ -683,7 +673,6 @@ const CalendarPage: React.FC = () => {
                       </ul>
                     )}
                   </div>
-
 
                   {/* Propriedade */}
                   <div className="col-md-6">

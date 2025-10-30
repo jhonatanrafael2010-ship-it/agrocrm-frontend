@@ -63,12 +63,20 @@
 }
 
 .sidebar nav a {
+<<<<<<< HEAD
+=======
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 10px 14px;
+>>>>>>> parent of 5f6a33f (Layout calendario Bom)
   display: flex;
   align-items: center;
   gap: 8px;
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 6px;
+<<<<<<< HEAD
   font-weight: var(--font-weight-medium);
   color: var(--text) !important;
   background: transparent !important;
@@ -88,6 +96,18 @@
 
 .sidebar nav a svg {
   color: currentColor !important;
+=======
+  transition: background 0.2s ease;
+}
+
+.sidebar nav a:hover {
+  background: var(--accent-hover) !important;
+}
+
+.sidebar nav a.active {
+  background: var(--accent-hover) !important;
+  color: #fff !important;
+>>>>>>> parent of 5f6a33f (Layout calendario Bom)
 }
 
 /* =========================================================
@@ -265,13 +285,4 @@ body[data-platform='mobile'] {
   background: #0f172a !important; /* fundo escuro pra mostrar selecionado */
   color: #fff !important;
   border-color: rgba(0,0,0,0.25) !important;
-}
-@keyframes fieldReset {
-  0% { background-color: rgba(45, 211, 111, 0.15); }
-  100% { background-color: transparent; }
-}
-
-input:focus,
-select:focus {
-  animation: fieldReset 0.6s ease;
 }

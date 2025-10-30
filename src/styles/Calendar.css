@@ -393,6 +393,7 @@ body[data-theme='light'] .calendar-filter {
 body[data-theme='light'] .calendar-shell .fc {
   background: #fff;
 }
+<<<<<<< HEAD
 /* ================================================
 🧭 Barra superior do calendário — posição e z-index
 ================================================ */
@@ -421,3 +422,5 @@ body[data-theme='light'] .calendar-shell .fc {
   z-index: 2000 !important;
   position: relative !important;
 }
+=======
+>>>>>>> parent of 5f6a33f (Layout calendario Bom)

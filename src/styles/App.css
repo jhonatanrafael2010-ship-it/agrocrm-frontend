@@ -1,18 +1,39 @@
-/* =========================================================
-🌿 APP.CSS — AgroCRM | Bootstrap 5 Alinhado (2025)
-========================================================= */
-
-/* ----------------------------------------
-🎨 Animações e ícones
----------------------------------------- */
-@keyframes spin-sun {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-/* ----------------------------------------
-🌗 Botão de alternar tema
----------------------------------------- */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+h1 {
+  font-size: 4.2rem;
+  line-height: 1.02;
+  margin: 1.5rem 0 1rem;
+}
+
 .theme-toggle-btn {
   position: fixed;
   top: 16px;
@@ -20,36 +41,47 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: none;
   cursor: pointer;
   font-size: 1.8rem;
   background: var(--panel);
   color: var(--text);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease, transform 0.4s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  transition: all 0.3s ease, transform 0.5s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
 }
 
 .theme-toggle-btn:hover {
   transform: rotate(25deg) scale(1.1);
-  background: rgba(45, 211, 111, 0.1);
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 12px rgba(0,0,0,0.35);
 }
 
 .theme-toggle-btn:active {
-  transform: rotate(-10deg) scale(0.94);
+  transform: rotate(-15deg) scale(0.95);
 }
 
-[data-theme='light'] .theme-toggle-btn:hover {
+@keyframes spin-sun {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+[data-theme='light'] .theme-toggle-btn {
+  background: var(--panel);
+  color: var(--text);
   animation: spin-sun 2s linear infinite;
 }
 
+[data-theme='dark'] .theme-toggle-btn {
+  background: var(--panel);
+  color: var(--text);
+}
+
 /* =========================================================
-🌿 BASE DO APLICATIVO
+🌿 BASE DO APLICATIVO (Desktop + APK)
 ========================================================= */
+
 .app {
   background: var(--bg);
   color: var(--text);
@@ -60,19 +92,20 @@
 }
 
 /* ----------------------------------------
-🧭 Cabeçalho (Navbar Bootstrap)
+🧭 Cabeçalho superior
 ---------------------------------------- */
 .app-header {
-  @apply navbar bg-body shadow-sm border-bottom; /* se usar Tailwind */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: var(--panel);
   color: var(--text);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 2px 6px var(--shadow);
   height: 58px;
   padding: 0 1rem;
-  z-index: 1030; /* compatível com Bootstrap */
-  position: sticky;
-  top: 0;
+  z-index: 100;
+  position: relative;
 }
 
 .header-left {
@@ -85,7 +118,27 @@
   font-weight: 700;
   font-size: 1.25rem;
   color: var(--accent);
-  margin: 0;
+}
+
+/* ----------------------------------------
+🌗 Botão de alternar tema
+---------------------------------------- */
+.theme-toggle-btn {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--shadow);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.theme-toggle-btn:hover {
+  background: rgba(45, 211, 111, 0.1);
 }
 
 /* ----------------------------------------
@@ -97,9 +150,9 @@
   color: var(--text);
   font-size: 1.8rem;
   cursor: pointer;
+  z-index: 10000;
   padding: 0;
   margin: 0;
-  z-index: 1051;
 }
 
 /* ----------------------------------------
@@ -110,13 +163,14 @@
   width: 100%;
   margin-left: 240px;
   padding: 1.25rem;
-  transition: margin 0.3s ease;
   box-sizing: border-box;
+  transition: margin 0.3s ease;
 }
 
+/* Quando a sidebar estiver oculta ou no mobile */
 body[data-platform="mobile"] .main-content {
   margin-left: 0 !important;
-  padding-top: 58px !important; /* altura padrão do header Bootstrap */
+  padding-top: 70px !important; /* evita sobreposição com header fixo */
   padding-bottom: 70px !important;
 }
 
@@ -124,41 +178,55 @@ body[data-platform="mobile"] .main-content {
 📱 Layout Mobile (APK)
 ---------------------------------------- */
 body[data-platform="mobile"] .app-header {
-  position: fixed;
-  top: 0;
+  position: fixed !important;
+  top: 6px;
   left: 0;
   right: 0;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   height: 54px;
-  z-index: 1030;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
 }
 
+body[data-platform="mobile"] .menu-toggle {
+  margin-top: 2px;
+}
+
+
 body[data-platform="mobile"] .app-title {
   font-size: 1.1rem;
 }
 
+body[data-platform="mobile"] .menu-toggle {
+  font-size: 1.9rem;
+}
+
+/* Corrige sobreposição e largura no mobile */
 body[data-platform="mobile"] {
   overflow-x: hidden !important;
 }
 
 /* ----------------------------------------
-🧭 Overlay e dropdown mobile
+🧭 Overlay do menu mobile
 ---------------------------------------- */
 .mobile-overlay {
   position: fixed;
-  inset: 0;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 1020;
+  z-index: 9998;
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
+/* Dropdown interno do menu mobile */
 .menu-dropdown {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -192,6 +260,7 @@ body[data-platform="mobile"] {
   .app-header {
     position: sticky;
     top: 0;
+    z-index: 999;
   }
 
   .main-content {
