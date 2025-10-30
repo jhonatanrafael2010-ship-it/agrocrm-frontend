@@ -1,159 +1,107 @@
 /* =========================================================
-🌿 THEME-AGROCRM.CSS — Versão Desktop Only (2025)
+🌿 THEME-AGROCRM.CSS — Versão Desktop (rev. 2025)
 ========================================================= */
 
-/* ---------- Paleta base (claro) ---------- */
+/* ---------- Tema claro ---------- */
 :root {
-  --bg: #f7f9fb;
+  --bg: #f8fafc;
   --panel: #ffffff;
-  --text: #101418;
-  --muted: #444a52;
+  --text: #0f1418;
+  --muted: #4b5563;
   --accent: #2dd36f;
   --border: rgba(0, 0, 0, 0.08);
-  --shadow: rgba(0, 0, 0, 0.10);
+  --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Paleta base (escuro) ---------- */
-[data-theme="dark"] {
+/* ---------- Tema escuro ---------- */
+[data-theme='dark'] {
   --bg: #0b1620;
   --panel: #0e1c27;
-  --text: #dfeff0;
+  --text: #e4f1f0;
   --muted: #9fb3b6;
   --accent: #2dd36f;
   --border: rgba(255, 255, 255, 0.06);
   --shadow: rgba(0, 0, 0, 0.45);
 }
 
-/* =========================================================
-🖤 Remove faixas e partes brancas no tema escuro
-========================================================= */
-[data-theme="dark"] .calendar-wrap,
-[data-theme="dark"] .fc,
-[data-theme="dark"] .fc-daygrid-day-frame,
-[data-theme="dark"] .fc-view-harness,
-[data-theme="dark"] .fc-scrollgrid,
-[data-theme="dark"] .fc-daygrid-day {
-  background: #0e1c27 !important;
-  border-color: #1f2d36 !important;
+/* ---------- Estrutura base ---------- */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 /* =========================================================
-🎨 FullCalendar — Cores sólidas das visitas
+🗓️ FullCalendar — base e fundo
 ========================================================= */
+.calendar-page .fc,
+.calendar-page .fc-scrollgrid,
+.calendar-page .fc-daygrid-day,
+.calendar-page .fc-theme-standard td,
+.calendar-page .fc-theme-standard th {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
 
-.calendar-page .fc-daygrid-event,
-.calendar-page .fc-timegrid-event,
-.calendar-page .fc-h-event,
-.calendar-page .fc-v-event,
+/* =========================================================
+🎨 Eventos (visitas)
+========================================================= */
+.calendar-page .fc-event,
 .fc-daygrid-event,
 .fc-timegrid-event,
-.fc-event,
 .fc-h-event,
 .fc-v-event {
   background: transparent !important;
-  border: 0 !important;
+  border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
-  border-radius: 0 !important;
+  outline: none !important;
 }
 
-.calendar-page .fc-event-main,
-.fc-event-main,
-.fc-event-main-frame,
-.fc-event-title-container {
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-}
-
-/* nosso cartão colorido e sólido */
 .calendar-page .visit-card {
-  display: block !important;
-  width: 100% !important;
-  border: 0 !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-  padding: 6px 8px !important;
-  box-shadow: none !important;
-  background-clip: padding-box !important;
-  overflow: hidden !important;
-  line-height: 1.35 !important;
-  text-align: left !important;
-  box-sizing: border-box !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-  hyphens: auto !important;
-  font-weight: 500 !important;
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  padding: 6px 8px;
+  line-height: 1.35;
+  text-align: left;
+  font-weight: 500;
+  background-clip: padding-box;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
 }
 
+/* Títulos dentro do card */
 .calendar-page .visit-card > div {
-  margin: 1px 0;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
+  margin: 2px 0;
+  white-space: normal;
 }
 
 /* =========================================================
-💻 Ajustes específicos para desktop
+💻 Ajustes Desktop
 ========================================================= */
 @media (min-width: 901px) {
-  body {
-    overflow-x: hidden;
-  }
-
   .calendar-page .fc {
     font-size: 0.95rem;
   }
-
   .visit-card {
     max-width: 95%;
   }
 }
-/* ====== Calendário (desktop) ====== */
-.calendar-page .visit-shell,
-.calendar-page .fc-daygrid-event,
-.calendar-page .fc-h-event,
-.calendar-page .fc-v-event {
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
 
-.calendar-page .fc-event-main,
-.calendar-page .fc-event-main-frame,
-.calendar-page .fc-event-title-container {
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-}
-
-.calendar-page .visit-card {
-  border: 0 !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-  background-clip: padding-box !important;
-  overflow: hidden !important;
-}
-
-.calendar-page .visit-card > div {
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: break-word !important;
-}
-
-/* Tira “faixas brancas” na grid */
-.calendar-page .fc,
-.calendar-page .fc-scrollgrid,
-.calendar-page .fc-scrollgrid table,
-.calendar-page .fc-theme-standard td,
-.calendar-page .fc-theme-standard th,
-.calendar-page .fc-daygrid-day,
-.calendar-page .calendar-wrap {
-  background: var(--panel) !important;
-  border-color: var(--border) !important;
+/* =========================================================
+🌙 Tema escuro — reforço para remover faixas brancas
+========================================================= */
+[data-theme='dark'] .calendar-page .fc,
+[data-theme='dark'] .calendar-page .fc-scrollgrid,
+[data-theme='dark'] .calendar-page .fc-daygrid-day,
+[data-theme='dark'] .calendar-page .fc-daygrid-day-frame,
+[data-theme='dark'] .calendar-page .fc-view-harness {
+  background: #0e1c27 !important;
+  border-color: #1f2d36 !important;
 }
