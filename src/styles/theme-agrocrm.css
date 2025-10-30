@@ -1,39 +1,52 @@
 /* =========================================================
-🌿 THEME-AGROCRM.CSS — Versão Desktop (rev. 2025)
+🌿 THEME-AGROCRM.CSS — Versão Desktop (2025)
 ========================================================= */
 
-/* ---------- Tema claro ---------- */
+/* ---------- Paleta base (claro) ---------- */
 :root {
-  --bg: #f8fafc;
+  --bg: #f7f9fb;
   --panel: #ffffff;
-  --text: #0f1418;
-  --muted: #4b5563;
-  --accent: #2dd36f;
+  --text: #101418;
+  --muted: #444a52;
+  --accent: #26b96a;
   --border: rgba(0, 0, 0, 0.08);
   --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Tema escuro ---------- */
-[data-theme='dark'] {
+/* ---------- Paleta base (escuro) ---------- */
+[data-theme="dark"] {
   --bg: #0b1620;
   --panel: #0e1c27;
-  --text: #e4f1f0;
+  --text: #dfeff0;
   --muted: #9fb3b6;
-  --accent: #2dd36f;
+  --accent: #26b96a;
   --border: rgba(255, 255, 255, 0.06);
   --shadow: rgba(0, 0, 0, 0.45);
 }
 
-/* ---------- Estrutura base ---------- */
+/* =========================================================
+🖤 Fundo e estrutura base
+========================================================= */
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   transition: background 0.25s ease, color 0.25s ease;
 }
 
+/* Remove faixas brancas no tema escuro */
+[data-theme="dark"] .calendar-wrap,
+[data-theme="dark"] .fc,
+[data-theme="dark"] .fc-daygrid-day-frame,
+[data-theme="dark"] .fc-view-harness,
+[data-theme="dark"] .fc-scrollgrid,
+[data-theme="dark"] .fc-daygrid-day {
+  background: #0e1c27 !important;
+  border-color: #1f2d36 !important;
+}
+
 /* =========================================================
-🗓️ FullCalendar — base e fundo
+🎨 FullCalendar — Cores e estrutura dos eventos
 ========================================================= */
 .calendar-page .fc,
 .calendar-page .fc-scrollgrid,
@@ -45,19 +58,20 @@ body {
   color: var(--text) !important;
 }
 
-/* =========================================================
-🎨 Eventos (visitas)
-========================================================= */
-.calendar-page .fc-event,
+.calendar-page .fc-daygrid-event,
+.calendar-page .fc-timegrid-event,
+.calendar-page .fc-h-event,
+.calendar-page .fc-v-event,
 .fc-daygrid-event,
 .fc-timegrid-event,
+.fc-event,
 .fc-h-event,
 .fc-v-event {
   background: transparent !important;
-  border: none !important;
+  border: 0 !important;
   box-shadow: none !important;
   padding: 0 !important;
-  outline: none !important;
+  border-radius: 0 !important;
 }
 
 .calendar-page .visit-card {
@@ -72,36 +86,65 @@ body {
   font-weight: 500;
   background-clip: padding-box;
   overflow-wrap: break-word;
-  word-break: break-word;
   box-sizing: border-box;
 }
 
-/* Títulos dentro do card */
 .calendar-page .visit-card > div {
   margin: 2px 0;
-  white-space: normal;
 }
 
 /* =========================================================
-💻 Ajustes Desktop
+💻 Ajustes específicos Desktop
 ========================================================= */
 @media (min-width: 901px) {
-  .calendar-page .fc {
-    font-size: 0.95rem;
-  }
-  .visit-card {
-    max-width: 95%;
-  }
+  body { overflow-x: hidden; }
+  .calendar-page .fc { font-size: 0.95rem; }
+  .visit-card { max-width: 95%; }
 }
 
 /* =========================================================
-🌙 Tema escuro — reforço para remover faixas brancas
+🧩 Botões e modais
 ========================================================= */
-[data-theme='dark'] .calendar-page .fc,
-[data-theme='dark'] .calendar-page .fc-scrollgrid,
-[data-theme='dark'] .calendar-page .fc-daygrid-day,
-[data-theme='dark'] .calendar-page .fc-daygrid-day-frame,
-[data-theme='dark'] .calendar-page .fc-view-harness {
-  background: #0e1c27 !important;
-  border-color: #1f2d36 !important;
+.btn,
+button,
+input[type="button"],
+input[type="submit"] {
+  background: var(--accent) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.btn:hover,
+button:hover {
+  filter: brightness(1.1) !important;
+}
+
+.btn:active,
+button:active {
+  transform: scale(0.97) !important;
+}
+
+/* Botões específicos */
+.btn-cancel,
+button.cancelar {
+  background: #4b5563 !important;
+}
+.btn-delete,
+button.excluir {
+  background: #e43f3f !important;
+}
+.btn-save {
+  background: #26b96a !important;
+}
+
+/* =========================================================
+🗓️ Títulos do calendário
+========================================================= */
+.calendar-page h2,
+.fc-toolbar-title {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
 }
