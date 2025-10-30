@@ -1,79 +1,77 @@
-import React, { useEffect, useRef, useState } from 'react'
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import ptBrLocale from '@fullcalendar/core/locales/pt-br'
-import DarkSelect from '../components/DarkSelect'
-import '../styles/Calendar.css'
-import { Camera, CameraResultType } from '@capacitor/camera'
-import { Geolocation } from '@capacitor/geolocation'
+import React, { useEffect, useRef, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
+import DarkSelect from "../components/DarkSelect";
+import "../styles/Calendar.css";
+import { Camera, CameraResultType } from "@capacitor/camera";
+import { Geolocation } from "@capacitor/geolocation";
 
+const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
 
-
-const API_BASE = (import.meta as any).env.VITE_API_URL || '/api/'
-
-type Client = { id: number; name: string }
-type Property = { id: number; client_id: number; name: string }
-type Plot = { id: number; property_id: number; name: string }
-type Culture = { id: number; name: string }
-type Variety = { id: number; name: string; culture: string }
-type Consultant = { id: number; name: string }
+type Client = { id: number; name: string };
+type Property = { id: number; client_id: number; name: string };
+type Plot = { id: number; property_id: number; name: string };
+type Culture = { id: number; name: string };
+type Variety = { id: number; name: string; culture: string };
+type Consultant = { id: number; name: string };
 
 type Visit = {
-  id: number
-  client_id: number
-  property_id: number
-  plot_id: number
-  consultant_id?: number | null
-  date: string
-  recommendation?: string
-  status?: 'planned' | 'done' | string
-  culture?: string
-  variety?: string
-  client_name?: string        // ✅ nome vindo do backend
-  consultant_name?: string    // ✅ nome vindo do backend
-}
-
-
+  id: number;
+  client_id: number;
+  property_id: number;
+  plot_id: number;
+  consultant_id?: number | null;
+  date: string;
+  recommendation?: string;
+  status?: "planned" | "done" | string;
+  culture?: string;
+  variety?: string;
+  client_name?: string;
+  consultant_name?: string;
+};
 
 const CalendarPage: React.FC = () => {
-  const calendarRef = useRef<any>(null)
-  const [events, setEvents] = useState<any[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [cultures, setCultures] = useState<Culture[]>([])
-  const [varieties, setVarieties] = useState<Variety[]>([])
-  const [consultants, setConsultants] = useState<Consultant[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
-  const [plots, setPlots] = useState<Plot[]>([])
-  const [loading, setLoading] = useState(false)
+  const calendarRef = useRef<any>(null);
 
-  // filtro de agenda por consultor
-  const [selectedConsultant, setSelectedConsultant] = useState<string>('')
-  // filtro adicional por variedade
-  const [selectedVariety, setSelectedVariety] = useState<string>('');
+  // dados base
+  const [events, setEvents] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [cultures, setCultures] = useState<Culture[]>([]);
+  const [varieties, setVarieties] = useState<Variety[]>([]);
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [open, setOpen] = useState(false)
+  // filtros
+  const [selectedConsultant, setSelectedConsultant] = useState<string>("");
+  const [selectedVariety, setSelectedVariety] = useState<string>("");
+
+  // modal
+  const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     id: null as number | null,
-    date: '',
-    client_id: '',
-    property_id: '',
-    plot_id: '',
-    consultant_id: '',
-    culture: '',
-    variety: '',
-    recommendation: '',
+    date: "",
+    client_id: "",
+    property_id: "",
+    plot_id: "",
+    consultant_id: "",
+    culture: "",
+    variety: "",
+    recommendation: "",
     genPheno: true,
     photos: null as FileList | null,
     photoPreviews: [] as string[],
-    clientSearch: ''  // ✅ novo campo para busca digitável
+    clientSearch: "", // busca digitável
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
-
-
   // ============================================================
-  // 🔁 Função para carregar visitas e montar eventos
+  // 🔁 Carregar visitas -> monta eventos
   // ============================================================
   const loadVisits = async () => {
     try {
@@ -87,7 +85,6 @@ const CalendarPage: React.FC = () => {
       const evs = (vs || [])
         .filter((v) => v.date)
         .map((v) => {
-          // ✅ Agora prioriza os nomes vindos do backend
           const clientName =
             v.client_name ||
             cs.find((c) => c.id === v.client_id)?.name ||
@@ -96,61 +93,55 @@ const CalendarPage: React.FC = () => {
           const consultant =
             v.consultant_name ||
             cons.find((x) => x.id === v.consultant_id)?.name ||
-            '';
+            "";
 
           const variety =
-            v.variety || v.recommendation?.match(/\(([^)]+)\)/)?.[1] || '';
+            v.variety || v.recommendation?.match(/\(([^)]+)\)/)?.[1] || "";
 
-          let stage = '';
+          let stage = "";
           if (v.recommendation) {
-            stage = v.recommendation.split('—').pop()?.trim() || v.recommendation;
-            stage = stage.replace(/\s*\(.*?\)\s*/g, '').trim();
+            stage =
+              v.recommendation.split("—").pop()?.trim() || v.recommendation;
+            stage = stage.replace(/\s*\(.*?\)\s*/g, "").trim();
           }
 
-          const titleLines = [
-            `👤 ${clientName}`,
-            variety ? `🌱 ${variety}` : '',
-            stage ? `📍 ${stage}` : '',
-            consultant ? `👨‍🌾 ${consultant}` : '',
-          ].filter(Boolean);
-
           const tooltip = `
-      👤 ${clientName}
-      🌱 ${variety || '-'}
-      📍 ${stage || '-'}
-      👨‍🌾 ${consultant || '-'}
+👤 ${clientName}
+🌱 ${variety || "-"}
+📍 ${stage || "-"}
+👨‍🌾 ${consultant || "-"}
           `.trim();
 
           return {
             id: `visit-${v.id}`,
-            title: titleLines.join('\n'),
+            title: clientName,
             start: v.date,
             backgroundColor: colorFor(v.date, v.status),
-            extendedProps: { type: 'visit', raw: v },
-            classNames: ['visit-event'],
-            dataTooltip: tooltip,
+            borderColor: colorFor(v.date, v.status),
+            extendedProps: { type: "visit", raw: v, tooltip },
+            classNames: ["visit-event"],
           };
         });
 
       setEvents(evs);
       console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
     } catch (err) {
-      console.error('❌ Erro ao carregar visitas:', err);
+      console.error("❌ Erro ao carregar visitas:", err);
     }
   };
 
   // ============================================================
-  // 🚀 Load inicial — carrega clientes, culturas e dispara loadVisits
+  // 🚀 Load inicial
   // ============================================================
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`${API_BASE}clients`).then(r => r.json()),
-      fetch(`${API_BASE}properties`).then(r => r.json()),
-      fetch(`${API_BASE}plots`).then(r => r.json()),
-      fetch(`${API_BASE}cultures`).then(r => r.json()),
-      fetch(`${API_BASE}varieties`).then(r => r.json()),
-      fetch(`${API_BASE}consultants`).then(r => r.json())
+      fetch(`${API_BASE}clients`).then((r) => r.json()),
+      fetch(`${API_BASE}properties`).then((r) => r.json()),
+      fetch(`${API_BASE}plots`).then((r) => r.json()),
+      fetch(`${API_BASE}cultures`).then((r) => r.json()),
+      fetch(`${API_BASE}varieties`).then((r) => r.json()),
+      fetch(`${API_BASE}consultants`).then((r) => r.json()),
     ])
       .then(([cs, ps, pls, cts, vars, cons]) => {
         setClients(cs || []);
@@ -162,500 +153,409 @@ const CalendarPage: React.FC = () => {
       })
       .catch(console.error)
       .finally(() => {
-        loadVisits(); // ✅ carrega visitas assim que tudo estiver pronto
+        loadVisits();
         setLoading(false);
       });
   }, []);
 
+  // ============================================================
+  // 🎨 Cor dos eventos
+  // ============================================================
+  const colorFor = (dateISO?: string, status?: string): string => {
+    const s = (status || "").toLowerCase();
 
+    // concluído
+    if (s.includes("done") || s.includes("conclu")) return "#2dd36f"; // verde da sua UI
 
-// =============================================================
-// 🎨 Função de cor sólida para eventos (status + data)
-//  - done/concluído  → verde
-//  - não concluído & data < hoje → vermelho (atrasado)
-//  - não concluído & data >= hoje → azul (planejado)
-// =============================================================
-const colorFor = (dateISO?: string, status?: string): string => {
-  const s = (status || '').toLowerCase();
+    // normaliza data
+    let d: Date | null = null;
+    if (dateISO) {
+      const [y, m, day] = dateISO.split("-");
+      if (y && m && day)
+        d = new Date(Number(y), Number(m) - 1, Number(day), 0, 0, 0, 0);
+      else d = new Date(dateISO);
+    }
 
-  // concluído (aceita "done" ou "conclu")
-  if (s.includes('done') || s.includes('conclu')) return '#16a34a';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // normaliza data
-  let d: Date | null = null;
-  if (dateISO) {
-    // garante meia-noite local para evitar fuso aplicar vermelho/azul errado
-    const [y, m, day] = dateISO.split('-'); // espera YYYY-MM-DD
-    if (y && m && day) d = new Date(Number(y), Number(m) - 1, Number(day), 0, 0, 0, 0);
-    else d = new Date(dateISO); // fallback
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (d && d.getTime() < today.getTime()) return '#dc2626'; // atrasado
-  return '#2563eb'; // planejado
-};
-
-
-  const handleChange = (e: any) => {
-    const { name, value } = e.target
-    setForm(f => ({ ...f, [name]: value }))
-  }
-
-
-  const handleCreateOrUpdate = async () => {
-  if (!form.date || !form.client_id) {
-    alert('Data e cliente são obrigatórios');
-    return;
-  }
-
-
-  const [d, m, y] = form.date.split('/');
-  // ✅ Garante que a data enviada para o backend é sempre o mesmo dia escolhido (sem deslocamento de fuso)
-  const iso = `${y}-${m}-${d}`; 
-
-
-  // resolve nome da cultura
-  let cultureName = '';
-  if (form.culture) {
-    const byId = cultures.find(c => String(c.id) === String(form.culture));
-    cultureName = byId ? byId.name : form.culture;
-  }
-
-  // monta payload completo
-  const payload = {
-    client_id: Number(form.client_id),
-    property_id: Number(form.property_id),
-    plot_id: Number(form.plot_id),
-    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
-    date: iso,
-    status: 'planned',
-    generate_schedule: !!form.genPheno,
-    culture: cultureName || '',
-    variety: form.variety || '',
-    recommendation: form.genPheno ? '' : (form.recommendation || 'Plantio'),
-    latitude: (form as any).latitude || null,
-    longitude: (form as any).longitude || null,
+    if (d && d.getTime() < today.getTime()) return "#dc3545"; // atrasado
+    return "#2563eb"; // planejado
   };
 
-  try {
-    const res = await fetch(`${API_BASE}visits`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  // ============================================================
+  // 📝 Form handlers
+  // ============================================================
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
 
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(body || `Erro ${res.status}`);
+  const handleCreateOrUpdate = async () => {
+    if (!form.date || !form.client_id) {
+      alert("Data e cliente são obrigatórios");
+      return;
     }
 
-    // ✅ Captura o ID da nova visita criada
-    const data = await res.json();
-    const newVisitId = data.visit?.id;
+    // converte dd/mm/aaaa → yyyy-mm-dd
+    const [d, m, y] = form.date.split("/");
+    const iso = `${y}-${m}-${d}`;
 
-    // ✅ Se há fotos, envia ao backend
-    if (newVisitId && form.photos && form.photos.length > 0) {
-      const fd = new FormData();
-      Array.from(form.photos).forEach((file) => fd.append("photos", file));
+    let cultureName = "";
+    if (form.culture) {
+      const byId = cultures.find((c) => String(c.id) === String(form.culture));
+      cultureName = byId ? byId.name : form.culture;
+    }
 
-      try {
-        await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
-          method: "POST",
-          body: fd,
-        });
-        console.log("📸 Fotos enviadas com sucesso!");
-      } catch (err) {
-        console.error("Erro ao enviar fotos:", err);
+    const payload: any = {
+      client_id: Number(form.client_id),
+      property_id: form.property_id ? Number(form.property_id) : null,
+      plot_id: form.plot_id ? Number(form.plot_id) : null,
+      consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+      date: iso,
+      status: "planned",
+      generate_schedule: !!form.genPheno,
+      culture: cultureName || "",
+      variety: form.variety || "",
+      recommendation: form.genPheno ? "" : form.recommendation || "Plantio",
+      latitude: form.latitude,
+      longitude: form.longitude,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}visits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Erro ${res.status}`);
       }
-    }
 
-    // Captura coordenadas GPS (se o usuário permitir)
-if ("geolocation" in navigator) {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      console.log("📍 Localização:", pos.coords.latitude, pos.coords.longitude);
-      // Exemplo: adicionar no payload
-      payload["latitude"] = pos.coords.latitude;
-      payload["longitude"] = pos.coords.longitude;
-    },
-    (err) => console.warn("⚠️ Sem permissão para GPS:", err)
-  );
-}
+      const data = await res.json();
+      const newVisitId = data.visit?.id;
 
-
-    // ✅ Aguarda o upload das fotos antes de atualizar a lista
-    if (newVisitId && form.photos && form.photos.length > 0) {
-      const fd = new FormData();
-      Array.from(form.photos).forEach((file) => fd.append("photos", file));
-
-      try {
-        const uploadResp = await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
-          method: "POST",
-          body: fd,
-        });
-
-        if (uploadResp.ok) {
+      // upload de fotos (se tiver)
+      if (newVisitId && form.photos && form.photos.length > 0) {
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file) => fd.append("photos", file));
+        try {
+          await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
+            method: "POST",
+            body: fd,
+          });
           console.log("📸 Fotos enviadas com sucesso!");
-        } else {
-          console.warn("⚠️ Falha no upload de fotos:", uploadResp.status);
+        } catch (err) {
+          console.error("Erro ao enviar fotos:", err);
         }
-      } catch (err) {
-        console.error("Erro ao enviar fotos:", err);
       }
-    }
 
-    // ✅ Só depois de tudo, fecha o modal e recarrega
-    setOpen(false);
-    await loadVisits();
-
-    setForm({
-      id: null,
-      date: '',
-      client_id: '',
-      property_id: '',
-      plot_id: '',
-      consultant_id: '',
-      culture: '',
-      variety: '',
-      recommendation: '',
-      genPheno: true,
-      photos: null,
-      photoPreviews: [],
-      clientSearch: ''
-    });
-
-    await loadVisits();
+      // recarrega
+      setOpen(false);
+      await loadVisits();
+      setForm({
+        id: null,
+        date: "",
+        client_id: "",
+        property_id: "",
+        plot_id: "",
+        consultant_id: "",
+        culture: "",
+        variety: "",
+        recommendation: "",
+        genPheno: true,
+        photos: null,
+        photoPreviews: [],
+        clientSearch: "",
+        latitude: null,
+        longitude: null,
+      });
     } catch (e: any) {
       console.error("❌ Erro ao salvar visita:", e);
-      alert(e?.message || 'Erro ao salvar visita');
+      alert(e?.message || "Erro ao salvar visita");
     }
-  }; // ✅ <-- ESTA LINHA FECHA handleCreateOrUpdate CORRETAMENTE
+  };
 
-
+  // ============================================================
+  // 🗑️ Excluir
+  // ============================================================
   const handleDelete = async () => {
     if (!form.id) return;
-    if (!confirm('🗑 Deseja realmente excluir esta visita?')) return;
+    if (!confirm("🗑 Deseja realmente excluir esta visita?")) return;
     try {
-      const resp = await fetch(`${API_BASE}visits/${form.id}`, { method: 'DELETE' });
-      if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-      // 🔁 Recarrega visitas para refletir exclusão em cascata
+      const resp = await fetch(`${API_BASE}visits/${form.id}`, {
+        method: "DELETE",
+      });
+      if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
       await loadVisits();
       setOpen(false);
     } catch (e) {
-      alert('Erro ao excluir');
+      alert("Erro ao excluir");
     }
   };
 
+  // ============================================================
+  // 📸 Tirar foto
+  // ============================================================
+  const handleTakePhoto = async () => {
+    try {
+      const image = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+      });
+
+      if (image.base64String) {
+        const base64 = `data:image/jpeg;base64,${image.base64String}`;
+        setForm((f) => ({
+          ...f,
+          photoPreviews: [...(f.photoPreviews || []), base64],
+        }));
+        alert("📸 Foto capturada com sucesso!");
+      }
+    } catch (err) {
+      console.error("Erro ao tirar foto:", err);
+      alert("Erro ao capturar foto");
+    }
+  };
 
   // ============================================================
-// 📸 Tirar Foto diretamente do app
-// ============================================================
-const handleTakePhoto = async () => {
-  try {
-    const image = await Camera.getPhoto({
-      quality: 85,
-      allowEditing: false,
-      resultType: CameraResultType.Base64,
-    });
-
-    if (image.base64String) {
-      const base64 = `data:image/jpeg;base64,${image.base64String}`;
+  // 📍 GPS
+  // ============================================================
+  const handleGetLocation = async () => {
+    try {
+      const position = await Geolocation.getCurrentPosition();
+      const { latitude, longitude } = position.coords;
       setForm((f) => ({
         ...f,
-        photoPreviews: [...(f.photoPreviews || []), base64],
+        latitude,
+        longitude,
       }));
-      alert('📸 Foto capturada com sucesso!');
+      alert(
+        `📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+      );
+    } catch (err) {
+      console.error("Erro ao obter localização:", err);
+      alert("Erro ao capturar localização");
     }
-  } catch (err) {
-    console.error('Erro ao tirar foto:', err);
-    alert('Erro ao capturar foto');
-  }
-};
+  };
 
-// ============================================================
-// 📍 Capturar localização GPS do dispositivo
-// ============================================================
-const handleGetLocation = async () => {
-  try {
-    const position = await Geolocation.getCurrentPosition();
-    const { latitude, longitude } = position.coords;
-    setForm((f) => ({
-      ...f,
-      latitude,
-      longitude,
-    }));
-    alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-  } catch (err) {
-    console.error('Erro ao obter localização:', err);
-    alert('Erro ao capturar localização');
-  }
-};
+  // ============================================================
+  // ✅ Concluir
+  // ============================================================
+  const markDone = async () => {
+    if (!form.id) return;
+    try {
+      const r = await fetch(`${API_BASE}visits/${form.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+      if (!r.ok) throw new Error("Erro HTTP " + r.status);
 
-
-// ============================================================
-// ✅ Marcar visita como concluída
-// ============================================================
-const markDone = async () => {
-  if (!form.id) return;
-  try {
-    // Atualiza o status da visita no backend
-    const r = await fetch(`${API_BASE}visits/${form.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'done' }),
-    });
-
-    if (!r.ok) throw new Error('Erro HTTP ' + r.status);
-
-    // ✅ Envia fotos também ao marcar como concluída
-    if (form.photos && form.photos.length > 0) {
-      const fd = new FormData();
-      Array.from(form.photos).forEach((file) => fd.append('photos', file));
-
-      try {
-        const uploadResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
-          method: 'POST',
+      // envia fotos se tiver
+      if (form.photos && form.photos.length > 0) {
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file) => fd.append("photos", file));
+        await fetch(`${API_BASE}visits/${form.id}/photos`, {
+          method: "POST",
           body: fd,
-        });
-
-        if (uploadResp.ok) {
-          console.log('📸 Fotos enviadas com sucesso ao concluir!');
-        } else {
-          console.warn('⚠️ Falha ao enviar fotos ao concluir:', uploadResp.status);
-        }
-      } catch (err) {
-        console.error('Erro ao enviar fotos ao concluir:', err);
+        }).catch((e) => console.warn("Falha upload ao concluir", e));
       }
+
+      // atualiza visual
+      await loadVisits();
+      setOpen(false);
+    } catch (e) {
+      console.error("Erro ao concluir:", e);
+      alert("Erro ao concluir");
     }
+  };
 
-    // ✅ Atualiza o calendário visualmente
-    const calendarApi = calendarRef.current?.getApi();
-
-    setEvents((prev) =>
-      prev.map((ev) => {
-        if (ev.id === `visit-${form.id}`) {
-          const updatedVisit = { ...ev.extendedProps.raw, status: 'done' };
-          const newBg = colorFor(updatedVisit.date, updatedVisit.status);
-          const existingEvent = calendarApi?.getEventById(ev.id);
-
-          if (existingEvent) {
-            existingEvent.setExtendedProp('status', 'done');
-            existingEvent.setProp('backgroundColor', newBg);
-            existingEvent.setProp('borderColor', newBg);
-          }
-
-          return {
-            ...ev,
-            backgroundColor: newBg,
-            extendedProps: { ...ev.extendedProps, raw: updatedVisit },
-          };
-        }
-        return ev;
-      })
-    );
-
-    await loadVisits();
-    setOpen(false);
-  } catch (e) {
-    console.error('Erro ao concluir:', e);
-    alert('Erro ao concluir');
-  }
-};
-
-
-    // ==============================
+  // ============================================================
   // Render
-  // ==============================
+  // ============================================================
   return (
     <div className="calendar-page">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-        <h2 style={{ margin: 0 }}>Agenda de Visitas</h2>
-        <select
-          value={selectedConsultant}
-          onChange={(e) => setSelectedConsultant(e.target.value)}
-          style={{ marginLeft: 'auto', padding: '6px 10px', borderRadius: 8, background: '#0d1f1b', color: '#cde5df', border: '1px solid #234' }}
-        >
-          <option value="">Todos os consultores</option>
-          {consultants.map(c => (
-            <option key={c.id} value={String(c.id)}>{c.name}</option>
-          ))}
-        </select>
-        <select
-        value={selectedVariety}
-        onChange={(e) => setSelectedVariety(e.target.value)}
-        style={{
-          background: '#101c1a',
-          color: '#d5e5e2',
-          border: '1px solid #2d3d3f',
-          borderRadius: '8px',
-          padding: '6px 10px',
-          marginLeft: '10px'
-        }}
-      >
-        <option value="">Todas as variedades</option>
-        {varieties.map(v => (
-          <option key={v.id} value={v.name}>{v.name}</option>
-        ))}
-      </select>
+      {/* barra de topo com filtros */}
+      <div className="calendar-toolbar">
+        <h2 className="mb-0">Agenda de Visitas</h2>
 
+        <div className="d-flex gap-2 ms-auto align-items-center">
+          {/* filtro consultor */}
+          <select
+            value={selectedConsultant}
+            onChange={(e) => setSelectedConsultant(e.target.value)}
+            className="form-select form-select-sm calendar-filter"
+          >
+            <option value="">Todos os consultores</option>
+            {consultants.map((c) => (
+              <option key={c.id} value={String(c.id)}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+
+          {/* filtro variedade */}
+          <select
+            value={selectedVariety}
+            onChange={(e) => setSelectedVariety(e.target.value)}
+            className="form-select form-select-sm calendar-filter"
+          >
+            <option value="">Todas as variedades</option>
+            {varieties.map((v) => (
+              <option key={v.id} value={v.name}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {loading && <div style={{ color: '#9fb3b6' }}>Carregando...</div>}
+      {loading && <div className="text-muted mb-2">Carregando...</div>}
 
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        locales={[ptBrLocale]}
-        locale="pt-br"
-        initialView="dayGridMonth"
-        height={window.innerWidth < 768 ? 'auto' : 650}
-        expandRows={true}
-        dateClick={(info) => {
-          // ⚙️ Detecta se está em modo mobile (APK)
-          const isMobile = window.innerWidth <= 768 || document.body.dataset.platform === "mobile";
-          if (isMobile) return; // no mobile, não abre o modal
+      <div className="calendar-shell">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          locales={[ptBrLocale]}
+          locale="pt-br"
+          initialView="dayGridMonth"
+          height={window.innerWidth < 768 ? "auto" : 650}
+          expandRows={true}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          dayMaxEventRows={3}
+          eventDisplay="block"
+          events={events.filter((e) => {
+            const cid = e.extendedProps?.raw?.consultant_id;
+            const variety =
+              e.extendedProps?.raw?.variety ||
+              e.extendedProps?.raw?.variedade ||
+              "";
 
-          // 💻 Mantém comportamento normal no desktop
-          const dateStr = info.dateStr;
-          const [y, m, d] = dateStr.split('-');
-          setForm({
-            id: null,
-            date: `${d}/${m}/${y}`,
-            client_id: '',
-            property_id: '',
-            plot_id: '',
-            consultant_id: '',
-            culture: '',
-            variety: '',
-            recommendation: '',
-            genPheno: true,
-            photos: null,
-            photoPreviews: [],
-            clientSearch: ''
-          });
-          setOpen(true);
-        }}
-        events={events.filter(e => {
-        const cid = e.extendedProps?.raw?.consultant_id;
-        const variety = e.extendedProps?.raw?.variety || e.extendedProps?.raw?.variedade || '';
+            const matchesConsultant =
+              !selectedConsultant || String(cid || "") === selectedConsultant;
 
-        const matchesConsultant =
-          !selectedConsultant || String(cid || '') === selectedConsultant;
+            const matchesVariety =
+              !selectedVariety ||
+              String(variety)
+                .toLowerCase()
+                .includes(selectedVariety.toLowerCase());
 
-        const matchesVariety =
-          !selectedVariety || String(variety).toLowerCase().includes(selectedVariety.toLowerCase());
+            return matchesConsultant && matchesVariety;
+          })}
+          dateClick={(info) => {
+            // mobile não abre modal
+            const isMobile =
+              window.innerWidth <= 768 ||
+              document.body.dataset.platform === "mobile";
+            if (isMobile) return;
 
-        return matchesConsultant && matchesVariety;
-      })}
+            const dateStr = info.dateStr;
+            const [y, m, d] = dateStr.split("-");
+            setForm({
+              id: null,
+              date: `${d}/${m}/${y}`,
+              client_id: "",
+              property_id: "",
+              plot_id: "",
+              consultant_id: "",
+              culture: "",
+              variety: "",
+              recommendation: "",
+              genPheno: true,
+              photos: null,
+              photoPreviews: [],
+              clientSearch: "",
+              latitude: null,
+              longitude: null,
+            });
+            setOpen(true);
+          }}
+          eventClick={(info) => {
+            const v = info.event.extendedProps?.raw as Visit | undefined;
+            if (!v) return;
+            const d = v.date ? new Date(v.date) : null;
+            setForm({
+              id: v.id,
+              date: d ? d.toLocaleDateString("pt-BR") : "",
+              client_id: String(v.client_id || ""),
+              property_id: String(v.property_id || ""),
+              plot_id: String(v.plot_id || ""),
+              consultant_id: String(v.consultant_id || ""),
+              culture: v.culture || "",
+              variety: v.variety || "",
+              recommendation: v.recommendation || "",
+              genPheno: false,
+              photos: null,
+              photoPreviews: [],
+              clientSearch: "",
+              latitude: null,
+              longitude: null,
+            });
+            setOpen(true);
+          }}
+          eventContent={(arg) => {
+            const v = (arg.event.extendedProps?.raw as any) || {};
+            const bg = colorFor(v?.date || arg.event.startStr, v?.status);
 
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        eventClassNames={() => ['visit-shell']}
+            const stage =
+              (
+                (v?.recommendation?.split("—").pop() || v?.recommendation || "") +
+                ""
+              ).trim() || "-";
 
-        eventContent={(arg) => {
-        const v = (arg.event.extendedProps?.raw as any) || {};
-        const bg = colorFor(v?.date || arg.event.startStr, v?.status);
+            const clientName = v?.client_name || "—";
+            const variety = v?.variety || "—";
+            const consultant = v?.consultant_name || "—";
 
-        const stage = (
-          (v?.recommendation?.split('—').pop() || v?.recommendation || '') + ''
-        ).trim() || '-';
+            return (
+              <div
+                className="fc-visit-card"
+                style={{ backgroundColor: bg, borderColor: bg }}
+              >
+                <div className="fc-visit-line">👤 {clientName}</div>
+                <div className="fc-visit-line">🌱 {variety}</div>
+                <div className="fc-visit-line">📍 {stage}</div>
+                <div className="fc-visit-line">👨‍🌾 {consultant}</div>
+              </div>
+            );
+          }}
+        />
+      </div>
 
-        // Cartão
-        const wrapper = document.createElement('div');
-        wrapper.className = 'visit-card';
-        wrapper.style.backgroundColor = bg;
-        wrapper.style.color = '#fff';
-        wrapper.style.padding = '6px 8px';
-        wrapper.style.borderRadius = '10px';
-        wrapper.style.boxSizing = 'border-box';
-
-        // layout vertical simples, sem forçar quebras
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.alignItems = 'flex-start';
-        wrapper.style.justifyContent = 'center';
-
-        // 🔑 largura cheia da célula e scroll horizontal se precisar
-        wrapper.style.width = '100%';
-        wrapper.style.overflowX = 'auto';
-        wrapper.style.overflowY = 'hidden';
-        // não force white-space aqui; deixe a linha decidir
-
-        const addRow = (text: string) => {
-          const row = document.createElement('div');
-          row.textContent = text || '-';
-          row.style.margin = '2px 0';
-          // 🔑 cada linha vira “uma linha” e rola pro lado se passar
-          row.style.whiteSpace = 'normal';    // ✅ permite múltiplas linhas
-          row.style.wordBreak  = 'break-word'; // ✅ quebra palavras longas
-          row.style.overflow   = 'visible';
-          row.style.textOverflow = 'clip';
-          wrapper.appendChild(row);
-        };
-
-        addRow(`👤 ${v?.client_name || '-'}`);
-        addRow(`🌱 ${v?.variety || '-'}`);
-        addRow(`📍 ${stage}`);
-        addRow(`👨‍🌾 ${v?.consultant_name || '-'}`);
-
-        return { domNodes: [wrapper] };
-      }}
-
-
-
-        eventClick={(info) => {
-          const v = info.event.extendedProps?.raw;
-          if (!v) return;
-          const d = v.date ? new Date(v.date) : null;
-          setForm({
-            id: v.id,
-            date: d ? d.toLocaleDateString('pt-BR') : '',
-            client_id: String(v.client_id || ''),
-            property_id: String(v.property_id || ''),
-            plot_id: String(v.plot_id || ''),
-            consultant_id: String(v.consultant_id || ''),
-            culture: v.culture || '',
-            variety: v.variety || '',
-            recommendation: v.recommendation || '',
-            genPheno: false,
-            photos: null,
-            photoPreviews: [],
-            clientSearch: ''
-          });
-          setOpen(true);
-        }}
-      />
-
-
-      {/* ➕ Botão flutuante (fica sempre visível no mobile) */}
+      {/* ➕ FAB no mobile */}
       {window.innerWidth <= 768 && (
         <button
           className="fab"
           onClick={() => {
-            const btn = document.querySelector('.fab');
+            const btn = document.querySelector(".fab");
             if (btn) {
-              btn.classList.add('pressed');
-              setTimeout(() => btn.classList.remove('pressed'), 180);
+              btn.classList.add("pressed");
+              setTimeout(() => btn.classList.remove("pressed"), 180);
             }
             setForm({
               id: null,
-              date: new Date().toLocaleDateString('pt-BR'),
-              client_id: '',
-              property_id: '',
-              plot_id: '',
-              consultant_id: '',
-              culture: '',
-              variety: '',
-              recommendation: '',
+              date: new Date().toLocaleDateString("pt-BR"),
+              client_id: "",
+              property_id: "",
+              plot_id: "",
+              consultant_id: "",
+              culture: "",
+              variety: "",
+              recommendation: "",
               genPheno: true,
               photos: null,
               photoPreviews: [],
-              clientSearch: '',
+              clientSearch: "",
+              latitude: null,
+              longitude: null,
             });
             setOpen(true);
           }}
@@ -664,309 +564,330 @@ const markDone = async () => {
         </button>
       )}
 
-
+      {/* MODAL */}
       {open && (
-  <div
-    className="modal fade show d-block"
-    tabIndex={-1}
-    role="dialog"
-    style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
-  >
-    <div className="modal-dialog modal-dialog-centered modal-xl" role="document">
-      <div className="modal-content bg-dark text-light border-0 shadow-lg">
-        {/* Cabeçalho */}
-        <div className="modal-header border-0">
-          <h5 className="modal-title">
-            {form.id ? 'Editar Visita' : 'Nova Visita'}
-          </h5>
-          <button
-            type="button"
-            className="btn-close btn-close-white"
-            aria-label="Fechar"
-            onClick={() => setOpen(false)}
-          ></button>
-        </div>
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          role="dialog"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered modal-xl"
+            role="document"
+          >
+            <div className="modal-content bg-dark text-light border-0 shadow-lg">
+              {/* Cabeçalho */}
+              <div className="modal-header border-0">
+                <h5 className="modal-title">
+                  {form.id ? "Editar Visita" : "Nova Visita"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  aria-label="Fechar"
+                  onClick={() => setOpen(false)}
+                ></button>
+              </div>
 
-        {/* Corpo */}
-        <div className="modal-body">
-          <div className="row g-3">
-            {/* Data */}
-            <div className="col-md-4">
-              <label className="form-label fw-semibold">Data</label>
-              <input
-                name="date"
-                value={form.date}
-                onChange={handleChange}
-                placeholder="dd/mm/aaaa"
-                className="form-control bg-dark text-light border-secondary"
-              />
-            </div>
+              {/* Corpo */}
+              <div className="modal-body">
+                <div className="row g-3">
+                  {/* Data */}
+                  <div className="col-md-4">
+                    <label className="form-label fw-semibold">Data</label>
+                    <input
+                      name="date"
+                      value={form.date}
+                      onChange={handleChange}
+                      placeholder="dd/mm/aaaa"
+                      className="form-control bg-dark text-light border-secondary"
+                    />
+                  </div>
 
-            {/* Cliente */}
-            <div className="col-12 position-relative">
-              <label className="form-label fw-semibold">Cliente</label>
-              <input
-                type="text"
-                className="form-control bg-dark text-light border-secondary"
-                value={
-                  clients.find(c => String(c.id) === form.client_id)?.name ||
-                  form.clientSearch ||
-                  ''
-                }
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setForm(f => ({ ...f, clientSearch: value, client_id: '' }));
-                }}
-                placeholder="Digite o nome do cliente..."
-              />
-              {form.clientSearch && (
-                <ul
-                  className="list-group position-absolute w-100 mt-1"
-                  style={{
-                    maxHeight: '150px',
-                    overflowY: 'auto',
-                    zIndex: 20,
-                  }}
-                >
-                  {clients
-                    .filter(c =>
-                      c.name
-                        .toLowerCase()
-                        .startsWith(form.clientSearch.toLowerCase())
-                    )
-                    .map(c => (
-                      <li
-                        key={c.id}
-                        className={`list-group-item list-group-item-action ${
-                          form.client_id === String(c.id)
-                            ? 'active bg-success text-white'
-                            : 'bg-dark text-light'
-                        }`}
-                        onClick={() => {
-                          setForm(f => ({
-                            ...f,
-                            client_id: String(c.id),
-                            clientSearch: c.name,
-                          }));
+                  {/* Cliente busca digitável */}
+                  <div className="col-12 position-relative">
+                    <label className="form-label fw-semibold">Cliente</label>
+                    <input
+                      type="text"
+                      className="form-control bg-dark text-light border-secondary"
+                      value={
+                        clients.find((c) => String(c.id) === form.client_id)
+                          ?.name ||
+                        form.clientSearch ||
+                        ""
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setForm((f) => ({
+                          ...f,
+                          clientSearch: value,
+                          client_id: "",
+                        }));
+                      }}
+                      placeholder="Digite o nome do cliente..."
+                    />
+                    {form.clientSearch && (
+                      <ul
+                        className="list-group position-absolute w-100 mt-1"
+                        style={{
+                          maxHeight: "150px",
+                          overflowY: "auto",
+                          zIndex: 20,
                         }}
-                        style={{ cursor: 'pointer' }}
                       >
-                        {c.name}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
+                        {clients
+                          .filter((c) =>
+                            c.name
+                              .toLowerCase()
+                              .startsWith(form.clientSearch.toLowerCase())
+                          )
+                          .map((c) => (
+                            <li
+                              key={c.id}
+                              className={`list-group-item list-group-item-action ${
+                                form.client_id === String(c.id)
+                                  ? "active bg-success text-white"
+                                  : "bg-dark text-light"
+                              }`}
+                              onClick={() => {
+                                setForm((f) => ({
+                                  ...f,
+                                  client_id: String(c.id),
+                                  clientSearch: c.name,
+                                }));
+                              }}
+                              style={{ cursor: "pointer" }}
+                            >
+                              {c.name}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
 
-            {/* Propriedade */}
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">Propriedade</label>
-              <DarkSelect
-                name="property_id"
-                value={form.property_id}
-                placeholder="Selecione propriedade"
-                options={[
-                  { value: '', label: 'Selecione propriedade' },
-                  ...properties.map(p => ({
-                    value: String(p.id),
-                    label: p.name,
-                  })),
-                ]}
-                onChange={(e: any) =>
-                  setForm(f => ({
-                    ...f,
-                    property_id: e.target.value,
-                    plot_id: '',
-                  }))
-                }
-              />
-            </div>
+                  {/* Propriedade */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Propriedade</label>
+                    <DarkSelect
+                      name="property_id"
+                      value={form.property_id}
+                      placeholder="Selecione propriedade"
+                      options={[
+                        { value: "", label: "Selecione propriedade" },
+                        ...properties.map((p) => ({
+                          value: String(p.id),
+                          label: p.name,
+                        })),
+                      ]}
+                      onChange={(e: any) =>
+                        setForm((f) => ({
+                          ...f,
+                          property_id: e.target.value,
+                          plot_id: "",
+                        }))
+                      }
+                    />
+                  </div>
 
-            {/* Talhão */}
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">Talhão</label>
-              <DarkSelect
-                name="plot_id"
-                value={form.plot_id}
-                placeholder="Selecione talhão"
-                options={[
-                  { value: '', label: 'Selecione talhão' },
-                  ...plots.map(pl => ({
-                    value: String(pl.id),
-                    label: pl.name,
-                  })),
-                ]}
-                onChange={handleChange as any}
-              />
-            </div>
+                  {/* Talhão */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Talhão</label>
+                    <DarkSelect
+                      name="plot_id"
+                      value={form.plot_id}
+                      placeholder="Selecione talhão"
+                      options={[
+                        { value: "", label: "Selecione talhão" },
+                        ...plots.map((pl) => ({
+                          value: String(pl.id),
+                          label: pl.name,
+                        })),
+                      ]}
+                      onChange={handleChange as any}
+                    />
+                  </div>
 
-            {/* Cultura */}
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">Cultura</label>
-              <select
-                name="culture"
-                value={form.culture}
-                onChange={(e) =>
-                  setForm(f => ({ ...f, culture: e.target.value, variety: '' }))
-                }
-                className="form-select bg-dark text-light border-secondary"
-              >
-                <option value="">Selecione</option>
-                {cultures.map(c => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  {/* Cultura */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Cultura</label>
+                    <select
+                      name="culture"
+                      value={form.culture}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          culture: e.target.value,
+                          variety: "",
+                        }))
+                      }
+                      className="form-select bg-dark text-light border-secondary"
+                    >
+                      <option value="">Selecione</option>
+                      {cultures.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            {/* Variedade */}
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">Variedade</label>
-              <select
-                name="variety"
-                value={form.variety}
-                onChange={(e) =>
-                  setForm(f => ({ ...f, variety: e.target.value }))
-                }
-                disabled={!form.culture}
-                className="form-select bg-dark text-light border-secondary"
-              >
-                <option value="">Selecione</option>
-                {varieties
-                  .filter(
-                    v =>
-                      v.culture.toLowerCase() ===
-                      (form.culture || '').toLowerCase()
-                  )
-                  .map(v => (
-                    <option key={v.id} value={v.name}>
-                      {v.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
+                  {/* Variedade */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Variedade</label>
+                    <select
+                      name="variety"
+                      value={form.variety}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, variety: e.target.value }))
+                      }
+                      disabled={!form.culture}
+                      className="form-select bg-dark text-light border-secondary"
+                    >
+                      <option value="">Selecione</option>
+                      {varieties
+                        .filter(
+                          (v) =>
+                            v.culture.toLowerCase() ===
+                            (form.culture || "").toLowerCase()
+                        )
+                        .map((v) => (
+                          <option key={v.id} value={v.name}>
+                            {v.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-            {/* Consultor */}
-            <div className="col-md-6">
-              <label className="form-label fw-semibold">Consultor</label>
-              <select
-                name="consultant_id"
-                value={form.consultant_id}
-                onChange={(e) =>
-                  setForm(f => ({ ...f, consultant_id: e.target.value }))
-                }
-                className="form-select bg-dark text-light border-secondary"
-              >
-                <option value="">Selecione</option>
-                {consultants.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  {/* Consultor */}
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Consultor</label>
+                    <select
+                      name="consultant_id"
+                      value={form.consultant_id}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          consultant_id: e.target.value,
+                        }))
+                      }
+                      className="form-select bg-dark text-light border-secondary"
+                    >
+                      <option value="">Selecione</option>
+                      {consultants.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            {/* Checkbox */}
-            <div className="col-12 form-check mt-3">
-              <input
-                id="genPheno"
-                type="checkbox"
-                className="form-check-input"
-                checked={form.genPheno}
-                onChange={e =>
-                  setForm(f => ({ ...f, genPheno: e.target.checked }))
-                }
-              />
-              <label htmlFor="genPheno" className="form-check-label ms-2">
-                Gerar cronograma fenológico (milho/soja/algodão)
-              </label>
-            </div>
+                  {/* Checkbox */}
+                  <div className="col-12 form-check mt-3">
+                    <input
+                      id="genPheno"
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={form.genPheno}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, genPheno: e.target.checked }))
+                      }
+                    />
+                    <label htmlFor="genPheno" className="form-check-label ms-2">
+                      Gerar cronograma fenológico (milho/soja/algodão)
+                    </label>
+                  </div>
 
-            {/* Botões de captura */}
-            <div className="col-12 d-flex justify-content-between mt-3">
-              <button
-                type="button"
-                className="btn btn-outline-light"
-                onClick={handleTakePhoto}
-              >
-                📸 Tirar Foto
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-info"
-                onClick={handleGetLocation}
-              >
-                📍 Capturar Localização
-              </button>
-            </div>
+                  {/* Botões de captura */}
+                  <div className="col-12 d-flex justify-content-between mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-light"
+                      onClick={handleTakePhoto}
+                    >
+                      📸 Tirar Foto
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-info"
+                      onClick={handleGetLocation}
+                    >
+                      📍 Capturar Localização
+                    </button>
+                  </div>
 
-            {/* Recomendação */}
-            <div className="col-12">
-              <label className="form-label fw-semibold">Recomendação</label>
-              <textarea
-                name="recommendation"
-                value={form.recommendation}
-                onChange={handleChange}
-                placeholder="Observações ou anotações técnicas..."
-                className="form-control bg-dark text-light border-secondary"
-              />
-            </div>
+                  {/* Recomendação */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">
+                      Recomendação
+                    </label>
+                    <textarea
+                      name="recommendation"
+                      value={form.recommendation}
+                      onChange={handleChange}
+                      placeholder="Observações ou anotações técnicas..."
+                      className="form-control bg-dark text-light border-secondary"
+                    />
+                  </div>
 
-            {/* Upload de fotos */}
-            <div className="col-12">
-              <label className="form-label fw-semibold">Fotos da Visita</label>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="form-control bg-dark text-light border-secondary"
-                onChange={(e) => {
-                  const files = e.target.files;
-                  if (!files) return;
-                  const previews = Array.from(files).map((f) =>
-                    URL.createObjectURL(f)
-                  );
-                  setForm((f) => ({
-                    ...f,
-                    photos: files,
-                    photoPreviews: previews,
-                  }));
-                }}
-              />
+                  {/* Upload fotos */}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">
+                      Fotos da Visita
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="form-control bg-dark text-light border-secondary"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+                        const previews = Array.from(files).map((f) =>
+                          URL.createObjectURL(f)
+                        );
+                        setForm((f) => ({
+                          ...f,
+                          photos: files,
+                          photoPreviews: previews,
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Rodapé */}
+              <div className="modal-footer border-0">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancelar
+                </button>
+
+                {!form.id && (
+                  <button className="btn btn-success" onClick={handleCreateOrUpdate}>
+                    💾 Salvar
+                  </button>
+                )}
+
+                {form.id && (
+                  <>
+                    <button className="btn btn-success" onClick={markDone}>
+                      ✅ Concluir
+                    </button>
+                    <button className="btn btn-danger" onClick={handleDelete}>
+                      🗑 Excluir
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Rodapé */}
-        <div className="modal-footer border-0">
-          <button className="btn btn-secondary" onClick={() => setOpen(false)}>
-            Cancelar
-          </button>
-
-          {!form.id && (
-            <button className="btn btn-success" onClick={handleCreateOrUpdate}>
-              💾 Salvar
-            </button>
-          )}
-
-          {form.id && (
-            <>
-              <button className="btn btn-success" onClick={markDone}>
-                ✅ Concluir
-              </button>
-              <button className="btn btn-danger" onClick={handleDelete}>
-                🗑 Excluir
-              </button>
-            </>
-          )}
-        </div>
-      </div> 
-    </div> 
-  </div> 
-)} 
-
-    </div> 
+      )}
+    </div>
   );
 };
 

@@ -241,3 +241,155 @@
 .modal {
   position: relative; /* ⚙️ necessário para posicionar o botão dentro */
 }
+/* =====================================================
+   📅 FULLCALENDAR — Repaginado estilo Bootstrap 5
+   ===================================================== */
+
+/* container geral */
+.calendar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* barra do topo */
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(7, 24, 40, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px 14px;
+  backdrop-filter: blur(6px);
+}
+
+/* filtros */
+.calendar-filter {
+  min-width: 160px;
+  background: rgba(4, 12, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #ecf7f5;
+}
+
+/* área do calendário */
+.calendar-shell .fc {
+  background: rgba(8, 15, 18, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+/* cabeçalho do calendário */
+.fc .fc-toolbar {
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* botões Bootstrap-like */
+.fc .fc-button {
+  background: #102329;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ecf7f5;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: 0.15s ease;
+}
+.fc .fc-button:hover {
+  background: #173139;
+}
+.fc .fc-button.fc-button-primary:not(:disabled).fc-button-active {
+  background: #2dd36f;
+  border-color: #2dd36f;
+  color: #081317;
+}
+
+/* células do mês */
+.fc .fc-daygrid-day {
+  background: rgba(3, 8, 12, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+body[data-theme='light'] .fc .fc-daygrid-day {
+  background: #fff;
+}
+
+/* remove azul e sublinhado das datas */
+.fc .fc-daygrid-day-number {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 4px 7px;
+}
+.fc a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* dia atual */
+.fc .fc-day-today {
+  background: rgba(45, 211, 111, 0.07);
+}
+.fc .fc-day-today .fc-daygrid-day-number {
+  background: rgba(45, 211, 111, 0.25);
+  border-radius: 999px;
+  color: #2dd36f;
+}
+
+/* eventos */
+.fc-visit-card {
+  border-radius: 10px;
+  padding: 4px 6px 6px;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.fc-visit-line {
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* botão flutuante (mobile) */
+.fab {
+  position: fixed;
+  bottom: 18px;
+  right: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: #2dd36f;
+  border: none;
+  color: #021;
+  font-size: 30px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(3, 122, 63, 0.5);
+  z-index: 999;
+  transition: transform 0.15s ease;
+}
+.fab.pressed {
+  transform: scale(0.94);
+}
+
+/* tema claro */
+body[data-theme='light'] .calendar-toolbar {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.035);
+}
+body[data-theme='light'] .calendar-filter {
+  background: #fff;
+  color: #134;
+}
+body[data-theme='light'] .calendar-shell .fc {
+  background: #fff;
+}
