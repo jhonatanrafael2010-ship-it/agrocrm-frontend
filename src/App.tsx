@@ -10,6 +10,7 @@ import "./styles/App.css";
 import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
+import './styles/theme-agrocrm.css'
 
 
 
