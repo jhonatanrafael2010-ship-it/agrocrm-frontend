@@ -59,9 +59,10 @@
   font-family: var(--font-family);
 }
 
+/* Links da sidebar — padrão neutro */
 .sidebar nav a {
-  background: var(--accent) !important;
-  color: #fff !important;
+  background: transparent !important;
+  color: var(--text) !important;
   border-radius: 8px;
   padding: 10px 14px;
   display: flex;
@@ -69,8 +70,21 @@
   gap: 8px;
   font-weight: var(--font-weight-medium);
   margin-bottom: 6px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
+
+/* Hover — leve realce */
+.sidebar nav a:hover {
+  background: rgba(45, 211, 111, 0.1) !important;
+  color: var(--accent) !important;
+}
+
+/* Ativo — verde AgroCRM */
+.sidebar nav a.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
 
 .sidebar nav a:hover {
   background: var(--accent-hover) !important;
@@ -256,4 +270,13 @@ body[data-platform='mobile'] {
   background: #0f172a !important; /* fundo escuro pra mostrar selecionado */
   color: #fff !important;
   border-color: rgba(0,0,0,0.25) !important;
+}
+@keyframes fieldReset {
+  0% { background-color: rgba(45, 211, 111, 0.15); }
+  100% { background-color: transparent; }
+}
+
+input:focus,
+select:focus {
+  animation: fieldReset 0.6s ease;
 }

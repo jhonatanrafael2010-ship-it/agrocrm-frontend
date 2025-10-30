@@ -393,3 +393,18 @@ body[data-theme='light'] .calendar-filter {
 body[data-theme='light'] .calendar-shell .fc {
   background: #fff;
 }
+/* ================================================
+🧭 Barra superior do calendário — posição e z-index
+================================================ */
+.calendar-toolbar {
+  position: relative !important;
+  z-index: 1 !important;
+  background: var(--panel);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.calendar-page .modal {
+  z-index: 1055 !important; /* acima da toolbar */
+}
