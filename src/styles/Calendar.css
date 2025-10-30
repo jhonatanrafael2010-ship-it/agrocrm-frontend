@@ -247,6 +247,11 @@
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
+/* ✅ Garantir que o modal fique visível corretamente */
+.modal.show {
+  display: block !important;
+}
+
 /* =====================================================
    📅 FULLCALENDAR — Repaginado estilo Bootstrap 5
 ===================================================== */
@@ -256,6 +261,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: transparent; /* evita fundo branco no modo claro */
 }
 
 /* barra do topo */
@@ -282,7 +288,7 @@
 
 /* área do calendário */
 .calendar-shell .fc {
-  background: rgba(8, 15, 18, 0.15);
+  background: var(--panel);
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.25);

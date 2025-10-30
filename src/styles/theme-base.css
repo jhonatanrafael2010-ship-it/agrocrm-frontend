@@ -10,8 +10,8 @@
   --accent: #26b96a;            /* 🌿 Verde AgroCRM */
   --accent-hover: #1fa75d;      /* Hover escurecido */
   --accent-light: #36c97a;      /* Versão clara */
-  --danger: #e43f3f;            /* Excluir */
-  --cancel: #4b5563;            /* Cancelar */
+  --danger: #e43f3f;
+  --cancel: #4b5563;
   --white: #ffffff;
   --black: #000000;
   --shadow: rgba(0, 0, 0, 0.15);
@@ -29,10 +29,10 @@
 ========================================================= */
 :root[data-theme='light'],
 [data-theme='light'] {
-  --bg: #f7f9fb;
+  --bg: #f5f7fa;
   --panel: #ffffff;
   --text: #101418;
-  --muted: #444a52;
+  --muted: #4a4f57;
   --border: rgba(0, 0, 0, 0.08);
   --shadow: rgba(0, 0, 0, 0.1);
 }
@@ -54,14 +54,15 @@
 🧭 Sidebar e Navegação — Visual unificado (desktop + mobile)
 ========================================================= */
 
+/* Sidebar sempre escura (independente do tema) */
 .sidebar {
-  background: #0c1b24 !important; /* Azul petróleo escuro */
-  color: #f0f6f5 !important;
+  background: #0c1b24;
+  color: #f0f6f5;
   font-family: var(--font-family);
   padding: 0;
 }
 
-/* 🔹 Itens neutros */
+/* Itens neutros */
 .sidebar nav a {
   display: flex;
   align-items: center;
@@ -70,28 +71,27 @@
   padding: 10px 14px;
   margin-bottom: 6px;
   font-weight: 500;
-  background: transparent !important;
-  color: #f5f7f7 !important;
+  background: transparent;
+  color: #f5f7f7;
   transition: background 0.25s ease, color 0.25s ease;
 }
 
-/* 🔹 Hover suave */
+/* Hover */
 .sidebar nav a:hover {
-  background: rgba(45, 211, 111, 0.1) !important;
-  color: #2dd36f !important;
+  background: rgba(45, 211, 111, 0.1);
+  color: #2dd36f;
 }
 
-/* 🟩 Ativo — verde escuro sólido */
+/* Ativo */
 .sidebar nav a.active {
-  background: #1fa75d !important;
-  color: #ffffff !important;
+  background: #1fa75d;
+  color: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05),
               0 2px 6px rgba(0,0,0,0.25);
 }
 
-/* 🔹 Ícones sempre brancos */
 .sidebar nav a svg {
-  color: currentColor !important;
+  color: currentColor;
 }
 
 /* =========================================================
@@ -99,18 +99,18 @@
 ========================================================= */
 button,
 .btn {
-  background: var(--accent) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 10px !important;
-  font-weight: var(--font-weight-bold) !important;
-  transition: all 0.2s ease-in-out !important;
-  box-shadow: 0 2px 6px var(--shadow) !important;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: var(--font-weight-bold);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px var(--shadow);
 }
 
 button:hover,
 .btn:hover {
-  background: var(--accent-hover) !important;
+  background: var(--accent-hover);
   filter: brightness(1.05);
 }
 
@@ -119,24 +119,23 @@ button:active,
   transform: scale(0.96);
 }
 
-/* Botões específicos */
 .btn-cancel {
-  background: var(--cancel) !important;
+  background: var(--cancel);
 }
 .btn-delete {
-  background: var(--danger) !important;
+  background: var(--danger);
 }
 .btn-save {
-  background: var(--accent) !important;
+  background: var(--accent);
 }
 
 /* Botão flutuante (FAB) */
 .fab {
-  background: var(--accent) !important;
-  color: #fff !important;
+  background: var(--accent);
+  color: #fff;
 }
 .fab:hover {
-  background: var(--accent-hover) !important;
+  background: var(--accent-hover);
 }
 
 /* =========================================================
@@ -144,11 +143,11 @@ button:active,
 ========================================================= */
 .modal,
 .dialog {
-  background-color: var(--panel) !important;
-  color: var(--text) !important;
+  background-color: var(--panel);
+  color: var(--text);
   font-family: var(--font-family);
   box-shadow: 0 4px 22px rgba(0, 0, 0, 0.4);
-  border-radius: 14px !important;
+  border-radius: 14px;
 }
 
 .modal-header,
@@ -160,14 +159,14 @@ button:active,
 
 .modal-header h2,
 .dialog-title {
-  color: var(--accent) !important;
+  color: var(--accent);
   font-weight: var(--font-weight-bold);
 }
 
 .modal-header .close-btn {
-  background: transparent !important;
-  color: var(--white) !important;
-  border: none !important;
+  background: transparent;
+  color: var(--text);
+  border: none;
   font-size: 1.3rem;
   opacity: 0.8;
   transition: opacity 0.2s ease, color 0.2s ease;
@@ -175,32 +174,32 @@ button:active,
 
 .modal-header .close-btn:hover {
   opacity: 1;
-  color: var(--accent) !important;
+  color: var(--accent);
 }
 
 /* =========================================================
 📊 Dashboard e Calendário
 ========================================================= */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--accent) !important;
+  color: var(--accent);
   font-family: var(--font-family);
 }
 
 .calendar-page h2,
 .fc-toolbar-title {
-  color: var(--accent) !important;
+  color: var(--accent);
   font-weight: 700;
 }
 
 .calendar-page .fc-button,
 .fc-button-primary {
-  background: var(--accent) !important;
-  border: none !important;
-  color: #fff !important;
+  background: var(--accent);
+  border: none;
+  color: #fff;
 }
 
 .calendar-page .fc-button:hover {
-  background: var(--accent-hover) !important;
+  background: var(--accent-hover);
 }
 
 /* =========================================================
@@ -209,13 +208,22 @@ h1, h2, h3, h4, h5, h6 {
 input,
 select,
 textarea {
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-  padding: 8px 10px !important;
-  font-size: 0.9rem !important;
-  background: var(--panel) !important;
-  color: var(--text) !important;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: var(--panel);
+  color: var(--text);
   font-family: var(--font-family);
+}
+
+/* Foco */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 /* =========================================================
@@ -223,7 +231,12 @@ textarea {
 ========================================================= */
 i,
 svg {
-  color: var(--accent) !important;
+  color: var(--accent);
+}
+
+[data-theme='light'] i,
+[data-theme='light'] svg {
+  color: var(--muted); /* Ícones mais sutis no modo claro */
 }
 
 /* =========================================================
@@ -238,35 +251,30 @@ body[data-platform='mobile'] {
   --border-mobile: var(--border);
   --shadow-mobile: var(--shadow);
 }
-/* limpa visual de selects depois de resetar dependências */
-.select-wrapper.has-value select,
-.form-row.has-value select {
-  background: var(--panel) !important;
-  color: var(--text) !important;
-}
+
 /* =========================================================
 🟩 FullCalendar + Bootstrap look (verde AgroCRM)
 ========================================================= */
 .fc .fc-button,
 .calendar-page .fc-button {
-  background: var(--accent) !important;
-  border: 1px solid rgba(0,0,0,0.1) !important;
-  color: #fff !important;
-  border-radius: 12px !important;
-  padding: 4px 14px !important;
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
+  background: var(--accent);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: #fff;
+  border-radius: 12px;
+  padding: 4px 14px;
+  font-weight: 600;
+  line-height: 1.2;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .fc .fc-button:hover,
 .calendar-page .fc-button:hover {
-  background: var(--accent-hover) !important;
+  background: var(--accent-hover);
 }
 
 .fc .fc-button.fc-button-active,
 .calendar-page .fc-button.fc-button-active {
-  background: #0f172a !important; /* fundo escuro pra mostrar selecionado */
-  color: #fff !important;
-  border-color: rgba(0,0,0,0.25) !important;
+  background: #0f172a;
+  color: #fff;
+  border-color: rgba(0,0,0,0.25);
 }

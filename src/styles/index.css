@@ -104,12 +104,21 @@ html, body {
 /* ------------------ */
 /* ESTRUTURA GERAL    */
 /* ------------------ */
-div, section, article, table, th, td, input, select, textarea {
-  background-color: var(--panel);
+/* ❗ NÃO estilizar todos os divs, isso quebra o tema */
+.card,
+.clients-card,
+.dashboard-section,
+.chart-card,
+.kanban-col,
+.calendar-wrap {
+  background: var(--panel);
   color: var(--text);
-  border-color: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow);
   transition: background 0.3s ease, color 0.3s ease;
 }
+
 
 /* ------------------ */
 /* CARTÕES E PAINÉIS  */
@@ -427,4 +436,21 @@ label { color: var(--muted); font-size: 0.9rem; }
     padding: 1rem;
     border-radius: 10px;
   }
+}
+/* Sidebar sempre escura */
+aside.d-flex.bg-dark {
+  background: #0c1b24 !important;
+  color: #f5f7f7 !important;
+}
+
+/* itens do menu lateral */
+aside .list-group-item {
+  background: transparent !important;
+  color: #f5f7f7 !important;
+}
+
+/* item ativo */
+aside .list-group-item.active {
+  background: #1fa75d !important;
+  color: #fff !important;
 }
