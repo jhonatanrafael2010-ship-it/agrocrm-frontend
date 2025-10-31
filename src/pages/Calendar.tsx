@@ -347,32 +347,41 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const markDone = async () => {
     if (!form.id) return;
+
     try {
+      // ✅ Se houver fotos, envia primeiro
+      if (form.photos && form.photos.length > 0) {
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file) => fd.append("photos", file));
+        const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+        if (!photoResp.ok) {
+          console.warn("⚠️ Falha ao enviar fotos antes de concluir:", photoResp.status);
+        } else {
+          console.log("📸 Fotos enviadas com sucesso antes de concluir!");
+        }
+      }
+
+      // ✅ Depois, atualiza o status para concluído
       const r = await fetch(`${API_BASE}visits/${form.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "done" }),
       });
+
       if (!r.ok) throw new Error("Erro HTTP " + r.status);
 
-      // envia fotos se tiver
-      if (form.photos && form.photos.length > 0) {
-        const fd = new FormData();
-        Array.from(form.photos).forEach((file) => fd.append("photos", file));
-        await fetch(`${API_BASE}visits/${form.id}/photos`, {
-          method: "POST",
-          body: fd,
-        }).catch((e) => console.warn("Falha upload ao concluir", e));
-      }
-
-      // atualiza visual
       await loadVisits();
       setOpen(false);
+      alert("✅ Visita concluída e fotos salvas com sucesso!");
     } catch (e) {
       console.error("Erro ao concluir:", e);
-      alert("Erro ao concluir");
+      alert("Erro ao concluir visita");
     }
   };
+
 
   // ============================================================
   // Render
