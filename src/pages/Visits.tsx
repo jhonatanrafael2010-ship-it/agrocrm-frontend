@@ -246,6 +246,14 @@ const Visits: React.FC = () => {
                             >
                               Ver
                             </button>
+
+                            <button
+                              className="btn btn-outline-success btn-sm me-1"
+                              onClick={() => window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")}
+                            >
+                              📄 PDF
+                            </button>
+
                             <button
                               className="btn btn-outline-danger btn-sm"
                               onClick={() => handleDelete(v.id)}
