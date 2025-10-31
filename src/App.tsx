@@ -13,6 +13,9 @@ import MobileMenu from "./components/MobileMenu";
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
+  // ===========================================
+  // 🌙 Controle de tema (escuro/claro) — Corrigido
+  // ===========================================
   const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem("theme");
     if (stored) return stored;
@@ -20,10 +23,24 @@ const App: React.FC = () => {
     return prefersDark ? "dark" : "light";
   });
 
+  // 🔧 Função única para aplicar tema global (sincroniza Bootstrap + app)
+  const applyTheme = (themeValue: string) => {
+    document.documentElement.setAttribute("data-theme", themeValue);
+    document.documentElement.setAttribute("data-bs-theme", themeValue);
+    document.body.setAttribute("data-theme", themeValue);
+    localStorage.setItem("theme", themeValue);
+  };
+
+  // Atualiza tema quando o state muda
   useEffect(() => {
-    document.body.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    applyTheme(theme);
   }, [theme]);
+
+  // Alternar entre temas
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
 
   useEffect(() => {
     async function syncPending() {
@@ -41,10 +58,6 @@ const App: React.FC = () => {
       window.removeEventListener("online", syncPending);
     };
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
 
   const [isMobileApp, setIsMobileApp] = useState(false);
 

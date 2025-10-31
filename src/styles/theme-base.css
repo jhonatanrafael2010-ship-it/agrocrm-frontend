@@ -27,8 +27,7 @@
 /* =========================================================
 🌞 Tema Claro
 ========================================================= */
-:root[data-theme='light'],
-[data-theme='light'] {
+html[data-theme='light'] {
   --bg: #f5f7fa;
   --panel: #ffffff;
   --text: #101418;
@@ -40,8 +39,7 @@
 /* =========================================================
 🌙 Tema Escuro
 ========================================================= */
-:root[data-theme='dark'],
-[data-theme='dark'] {
+html[data-theme='dark'] {
   --bg: #0b1620;
   --panel: #0e1c27;
   --text: #dfeff0;
@@ -217,7 +215,6 @@ textarea {
   font-family: var(--font-family);
 }
 
-/* Foco */
 input:focus,
 select:focus,
 textarea:focus {
@@ -234,9 +231,9 @@ svg {
   color: var(--accent);
 }
 
-[data-theme='light'] i,
-[data-theme='light'] svg {
-  color: var(--muted); /* Ícones mais sutis no modo claro */
+html[data-theme='light'] i,
+html[data-theme='light'] svg {
+  color: var(--muted);
 }
 
 /* =========================================================
@@ -277,4 +274,13 @@ body[data-platform='mobile'] {
   background: #0f172a;
   color: #fff;
   border-color: rgba(0,0,0,0.25);
+}
+
+/* =========================================================
+🌗 Fundo e transição global
+========================================================= */
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.25s ease, color 0.25s ease;
 }

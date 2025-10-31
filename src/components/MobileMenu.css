@@ -3,8 +3,8 @@
 ========================================================= */
 
 .offcanvas {
-  background-color: #0c1b24 !important; /* mesmo tom da sidebar */
-  color: #f5f7f7 !important;
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
   z-index: 2000 !important;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);

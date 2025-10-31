@@ -17,7 +17,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  background: rgba(10, 20, 18, 0.92);
+  background: var(--panel);
+  color: var(--text);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid rgba(80, 200, 160, 0.25);
   border-radius: 18px;
@@ -29,7 +30,6 @@
   overflow-x: hidden;
   margin: 0 auto;
   box-shadow: 0 0 28px rgba(0, 0, 0, 0.6);
-  color: #e9f4f1;
   scrollbar-width: thin;
   animation: fadeIn 0.25s ease;
 }
