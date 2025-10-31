@@ -27,9 +27,10 @@ const App: React.FC = () => {
   const applyTheme = (themeValue: string) => {
     document.documentElement.setAttribute("data-theme", themeValue);
     document.documentElement.setAttribute("data-bs-theme", themeValue);
-    document.body.setAttribute("data-theme", themeValue);
+    document.body.setAttribute("data-theme", themeValue); // ✅ garante herança global
     localStorage.setItem("theme", themeValue);
   };
+
 
   // Atualiza tema quando o state muda
   useEffect(() => {

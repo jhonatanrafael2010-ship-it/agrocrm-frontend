@@ -187,6 +187,15 @@ html[data-theme='dark'] .fab {
   font-weight: var(--font-weight-bold);
 }
 
+.dialog,
+.dialog-content {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
 .modal-header .close-btn {
   background: transparent;
   color: var(--text);
@@ -340,4 +349,35 @@ body {
 .dropdown-item:hover {
   background-color: rgba(45, 211, 111, 0.15) !important;
   color: var(--accent) !important;
+}
+/* =========================================================
+🧩 Integração direta com Bootstrap — sincroniza variáveis internas
+========================================================= */
+
+/* Tema claro */
+html[data-theme='light'],
+body[data-theme='light'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-modal-bg: var(--panel);
+  --bs-modal-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-link-color: var(--text);
+  --bs-dropdown-link-hover-color: var(--accent);
+  --bs-dropdown-link-hover-bg: rgba(45, 211, 111, 0.15);
+}
+
+/* Tema escuro */
+html[data-theme='dark'],
+body[data-theme='dark'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-modal-bg: var(--panel);
+  --bs-modal-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-link-color: var(--text);
+  --bs-dropdown-link-hover-color: var(--accent);
+  --bs-dropdown-link-hover-bg: rgba(45, 211, 111, 0.15);
 }
