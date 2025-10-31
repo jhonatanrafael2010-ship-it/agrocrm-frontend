@@ -389,16 +389,40 @@ const CalendarPage: React.FC = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  const handleOpenLightbox = (url: string) => {
-    setLightboxUrl(url);
-    setLightboxOpen(true);
-  };
-
   const handleCloseLightbox = () => {
     setLightboxOpen(false);
     setLightboxUrl(null);
   };
   
+
+  // ============================================================
+  // ⬅️➡️ Navegação entre fotos no lightbox
+  // ============================================================
+  const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+
+  const handleOpenLightbox = (url: string, photos?: string[]) => {
+    setLightboxPhotos(photos || []);
+    const index = (photos || []).indexOf(url);
+    setCurrentPhotoIndex(index >= 0 ? index : 0);
+    setLightboxUrl(url);
+    setLightboxOpen(true);
+  };
+
+  const handlePrevLightbox = () => {
+    if (lightboxPhotos.length === 0) return;
+    const prevIndex = (currentPhotoIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    setCurrentPhotoIndex(prevIndex);
+    setLightboxUrl(lightboxPhotos[prevIndex]);
+  };
+
+  const handleNextLightbox = () => {
+    if (lightboxPhotos.length === 0) return;
+    const nextIndex = (currentPhotoIndex + 1) % lightboxPhotos.length;
+    setCurrentPhotoIndex(nextIndex);
+    setLightboxUrl(lightboxPhotos[nextIndex]);
+  };
+
   // ============================================================
   // Render
   // ============================================================
@@ -893,7 +917,13 @@ const CalendarPage: React.FC = () => {
                             key={p.id}
                             src={p.url}
                             alt="Foto da visita"
-                            onClick={() => handleOpenLightbox(p.url)} // ⬅️ adiciona essa linha
+                            onClick={() =>
+                              handleOpenLightbox(
+                                p.url,
+                                (events.find((e) => e.extendedProps?.raw?.id === form.id)
+                                  ?.extendedProps?.raw?.photos || []).map((ph: any) => ph.url)
+                              )
+                            }
                             style={{
                               width: "110px",
                               height: "110px",
@@ -910,30 +940,6 @@ const CalendarPage: React.FC = () => {
                 </div>
               </div>
 
-
-              {/* Galeria de fotos salvas no banco */}
-              {form.id && (
-                <div className="col-12 mt-3">
-                  <label className="form-label fw-semibold">Fotos já salvas</label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {(events.find(e => e.extendedProps?.raw?.id === form.id)?.extendedProps?.raw?.photos || []).map((p: any) => (
-                      <img
-                        key={p.id}
-                        src={p.url}
-                        alt="Foto da visita"
-                        style={{
-                          width: "110px",
-                          height: "110px",
-                          objectFit: "cover",
-                          borderRadius: "10px",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          boxShadow: "0 2px 5px rgba(0,0,0,0.3)"
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
 
 
               {/* Rodapé */}
@@ -966,14 +972,17 @@ const CalendarPage: React.FC = () => {
           </div>
         </div>
       )}
-      {/* 🖼️ Lightbox Modal */}
+      {/* 🖼️ Lightbox Modal com Navegação */}
       {lightboxOpen && (
-        <div
-          className="lightbox-overlay"
-          onClick={handleCloseLightbox}
-        >
+        <div className="lightbox-overlay" onClick={handleCloseLightbox}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-nav left" onClick={(e) => { e.stopPropagation(); handlePrevLightbox(); }}>
+              ⟵
+            </button>
             <img src={lightboxUrl || ""} alt="Visualização ampliada" />
+            <button className="lightbox-nav right" onClick={(e) => { e.stopPropagation(); handleNextLightbox(); }}>
+              ⟶
+            </button>
             <button className="lightbox-close" onClick={handleCloseLightbox}>
               ✕
             </button>

@@ -485,3 +485,37 @@ html[data-theme='dark'] .photo-gallery img {
     opacity: 1;
   }
 }
+/* =========================================================
+🖼️ Lightbox com Navegação
+========================================================= */
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  padding: 0.3em 0.5em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  z-index: 10;
+}
+
+.lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.lightbox-nav.left {
+  left: 10px;
+}
+
+.lightbox-nav.right {
+  right: 10px;
+}
+
+.lightbox-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
