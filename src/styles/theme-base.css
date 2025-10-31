@@ -131,9 +131,35 @@ button:active,
 .fab {
   background: var(--accent);
   color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  transition: all 0.25s ease;
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1500;
 }
+
+html[data-theme='light'] .fab {
+  background: var(--accent);
+  color: #fff;
+}
+
+html[data-theme='dark'] .fab {
+  background: var(--accent);
+  color: #fff;
+}
+
 .fab:hover {
   background: var(--accent-hover);
+  transform: scale(1.05);
 }
 
 /* =========================================================
@@ -283,4 +309,35 @@ body {
   background: var(--bg);
   color: var(--text);
   transition: background 0.25s ease, color 0.25s ease;
+}
+/* =========================================================
+🧩 Correção dos modais no modo claro/escuro
+========================================================= */
+.modal-content {
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.modal-header h5,
+.modal-title {
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+.dropdown-menu {
+  background-color: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.dropdown-item {
+  color: var(--text) !important;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(45, 211, 111, 0.15) !important;
+  color: var(--accent) !important;
 }
