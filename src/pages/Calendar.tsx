@@ -277,6 +277,7 @@ const CalendarPage: React.FC = () => {
       alert(e?.message || "Erro ao salvar visita");
     }
   };
+  
 
   // ============================================================
   // 🗑️ Excluir
@@ -382,7 +383,22 @@ const CalendarPage: React.FC = () => {
     }
   };
 
+  // ============================================================
+  // 🖼️ Lightbox (visualizador de fotos)
+  // ============================================================
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  const handleOpenLightbox = (url: string) => {
+    setLightboxUrl(url);
+    setLightboxOpen(true);
+  };
+
+  const handleCloseLightbox = () => {
+    setLightboxOpen(false);
+    setLightboxUrl(null);
+  };
+  
   // ============================================================
   // Render
   // ============================================================
@@ -629,8 +645,7 @@ const CalendarPage: React.FC = () => {
                       type="text"
                       className="form-control bg-dark text-light border-secondary"
                       value={
-                        clients.find((c) => String(c.id) === form.client_id)
-                          ?.name ||
+                        clients.find((c) => String(c.id) === form.client_id)?.name ||
                         form.clientSearch ||
                         ""
                       }
@@ -655,9 +670,7 @@ const CalendarPage: React.FC = () => {
                       >
                         {clients
                           .filter((c) =>
-                            c.name
-                              .toLowerCase()
-                              .startsWith(form.clientSearch.toLowerCase())
+                            c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase())
                           )
                           .map((c) => (
                             <li
@@ -835,9 +848,7 @@ const CalendarPage: React.FC = () => {
 
                   {/* Recomendação */}
                   <div className="col-12">
-                    <label className="form-label fw-semibold">
-                      Recomendação
-                    </label>
+                    <label className="form-label fw-semibold">Recomendação</label>
                     <textarea
                       name="recommendation"
                       value={form.recommendation}
@@ -849,9 +860,7 @@ const CalendarPage: React.FC = () => {
 
                   {/* Upload fotos */}
                   <div className="col-12">
-                    <label className="form-label fw-semibold">
-                      Fotos da Visita
-                    </label>
+                    <label className="form-label fw-semibold">Fotos da Visita</label>
                     <input
                       type="file"
                       multiple
@@ -871,8 +880,61 @@ const CalendarPage: React.FC = () => {
                       }}
                     />
                   </div>
+
+                  {/* ✅ Galeria de fotos existentes (vindas do backend) */}
+                  {form.id && (
+                    <div className="col-12 mt-3">
+                      <label className="form-label fw-semibold">Fotos já salvas</label>
+                      <div className="d-flex flex-wrap gap-2">
+                        {(events.find(
+                          (e) => e.extendedProps?.raw?.id === form.id
+                        )?.extendedProps?.raw?.photos || []).map((p: any) => (
+                          <img
+                            key={p.id}
+                            src={p.url}
+                            alt="Foto da visita"
+                            onClick={() => handleOpenLightbox(p.url)} // ⬅️ adiciona essa linha
+                            style={{
+                              width: "110px",
+                              height: "110px",
+                              objectFit: "cover",
+                              borderRadius: "10px",
+                              border: "1px solid rgba(255,255,255,0.2)",
+                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
+
+
+              {/* Galeria de fotos salvas no banco */}
+              {form.id && (
+                <div className="col-12 mt-3">
+                  <label className="form-label fw-semibold">Fotos já salvas</label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {(events.find(e => e.extendedProps?.raw?.id === form.id)?.extendedProps?.raw?.photos || []).map((p: any) => (
+                      <img
+                        key={p.id}
+                        src={p.url}
+                        alt="Foto da visita"
+                        style={{
+                          width: "110px",
+                          height: "110px",
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.3)"
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
 
               {/* Rodapé */}
               <div className="modal-footer border-0">
@@ -901,6 +963,20 @@ const CalendarPage: React.FC = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 🖼️ Lightbox Modal */}
+      {lightboxOpen && (
+        <div
+          className="lightbox-overlay"
+          onClick={handleCloseLightbox}
+        >
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxUrl || ""} alt="Visualização ampliada" />
+            <button className="lightbox-close" onClick={handleCloseLightbox}>
+              ✕
+            </button>
           </div>
         </div>
       )}

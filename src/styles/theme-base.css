@@ -381,3 +381,107 @@ body[data-theme='dark'] {
   --bs-dropdown-link-hover-color: var(--accent);
   --bs-dropdown-link-hover-bg: rgba(45, 211, 111, 0.15);
 }
+/* =========================================================
+📸 Galeria de Fotos das Visitas
+========================================================= */
+
+/* Container das miniaturas */
+.photo-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* Miniaturas padrão */
+.photo-gallery img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 5px var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Efeito de hover */
+.photo-gallery img:hover {
+  transform: scale(1.05);
+  border-color: var(--accent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Ajuste para telas pequenas */
+@media (max-width: 600px) {
+  .photo-gallery img {
+    width: 90px;
+    height: 90px;
+  }
+}
+
+/* Aparência coerente com os dois temas */
+html[data-theme='light'] .photo-gallery img {
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme='dark'] .photo-gallery img {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+/* =========================================================
+🖼️ Lightbox (visualizador de fotos ampliadas)
+========================================================= */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  animation: fadeIn 0.3s ease;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 95%;
+  max-height: 90%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-content img {
+  display: block;
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 10px;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
