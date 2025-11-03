@@ -431,7 +431,7 @@ const CalendarPage: React.FC = () => {
       {/* 🌿 Logo NutriCRM */}
       <div className="app-logo-container">
         <img
-          src={`${API_BASE.replace("/api/", "")}static/nutricrm_logo.png`}
+          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
           alt="NutriCRM"
           className="app-logo"
         />

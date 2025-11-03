@@ -499,20 +499,25 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 0;
   background: linear-gradient(135deg, #1b5e20, #4caf50);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
 }
 
 .app-logo {
-  height: 48px;
+  height: 58px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  transition: transform 0.2s ease-in-out;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s ease-in-out;
 }
 
+
 .app-logo:hover {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 @media (max-width: 768px) {
