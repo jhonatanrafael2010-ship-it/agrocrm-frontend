@@ -428,6 +428,15 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   return (
     <div className="calendar-page">
+      {/* 🌿 Logo NutriCRM */}
+      <div className="app-logo-container">
+        <img
+          src={`${API_BASE.replace("/api/", "")}static/nutricrm_logo.png`}
+          alt="NutriCRM"
+          className="app-logo"
+        />
+      </div>
+
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
         <div className="title-row">
@@ -959,9 +968,61 @@ const CalendarPage: React.FC = () => {
 
                 {form.id && (
                   <>
+                    {/* 📄 Botão PDF com loading */}
+                    <button
+                      className="btn btn-outline-primary d-flex align-items-center"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          // Abre PDF em nova aba (desktop)
+                          if (window.innerWidth > 768) {
+                            window.open(`${API_BASE}visits/${form.id}/pdf`, "_blank");
+                          } else {
+                            // Mobile: faz o download direto
+                            const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                            if (!res.ok) throw new Error("Erro ao gerar PDF");
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `Visita_${form.id}.pdf`;
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                          }
+                        } catch (err) {
+                          console.error("Erro ao gerar PDF:", err);
+                          alert("❌ Falha ao gerar o relatório PDF");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                      style={{
+                        minWidth: window.innerWidth > 768 ? "auto" : "50px",
+                        borderRadius: window.innerWidth > 768 ? "6px" : "50%",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          {window.innerWidth > 768 && "Gerando PDF..."}
+                        </>
+                      ) : (
+                        <>
+                          📄 {window.innerWidth > 768 && "PDF"}
+                        </>
+                      )}
+                    </button>
+
                     <button className="btn btn-success" onClick={markDone}>
                       ✅ Concluir
                     </button>
+
                     <button className="btn btn-danger" onClick={handleDelete}>
                       🗑 Excluir
                     </button>
