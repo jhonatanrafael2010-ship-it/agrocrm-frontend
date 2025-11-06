@@ -1,156 +1,212 @@
-// ==============================
-// 📸 Seção de fotos da visita (revisado)
-// ==============================
-
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
-function VisitPhotos({ visitId, existingPhotos, onRefresh }) {
-  const [photos, setPhotos] = useState(existingPhotos || []);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [captions, setCaptions] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
+const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
 
-  // 🔹 Manipula seleção de arquivos
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
-    setCaptions(Array(files.length).fill("")); // cria legendas vazias
-  };
+type Photo = {
+  id: number;
+  url: string;
+  caption?: string;
+};
 
-  // 🔹 Atualiza legenda digitada
-  const handleCaptionChange = (index: number, text: string) => {
-    const newCaptions = [...captions];
-    newCaptions[index] = text;
-    setCaptions(newCaptions);
-  };
+interface VisitPhotosProps {
+  visitId: number | null;
+  existingPhotos: Photo[];
+  onRefresh: () => void;
+}
 
-  // 🔹 Faz upload das fotos com legendas
+const VisitPhotos: React.FC<VisitPhotosProps> = ({
+  visitId,
+  existingPhotos,
+  onRefresh,
+}) => {
+  const [photos, setPhotos] = useState<FileList | null>(null);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [photoCaptions, setPhotoCaptions] = useState<string[]>([]);
+  const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
+
+  // 📸 Upload de novas fotos
   const handleUpload = async () => {
-    if (!selectedFiles.length) return alert("Selecione uma ou mais fotos.");
+    if (!visitId || !photos || photos.length === 0) return;
 
-    const formData = new FormData();
-    selectedFiles.forEach((file, i) => {
-      formData.append("photos", file);
-      formData.append("captions", captions[i] || "");
+    const fd = new FormData();
+    Array.from(photos).forEach((file, idx) => {
+      fd.append("photos", file);
+      fd.append("captions", photoCaptions[idx] || "");
     });
 
     try {
-      setUploading(true);
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/visits/${visitId}/photos`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      // Atualiza lista de fotos após upload
-      setPhotos((prev) => [...prev, ...res.data.photos]);
-      setSelectedFiles([]);
-      setCaptions([]);
-      if (onRefresh) onRefresh();
+      await axios.post(`${API_BASE}visits/${visitId}/photos`, fd);
+      alert("📸 Fotos enviadas com sucesso!");
+      setPhotos(null);
+      setPhotoPreviews([]);
+      setPhotoCaptions([]);
+      onRefresh();
     } catch (err) {
-      console.error("❌ Erro ao enviar fotos:", err);
-      alert("Erro ao enviar fotos. Verifique sua conexão.");
-    } finally {
-      setUploading(false);
+      console.error("Erro ao enviar fotos:", err);
+      alert("❌ Falha ao enviar fotos.");
     }
   };
 
-  // 🔹 Atualiza legenda de uma foto já salva
-  const updateCaption = async (photoId: number, caption: string) => {
+  // 🗑 Excluir foto
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!window.confirm("Excluir esta foto?")) return;
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/photos/${photoId}`, {
-        caption,
+      await axios.delete(`${API_BASE}photos/${photoId}`);
+      setSavedPhotos((prev: Photo[]) => prev.filter((p) => p.id !== photoId));
+      onRefresh();
+    } catch (err) {
+      console.error("Erro ao excluir foto:", err);
+    }
+  };
+
+  // ✏️ Atualizar legenda
+  const handleUpdateCaption = async (photoId: number, newCaption: string) => {
+    try {
+      await axios.put(`${API_BASE}photos/${photoId}`, {
+        caption: newCaption,
       });
-      setPhotos((prev) =>
-        prev.map((p) => (p.id === photoId ? { ...p, caption } : p))
+      setSavedPhotos((prev: Photo[]) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, caption: newCaption } : p
+        )
       );
     } catch (err) {
-      console.error("⚠️ Erro ao atualizar legenda:", err);
-    }
-  };
-
-  // 🔹 Exclui uma foto
-  const deletePhoto = async (photoId: number) => {
-    if (!confirm("Deseja excluir esta foto?")) return;
-    try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/photos/${photoId}`);
-      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      console.error("⚠️ Erro ao excluir foto:", err);
-      alert("Erro ao excluir foto.");
+      console.error("Erro ao atualizar legenda:", err);
     }
   };
 
   return (
-    <div className="photos-section mt-4">
-      <h4 className="text-lg font-semibold mb-2">📸 Fotos da visita</h4>
-
-      {/* Upload de novas fotos */}
+    <div className="col-12 mt-3">
+      <label className="form-label fw-semibold">Fotos da Visita</label>
       <input
         type="file"
-        accept="image/*"
         multiple
-        onChange={handleFileChange}
-        className="mb-2"
+        accept="image/*"
+        className="form-control bg-dark text-light border-secondary"
+        onChange={(e) => {
+          const files = e.target.files;
+          if (!files) return;
+          const previews = Array.from(files).map((f) => URL.createObjectURL(f));
+          const emptyCaptions = Array.from(files).map(() => "");
+          setPhotos(files);
+          setPhotoPreviews(previews);
+          setPhotoCaptions(emptyCaptions);
+        }}
       />
 
-      {selectedFiles.map((file, i) => (
-        <div
-          key={i}
-          className="p-2 mb-2 border rounded bg-gray-50 flex items-center"
-        >
-          <span className="flex-1 text-sm truncate">{file.name}</span>
-          <input
-            type="text"
-            placeholder="Legenda..."
-            value={captions[i]}
-            onChange={(e) => handleCaptionChange(i, e.target.value)}
-            className="ml-2 border px-2 py-1 rounded text-sm flex-1"
-          />
-        </div>
-      ))}
-
-      {selectedFiles.length > 0 && (
-        <button
-          onClick={handleUpload}
-          disabled={uploading}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        >
-          {uploading ? "Enviando..." : "Salvar Fotos"}
-        </button>
-      )}
-
-      {/* Lista de fotos existentes */}
-      {photos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
-          {photos.map((p) => (
-            <div key={p.id} className="border rounded-lg overflow-hidden bg-white shadow">
+      {/* Mostra prévias */}
+      {photoPreviews.length > 0 && (
+        <div className="d-flex flex-wrap gap-3 mt-3">
+          {photoPreviews.map((preview, i) => (
+            <div
+              key={i}
+              style={{
+                width: "140px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
               <img
-                src={p.url}
-                alt={p.caption || "Foto da visita"}
-                className="w-full h-40 object-cover"
+                src={preview}
+                alt={`Foto ${i + 1}`}
+                style={{
+                  width: "130px",
+                  height: "130px",
+                  objectFit: "cover",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  marginBottom: "6px",
+                }}
               />
               <input
                 type="text"
-                className="w-full text-sm border-t px-2 py-1 focus:outline-none"
                 placeholder="Legenda..."
-                value={p.caption || ""}
-                onChange={(e) => updateCaption(p.id, e.target.value)}
+                value={photoCaptions[i] || ""}
+                onChange={(e) => {
+                  const newCaps = [...photoCaptions];
+                  newCaps[i] = e.target.value;
+                  setPhotoCaptions(newCaps);
+                }}
+                className="form-control form-control-sm bg-dark text-light border-secondary"
               />
-              <button
-                onClick={() => deletePhoto(p.id)}
-                className="text-red-500 text-xs w-full py-1 border-t hover:bg-red-50"
-              >
-                Excluir
-              </button>
             </div>
           ))}
         </div>
       )}
+
+      {photoPreviews.length > 0 && (
+        <div className="mt-2">
+          <button className="btn btn-success btn-sm" onClick={handleUpload}>
+            💾 Enviar Fotos
+          </button>
+        </div>
+      )}
+
+      {/* Fotos já salvas */}
+      {savedPhotos.length > 0 && (
+        <div className="mt-4">
+          <label className="form-label fw-semibold">Fotos salvas</label>
+          <div className="d-flex flex-wrap gap-3">
+            {savedPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                style={{
+                  width: "140px",
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <img
+                  src={API_BASE.replace("/api", "") + photo.url}
+                  alt="Foto"
+                  style={{
+                    width: "130px",
+                    height: "130px",
+                    objectFit: "cover",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    marginBottom: "6px",
+                  }}
+                />
+                <button
+                  onClick={() => handleDeletePhoto(photo.id)}
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    backgroundColor: "#b71c1c",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "22px",
+                    height: "22px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  🗑
+                </button>
+                <input
+                  type="text"
+                  value={photo.caption || ""}
+                  placeholder="Legenda..."
+                  onChange={(e) =>
+                    handleUpdateCaption(photo.id, e.target.value)
+                  }
+                  className="form-control form-control-sm bg-dark text-light border-secondary"
+                  style={{ fontSize: "12px" }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default VisitPhotos;

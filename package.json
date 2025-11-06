@@ -21,6 +21,7 @@
     "@fullcalendar/react": "^6.1.8",
     "@fullcalendar/timegrid": "^6.1.8",
     "@hello-pangea/dnd": "^18.0.1",
+    "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "idb": "^8.0.3",
     "lucide-react": "^0.546.0",
