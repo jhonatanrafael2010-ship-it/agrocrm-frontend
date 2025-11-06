@@ -918,26 +918,125 @@ const CalendarPage: React.FC = () => {
                     existingPhotos={form.savedPhotos}
                     onRefresh={loadVisits}
                   />
-
-            {/* 🖼️ Lightbox Modal */}
-            {lightboxOpen && (
-              <div className="lightbox-overlay" onClick={handleCloseLightbox}>
-                <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-                  <button className="lightbox-nav left" onClick={(e) => { e.stopPropagation(); handlePrevLightbox(); }}>
-                    ⟵
-                  </button>
-                  <img src={lightboxUrl || ""} alt="Visualização ampliada" />
-                  <button className="lightbox-nav right" onClick={(e) => { e.stopPropagation(); handleNextLightbox(); }}>
-                    ⟶
-                  </button>
-                  <button className="lightbox-close" onClick={handleCloseLightbox}>
-                    ✕
-                  </button>
                 </div>
               </div>
-            )}
-          </div>
-        );
-      };
 
-      export default CalendarPage;
+              {/* Rodapé */}
+              <div className="modal-footer border-0">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancelar
+                </button>
+
+                {!form.id && (
+                  <button
+                    className="btn btn-success"
+                    onClick={handleCreateOrUpdate}
+                  >
+                    💾 Salvar
+                  </button>
+                )}
+
+                {form.id && (
+                  <>
+                    <button
+                      className="btn btn-outline-primary d-flex align-items-center"
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          if (window.innerWidth > 768) {
+                            window.open(
+                              `${API_BASE}visits/${form.id}/pdf`,
+                              "_blank"
+                            );
+                          } else {
+                            const res = await fetch(
+                              `${API_BASE}visits/${form.id}/pdf`
+                            );
+                            if (!res.ok)
+                              throw new Error("Erro ao gerar PDF");
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            const clientName =
+                              clients.find(
+                                (c) => String(c.id) === form.client_id
+                              )?.name || "Visita";
+                            const safeName = clientName.replace(
+                              /[^a-z0-9]/gi,
+                              "_"
+                            );
+                            a.download = `Relatorio_${safeName}_${form.date.replace(
+                              /\//g,
+                              "-"
+                            )}.pdf`;
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                          }
+                        } catch (err) {
+                          console.error("Erro ao gerar PDF:", err);
+                          alert("❌ Falha ao gerar o relatório PDF");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      {loading ? "Gerando..." : "📄 PDF"}
+                    </button>
+
+                    <button className="btn btn-success" onClick={markDone}>
+                      ✅ Concluir
+                    </button>
+
+                    <button className="btn btn-danger" onClick={handleDelete}>
+                      🗑 Excluir
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🖼️ Lightbox Modal */}
+      {lightboxOpen && (
+        <div className="lightbox-overlay" onClick={handleCloseLightbox}>
+          <div
+            className="lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="lightbox-nav left"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevLightbox();
+              }}
+            >
+              ⟵
+            </button>
+            <img src={lightboxUrl || ""} alt="Visualização ampliada" />
+            <button
+              className="lightbox-nav right"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextLightbox();
+              }}
+            >
+              ⟶
+            </button>
+            <button className="lightbox-close" onClick={handleCloseLightbox}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CalendarPage;
