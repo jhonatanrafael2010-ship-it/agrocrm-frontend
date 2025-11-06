@@ -248,7 +248,6 @@ const CalendarPage: React.FC = () => {
         throw new Error(body || `Erro ${res.status}`);
       }
 
-      const data = await res.json();
     
 
       // upload de fotos (se tiver)
