@@ -27,11 +27,18 @@ type Visit = {
   date: string;
   recommendation?: string;
   status?: "planned" | "done" | string;
+  photos?: Photo[];
   culture?: string;
   variety?: string;
   client_name?: string;
   consultant_name?: string;
 };
+type Photo = {
+  id: number;
+  url: string;
+  caption?: string;
+};
+
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
@@ -66,10 +73,12 @@ const CalendarPage: React.FC = () => {
     genPheno: true,
     photos: null as FileList | null,
     photoPreviews: [] as string[],
-    clientSearch: "", // busca digitável
+    savedPhotos: [] as any[], // 🆕 fotos já salvas da visita
+    clientSearch: "",
     latitude: null as number | null,
     longitude: null as number | null,
   });
+
 
   // ============================================================
   // 🔁 Carregar visitas -> monta eventos
@@ -273,10 +282,13 @@ const CalendarPage: React.FC = () => {
         genPheno: true,
         photos: null,
         photoPreviews: [],
+        savedPhotos: [], // 🆕 limpa fotos antigas
         clientSearch: "",
         latitude: null,
         longitude: null,
+        photoCaptions: [],
       });
+
     } catch (e: any) {
       console.error("❌ Erro ao salvar visita:", e);
       alert(e?.message || "Erro ao salvar visita");
@@ -565,10 +577,13 @@ const CalendarPage: React.FC = () => {
             genPheno: false,
             photos: null,
             photoPreviews: [],
-            clientSearch: clientName, // ✅ agora mantém o nome correto no input
-            latitude: null,
-            longitude: null,
+            savedPhotos: v.photos || [], // 🆕 carrega fotos já salvas
+            clientSearch: clientName,
+            latitude: v.latitude || null,
+            longitude: v.longitude || null,
+            photoCaptions: [],
           });
+
           setOpen(true);
         }}
 
@@ -964,204 +979,180 @@ const CalendarPage: React.FC = () => {
                   </div>
 
 
-                  {/* Fotos já salvas */}
-                  {selectedVisit && selectedVisit.photos && selectedVisit.photos.length > 0 && (
-                    <div className="col-12 mt-3">
-                      <label className="form-label fw-semibold">Fotos salvas:</label>
-                      <div className="d-flex flex-wrap gap-3">
-                        {selectedVisit.photos.map((photo) => (
-                          <div
-                            key={photo.id}
-                            style={{
-                              width: "140px",
-                              position: "relative",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                            }}
-                          >
-                            <img
-                              src={API_BASE.replace("/api", "") + photo.url}
-                              alt="Foto"
-                              style={{
-                                width: "130px",
-                                height: "130px",
-                                objectFit: "cover",
-                                borderRadius: "10px",
-                                border: "1px solid rgba(255,255,255,0.2)",
-                                marginBottom: "6px",
-                              }}
-                            />
+                        {/* Fotos já salvas */}
+                        {form.id && form.photoPreviews.length === 0 && (
+                          <div className="col-12 mt-3">
+                            <label className="form-label fw-semibold">Fotos já salvas:</label>
+                            <div className="d-flex flex-wrap gap-3">
+                              {(form.savedPhotos || []).map((photo: any) => (
+                                <div
+                                  key={photo.id}
+                                  style={{
+                                    width: "140px",
+                                    position: "relative",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <img
+                                    src={API_BASE.replace("/api", "") + photo.url}
+                                    alt="Foto"
+                                    style={{
+                                      width: "130px",
+                                      height: "130px",
+                                      objectFit: "cover",
+                                      borderRadius: "10px",
+                                      border: "1px solid rgba(255,255,255,0.2)",
+                                      marginBottom: "6px",
+                                    }}
+                                  />
 
-                            {/* 🗑️ Botão de exclusão */}
-                            <button
-                              onClick={async () => {
-                                if (!window.confirm("Excluir esta foto?")) return;
-                                try {
-                                  await fetch(`${API_BASE}photos/${photo.id}`, { method: "DELETE" });
-                                  setSelectedVisit((v) => ({
-                                    ...v,
-                                    photos: v.photos.filter((p) => p.id !== photo.id),
-                                  }));
-                                } catch (err) {
-                                  console.error("Erro ao excluir foto:", err);
-                                }
-                              }}
-                              style={{
-                                position: "absolute",
-                                top: "-8px",
-                                right: "-8px",
-                                backgroundColor: "#b71c1c",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "50%",
-                                width: "22px",
-                                height: "22px",
-                                fontSize: "12px",
-                                cursor: "pointer",
-                              }}
-                            >
-                              🗑
-                            </button>
+                                  {/* 🗑️ Excluir foto */}
+                                  <button
+                                    onClick={async () => {
+                                      if (!window.confirm("Excluir esta foto?")) return;
+                                      try {
+                                        await fetch(`${API_BASE}photos/${photo.id}`, { method: "DELETE" });
+                                        setForm((f) => ({
+                                          ...f,
+                                          savedPhotos: (f.savedPhotos || []).filter((p) => p.id !== photo.id),
+                                        }));
+                                      } catch (err) {
+                                        console.error("Erro ao excluir foto:", err);
+                                      }
+                                    }}
+                                    style={{
+                                      position: "absolute",
+                                      top: "-8px",
+                                      right: "-8px",
+                                      backgroundColor: "#b71c1c",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "50%",
+                                      width: "22px",
+                                      height: "22px",
+                                      fontSize: "12px",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    🗑
+                                  </button>
 
-                            {/* ✏️ Campo de legenda editável */}
-                            <input
-                              type="text"
-                              value={photo.caption || ""}
-                              placeholder="Legenda..."
-                              onChange={(e) => {
-                                const newCaption = e.target.value;
-                                setSelectedVisit((v) => ({
-                                  ...v,
-                                  photos: v.photos.map((p) =>
-                                    p.id === photo.id ? { ...p, caption: newCaption } : p
-                                  ),
-                                }));
-                              }}
-                              onBlur={async (e) => {
-                                try {
-                                  await fetch(`${API_BASE}photos/${photo.id}`, {
-                                    method: "PUT",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ caption: e.target.value }),
-                                  });
-                                } catch (err) {
-                                  console.error("Erro ao atualizar legenda:", err);
-                                }
-                              }}
-                              className="form-control form-control-sm bg-dark text-light border-secondary"
-                              style={{ fontSize: "12px" }}
-                            />
+                                  {/* ✏️ Editar legenda */}
+                                  <input
+                                    type="text"
+                                    value={photo.caption || ""}
+                                    placeholder="Legenda..."
+                                    onChange={(e) => {
+                                      const newCaption = e.target.value;
+                                      setForm((f) => ({
+                                        ...f,
+                                        savedPhotos: (f.savedPhotos || []).map((p) =>
+                                          p.id === photo.id ? { ...p, caption: newCaption } : p
+                                        ),
+                                      }));
+                                    }}
+                                    onBlur={async (e) => {
+                                      try {
+                                        await fetch(`${API_BASE}photos/${photo.id}`, {
+                                          method: "PUT",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({ caption: e.target.value }),
+                                        });
+                                      } catch (err) {
+                                        console.error("Erro ao atualizar legenda:", err);
+                                      }
+                                    }}
+                                    className="form-control form-control-sm bg-dark text-light border-secondary"
+                                    style={{ fontSize: "12px" }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
-                  )}
 
+                    {/* Rodapé */}
+                    <div className="modal-footer border-0">
+                      <button className="btn btn-secondary" onClick={() => setOpen(false)}>
+                        Cancelar
+                      </button>
 
+                      {!form.id && (
+                        <button className="btn btn-success" onClick={handleCreateOrUpdate}>
+                          💾 Salvar
+                        </button>
+                      )}
 
-
-              {/* Rodapé */}
-              <div className="modal-footer border-0">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancelar
-                </button>
-
-                {!form.id && (
-                  <button className="btn btn-success" onClick={handleCreateOrUpdate}>
-                    💾 Salvar
-                  </button>
-                )}
-
-                {form.id && (
-                  <>
-                    {/* 📄 Botão PDF com loading */}
-                    <button
-                      className="btn btn-outline-primary d-flex align-items-center"
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          // Abre PDF em nova aba (desktop)
-                          if (window.innerWidth > 768) {
-                            window.open(`${API_BASE}visits/${form.id}/pdf`, "_blank");
-                          } else {
-                            // Mobile: faz o download direto
-                            const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
-                            if (!res.ok) throw new Error("Erro ao gerar PDF");
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `Visita_${form.id}.pdf`;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                          }
-                        } catch (err) {
-                          console.error("Erro ao gerar PDF:", err);
-                          alert("❌ Falha ao gerar o relatório PDF");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      disabled={loading}
-                      style={{
-                        minWidth: window.innerWidth > 768 ? "auto" : "50px",
-                        borderRadius: window.innerWidth > 768 ? "6px" : "50%",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {loading ? (
+                      {form.id && (
                         <>
-                          <span
-                            className="spinner-border spinner-border-sm me-2"
-                            role="status"
-                            aria-hidden="true"
-                          ></span>
-                          {window.innerWidth > 768 && "Gerando PDF..."}
-                        </>
-                      ) : (
-                        <>
-                          📄 {window.innerWidth > 768 && "PDF"}
+                          <button
+                            className="btn btn-outline-primary d-flex align-items-center"
+                            onClick={async () => {
+                              setLoading(true);
+                              try {
+                                if (window.innerWidth > 768) {
+                                  window.open(`${API_BASE}visits/${form.id}/pdf`, "_blank");
+                                } else {
+                                  const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                                  if (!res.ok) throw new Error("Erro ao gerar PDF");
+                                  const blob = await res.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const a = document.createElement("a");
+                                  a.href = url;
+                                  a.download = `Visita_${form.id}.pdf`;
+                                  a.click();
+                                  window.URL.revokeObjectURL(url);
+                                }
+                              } catch (err) {
+                                console.error("Erro ao gerar PDF:", err);
+                                alert("❌ Falha ao gerar o relatório PDF");
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            {loading ? "Gerando..." : "📄 PDF"}
+                          </button>
+
+                          <button className="btn btn-success" onClick={markDone}>
+                            ✅ Concluir
+                          </button>
+
+                          <button className="btn btn-danger" onClick={handleDelete}>
+                            🗑 Excluir
+                          </button>
                         </>
                       )}
-                    </button>
-
-                    <button className="btn btn-success" onClick={markDone}>
-                      ✅ Concluir
-                    </button>
-
-                    <button className="btn btn-danger" onClick={handleDelete}>
-                      🗑 Excluir
-                    </button>
-                  </>
-                )}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* 🖼️ Lightbox Modal com Navegação */}
-      {lightboxOpen && (
-        <div className="lightbox-overlay" onClick={handleCloseLightbox}>
-          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <button className="lightbox-nav left" onClick={(e) => { e.stopPropagation(); handlePrevLightbox(); }}>
-              ⟵
-            </button>
-            <img src={lightboxUrl || ""} alt="Visualização ampliada" />
-            <button className="lightbox-nav right" onClick={(e) => { e.stopPropagation(); handleNextLightbox(); }}>
-              ⟶
-            </button>
-            <button className="lightbox-close" onClick={handleCloseLightbox}>
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+            )}
 
-export default CalendarPage;
+            {/* 🖼️ Lightbox Modal */}
+            {lightboxOpen && (
+              <div className="lightbox-overlay" onClick={handleCloseLightbox}>
+                <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                  <button className="lightbox-nav left" onClick={(e) => { e.stopPropagation(); handlePrevLightbox(); }}>
+                    ⟵
+                  </button>
+                  <img src={lightboxUrl || ""} alt="Visualização ampliada" />
+                  <button className="lightbox-nav right" onClick={(e) => { e.stopPropagation(); handleNextLightbox(); }}>
+                    ⟶
+                  </button>
+                  <button className="lightbox-close" onClick={handleCloseLightbox}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      export default CalendarPage;
