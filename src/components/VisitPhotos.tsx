@@ -161,7 +161,11 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                 }}
               >
                 <img
-                  src={API_BASE.replace("/api", "") + photo.url}
+                  src={
+                    photo.url.startsWith("http")
+                        ? photo.url
+                        : `${API_BASE.replace("/api", "")}${photo.url.startsWith("/") ? "" : "/"}${photo.url}`
+                    }
                   alt="Foto"
                   style={{
                     width: "130px",
