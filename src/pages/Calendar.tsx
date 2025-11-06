@@ -417,7 +417,7 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   // ⬅️➡️ Navegação entre fotos no lightbox
   // ============================================================
-  const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
+  const [lightboxPhotos] = useState<string[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
 
 
