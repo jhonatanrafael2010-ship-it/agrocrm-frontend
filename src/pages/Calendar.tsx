@@ -30,6 +30,8 @@ type Visit = {
   photos?: Photo[];
   culture?: string;
   variety?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   client_name?: string;
   consultant_name?: string;
 };
@@ -418,13 +420,14 @@ const CalendarPage: React.FC = () => {
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
 
-  const handleOpenLightbox = (url: string, photos?: string[]) => {
+  const _handleOpenLightbox = (url: string, photos?: string[]) => {
     setLightboxPhotos(photos || []);
     const index = (photos || []).indexOf(url);
     setCurrentPhotoIndex(index >= 0 ? index : 0);
     setLightboxUrl(url);
     setLightboxOpen(true);
   };
+
 
   const handlePrevLightbox = () => {
     if (lightboxPhotos.length === 0) return;
@@ -546,11 +549,13 @@ const CalendarPage: React.FC = () => {
               variety: "",
               recommendation: "",
               genPheno: true,
+              savedPhotos: [],
               photos: null,
               photoPreviews: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
+              photoCaptions: [],
             });
             setOpen(true);
           }}
@@ -637,11 +642,13 @@ const CalendarPage: React.FC = () => {
               variety: "",
               recommendation: "",
               genPheno: true,
+              savedPhotos: [],
               photos: null,
               photoPreviews: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
+              photoCaptions: [],
             });
             setOpen(true);
           }}
