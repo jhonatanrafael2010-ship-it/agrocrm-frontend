@@ -64,3 +64,9 @@ aside .fw-bold.fs-5.text-success {
   text-shadow: 0 0 6px rgba(45, 211, 111, 0.25);
   letter-spacing: 0.5px;
 }
+.sidebar-logo img {
+  transition: transform 0.2s ease;
+}
+.sidebar-logo img:hover {
+  transform: scale(1.05);
+}

@@ -252,22 +252,25 @@ const CalendarPage: React.FC = () => {
       const newVisitId = data.visit?.id;
 
       // upload de fotos (se tiver)
-      if (newVisitId && form.photos && form.photos.length > 0) {
+      if (form.photos && form.photos.length > 0) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
           fd.append("captions", form.photoCaptions[idx] || "");
         });
-        try {
-          await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
-            method: "POST",
-            body: fd,
-          });
+
+        const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+
+        if (!photoResp.ok) {
+          console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
+        } else {
           console.log("📸 Fotos e legendas enviadas com sucesso!");
-        } catch (err) {
-          console.error("Erro ao enviar fotos:", err);
         }
       }
+
 
 
       // recarrega

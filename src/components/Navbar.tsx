@@ -34,19 +34,29 @@ const Navbar: React.FC<Props> = ({
       className="d-flex flex-column bg-dark text-light border-end border-secondary h-100 p-3"
       style={{ width: 240 }}
     >
-      {/* 🔹 Logo / Marca */}
-      <div className="mb-4 text-center">
+      {/* 🔹 Logo NutriCRM */}
+      <div
+        className="sidebar-logo text-center py-3"
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          marginBottom: "12px",
+        }}
+      >
         <img
-          src="https://agrocrm-backend.onrender.com/uploads/nutricrm_logo.png"
+          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
           alt="NutriCRM"
           style={{
-            maxWidth: "140px",
-            marginBottom: "6px",
+            width: "160px",
+            height: "auto",
+            objectFit: "contain",
+            margin: "0 auto",
+            display: "block",
             cursor: "pointer",
           }}
           onClick={() => onNavigate("Dashboard")}
         />
       </div>
+
 
 
       {/* 🔹 Navegação */}
