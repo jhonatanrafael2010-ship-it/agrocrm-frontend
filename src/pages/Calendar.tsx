@@ -53,6 +53,7 @@ const CalendarPage: React.FC = () => {
   // modal
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
+    photoCaptions: [] as string[],
     id: null as number | null,
     date: "",
     client_id: "",
@@ -240,17 +241,21 @@ const CalendarPage: React.FC = () => {
       // upload de fotos (se tiver)
       if (newVisitId && form.photos && form.photos.length > 0) {
         const fd = new FormData();
-        Array.from(form.photos).forEach((file) => fd.append("photos", file));
+        Array.from(form.photos).forEach((file, idx) => {
+          fd.append("photos", file);
+          fd.append("captions", form.photoCaptions[idx] || "");
+        });
         try {
           await fetch(`${API_BASE}visits/${newVisitId}/photos`, {
             method: "POST",
             body: fd,
           });
-          console.log("📸 Fotos enviadas com sucesso!");
+          console.log("📸 Fotos e legendas enviadas com sucesso!");
         } catch (err) {
           console.error("Erro ao enviar fotos:", err);
         }
       }
+
 
       // recarrega
       setOpen(false);
@@ -902,52 +907,157 @@ const CalendarPage: React.FC = () => {
                       onChange={(e) => {
                         const files = e.target.files;
                         if (!files) return;
-                        const previews = Array.from(files).map((f) =>
-                          URL.createObjectURL(f)
-                        );
+
+                        const previews = Array.from(files).map((f) => URL.createObjectURL(f));
+                        const emptyCaptions = Array.from(files).map(() => "");
+
                         setForm((f) => ({
                           ...f,
                           photos: files,
                           photoPreviews: previews,
+                          photoCaptions: emptyCaptions,
                         }));
                       }}
                     />
+
+                    {/* Mostra prévias com campo de legenda */}
+                    {form.photoPreviews.length > 0 && (
+                      <div className="d-flex flex-wrap gap-3 mt-3">
+                        {form.photoPreviews.map((preview, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: "140px",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                            }}
+                          >
+                            <img
+                              src={preview}
+                              alt={`Foto ${i + 1}`}
+                              style={{
+                                width: "130px",
+                                height: "130px",
+                                objectFit: "cover",
+                                borderRadius: "10px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                                marginBottom: "6px",
+                              }}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Legenda..."
+                              value={form.photoCaptions[i] || ""}
+                              onChange={(e) => {
+                                const newCaps = [...form.photoCaptions];
+                                newCaps[i] = e.target.value;
+                                setForm((f) => ({ ...f, photoCaptions: newCaps }));
+                              }}
+                              className="form-control form-control-sm bg-dark text-light border-secondary"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* ✅ Galeria de fotos existentes (vindas do backend) */}
-                  {form.id && (
+
+                  {/* Fotos já salvas */}
+                  {selectedVisit && selectedVisit.photos && selectedVisit.photos.length > 0 && (
                     <div className="col-12 mt-3">
-                      <label className="form-label fw-semibold">Fotos já salvas</label>
-                      <div className="d-flex flex-wrap gap-2">
-                        {(events.find(
-                          (e) => e.extendedProps?.raw?.id === form.id
-                        )?.extendedProps?.raw?.photos || []).map((p: any) => (
-                          <img
-                            key={p.id}
-                            src={p.url}
-                            alt="Foto da visita"
-                            onClick={() =>
-                              handleOpenLightbox(
-                                p.url,
-                                (events.find((e) => e.extendedProps?.raw?.id === form.id)
-                                  ?.extendedProps?.raw?.photos || []).map((ph: any) => ph.url)
-                              )
-                            }
+                      <label className="form-label fw-semibold">Fotos salvas:</label>
+                      <div className="d-flex flex-wrap gap-3">
+                        {selectedVisit.photos.map((photo) => (
+                          <div
+                            key={photo.id}
                             style={{
-                              width: "110px",
-                              height: "110px",
-                              objectFit: "cover",
-                              borderRadius: "10px",
-                              border: "1px solid rgba(255,255,255,0.2)",
-                              boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                              width: "140px",
+                              position: "relative",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
                             }}
-                          />
+                          >
+                            <img
+                              src={API_BASE.replace("/api", "") + photo.url}
+                              alt="Foto"
+                              style={{
+                                width: "130px",
+                                height: "130px",
+                                objectFit: "cover",
+                                borderRadius: "10px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                marginBottom: "6px",
+                              }}
+                            />
+
+                            {/* 🗑️ Botão de exclusão */}
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm("Excluir esta foto?")) return;
+                                try {
+                                  await fetch(`${API_BASE}photos/${photo.id}`, { method: "DELETE" });
+                                  setSelectedVisit((v) => ({
+                                    ...v,
+                                    photos: v.photos.filter((p) => p.id !== photo.id),
+                                  }));
+                                } catch (err) {
+                                  console.error("Erro ao excluir foto:", err);
+                                }
+                              }}
+                              style={{
+                                position: "absolute",
+                                top: "-8px",
+                                right: "-8px",
+                                backgroundColor: "#b71c1c",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "22px",
+                                height: "22px",
+                                fontSize: "12px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              🗑
+                            </button>
+
+                            {/* ✏️ Campo de legenda editável */}
+                            <input
+                              type="text"
+                              value={photo.caption || ""}
+                              placeholder="Legenda..."
+                              onChange={(e) => {
+                                const newCaption = e.target.value;
+                                setSelectedVisit((v) => ({
+                                  ...v,
+                                  photos: v.photos.map((p) =>
+                                    p.id === photo.id ? { ...p, caption: newCaption } : p
+                                  ),
+                                }));
+                              }}
+                              onBlur={async (e) => {
+                                try {
+                                  await fetch(`${API_BASE}photos/${photo.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ caption: e.target.value }),
+                                  });
+                                } catch (err) {
+                                  console.error("Erro ao atualizar legenda:", err);
+                                }
+                              }}
+                              className="form-control form-control-sm bg-dark text-light border-secondary"
+                              style={{ fontSize: "12px" }}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
+
 
 
 
