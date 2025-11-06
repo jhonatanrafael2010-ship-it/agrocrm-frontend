@@ -1102,7 +1102,9 @@ const CalendarPage: React.FC = () => {
                                   const url = window.URL.createObjectURL(blob);
                                   const a = document.createElement("a");
                                   a.href = url;
-                                  a.download = `Visita_${form.id}.pdf`;
+                                  const clientName = clients.find(c => String(c.id) === form.client_id)?.name || "Visita";
+                                  const safeName = clientName.replace(/[^a-z0-9]/gi, "_");
+                                  a.download = `Relatorio_${safeName}_${form.date.replace(/\//g, "-")}.pdf`;
                                   a.click();
                                   window.URL.revokeObjectURL(url);
                                 }
