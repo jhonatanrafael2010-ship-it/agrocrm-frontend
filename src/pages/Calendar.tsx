@@ -420,14 +420,6 @@ const CalendarPage: React.FC = () => {
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
 
-  const _handleOpenLightbox = (url: string, photos?: string[]) => {
-    setLightboxPhotos(photos || []);
-    const index = (photos || []).indexOf(url);
-    setCurrentPhotoIndex(index >= 0 ? index : 0);
-    setLightboxUrl(url);
-    setLightboxOpen(true);
-  };
-
 
   const handlePrevLightbox = () => {
     if (lightboxPhotos.length === 0) return;
