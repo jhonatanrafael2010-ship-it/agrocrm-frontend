@@ -249,8 +249,7 @@ const CalendarPage: React.FC = () => {
       }
 
       const data = await res.json();
-      const newVisitId = response.visit?.id;
-      console.log("✅ Nova visita criada com ID:", newVisitId);
+    
 
       // upload de fotos (se tiver)
       if (form.photos && form.photos.length > 0) {
