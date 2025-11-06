@@ -70,3 +70,9 @@ aside .fw-bold.fs-5.text-success {
 .sidebar-logo img:hover {
   transform: scale(1.05);
 }
+.sidebar img {
+  border-radius: 16px;
+  background: transparent;
+  padding: 8px;
+  object-fit: contain;
+}

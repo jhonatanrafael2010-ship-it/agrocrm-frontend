@@ -46,7 +46,7 @@ const Navbar: React.FC<Props> = ({
           src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
           alt="NutriCRM"
           style={{
-            width: "160px",
+            width: "180px",
             height: "auto",
             objectFit: "contain",
             margin: "0 auto",
@@ -56,8 +56,6 @@ const Navbar: React.FC<Props> = ({
           onClick={() => onNavigate("Dashboard")}
         />
       </div>
-
-
 
       {/* 🔹 Navegação */}
       <nav className="flex-grow-1">
@@ -85,10 +83,7 @@ const Navbar: React.FC<Props> = ({
 
       {/* 🔹 Rodapé (Tema + Logout) */}
       <div className="mt-auto pt-3 border-top border-secondary">
-        {/* 🌗 Alternar tema (claro/escuro) */}
         <ThemeToggle />
-
-        {/* 🚪 Botão de sair */}
         <button
           className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 mt-3"
           onClick={() => alert("🚪 Logout realizado!")}

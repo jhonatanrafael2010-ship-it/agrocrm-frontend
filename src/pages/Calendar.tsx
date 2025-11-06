@@ -444,15 +444,6 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   return (
     <div className="calendar-page">
-      {/* 🌿 Logo NutriCRM */}
-      <div className="app-logo-container">
-        <img
-          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
-          alt="NutriCRM"
-          className="app-logo"
-        />
-      </div>
-
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
         <div className="title-row">
