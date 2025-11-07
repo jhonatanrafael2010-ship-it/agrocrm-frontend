@@ -17,7 +17,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  background: var(--panel);
+  background: var(--panel) !important;
   color: var(--text);
   backdrop-filter: blur(14px) saturate(140%);
   border: 1px solid rgba(80, 200, 160, 0.25);
@@ -57,7 +57,6 @@
   text-shadow: 0 0 8px rgba(60, 255, 200, 0.2);
   position: sticky;
   top: 0;
-  background: rgba(10, 20, 18, 0.85);
   padding: 8px 0;
   z-index: 5;
   border-bottom: 1px solid rgba(60, 255, 200, 0.1);
@@ -81,8 +80,6 @@
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #2a3f3a;
-  background: rgba(18, 32, 29, 0.95);
-  color: #ecf8f5;
   font-size: 0.9rem;
   transition: 0.2s ease;
 }
@@ -123,9 +120,7 @@
   position: absolute;
   top: 2px;
   right: 2px;
-  background: rgba(0, 0, 0, 0.7);
   border: none;
-  color: #fff;
   border-radius: 5px;
   width: 22px;
   height: 22px;
@@ -169,9 +164,6 @@
 .btn-cancel {
   background: var(--panel);
   color: var(--text);
-}
-.btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .btn-delete {
@@ -227,9 +219,8 @@
   position: absolute;
   top: 16px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e0e0e0;
+  background: rgba(253, 25, 25, 0.08);
+  border: 1px solid rgba(51, 11, 11, 0.1);
   font-size: 1rem;
   font-weight: 600;
   border-radius: 8px;
@@ -241,8 +232,6 @@
   z-index: 15;
 }
 .modal-close:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
   transform: scale(1.05);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
 }
@@ -268,11 +257,13 @@
 .calendar-toolbar {
   display: flex;
   align-items: center;
+  background: var(--panel);
   gap: 10px;
-  background: rgba(7, 24, 40, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
   border-radius: 12px;
+  color: var(--text);
   padding: 10px 14px;
+  transition: background 0.3s ease, color 0.3s ease;
   backdrop-filter: blur(6px);
   position: relative !important;
   z-index: 5 !important;
@@ -281,9 +272,7 @@
 /* filtros */
 .calendar-filter {
   min-width: 160px;
-  background: rgba(4, 12, 20, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  color: #ecf7f5;
 }
 
 /* área do calendário */
@@ -298,7 +287,6 @@
 .fc .fc-toolbar {
   gap: 6px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.04);
 }
 
 .fc .fc-toolbar-title {
@@ -326,7 +314,6 @@
 
 /* células */
 .fc .fc-daygrid-day {
-  background: rgba(3, 8, 12, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 body[data-theme='light'] .fc .fc-daygrid-day {
@@ -346,13 +333,8 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 }
 
 /* dia atual */
-.fc .fc-day-today {
-  background: rgba(45, 211, 111, 0.07);
-}
 .fc .fc-day-today .fc-daygrid-day-number {
-  background: rgba(45, 211, 111, 0.25);
   border-radius: 999px;
-  color: #2dd36f;
 }
 
 /* eventos */
@@ -418,7 +400,6 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 .lightbox-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -445,18 +426,12 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.2);
   border: none;
   font-size: 2rem;
-  color: white;
   padding: 0.3em 0.5em;
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.2s;
-}
-
-.lightbox-nav:hover {
-  background: rgba(255, 255, 255, 0.4);
 }
 
 .lightbox-nav.left {
@@ -471,9 +446,7 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   position: absolute;
   top: -40px;
   right: -40px;
-  background: rgba(255, 255, 255, 0.2);
   border: none;
-  color: white;
   font-size: 1.5rem;
   padding: 0.3em 0.6em;
   border-radius: 50%;
@@ -508,7 +481,6 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 .app-logo {
   height: 58px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 6px 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);

@@ -3,17 +3,19 @@
 ========================================================= */
 
 aside {
-  background: #0c1b24 !important; /* Azul petróleo escuro */
-  color: #f0f6f5 !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);
   font-family: "Inter", sans-serif;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--border);
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
 
 /* 🔹 Itens neutros */
 .list-group-item {
   background: transparent !important;
-  color: #f5f7f7 !important;
+  color: var(--text) !important;
   font-weight: 500;
   border: none !important;
   border-radius: 8px !important;

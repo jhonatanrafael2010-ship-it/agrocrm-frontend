@@ -437,11 +437,6 @@ label { color: var(--muted); font-size: 0.9rem; }
     border-radius: 10px;
   }
 }
-/* Sidebar sempre escura */
-aside.d-flex.bg-dark {
-  background: #0c1b24 !important;
-  color: #f5f7f7 !important;
-}
 
 /* itens do menu lateral */
 aside .list-group-item {
@@ -453,4 +448,7 @@ aside .list-group-item {
 aside .list-group-item.active {
   background: #1fa75d !important;
   color: #fff !important;
+}
+body, aside, .modal-content, .calendar-page, .app, .app-header {
+  transition: background 0.3s ease, color 0.3s ease;
 }
