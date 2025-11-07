@@ -250,8 +250,9 @@ const Dashboard: React.FC = () => {
           {/* Últimas visitas */}
           <div className="row mb-5 justify-content-center">
             <div className="col-12 col-lg-10">
-              <div className="card bg-dark border-0 shadow-sm p-3">
-                <h5 className="text-secondary mb-3">🧭 Últimas Visitas</h5>
+              className="card border-0 shadow-sm text-center p-3"
+              style={{ background: "var(--panel)", color: "var(--text)" }}
+                <h5 style={{ color: "var(--text)" }}>🧭 Últimas Visitas</h5>
                 <div className="table-responsive">
                   <table
                     className="table table-sm align-middle"
@@ -282,7 +283,10 @@ const Dashboard: React.FC = () => {
           {/* Últimas oportunidades */}
           <div className="row justify-content-center">
             <div className="col-12 col-lg-10">
-              <div className="card bg-dark border-0 shadow-sm p-3">
+              <div
+                className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3"
+                style={{ background: "var(--panel)", color: "var(--text)" }}
+              >
                 <h5 className="text-secondary mb-3">💼 Últimas Oportunidades</h5>
                 <ul className="list-group list-group-flush">
                   {filteredOpps.slice(0, 12).map((o) => (
