@@ -28,17 +28,16 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // 🖼 Fotos já salvas no backend
   const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
 
-  // 🔁 Mantém o estado sincronizado com o que vem do pai (Calendar)
+  // 🔁 Mantém sincronizado com o Calendar
   useEffect(() => {
     setSavedPhotos(existingPhotos || []);
   }, [existingPhotos]);
 
-  // 🔗 Monta URL correta da foto (absoluta ou relativa)
+  // 🔗 Resolve URL correta
   const resolvePhotoUrl = (photo: Photo): string => {
     if (!photo.url) return "";
     if (photo.url.startsWith("http")) return photo.url;
 
-    // remove /api ou /api/ do final
     const base = API_BASE.replace(/\/api\/?$/, "");
     const path = photo.url.startsWith("/") ? photo.url : `/${photo.url}`;
     return `${base}${path}`;
@@ -60,30 +59,29 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
 
       alert("📸 Fotos enviadas com sucesso!");
 
-      // limpa prévias
+      // Limpa prévias locais
       setFilesToUpload(null);
       setPhotoPreviews([]);
       setPhotoCaptions([]);
 
-      // se o backend devolver as fotos novas, já soma na lista local
+      // Atualiza a lista local se o backend retornar fotos novas
       if (data && Array.isArray(data.photos)) {
         setSavedPhotos((prev) => [...prev, ...data.photos]);
       }
 
-      // pede pro pai recarregar visitas (para manter tudo alinhado)
-      onRefresh();
+      onRefresh(); // recarrega a visita
     } catch (err) {
       console.error("Erro ao enviar fotos:", err);
       alert("❌ Falha ao enviar fotos.");
     }
   };
 
-  // 🗑 Excluir foto já salva
+  // 🗑 Excluir foto
   const handleDeletePhoto = async (photoId: number) => {
     if (!window.confirm("Excluir esta foto?")) return;
     try {
       await axios.delete(`${API_BASE}photos/${photoId}`);
-      setSavedPhotos((prev: Photo[]) => prev.filter((p) => p.id !== photoId));
+      setSavedPhotos((prev) => prev.filter((p) => p.id !== photoId));
       onRefresh();
     } catch (err) {
       console.error("Erro ao excluir foto:", err);
@@ -91,42 +89,45 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     }
   };
 
-  // ✏️ Atualiza legenda só no front enquanto digita
+  // ✏️ Atualiza legenda localmente (sem piscar)
   const handleLocalCaptionChange = (photoId: number, newCaption: string) => {
     setSavedPhotos((prev) =>
       prev.map((p) => (p.id === photoId ? { ...p, caption: newCaption } : p))
     );
   };
 
-  // 💾 Salva a legenda no backend quando o usuário sai do campo
+  // 💾 Salva legenda no backend (sem recarregar toda a lista)
   const handleCaptionBlur = async (photoId: number, caption: string) => {
     try {
-        await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-        console.log("📝 Legenda salva:", caption);
-
-        // 🔁 Atualiza fotos do modal imediatamente
-        onRefresh();
+      await axios.put(`${API_BASE}photos/${photoId}`, { caption });
+      console.log("📝 Legenda salva:", caption);
     } catch (err) {
-        console.error("Erro ao atualizar legenda:", err);
-        alert("❌ Falha ao salvar legenda.");
+      console.error("Erro ao atualizar legenda:", err);
+      alert("❌ Falha ao salvar legenda.");
     }
+  };
+
+  // 🔁 Carrega fotos da visita (sem piscar ao editar legenda)
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      if (!visitId) return;
+      try {
+        const res = await fetch(`${API_BASE}visits/${visitId}/photos`);
+        if (res.ok) {
+          const data = await res.json();
+          setSavedPhotos(data);
+        } else {
+          console.error("❌ Erro ao buscar fotos:", res.status);
+        }
+      } catch (err) {
+        console.error("⚠️ Falha ao carregar fotos:", err);
+      }
     };
 
-    useEffect(() => {
-      const fetchPhotos = async () => {
-        if (!visitId) return;
-        const res = await fetch(`${API_BASE}visits/${visitId}`);
-        if (res.ok) {
-           const visit = await res.json();
-           setSavedPhotos(visit.photos || []);
-        }
-      };
-      fetchPhotos();
-    }, [visitId]);
+    fetchPhotos();
+  }, [visitId]);
 
-
-
-
+  // ✅ Renderização
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">Fotos da Visita</label>
@@ -150,56 +151,55 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         }}
       />
 
-      {/* Pré-visualização de novas fotos + legenda antes de enviar */}
+      {/* Pré-visualização das novas fotos */}
       {photoPreviews.length > 0 && (
-        <div className="d-flex flex-wrap gap-3 mt-3">
-          {photoPreviews.map((preview, i) => (
-            <div
-              key={i}
-              style={{
-                width: "140px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <img
-                src={preview}
-                alt={`Foto ${i + 1}`}
+        <>
+          <div className="d-flex flex-wrap gap-3 mt-3">
+            {photoPreviews.map((preview, i) => (
+              <div
+                key={i}
                 style={{
-                  width: "130px",
-                  height: "130px",
-                  objectFit: "cover",
-                  borderRadius: "10px",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  marginBottom: "6px",
+                  width: "140px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
                 }}
-              />
-              <input
-                type="text"
-                placeholder="Legenda..."
-                value={photoCaptions[i] || ""}
-                onChange={(e) => {
-                  const newCaps = [...photoCaptions];
-                  newCaps[i] = e.target.value;
-                  setPhotoCaptions(newCaps);
-                }}
-                className="form-control form-control-sm bg-dark text-light border-secondary"
-              />
-            </div>
-          ))}
-        </div>
+              >
+                <img
+                  src={preview}
+                  alt={`Foto ${i + 1}`}
+                  style={{
+                    width: "130px",
+                    height: "130px",
+                    objectFit: "cover",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    marginBottom: "6px",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Legenda..."
+                  value={photoCaptions[i] || ""}
+                  onChange={(e) => {
+                    const newCaps = [...photoCaptions];
+                    newCaps[i] = e.target.value;
+                    setPhotoCaptions(newCaps);
+                  }}
+                  className="form-control form-control-sm bg-dark text-light border-secondary"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-2">
+            <button className="btn btn-success btn-sm" onClick={handleUpload}>
+              💾 Enviar Fotos
+            </button>
+          </div>
+        </>
       )}
 
-      {photoPreviews.length > 0 && (
-        <div className="mt-2">
-          <button className="btn btn-success btn-sm" onClick={handleUpload}>
-            💾 Enviar Fotos
-          </button>
-        </div>
-      )}
-
-      {/* Fotos já salvas no backend */}
+      {/* Fotos já salvas */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">Fotos salvas</label>
@@ -227,8 +227,6 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                     marginBottom: "6px",
                   }}
                 />
-
-                {/* Botão excluir */}
                 <button
                   onClick={() => handleDeletePhoto(photo.id)}
                   style={{
@@ -248,7 +246,6 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                   🗑
                 </button>
 
-                {/* Legenda editável */}
                 <input
                   type="text"
                   value={photo.caption || ""}
