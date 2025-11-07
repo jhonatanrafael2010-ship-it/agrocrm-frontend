@@ -184,7 +184,10 @@ const Dashboard: React.FC = () => {
           {/* Gráfico */}
           <div className="row mb-5 justify-content-center">
             <div className="col-12 col-lg-10">
-              <div className="card border-0 shadow-sm p-4" style={{ background: "var(--panel)", color: "var(--text)" }}>
+              <div
+                className="card border-0 shadow-sm p-4"
+                style={{ background: "var(--panel)", color: "var(--text)" }}
+              >
                 <h5 className="text-secondary mb-3">📈 Vendas por dia</h5>
                 <div className="chart-container position-relative">
                   <svg width="100%" height="120" viewBox={`0 0 ${days.length * 30} 100`}>
@@ -250,8 +253,10 @@ const Dashboard: React.FC = () => {
           {/* Últimas visitas */}
           <div className="row mb-5 justify-content-center">
             <div className="col-12 col-lg-10">
-              className="card border-0 shadow-sm text-center p-3"
-              style={{ background: "var(--panel)", color: "var(--text)" }}
+              <div
+                className="card border-0 shadow-sm text-center p-3"
+                style={{ background: "var(--panel)", color: "var(--text)" }}
+              >
                 <h5 style={{ color: "var(--text)" }}>🧭 Últimas Visitas</h5>
                 <div className="table-responsive">
                   <table
