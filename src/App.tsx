@@ -26,10 +26,10 @@ const App: React.FC = () => {
   // 🔧 Função única para aplicar tema global (sincroniza Bootstrap + app)
   const applyTheme = (themeValue: string) => {
     document.documentElement.setAttribute("data-theme", themeValue);
-    document.documentElement.setAttribute("data-bs-theme", themeValue);
-    document.body.setAttribute("data-theme", themeValue); // ✅ garante herança global
+    document.body.setAttribute("data-theme", themeValue);
     localStorage.setItem("theme", themeValue);
   };
+
 
 
   // Atualiza tema quando o state muda
@@ -91,7 +91,8 @@ const App: React.FC = () => {
   return (
     <div className="app d-flex flex-column vh-100">
       {/* 🔝 Cabeçalho fixo (Bootstrap Navbar) */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top px-3">
+      <nav className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
+           style={{ background: "var(--panel)", color: "var(--text)" }}>
         <div className="container-fluid">
           <div className="d-flex align-items-center gap-3">
             {/* ☰ Botão de menu mobile */}

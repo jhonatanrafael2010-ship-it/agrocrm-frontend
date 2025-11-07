@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Sun, Moon } from "lucide-react"; // ícones modernos (já incluídos no shadcn/lucide)
+import { Sun, Moon } from "lucide-react";
 
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -13,11 +13,19 @@ const ThemeToggle: React.FC = () => {
     applyTheme(initial);
   }, []);
 
-  // 🔁 Atualiza tema
+  // 🔁 Atualiza tema global
   const applyTheme = (mode: "light" | "dark") => {
+    document.documentElement.setAttribute("data-theme", mode); // 👈 usa o seletor que seu CSS reconhece
     document.documentElement.setAttribute("data-bs-theme", mode);
-    document.body.dataset.theme = mode;
+    document.body.setAttribute("data-theme", mode);
     localStorage.setItem("theme", mode);
+
+    // 🔄 Força repaint para garantir atualização imediata
+    setTimeout(() => {
+      document.documentElement.style.transition = "none";
+      void document.documentElement.offsetHeight;
+      document.documentElement.style.transition = "";
+    }, 50);
   };
 
   const toggleTheme = () => {

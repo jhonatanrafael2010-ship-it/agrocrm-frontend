@@ -586,3 +586,32 @@ body[data-theme='light'] {
   color: var(--text);
   transition: background 0.3s ease, color 0.3s ease;
 }
+
+/* Força cards, modais e painéis a respeitarem o tema */
+.card,
+.modal-content,
+.offcanvas,
+.table,
+.dropdown-menu {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* Força inputs e selects a reagirem corretamente */
+input,
+select,
+textarea {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* Corrige hover e foco */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(45, 211, 111, 0.25);
+}

@@ -2,9 +2,9 @@ import { createRoot } from 'react-dom/client'
 import './styles/index.css'
 import App from './App.tsx'
 import { getDB } from './db';
+import './styles/theme-base.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import './styles/theme-base.css';
 import './styles/theme-agrocrm.css';
 import './styles/theme-agrocrm-mobile.css';
 
