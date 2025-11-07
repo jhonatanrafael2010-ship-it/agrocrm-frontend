@@ -24,6 +24,15 @@
   --font-weight-bold: 600;
 }
 
+
+:root {
+  --text-secondary: var(--muted);
+  --input-bg: var(--panel);
+  --success: #2dd36f;
+  --warning: #f5c84c;
+  --info: #36a2eb;
+}
+
 /* =========================================================
 🌞 Tema Claro
 ========================================================= */
@@ -52,13 +61,16 @@ html[data-theme='dark'] {
 🧭 Sidebar e Navegação — Visual unificado (desktop + mobile)
 ========================================================= */
 
-/* Sidebar sempre escura (independente do tema) */
+/* Sidebar adapta-se ao tema */
 .sidebar {
-  background: #0c1b24;
-  color: #f0f6f5;
+  background: var(--panel);
+  color: var(--text);
   font-family: var(--font-family);
   padding: 0;
+  border-right: 1px solid var(--border);
+  transition: background 0.3s ease, color 0.3s ease;
 }
+
 
 /* Itens neutros */
 .sidebar nav a {
@@ -250,6 +262,13 @@ textarea {
   font-family: var(--font-family);
 }
 
+html[data-theme='dark'] input,
+html[data-theme='dark'] select,
+html[data-theme='dark'] textarea {
+  background: #0f202b;
+}
+
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -264,12 +283,14 @@ textarea:focus {
 i,
 svg {
   color: var(--accent);
+  transition: color 0.25s ease;
 }
 
-html[data-theme='light'] i,
-html[data-theme='light'] svg {
-  color: var(--muted);
+.sidebar i,
+.sidebar svg {
+  color: currentColor;
 }
+
 
 /* =========================================================
 📱 Integração com Mobile
@@ -518,4 +539,20 @@ html[data-theme='dark'] .photo-gallery img {
 .lightbox-nav:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+.card,
+.table,
+.modal-content {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--shadow);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+body[data-theme='dark'],
+body[data-theme='light'] {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
 }
