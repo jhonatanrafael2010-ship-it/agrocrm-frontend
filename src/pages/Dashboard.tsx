@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
       <div className="row mb-3">
         <div className="col-12 col-lg-10 mx-auto">
           <h2 className="fw-bold mb-2 text-success">📊 Dashboard</h2>
-          <p className="text-secondary mb-0">
+          <p className="mb-0" style={{ color: "var(--text-secondary)" }}>
             Acompanhe os principais indicadores de clientes, visitas e vendas.
           </p>
         </div>
@@ -140,8 +140,10 @@ const Dashboard: React.FC = () => {
                   style={{ background: "var(--panel)", color: "var(--text)" }}
                 >
                   <div className="fs-3">{c.icon}</div>
-                  <div className="fw-semibold text-secondary">{c.label}</div>
-                  <div className="fs-5 fw-bold text-light">{c.value}</div>
+                  <div className="fw-semibold" style={{ color: "var(--text-secondary)" }}>
+                    {c.label}
+                  </div>
+                  <div className="fs-5 fw-bold">{c.value}</div>
                 </div>
               </div>
             ))}
@@ -159,7 +161,12 @@ const Dashboard: React.FC = () => {
                     <small className="text-secondary">De</small>
                     <input
                       type="date"
-                      className="form-control form-control-sm bg-body-tertiary text-light border-secondary"
+                      className="form-control form-control-sm"
+                      style={{
+                        background: "var(--panel)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)",
+                      }}
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
@@ -168,7 +175,12 @@ const Dashboard: React.FC = () => {
                     <small className="text-secondary">Até</small>
                     <input
                       type="date"
-                      className="form-control form-control-sm bg-body-tertiary text-light border-secondary"
+                      className="form-control form-control-sm"
+                      style={{
+                        background: "var(--panel)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)",
+                      }}
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                     />
@@ -188,7 +200,9 @@ const Dashboard: React.FC = () => {
                 className="card border-0 shadow-sm p-4"
                 style={{ background: "var(--panel)", color: "var(--text)" }}
               >
-                <h5 className="text-secondary mb-3">📈 Vendas por dia</h5>
+                <h5 className="mb-3" style={{ color: "var(--text-secondary)" }}>
+                  📈 Vendas por dia
+                </h5>
                 <div className="chart-container position-relative">
                   <svg width="100%" height="120" viewBox={`0 0 ${days.length * 30} 100`}>
                     {dailySums.map((v, i) => {
@@ -292,12 +306,19 @@ const Dashboard: React.FC = () => {
                 className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3"
                 style={{ background: "var(--panel)", color: "var(--text)" }}
               >
-                <h5 className="text-secondary mb-3">💼 Últimas Oportunidades</h5>
+                <h5 className="mb-3" style={{ color: "var(--text-secondary)" }}>
+                  💼 Últimas Oportunidades
+                </h5>
                 <ul className="list-group list-group-flush">
                   {filteredOpps.slice(0, 12).map((o) => (
                     <li
                       key={o.id}
-                      className="list-group-item bg-dark text-light d-flex justify-content-between align-items-center border-secondary"
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                      style={{
+                        background: "var(--panel)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)",
+                      }}
                     >
                       <span>{o.title ?? "Sem título"}</span>
                       <span>

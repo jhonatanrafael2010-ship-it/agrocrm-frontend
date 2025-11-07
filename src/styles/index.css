@@ -14,6 +14,8 @@ Mantém aparência escura atual e adiciona modo claro coerente
   --accent: #2dd36f;
   --border: rgba(0,0,0,0.08);
   --shadow: rgba(0,0,0,0.1);
+  --text-secondary: var(--muted);
+  --input-bg: var(--panel);
 }
 
 [data-theme='dark'] {
@@ -24,6 +26,8 @@ Mantém aparência escura atual e adiciona modo claro coerente
   --accent: #2dd36f;
   --border: rgba(255,255,255,0.05);
   --shadow: rgba(0,0,0,0.4);
+  --text-secondary: var(--muted);
+  --input-bg: var(--panel);
 }
 
 /* ------------------ */

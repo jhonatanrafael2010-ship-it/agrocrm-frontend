@@ -669,7 +669,14 @@ const CalendarPage: React.FC = () => {
             className="modal-dialog modal-dialog-centered modal-xl"
             role="document"
           >
-            <div className="modal-content bg-dark text-light border-0 shadow-lg">
+            <div
+              className="modal-content border-0 shadow-lg"
+              style={{
+                background: "var(--panel)",
+                color: "var(--text)",
+                transition: "background 0.3s ease, color 0.3s ease",
+              }}
+            >
               {/* Cabeçalho */}
               <div className="modal-header border-0">
                 <h5 className="modal-title">
@@ -694,7 +701,12 @@ const CalendarPage: React.FC = () => {
                       value={form.date}
                       onChange={handleChange}
                       placeholder="dd/mm/aaaa"
-                      className="form-control bg-dark text-light border-secondary"
+                      className="form-control"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                     />
                   </div>
 
@@ -703,7 +715,12 @@ const CalendarPage: React.FC = () => {
                     <label className="form-label fw-semibold">Cliente</label>
                     <input
                       type="text"
-                      className="form-control bg-dark text-light border-secondary"
+                      className="form-control"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                       value={
                         clients.find((c) => String(c.id) === form.client_id)?.name ||
                         form.clientSearch ||
@@ -914,7 +931,12 @@ const CalendarPage: React.FC = () => {
                       value={form.recommendation}
                       onChange={handleChange}
                       placeholder="Observações ou anotações técnicas..."
-                      className="form-control bg-dark text-light border-secondary"
+                      className="form-control"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                     />
                   </div>
 
