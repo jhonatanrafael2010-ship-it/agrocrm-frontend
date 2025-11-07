@@ -1,5 +1,5 @@
 /* =========================================================
-🧭 SIDEBAR — AgroCRM (modo escuro + Bootstrap 5)
+🧭 SIDEBAR — AgroCRM (tema unificado claro/escuro)
 ========================================================= */
 
 aside {
@@ -8,9 +8,8 @@ aside {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);
   font-family: "Inter", sans-serif;
   border-right: 1px solid var(--border);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-
 
 /* 🔹 Itens neutros */
 .list-group-item {
@@ -30,22 +29,16 @@ aside {
 /* 🔹 Hover */
 .list-group-item:hover:not(.active) {
   background: rgba(45, 211, 111, 0.1) !important;
-  color: #0f9444 !important;
+  color: var(--accent) !important;
 }
 
-/* 🟩 Ativo */
+/* 🟩 Ativo (usando variável principal) */
 .list-group-item.active {
-  background: #1ba559 !important;
-  color: #fff !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05),
-              0 2px 6px rgba(0,0,0,0.25);
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+              0 2px 6px rgba(0, 0, 0, 0.25);
 }
-
-.list-group-item:hover:not(.active) {
-  background: rgba(45,211,111,0.1) !important;
-  color: #098f3f !important;
-}
-
 
 /* 🔹 Botão de sair */
 .btn-outline-danger {
@@ -62,10 +55,12 @@ aside {
 
 /* 🔸 Marca / Título AgroCRM */
 aside .fw-bold.fs-5.text-success {
-  color: #179e4d !important;
+  color: var(--accent) !important;
   text-shadow: 0 0 6px rgba(45, 211, 111, 0.25);
   letter-spacing: 0.5px;
 }
+
+/* 🔹 Logo */
 .sidebar-logo img {
   transition: transform 0.2s ease;
 }
@@ -77,4 +72,59 @@ aside .fw-bold.fs-5.text-success {
   background: transparent;
   padding: 8px;
   object-fit: contain;
+}
+
+/* =========================================================
+🌿 Navbar / Sidebar — Tema dinâmico
+========================================================= */
+
+.sidebar-panel {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.sidebar-logo {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.logo-img {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.25));
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.04);
+}
+
+/* 🔹 Footer */
+.sidebar-footer {
+  border-color: var(--border) !important;
+}
+
+/* 🚪 Botão de Logout */
+.navbar-logout-btn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--text);
+  transition: all 0.25s ease;
+}
+
+.navbar-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.theme-toggle-btn {
+  border-radius: 50px;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
 }

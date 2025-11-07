@@ -4,28 +4,29 @@ import { Sun, Moon } from "lucide-react";
 const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
-  // 🚀 Ao iniciar, carrega preferência do localStorage ou tema do sistema
+  // 🚀 Inicializa lendo o localStorage ou preferências do sistema
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
+    const stored = localStorage.getItem("theme") as "light" | "dark" | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initial = (stored as "light" | "dark") || (prefersDark ? "dark" : "light");
+    const initial = stored || (prefersDark ? "dark" : "light");
+
     setTheme(initial);
-    applyTheme(initial);
+    applyTheme(initial, false);
   }, []);
 
-  // 🔁 Atualiza tema global
-  const applyTheme = (mode: "light" | "dark") => {
-    document.documentElement.setAttribute("data-theme", mode); // 👈 usa o seletor que seu CSS reconhece
+  // ⚙️ Aplica o tema no HTML, body e Bootstrap
+  const applyTheme = (mode: "light" | "dark", persist = true) => {
+    document.documentElement.setAttribute("data-theme", mode);
     document.documentElement.setAttribute("data-bs-theme", mode);
     document.body.setAttribute("data-theme", mode);
-    localStorage.setItem("theme", mode);
+    if (persist) localStorage.setItem("theme", mode);
 
-    // 🔄 Força repaint para garantir atualização imediata
-    setTimeout(() => {
+    // 🔄 Repaint suave
+    requestAnimationFrame(() => {
       document.documentElement.style.transition = "none";
       void document.documentElement.offsetHeight;
       document.documentElement.style.transition = "";
-    }, 50);
+    });
   };
 
   const toggleTheme = () => {

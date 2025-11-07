@@ -615,3 +615,40 @@ textarea:focus {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 2px rgba(45, 211, 111, 0.25);
 }
+
+/* =========================================================
+🔧 Integração final com Bootstrap (mantém cores e contraste)
+========================================================= */
+[data-bs-theme='dark'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-card-bg: var(--panel);
+  --bs-modal-bg: var(--panel);
+  --bs-offcanvas-bg: var(--panel);
+  --bs-offcanvas-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-border-color: var(--border);
+}
+
+[data-bs-theme='light'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-card-bg: var(--panel);
+  --bs-modal-bg: var(--panel);
+  --bs-offcanvas-bg: var(--panel);
+  --bs-offcanvas-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-border-color: var(--border);
+}
+
+/* Corrige o botão de fechar do modal */
+[data-bs-theme='dark'] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+[data-bs-theme='light'] .btn-close {
+  filter: invert(0) grayscale(0);
+}

@@ -20,42 +20,31 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   existingPhotos,
   onRefresh,
 }) => {
-  // 📂 Novas fotos para upload
   const [filesToUpload, setFilesToUpload] = useState<FileList | null>(null);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [photoCaptions, setPhotoCaptions] = useState<string[]>([]);
-
-  // 🖼 Fotos já salvas no backend
   const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
 
-    // 🔁 Sincroniza fotos do pai, mas preserva legendas editadas localmente
-    useEffect(() => {
+  useEffect(() => {
     if (!existingPhotos) return;
-
-    setSavedPhotos(prev => {
-        const merged = existingPhotos.map(photo => {
-        const local = prev.find(p => p.id === photo.id);
+    setSavedPhotos((prev) =>
+      existingPhotos.map((photo) => {
+        const local = prev.find((p) => p.id === photo.id);
         return local ? { ...photo, caption: local.caption ?? photo.caption } : photo;
-        });
-        return merged;
-    });
-    }, [existingPhotos]);
+      })
+    );
+  }, [existingPhotos]);
 
-
-  // 🔗 Resolve URL correta
   const resolvePhotoUrl = (photo: Photo): string => {
     if (!photo.url) return "";
     if (photo.url.startsWith("http")) return photo.url;
-
     const base = API_BASE.replace(/\/api\/?$/, "");
     const path = photo.url.startsWith("/") ? photo.url : `/${photo.url}`;
     return `${base}${path}`;
   };
 
-  // 📸 Upload de novas fotos (com legenda)
   const handleUpload = async () => {
     if (!visitId || !filesToUpload || filesToUpload.length === 0) return;
-
     const fd = new FormData();
     Array.from(filesToUpload).forEach((file, idx) => {
       fd.append("photos", file);
@@ -65,27 +54,20 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     try {
       const resp = await axios.post(`${API_BASE}visits/${visitId}/photos`, fd);
       const data = resp.data;
-
       alert("📸 Fotos enviadas com sucesso!");
-
-      // Limpa prévias locais
       setFilesToUpload(null);
       setPhotoPreviews([]);
       setPhotoCaptions([]);
-
-      // Atualiza a lista local se o backend retornar fotos novas
       if (data && Array.isArray(data.photos)) {
         setSavedPhotos((prev) => [...prev, ...data.photos]);
       }
-
-      onRefresh(); // recarrega a visita
+      onRefresh();
     } catch (err) {
       console.error("Erro ao enviar fotos:", err);
       alert("❌ Falha ao enviar fotos.");
     }
   };
 
-  // 🗑 Excluir foto
   const handleDeletePhoto = async (photoId: number) => {
     if (!window.confirm("Excluir esta foto?")) return;
     try {
@@ -98,29 +80,24 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     }
   };
 
-  // ✏️ Atualiza legenda localmente (sem piscar)
   const handleLocalCaptionChange = (photoId: number, newCaption: string) => {
     setSavedPhotos((prev) =>
       prev.map((p) => (p.id === photoId ? { ...p, caption: newCaption } : p))
     );
   };
 
-  // 💾 Salva legenda no backend (sem recarregar toda a lista)
   const handleCaptionBlur = async (photoId: number, caption: string) => {
     try {
-        await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-        setSavedPhotos(prev =>
-        prev.map(p => (p.id === photoId ? { ...p, caption } : p))
-        );
-        console.log("📝 Legenda salva:", caption);
+      await axios.put(`${API_BASE}photos/${photoId}`, { caption });
+      setSavedPhotos((prev) =>
+        prev.map((p) => (p.id === photoId ? { ...p, caption } : p))
+      );
     } catch (err) {
-        console.error("Erro ao atualizar legenda:", err);
-        alert("❌ Falha ao salvar legenda.");
+      console.error("Erro ao atualizar legenda:", err);
+      alert("❌ Falha ao salvar legenda.");
     }
-    };
+  };
 
-
-  // 🔁 Carrega fotos da visita (sem piscar ao editar legenda)
   useEffect(() => {
     const fetchPhotos = async () => {
       if (!visitId) return;
@@ -129,42 +106,40 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         if (res.ok) {
           const data = await res.json();
           setSavedPhotos(data);
-        } else {
-          console.error("❌ Erro ao buscar fotos:", res.status);
         }
       } catch (err) {
         console.error("⚠️ Falha ao carregar fotos:", err);
       }
     };
-
     fetchPhotos();
   }, [visitId]);
 
-  // ✅ Renderização
   return (
     <div className="col-12 mt-3">
-      <label className="form-label fw-semibold">Fotos da Visita</label>
+      <label className="form-label fw-semibold">📸 Fotos da Visita</label>
 
-      {/* Input de novas fotos */}
       <input
         type="file"
         multiple
         accept="image/*"
-        className="form-control bg-dark text-light border-secondary"
+        className="form-control"
+        style={{
+          background: "var(--input-bg)",
+          color: "var(--text)",
+          borderColor: "var(--border)",
+        }}
         onChange={(e) => {
           const files = e.target.files;
           if (!files) return;
-
           const previews = Array.from(files).map((f) => URL.createObjectURL(f));
           const emptyCaptions = Array.from(files).map(() => "");
-
           setFilesToUpload(files);
           setPhotoPreviews(previews);
           setPhotoCaptions(emptyCaptions);
         }}
       />
 
-      {/* Pré-visualização das novas fotos */}
+      {/* Novas fotos */}
       {photoPreviews.length > 0 && (
         <>
           <div className="d-flex flex-wrap gap-3 mt-3">
@@ -186,7 +161,7 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                     height: "130px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    border: "1px solid var(--border)",
                     marginBottom: "6px",
                   }}
                 />
@@ -199,7 +174,12 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                     newCaps[i] = e.target.value;
                     setPhotoCaptions(newCaps);
                   }}
-                  className="form-control form-control-sm bg-dark text-light border-secondary"
+                  className="form-control form-control-sm"
+                  style={{
+                    background: "var(--input-bg)",
+                    color: "var(--text)",
+                    borderColor: "var(--border)",
+                  }}
                 />
               </div>
             ))}
@@ -212,10 +192,10 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         </>
       )}
 
-      {/* Fotos já salvas */}
+      {/* Fotos salvas */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
-          <label className="form-label fw-semibold">Fotos salvas</label>
+          <label className="form-label fw-semibold">📁 Fotos Salvas</label>
           <div className="d-flex flex-wrap gap-3">
             {savedPhotos.map((photo) => (
               <div
@@ -236,25 +216,33 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                     height: "130px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    border: "1px solid var(--border)",
                     marginBottom: "6px",
                   }}
                 />
                 <button
                   onClick={() => handleDeletePhoto(photo.id)}
+                  title="Excluir"
                   style={{
                     position: "absolute",
                     top: "-8px",
                     right: "-8px",
-                    backgroundColor: "#b71c1c",
-                    color: "white",
+                    backgroundColor: "var(--accent)",
+                    color: "#fff",
                     border: "none",
                     borderRadius: "50%",
                     width: "22px",
                     height: "22px",
                     fontSize: "12px",
                     cursor: "pointer",
+                    transition: "background 0.3s ease",
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#d32f2f")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "var(--accent)")
+                  }
                 >
                   🗑
                 </button>
@@ -269,8 +257,13 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                   onBlur={(e) =>
                     handleCaptionBlur(photo.id, e.target.value || "")
                   }
-                  className="form-control form-control-sm bg-dark text-light border-secondary"
-                  style={{ fontSize: "12px" }}
+                  className="form-control form-control-sm"
+                  style={{
+                    background: "var(--input-bg)",
+                    color: "var(--text)",
+                    borderColor: "var(--border)",
+                    fontSize: "12px",
+                  }}
                 />
               </div>
             ))}

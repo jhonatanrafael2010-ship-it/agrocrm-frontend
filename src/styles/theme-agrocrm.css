@@ -210,3 +210,43 @@ button:hover,
 .modal-header .close-btn:hover {
   color: var(--accent) !important;
 }
+
+/* ==========================================
+   🔧 Ajuste Bootstrap para seguir o tema
+========================================== */
+[data-bs-theme='dark'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-card-bg: var(--panel);
+  --bs-modal-bg: var(--panel);
+  --bs-offcanvas-bg: var(--panel);
+  --bs-offcanvas-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-border-color: var(--border);
+}
+
+[data-bs-theme='light'] {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-card-bg: var(--panel);
+  --bs-modal-bg: var(--panel);
+  --bs-offcanvas-bg: var(--panel);
+  --bs-offcanvas-color: var(--text);
+  --bs-dropdown-bg: var(--panel);
+  --bs-dropdown-color: var(--text);
+  --bs-dropdown-border-color: var(--border);
+}
+
+/* ==========================================
+   ❌ Corrige ícone do botão de fechar conforme o tema
+========================================== */
+[data-bs-theme='dark'] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-bs-theme='light'] .btn-close {
+  filter: invert(0) grayscale(0);
+}

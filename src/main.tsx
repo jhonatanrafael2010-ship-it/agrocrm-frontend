@@ -1,50 +1,58 @@
 import { createRoot } from 'react-dom/client'
-import './styles/index.css'
 import App from './App.tsx'
-import { getDB } from './db';
-import './styles/theme-base.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import './styles/theme-agrocrm.css';
-import './styles/theme-agrocrm-mobile.css';
+import { getDB } from './db'
 
+// ============================================================
+// 🎨 Estilos globais — Ordem de carregamento IMPORTANTE
+// ============================================================
 
-getDB().then(() => console.log('✅ IndexedDB pronta'));
+// 1️⃣ Bootstrap base
+import 'bootstrap/dist/css/bootstrap.min.css'
 
+// 2️⃣ Seus temas (base + desktop + mobile)
+import './styles/theme-base.css'
+import './styles/theme-agrocrm.css'
+import './styles/theme-agrocrm-mobile.css'
 
-// 📱 Detecta automaticamente se é versão mobile (APK)
+// 3️⃣ Estilos gerais do app (componentes, modais, calendário etc.)
+import './styles/app.css'
+
+// 4️⃣ Bootstrap JS por último
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+
+// 5️⃣ Index.css (estilo do Vite, opcional)
+import './styles/index.css'
+
+// ============================================================
+// 🗄️ IndexedDB e inicialização
+// ============================================================
+getDB().then(() => console.log('✅ IndexedDB pronta'))
+
+// 📱 Detecta automaticamente se é APK ou desktop
 if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
-  document.body.setAttribute('data-platform', 'mobile');
+  document.body.setAttribute('data-platform', 'mobile')
 } else {
-  document.body.setAttribute('data-platform', 'desktop');
+  document.body.setAttribute('data-platform', 'desktop')
 }
 
-
-// 🧹 Script automático para limpar cache ao detectar nova versão
+// ============================================================
+// 🔄 Atualização automática de cache (UX aprimorada)
+// ============================================================
 ;(async () => {
   try {
-    // 🔸 Cria splash temporário na tela
     const splash = document.createElement('div')
-    splash.style.position = 'fixed'
-    splash.style.top = '0'
-    splash.style.left = '0'
-    splash.style.width = '100%'
-    splash.style.height = '100%'
-    splash.style.background = '#0b1620'
-    splash.style.color = '#2dd36f'
-    splash.style.fontFamily = 'Inter, sans-serif'
-    splash.style.display = 'flex'
-    splash.style.flexDirection = 'column'
-    splash.style.alignItems = 'center'
-    splash.style.justifyContent = 'center'
-    splash.style.zIndex = '9999'
+    splash.style.cssText = `
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background:#0b1620; color:#2dd36f; font-family:Inter, sans-serif;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:9999;
+    `
     splash.innerHTML = `
       <div style="font-size:1.6rem;margin-bottom:10px;">🔄 Atualizando o sistema...</div>
       <div style="font-size:0.9rem;color:#9fb3b6;">Por favor, aguarde alguns segundos</div>
     `
     document.body.appendChild(splash)
 
-    // 🔹 Identifica versão atual e nova
     const currentVersion = localStorage.getItem('app_version')
     const files = Array.from(document.getElementsByTagName('script'))
     const hashFile = files.find(f => f.src.includes('index-') || f.src.includes('main-'))
@@ -52,7 +60,6 @@ if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
 
     if (currentVersion && newVersion && currentVersion !== newVersion) {
       console.log('🧩 Nova versão detectada! Limpando cache...')
-
       localStorage.clear()
       sessionStorage.clear()
 
@@ -71,69 +78,19 @@ if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
         for (const db of dbs) if (db.name) indexedDB.deleteDatabase(db.name)
       }
 
-      // ⏳ Espera um pouco para UX mais suave
       setTimeout(() => location.reload(), 1500)
       return
     } else if (!currentVersion && newVersion) {
       localStorage.setItem('app_version', newVersion)
     }
 
-    // 🔹 Remove splash se não precisar atualizar
     splash.remove()
   } catch (err) {
     console.warn('⚠️ Falha ao verificar cache:', err)
   }
 })()
 
-// ⚠️ StrictMode removido — evita re-render duplo no dev
+// ============================================================
+// ⚙️ Renderização principal
+// ============================================================
 createRoot(document.getElementById('root')!).render(<App />)
-
-
-// ============================================================
-// 🔁 Relacionamento em cascata do modal (corrige sombra duplicada)
-// ============================================================
-document.addEventListener("change", (ev) => {
-  const target = ev.target as HTMLSelectElement;
-  if (!target) return;
-
-  if (
-    target.matches("#visitClient, #cliente, select[name='cliente']")
-  ) {
-    const propSel = document.querySelector(
-      "#visitProperty, #propriedade, select[name='propriedade']"
-    ) as HTMLSelectElement | null;
-    const talhaoSel = document.querySelector(
-      "#visitPlot, #talhao, select[name='talhao']"
-    ) as HTMLSelectElement | null;
-
-    if (propSel) {
-      propSel.value = "";
-      propSel.selectedIndex = 0;
-      propSel.dispatchEvent(new Event("change"));
-    }
-    if (talhaoSel) {
-      talhaoSel.value = "";
-      talhaoSel.selectedIndex = 0;
-    }
-
-    const propWrapper = propSel
-      ? (propSel.closest(".form-row, .input-wrapper, .field") as HTMLElement)
-      : null;
-    if (propWrapper) {
-      propWrapper.classList.remove("has-value");
-    }
-  }
-});
-
-// ==============================
-// 🧭 Registro do Service Worker PWA
-// ==============================
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/service-worker.js")
-      .then(() => console.log("✅ Service Worker registrado com sucesso"))
-      .catch((err) => console.error("❌ Falha ao registrar Service Worker:", err));
-  });
-}
-

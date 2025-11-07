@@ -15,11 +15,10 @@ declare const bootstrap: any;
 
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
-  activeItem?: string; // ✅ permite destacar o item atual
+  activeItem?: string;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
-  // Fecha o menu automaticamente quando navega
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
     if (offcanvasEl) {
@@ -63,7 +62,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
             position: "absolute",
             top: "12px",
             right: "14px",
-            filter: "invert(0.5)",
+            filter: "invert(var(--invert-close, 0.5))",
           }}
         ></button>
       </div>
@@ -79,7 +78,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
               <button
                 key={item.label}
                 className={`list-group-item d-flex align-items-center gap-2 ${
-                  isActive ? "active" : "bg-transparent"
+                  isActive ? "active" : ""
                 }`}
                 onClick={() => {
                   onNavigate(item.label);

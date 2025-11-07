@@ -1,7 +1,82 @@
-.dark-select { position: relative; display: inline-block; width: 100%; }
-.ds-control { width: 100%; display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); color:#eafaf9; cursor:pointer }
-.ds-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.ds-arrow { margin-left: 8px; color: #9fb3b6 }
-.ds-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: linear-gradient(180deg, rgba(6,18,26,0.98), rgba(4,12,20,0.98)); border:1px solid rgba(255,255,255,0.04); border-radius:8px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); max-height: 220px; overflow:auto; z-index: 999 }
-.ds-option { padding: 8px 10px; color: #eafaf9; cursor: pointer }
-.ds-option:hover, .ds-option:focus { background: rgba(255,255,255,0.03) }
+/* =========================================================
+🌿 DarkSelect — Compatível com tema claro/escuro
+========================================================= */
+
+.dark-select {
+  position: relative;
+  width: 100%;
+  font-family: "Inter", sans-serif;
+}
+
+/* 🔘 Botão principal */
+.ds-control {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.ds-control:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* 🔽 Setinha */
+.ds-arrow {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: transform 0.25s ease;
+}
+
+.dark-select.open .ds-arrow {
+  transform: rotate(180deg);
+}
+
+/* 📋 Menu dropdown */
+.ds-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  max-height: 240px;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease;
+}
+
+/* 📦 Opções */
+.ds-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ds-option:hover {
+  background: rgba(45, 211, 111, 0.15);
+  color: var(--accent);
+}
+
+/* ✨ Transição */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

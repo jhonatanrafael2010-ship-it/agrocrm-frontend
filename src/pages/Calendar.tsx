@@ -828,7 +828,12 @@ const CalendarPage: React.FC = () => {
                           variety: "",
                         }))
                       }
-                      className="form-select bg-dark text-light border-secondary"
+                      className="form-select"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                     >
                       <option value="">Selecione</option>
                       {cultures.map((c) => (
@@ -849,7 +854,12 @@ const CalendarPage: React.FC = () => {
                         setForm((f) => ({ ...f, variety: e.target.value }))
                       }
                       disabled={!form.culture}
-                      className="form-select bg-dark text-light border-secondary"
+                      className="form-select"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                     >
                       <option value="">Selecione</option>
                       {varieties
@@ -878,7 +888,12 @@ const CalendarPage: React.FC = () => {
                           consultant_id: e.target.value,
                         }))
                       }
-                      className="form-select bg-dark text-light border-secondary"
+                      className="form-select"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)"
+                      }}
                     >
                       <option value="">Selecione</option>
                       {consultants.map((c) => (
