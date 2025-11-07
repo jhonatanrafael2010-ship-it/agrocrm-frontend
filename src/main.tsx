@@ -15,7 +15,8 @@ import './styles/theme-agrocrm.css'
 import './styles/theme-agrocrm-mobile.css'
 
 // 3️⃣ Estilos gerais do app (componentes, modais, calendário etc.)
-import './styles/app.css'
+import './styles/app.css';
+
 
 // 4️⃣ Bootstrap JS por último
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
