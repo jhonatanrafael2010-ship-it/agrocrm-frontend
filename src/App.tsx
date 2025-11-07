@@ -104,13 +104,6 @@ const App: React.FC = () => {
             >
               ☰
             </button>
-
-            <span
-              className="navbar-brand fw-bold"
-              style={{ letterSpacing: "0.5px" }}
-            >
-              AgroCRM
-            </span>
           </div>
 
           {/* 🌗 Alternar tema claro/escuro */}

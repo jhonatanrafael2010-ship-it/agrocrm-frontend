@@ -53,8 +53,8 @@
   margin-bottom: 12px;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 0 8px rgba(60, 255, 200, 0.2);
+  color: var(--text);
+  text-shadow: none;
   position: sticky;
   top: 0;
   padding: 8px 0;
@@ -71,7 +71,7 @@
 
 .form-row label {
   font-weight: 600;
-  color: #cfeae2;
+  color: var(--text);
 }
 
 .form-row input,

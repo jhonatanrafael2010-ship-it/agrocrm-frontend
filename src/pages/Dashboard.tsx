@@ -135,7 +135,10 @@ const Dashboard: React.FC = () => {
               { icon: "💼", label: "Oportunidades", value: opps.length },
             ].map((c, i) => (
               <div key={i} className="col-6 col-md-4 col-lg-2">
-                <div className="card bg-dark border-0 shadow-sm text-center p-3">
+                <div
+                  className="card border-0 shadow-sm text-center p-3"
+                  style={{ background: "var(--panel)", color: "var(--text)" }}
+                >
                   <div className="fs-3">{c.icon}</div>
                   <div className="fw-semibold text-secondary">{c.label}</div>
                   <div className="fs-5 fw-bold text-light">{c.value}</div>
@@ -147,7 +150,10 @@ const Dashboard: React.FC = () => {
           {/* Filtros */}
           <div className="row mb-4 justify-content-center">
             <div className="col-12 col-lg-10">
-              <div className="card bg-dark border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3">
+              <div
+                className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3"
+                style={{ background: "var(--panel)", color: "var(--text)" }}
+              >
                 <div className="d-flex gap-3 align-items-center flex-wrap">
                   <label className="d-flex flex-column">
                     <small className="text-secondary">De</small>
@@ -178,7 +184,7 @@ const Dashboard: React.FC = () => {
           {/* Gráfico */}
           <div className="row mb-5 justify-content-center">
             <div className="col-12 col-lg-10">
-              <div className="card bg-dark border-0 shadow-sm p-4">
+              <div className="card border-0 shadow-sm p-4" style={{ background: "var(--panel)", color: "var(--text)" }}>
                 <h5 className="text-secondary mb-3">📈 Vendas por dia</h5>
                 <div className="chart-container position-relative">
                   <svg width="100%" height="120" viewBox={`0 0 ${days.length * 30} 100`}>
@@ -247,7 +253,10 @@ const Dashboard: React.FC = () => {
               <div className="card bg-dark border-0 shadow-sm p-3">
                 <h5 className="text-secondary mb-3">🧭 Últimas Visitas</h5>
                 <div className="table-responsive">
-                  <table className="table table-dark table-sm align-middle">
+                  <table
+                    className="table table-sm align-middle"
+                    style={{ background: "var(--panel)", color: "var(--text)" }}
+                  >
                     <thead>
                       <tr>
                         <th>Data</th>

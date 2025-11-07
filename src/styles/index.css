@@ -438,17 +438,22 @@ label { color: var(--muted); font-size: 0.9rem; }
   }
 }
 
-/* itens do menu lateral */
 aside .list-group-item {
   background: transparent !important;
-  color: #f5f7f7 !important;
+  color: var(--text) !important;
 }
 
-/* item ativo */
 aside .list-group-item.active {
-  background: #1fa75d !important;
+  background: var(--accent) !important;
   color: #fff !important;
 }
+
+aside {
+  background: var(--panel);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
 body, aside, .modal-content, .calendar-page, .app, .app-header {
   transition: background 0.3s ease, color 0.3s ease;
 }
