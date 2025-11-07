@@ -101,14 +101,17 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // 💾 Salva a legenda no backend quando o usuário sai do campo
   const handleCaptionBlur = async (photoId: number, caption: string) => {
     try {
-      await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-      console.log("📝 Legenda salva:", caption);
-      // onRefresh();  // opcional — só se quiser recarregar tudo após blur
+        await axios.put(`${API_BASE}photos/${photoId}`, { caption });
+        console.log("📝 Legenda salva:", caption);
+
+        // 🔁 Atualiza fotos do modal imediatamente
+        onRefresh();
     } catch (err) {
-      console.error("Erro ao atualizar legenda:", err);
-      alert("❌ Falha ao salvar legenda.");
+        console.error("Erro ao atualizar legenda:", err);
+        alert("❌ Falha ao salvar legenda.");
     }
-  };
+    };
+
 
   return (
     <div className="col-12 mt-3">

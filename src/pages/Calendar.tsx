@@ -138,6 +138,15 @@ const CalendarPage: React.FC = () => {
         });
 
       setEvents(evs);
+      if (form.id) {
+        const updatedVisit = vs.find((v) => v.id === form.id);
+        if (updatedVisit) {
+          setForm((f) => ({
+            ...f,
+            savedPhotos: updatedVisit.photos || [],
+          }));
+        }
+      }
       console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
     } catch (err) {
       console.error("❌ Erro ao carregar visitas:", err);
@@ -315,6 +324,7 @@ const CalendarPage: React.FC = () => {
       if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
       await loadVisits();
       setOpen(false);
+      await loadVisits();
     } catch (e) {
       alert("Erro ao excluir");
     }
@@ -376,7 +386,10 @@ const CalendarPage: React.FC = () => {
       // ✅ Se houver fotos, envia primeiro
       if (form.photos && form.photos.length > 0) {
         const fd = new FormData();
-        Array.from(form.photos).forEach((file) => fd.append("photos", file));
+        Array.from(form.photos).forEach((file, idx) => {
+          fd.append("photos", file);
+          fd.append("captions", form.photoCaptions[idx] || "");
+        });
         const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
           method: "POST",
           body: fd,
