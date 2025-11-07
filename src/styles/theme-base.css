@@ -550,6 +550,36 @@ html[data-theme='dark'] .photo-gallery img {
   box-shadow: 0 2px 6px var(--shadow);
   transition: background 0.3s ease, color 0.3s ease;
 }
+
+/* =========================================================
+🧩 Correção visual — Modal de Visita (inputs e selects)
+========================================================= */
+.modal-content select,
+.modal-content input,
+.modal-content textarea {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Corrige selects do Bootstrap (setinha e opções internas) */
+.modal-content select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Corrige campo de upload e botão de foto */
+.modal-content input[type="file"] {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+/* Corrige textarea */
+.modal-content textarea::placeholder {
+  color: var(--muted) !important;
+}
+
 body[data-theme='dark'],
 body[data-theme='light'] {
   background: var(--bg);

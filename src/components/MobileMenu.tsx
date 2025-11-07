@@ -40,28 +40,38 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
 
   return (
     <div
-      className="offcanvas offcanvas-start text-bg-dark"
+      className="offcanvas offcanvas-start"
       tabIndex={-1}
       id="mobileMenu"
       aria-labelledby="mobileMenuLabel"
     >
+      {/* ========================================================= */}
+      {/* 🔰 Cabeçalho com logo NutriCRM */}
+      {/* ========================================================= */}
       <div className="offcanvas-header app-logo-container">
         <img
           src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
-          alt="NutriCRM"
+          alt="NutriCRM Logo"
           className="app-logo"
         />
         <button
           type="button"
-          className="btn-close text-reset"
+          className="btn-close"
           data-bs-dismiss="offcanvas"
-          aria-label="Close"
+          aria-label="Fechar"
+          style={{
+            position: "absolute",
+            top: "12px",
+            right: "14px",
+            filter: "invert(0.5)",
+          }}
         ></button>
       </div>
 
-
+      {/* ========================================================= */}
+      {/* 🔹 Corpo com links de navegação */}
+      {/* ========================================================= */}
       <div className="offcanvas-body d-flex flex-column justify-content-between p-3">
-        {/* 🔹 Navegação */}
         <div className="list-group list-group-flush">
           {links.map((item) => {
             const isActive = activeItem === item.label;
@@ -69,9 +79,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
               <button
                 key={item.label}
                 className={`list-group-item d-flex align-items-center gap-2 ${
-                  isActive
-                    ? "active"
-                    : "bg-transparent text-light"
+                  isActive ? "active" : "bg-transparent"
                 }`}
                 onClick={() => {
                   onNavigate(item.label);
@@ -90,7 +98,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
           })}
         </div>
 
-        {/* 🔹 Rodapé (Logout) */}
+        {/* ========================================================= */}
+        {/* 🚪 Rodapé (Logout) */}
+        {/* ========================================================= */}
         <div className="border-top border-secondary pt-3">
           <button
             className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
