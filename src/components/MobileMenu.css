@@ -11,18 +11,41 @@
   font-family: "Inter", sans-serif;
 }
 
-/* 🔸 Título superior */
-.offcanvas-title {
-  font-size: 1.2rem;
-  letter-spacing: 0.5px;
-  color: #2dd36f !important;
-  text-shadow: 0 0 6px rgba(45, 211, 111, 0.25);
+[data-theme='light'] .offcanvas {
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+[data-theme='dark'] .offcanvas {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 🔰 Logo container no topo do menu */
+.app-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1b5e20, #4caf50);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 14px 0;
+}
+
+.app-logo {
+  height: 54px;
+  object-fit: contain;
+  border-radius: 10px;
+  padding: 4px 14px;
+  transition: transform 0.25s ease-in-out;
+}
+
+.app-logo:hover {
+  transform: scale(1.04);
+}
+
 
 /* 🔹 Itens neutros */
 .list-group-item {
   background: transparent !important;
-  color: #f5f7f7 !important;
+  color: var(--text) !important;
   font-weight: 500;
   border: none !important;
   border-radius: 8px !important;
@@ -37,7 +60,7 @@
 /* 🔹 Hover */
 .list-group-item:hover:not(.active) {
   background: rgba(45, 211, 111, 0.1) !important;
-  color: #2dd36f !important;
+  color: var(--accent) !important;
 }
 
 /* 🟩 Ativo — igual ao desktop */

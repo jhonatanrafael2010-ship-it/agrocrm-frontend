@@ -45,20 +45,20 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
       id="mobileMenu"
       aria-labelledby="mobileMenuLabel"
     >
-      <div className="offcanvas-header border-bottom border-secondary">
-        <h5
-          className="offcanvas-title text-success fw-bold"
-          id="mobileMenuLabel"
-        >
-          AgroCRM
-        </h5>
+      <div className="offcanvas-header app-logo-container">
+        <img
+          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
+          alt="NutriCRM"
+          className="app-logo"
+        />
         <button
           type="button"
-          className="btn-close btn-close-white"
+          className="btn-close text-reset"
           data-bs-dismiss="offcanvas"
-          aria-label="Fechar"
+          aria-label="Close"
         ></button>
       </div>
+
 
       <div className="offcanvas-body d-flex flex-column justify-content-between p-3">
         {/* 🔹 Navegação */}
