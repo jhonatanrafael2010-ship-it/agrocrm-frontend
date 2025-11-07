@@ -117,12 +117,13 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         if (!visitId) return;
         const res = await fetch(`${API_BASE}visits/${visitId}`);
         if (res.ok) {
-          const visit = await res.json();
-          setPhotos(visit.photos || []);
+           const visit = await res.json();
+           setSavedPhotos(visit.photos || []);
         }
       };
       fetchPhotos();
     }, [visitId]);
+
 
 
 
