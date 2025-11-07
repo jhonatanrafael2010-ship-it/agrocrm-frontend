@@ -28,10 +28,19 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // 🖼 Fotos já salvas no backend
   const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
 
-  // 🔁 Mantém sincronizado com o Calendar
-  useEffect(() => {
-    setSavedPhotos(existingPhotos || []);
-  }, [existingPhotos]);
+    // 🔁 Sincroniza fotos do pai, mas preserva legendas editadas localmente
+    useEffect(() => {
+    if (!existingPhotos) return;
+
+    setSavedPhotos(prev => {
+        const merged = existingPhotos.map(photo => {
+        const local = prev.find(p => p.id === photo.id);
+        return local ? { ...photo, caption: local.caption ?? photo.caption } : photo;
+        });
+        return merged;
+    });
+    }, [existingPhotos]);
+
 
   // 🔗 Resolve URL correta
   const resolvePhotoUrl = (photo: Photo): string => {
@@ -99,13 +108,17 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // 💾 Salva legenda no backend (sem recarregar toda a lista)
   const handleCaptionBlur = async (photoId: number, caption: string) => {
     try {
-      await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-      console.log("📝 Legenda salva:", caption);
+        await axios.put(`${API_BASE}photos/${photoId}`, { caption });
+        setSavedPhotos(prev =>
+        prev.map(p => (p.id === photoId ? { ...p, caption } : p))
+        );
+        console.log("📝 Legenda salva:", caption);
     } catch (err) {
-      console.error("Erro ao atualizar legenda:", err);
-      alert("❌ Falha ao salvar legenda.");
+        console.error("Erro ao atualizar legenda:", err);
+        alert("❌ Falha ao salvar legenda.");
     }
-  };
+    };
+
 
   // 🔁 Carrega fotos da visita (sem piscar ao editar legenda)
   useEffect(() => {
