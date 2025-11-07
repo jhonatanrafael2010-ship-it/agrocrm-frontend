@@ -112,6 +112,19 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     }
     };
 
+    useEffect(() => {
+      const fetchPhotos = async () => {
+        if (!visitId) return;
+        const res = await fetch(`${API_BASE}visits/${visitId}`);
+        if (res.ok) {
+          const visit = await res.json();
+          setPhotos(visit.photos || []);
+        }
+      };
+      fetchPhotos();
+    }, [visitId]);
+
+
 
   return (
     <div className="col-12 mt-3">
