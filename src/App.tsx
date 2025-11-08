@@ -6,7 +6,7 @@ import CalendarPage from "./pages/Calendar";
 import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
-import "./styles/App.css";
+import "./styles/app.css";
 import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
