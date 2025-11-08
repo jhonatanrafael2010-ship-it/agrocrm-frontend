@@ -247,6 +247,7 @@ const CalendarPage: React.FC = () => {
 
 
     try {
+      console.log("📦 Payload enviado:", JSON.stringify(payload, null, 2));
       const res = await fetch(`${API_BASE}visits`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
