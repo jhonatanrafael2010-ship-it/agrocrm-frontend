@@ -310,108 +310,91 @@ body[data-platform="mobile"] {
 }
 
 /* =========================================================
-🎯 CORREÇÃO VISUAL DOS MODAIS — CENTRALIZADOS E AMPLIADOS
+🎯 MODAIS CENTRALIZADOS — CORREÇÃO DEFINITIVA
 ========================================================= */
 
 .modal {
+  position: fixed !important;
+  inset: 0;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 20000;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 10000;
 }
 
-/* Caixa principal do modal */
+.modal-dialog {
+  margin: 0 !important;
+  width: 100%;
+  max-width: 850px !important;
+  display: flex;
+  justify-content: center;
+}
+
 .modal-content {
-  position: relative;
-  width: 95%;
-  max-width: 900px !important;  /* 🔹 aumenta o tamanho */
   background: var(--panel);
   color: var(--text);
+  border-radius: 16px;
   border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  padding: 28px 32px;
-  overflow-y: auto;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  width: 100%;
+  padding: 20px 28px;
   max-height: 90vh;
+  overflow-y: auto;
   animation: fadeInModal 0.25s ease;
 }
 
-/* Animação suave */
 @keyframes fadeInModal {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================================
-❌ BOTÃO DE FECHAR — ESTILO CLÁSSICO VERMELHO COM “X”
+❌ BOTÃO DE FECHAR — VERMELHO CLÁSSICO
 ========================================================= */
-.modal-close,
 .modal .btn-close {
   position: absolute;
   top: 14px;
   right: 18px;
-  background: #dc2626 !important; /* vermelho */
+  background: #eb2121 !important;
   color: #fff !important;
   border: none !important;
   border-radius: 50%;
   width: 32px;
   height: 32px;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 32px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  z-index: 100;
 }
 
-.modal-close:hover,
-.modal .btn-close:hover {
-  background: #ef4444 !important;
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-}
-
-/* Substitui ícone interno (Bootstrap ou custom) por “X” */
 .modal .btn-close::before {
   content: "×";
   display: inline-block;
-  font-size: 1.3rem;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.modal .btn-close:hover {
+  background: #ca2e2e !important;
+  transform: scale(1.1);
 }
 
 /* =========================================================
-📱 RESPONSIVIDADE — AJUSTE MOBILE
+📱 Responsividade (mobile)
 ========================================================= */
 @media (max-width: 768px) {
   .modal-content {
-    max-width: 95% !important;
-    padding: 20px 24px;
+    max-width: 95vw !important;
+    padding: 18px 20px;
     border-radius: 14px;
   }
-
-  .modal .btn-close {
-    top: 10px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
-  }
 }
+
 
 /* =========================================================
 🌿 MODAL — "NOVA VISITA" ESTILO DASHBOARD AGRONÔMICO
@@ -576,4 +559,89 @@ body[data-platform="mobile"] {
 .visita-modal .modal-close:hover {
   transform: scale(1.1);
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+/* =========================================================
+🌾 MODAL DE NOVA VISITA — MELHOR DISTRIBUIÇÃO DE CAMPOS
+========================================================= */
+.modal-body .row.g-3 > [class*="col-"] {
+  flex: 1 1 48%;
+  min-width: 320px;
+}
+
+@media (max-width: 768px) {
+  .modal-body .row.g-3 > [class*="col-"] {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+}
+/* =========================================================
+📌 CABEÇALHO FIXO DENTRO DOS MODAIS
+========================================================= */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 0 0;
+  backdrop-filter: blur(8px) saturate(140%);
+}
+
+/* Evita que o conteúdo suba por baixo do cabeçalho */
+.modal-body {
+  padding-top: 8px;
+}
+
+/* Título do modal */
+.modal-header .modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Botão de fechar fixo */
+.modal-header .btn-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-header .btn-close::before {
+  content: "×";
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-header .btn-close:hover {
+  transform: scale(1.1);
+  background: #ef4444 !important;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-header .modal-title {
+    font-size: 1.05rem;
+  }
 }
