@@ -237,7 +237,6 @@ const CalendarPage: React.FC = () => {
       consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
       date: iso,
       status: "planned",
-      generate_schedule: !!form.genPheno,
       culture: cultureName || "",
       variety: form.variety || "",
       recommendation: form.genPheno ? "" : form.recommendation || "Plantio",
