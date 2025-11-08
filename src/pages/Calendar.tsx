@@ -230,6 +230,10 @@ const CalendarPage: React.FC = () => {
       cultureName = byId ? byId.name : form.culture;
     }
 
+    // ✅ Define automaticamente se deve gerar cronograma fenológico
+    const isPhenoCulture =
+      ["Milho", "Soja", "Algodão"].includes(cultureName || "");
+
     const payload: any = {
       client_id: Number(form.client_id),
       property_id: form.property_id ? Number(form.property_id) : null,
@@ -239,14 +243,15 @@ const CalendarPage: React.FC = () => {
       status: "planned",
       culture: cultureName || "",
       variety: form.variety || "",
-      recommendation: form.genPheno ? "" : form.recommendation || "Plantio",
+      recommendation: "Plantio",
       latitude: form.latitude,
       longitude: form.longitude,
 
-      // ✅ Correção definitiva:
-      generate_schedule: form.genPheno === true,
-      genPheno: form.genPheno === true,
+      // 🔥 Correção: dispara cronograma automático se a cultura for milho, soja ou algodão
+      generate_schedule: isPhenoCulture,
+      genPheno: isPhenoCulture,
     };
+
 
 
 
