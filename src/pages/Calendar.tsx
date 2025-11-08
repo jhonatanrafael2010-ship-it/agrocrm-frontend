@@ -670,7 +670,7 @@ const CalendarPage: React.FC = () => {
             role="document"
           >
             <div
-              className="modal-content border-0 shadow-lg"
+              className="modal-content visita-modal border-0 shadow-lg"
               style={{
                 background: "var(--panel)",
                 color: "var(--text)",

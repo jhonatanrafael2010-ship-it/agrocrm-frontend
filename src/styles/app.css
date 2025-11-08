@@ -308,3 +308,272 @@ body[data-platform="mobile"] {
 [data-bs-theme='light'] .btn-close {
   filter: invert(0) grayscale(0);
 }
+
+/* =========================================================
+🎯 CORREÇÃO VISUAL DOS MODAIS — CENTRALIZADOS E AMPLIADOS
+========================================================= */
+
+.modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 20000;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+/* Caixa principal do modal */
+.modal-content {
+  position: relative;
+  width: 95%;
+  max-width: 900px !important;  /* 🔹 aumenta o tamanho */
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  padding: 28px 32px;
+  overflow-y: auto;
+  max-height: 90vh;
+  animation: fadeInModal 0.25s ease;
+}
+
+/* Animação suave */
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+❌ BOTÃO DE FECHAR — ESTILO CLÁSSICO VERMELHO COM “X”
+========================================================= */
+.modal-close,
+.modal .btn-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: #dc2626 !important; /* vermelho */
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.modal-close:hover,
+.modal .btn-close:hover {
+  background: #ef4444 !important;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+/* Substitui ícone interno (Bootstrap ou custom) por “X” */
+.modal .btn-close::before {
+  content: "×";
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* =========================================================
+📱 RESPONSIVIDADE — AJUSTE MOBILE
+========================================================= */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95% !important;
+    padding: 20px 24px;
+    border-radius: 14px;
+  }
+
+  .modal .btn-close {
+    top: 10px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+/* =========================================================
+🌿 MODAL — "NOVA VISITA" ESTILO DASHBOARD AGRONÔMICO
+========================================================= */
+
+/* Layout geral */
+.modal-content.visita-modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: var(--panel);
+  color: var(--text);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(80, 200, 160, 0.25);
+  border-radius: 18px;
+  padding: 28px;
+  width: 95vw;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 auto;
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin;
+  animation: fadeInModal 0.25s ease;
+}
+
+/* Cabeçalho fixo do modal */
+.visita-modal h3 {
+  grid-column: span 2;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid rgba(60, 255, 200, 0.1);
+  padding-bottom: 10px;
+}
+
+/* Campos e rótulos */
+.visita-modal .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.visita-modal .form-row label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.visita-modal .form-row input,
+.visita-modal .form-row select,
+.visita-modal .form-row textarea {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #2a3f3a;
+  font-size: 0.9rem;
+  transition: 0.2s ease;
+}
+
+.visita-modal .form-row input:focus,
+.visita-modal .form-row select:focus,
+.visita-modal .form-row textarea:focus {
+  outline: none;
+  border-color: #37b67a;
+  box-shadow: 0 0 0 1px #37b67a;
+}
+
+/* Botões e ações */
+.visita-modal .modal-actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.visita-modal .btn-save,
+.visita-modal .btn-cancel,
+.visita-modal .btn-delete {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+/* Botões coloridos */
+.visita-modal .btn-save {
+  background: linear-gradient(90deg, #2dd4bf, #14b8a6);
+  color: #fff;
+}
+.visita-modal .btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.6);
+}
+
+.visita-modal .btn-cancel {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.visita-modal .btn-delete {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  color: #fff;
+}
+.visita-modal .btn-delete:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+/* =========================================================
+📱 RESPONSIVIDADE — MOBILE
+========================================================= */
+@media (max-width: 900px) {
+  .modal-content.visita-modal {
+    grid-template-columns: 1fr;
+    width: 95vw;
+    max-height: 92vh;
+    padding: 20px;
+  }
+
+  .visita-modal h3 {
+    grid-column: 1;
+    font-size: 1.2rem;
+  }
+
+  .visita-modal .modal-actions {
+    grid-column: 1;
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+❌ BOTÃO DE FECHAR DO MODAL VISITA
+========================================================= */
+.visita-modal .modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 15;
+}
+
+.visita-modal .modal-close:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
