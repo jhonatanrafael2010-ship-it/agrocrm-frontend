@@ -14,11 +14,13 @@ import './styles/theme-base.css'
 import './styles/theme-agrocrm.css'
 import './styles/theme-agrocrm-mobile.css'
 
-// 3️⃣ Estilos gerais do app — DEVE SER O ÚLTIMO CSS
-//    (sobrepõe tudo acima, inclusive Bootstrap)
-import './styles/app.css'
+// 3️⃣ Estilo do Vite (index.css) — vem ANTES do app.css
+import './styles/index.css'
 
-// 4️⃣ Bootstrap JS (opcional, mas deve vir após o CSS)
+// 4️⃣ Estilos gerais do app — DEVE SER O ÚLTIMO CSS
+import './styles/app.css'  // ⬅️ este agora fica por último!
+
+// 5️⃣ Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 // 5️⃣ Estilo do Vite (mantém, mas NÃO deve ficar depois do app.css)
