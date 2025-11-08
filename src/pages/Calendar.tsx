@@ -230,9 +230,22 @@ const CalendarPage: React.FC = () => {
       cultureName = byId ? byId.name : form.culture;
     }
 
-    // ✅ Define automaticamente se deve gerar cronograma fenológico
+    // 🔎 Normaliza a cultura (sem acento, minúscula)
+    const normalize = (s: string | undefined | null) =>
+      (s || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .toLowerCase()
+        .trim();
+
+    const normalizedCulture = normalize(cultureName);
+
+    // ✅ Vai gerar cronograma para milho, soja e algodão,
+    // mesmo que venha "Milho", "milho", "MILHO", "Algodao", "Soja IPRO", etc.
     const isPhenoCulture =
-      ["Milho", "Soja", "Algodão"].includes(cultureName || "");
+      normalizedCulture.startsWith("milho") ||
+      normalizedCulture.startsWith("soja") ||
+      normalizedCulture.startsWith("algodao");
 
     const payload: any = {
       client_id: Number(form.client_id),
@@ -247,16 +260,15 @@ const CalendarPage: React.FC = () => {
       latitude: form.latitude,
       longitude: form.longitude,
 
-      // 🔥 Correção: dispara cronograma automático se a cultura for milho, soja ou algodão
+      // 👇 sempre manda pros dois campos, como antes
       generate_schedule: isPhenoCulture,
       genPheno: isPhenoCulture,
     };
 
-
+    console.log("📦 Payload enviado:", payload);
 
 
     try {
-      console.log("📦 Payload enviado:", JSON.stringify(payload, null, 2));
       const res = await fetch(`${API_BASE}visits`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -267,6 +279,10 @@ const CalendarPage: React.FC = () => {
         const body = await res.text();
         throw new Error(body || `Erro ${res.status}`);
       }
+
+      const data = await res.json();
+      console.log("🔁 Resposta do backend ao criar visita:", data);
+
 
     
 
