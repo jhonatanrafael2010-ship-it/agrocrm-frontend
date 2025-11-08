@@ -243,6 +243,8 @@ const CalendarPage: React.FC = () => {
       recommendation: form.genPheno ? "" : form.recommendation || "Plantio",
       latitude: form.latitude,
       longitude: form.longitude,
+      generate_schedule: form.genPheno ? true : false,
+      genPheno: form.genPheno ? true : false,
     };
 
     try {
