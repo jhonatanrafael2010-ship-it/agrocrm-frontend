@@ -3,26 +3,35 @@ import App from './App.tsx'
 import { getDB } from './db'
 
 // ============================================================
-// 🎨 Estilos globais — Ordem de carregamento IMPORTANTE
+// 🎨 Estilos globais — ORDEM DE CARREGAMENTO CORRETA
 // ============================================================
 
-// 1️⃣ Bootstrap base
+// 1️⃣ Bootstrap base (estrutura e variáveis)
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-// 2️⃣ Seus temas (base + desktop + mobile)
+// 2️⃣ Temas personalizados (carregados ANTES do app.css)
 import './styles/theme-base.css'
 import './styles/theme-agrocrm.css'
 import './styles/theme-agrocrm-mobile.css'
 
-// 3️⃣ Estilos gerais do app (componentes, modais, calendário etc.)
-import './styles/app.css';
+// 3️⃣ Estilos gerais do app — DEVE SER O ÚLTIMO CSS
+//    (sobrepõe tudo acima, inclusive Bootstrap)
+import './styles/app.css'
 
-
-// 4️⃣ Bootstrap JS por último
+// 4️⃣ Bootstrap JS (opcional, mas deve vir após o CSS)
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-// 5️⃣ Index.css (estilo do Vite, opcional)
+// 5️⃣ Estilo do Vite (mantém, mas NÃO deve ficar depois do app.css)
 import './styles/index.css'
+
+
+// ============================================================
+// 🚀 Inicialização do app
+// ============================================================
+createRoot(document.getElementById('root')!).render(
+  <App />
+)
+
 
 // ============================================================
 // 🗄️ IndexedDB e inicialização

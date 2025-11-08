@@ -1,83 +1,3 @@
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-h1 {
-  font-size: 4.2rem;
-  line-height: 1.02;
-  margin: 1.5rem 0 1rem;
-}
-
-.theme-toggle-btn {
-  position: fixed;
-  top: 16px;
-  right: 18px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  font-size: 1.8rem;
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  transition: all 0.3s ease, transform 0.5s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-toggle-btn:hover {
-  transform: rotate(25deg) scale(1.1);
-  box-shadow: 0 0 12px rgba(0,0,0,0.35);
-}
-
-.theme-toggle-btn:active {
-  transform: rotate(-15deg) scale(0.95);
-}
-
-@keyframes spin-sun {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-[data-theme='light'] .theme-toggle-btn {
-  background: var(--panel);
-  color: var(--text);
-  animation: spin-sun 2s linear infinite;
-}
-
-[data-theme='dark'] .theme-toggle-btn {
-  background: var(--panel);
-  color: var(--text);
-}
-
 /* =========================================================
 🌿 BASE DO APLICATIVO (Desktop + APK)
 ========================================================= */
@@ -108,12 +28,6 @@ h1 {
   position: relative;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .app-title {
   font-weight: 700;
   font-size: 1.25rem;
@@ -142,39 +56,6 @@ h1 {
 }
 
 /* ----------------------------------------
-☰ Botão de menu mobile
----------------------------------------- */
-.menu-toggle {
-  background: none;
-  border: none;
-  color: var(--text);
-  font-size: 1.8rem;
-  cursor: pointer;
-  z-index: 10000;
-  padding: 0;
-  margin: 0;
-}
-
-/* ----------------------------------------
-📄 Conteúdo principal
----------------------------------------- */
-.main-content {
-  flex: 1;
-  width: 100%;
-  margin-left: 240px;
-  padding: 1.25rem;
-  box-sizing: border-box;
-  transition: margin 0.3s ease;
-}
-
-/* Quando a sidebar estiver oculta ou no mobile */
-body[data-platform="mobile"] .main-content {
-  margin-left: 0 !important;
-  padding-top: 70px !important; /* evita sobreposição com header fixo */
-  padding-bottom: 70px !important;
-}
-
-/* ----------------------------------------
 📱 Layout Mobile (APK)
 ---------------------------------------- */
 body[data-platform="mobile"] .app-header {
@@ -192,99 +73,14 @@ body[data-platform="mobile"] .app-header {
   padding: 0 1rem;
 }
 
-body[data-platform="mobile"] .menu-toggle {
-  margin-top: 2px;
-}
-
-
 body[data-platform="mobile"] .app-title {
   font-size: 1.1rem;
-}
-
-body[data-platform="mobile"] .menu-toggle {
-  font-size: 1.9rem;
-}
-
-/* Corrige sobreposição e largura no mobile */
-body[data-platform="mobile"] {
-  overflow-x: hidden !important;
-}
-
-/* ----------------------------------------
-🧭 Overlay do menu mobile
----------------------------------------- */
-.mobile-overlay {
-  position: fixed;
-  top: 56px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 9998;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-/* Dropdown interno do menu mobile */
-.menu-dropdown {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-top: 1rem;
-  padding: 0.5rem 0;
-  width: 88%;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-}
-
-.menu-dropdown button {
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 0.95rem;
-  color: var(--text);
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.menu-dropdown button:hover {
-  background: rgba(45, 211, 111, 0.1);
-}
-
-/* ----------------------------------------
-💻 Desktop refinado
----------------------------------------- */
-@media (min-width: 901px) {
-  .app-header {
-    position: sticky;
-    top: 0;
-    z-index: 999;
-  }
-
-  .main-content {
-    margin-left: 240px !important;
-    padding-top: 1.5rem;
-  }
 }
 
 /* ==========================================
    🔧 Ajuste Bootstrap para seguir o tema
 ========================================== */
-[data-bs-theme='dark'] {
-  --bs-body-bg: var(--bg);
-  --bs-body-color: var(--text);
-  --bs-border-color: var(--border);
-  --bs-card-bg: var(--panel);
-  --bs-modal-bg: var(--panel);
-  --bs-offcanvas-bg: var(--panel);
-  --bs-offcanvas-color: var(--text);
-  --bs-dropdown-bg: var(--panel);
-  --bs-dropdown-color: var(--text);
-  --bs-dropdown-border-color: var(--border);
-}
-
+[data-bs-theme='dark'],
 [data-bs-theme='light'] {
   --bs-body-bg: var(--bg);
   --bs-body-color: var(--text);
@@ -299,7 +95,7 @@ body[data-platform="mobile"] {
 }
 
 /* ==========================================
-   ❌ Corrige ícone do botão de fechar conforme o tema
+   ❌ Corrige ícone do botão de fechar
 ========================================== */
 [data-bs-theme='dark'] .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
@@ -313,37 +109,39 @@ body[data-platform="mobile"] {
 🎯 MODAIS CENTRALIZADOS — CORREÇÃO DEFINITIVA
 ========================================================= */
 
-.modal {
-  position: fixed !important;
-  inset: 0;
+.modal.show {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: rgba(0, 0, 0, 0.55);
+  inset: 0 !important;
+  position: fixed !important;
+  background: rgba(0, 0, 0, 0.55) !important;
   backdrop-filter: blur(3px);
-  z-index: 10000;
+  z-index: 9999 !important;
 }
 
 .modal-dialog {
-  margin: 0 !important;
-  width: 100%;
-  max-width: 850px !important;
-  display: flex;
-  justify-content: center;
+  margin: 0 auto !important;
+  transform: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 1100px !important;
 }
 
 .modal-content {
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+  margin: 0 auto !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  animation: fadeInModal 0.25s ease;
   width: 100%;
-  padding: 20px 28px;
   max-height: 90vh;
   overflow-y: auto;
-  animation: fadeInModal 0.25s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 @keyframes fadeInModal {
@@ -354,257 +152,6 @@ body[data-platform="mobile"] {
 /* =========================================================
 ❌ BOTÃO DE FECHAR — VERMELHO CLÁSSICO
 ========================================================= */
-.modal .btn-close {
-  position: absolute;
-  top: 14px;
-  right: 18px;
-  background: #eb2121 !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 1.1rem;
-  font-weight: 500;
-  line-height: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal .btn-close::before {
-  content: "×";
-  display: inline-block;
-  font-size: 1.4rem;
-  font-weight: 500;
-}
-
-.modal .btn-close:hover {
-  background: #ca2e2e !important;
-  transform: scale(1.1);
-}
-
-/* =========================================================
-📱 Responsividade (mobile)
-========================================================= */
-@media (max-width: 768px) {
-  .modal-content {
-    max-width: 95vw !important;
-    padding: 18px 20px;
-    border-radius: 14px;
-  }
-}
-
-
-/* =========================================================
-🌿 MODAL — "NOVA VISITA" ESTILO DASHBOARD AGRONÔMICO
-========================================================= */
-
-/* Layout geral */
-.modal-content.visita-modal {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  background: var(--panel);
-  color: var(--text);
-  backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgba(80, 200, 160, 0.25);
-  border-radius: 18px;
-  padding: 28px;
-  width: 95vw;
-  max-width: 1200px;
-  max-height: 90vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  margin: 0 auto;
-  box-shadow: 0 0 28px rgba(0, 0, 0, 0.6);
-  scrollbar-width: thin;
-  animation: fadeInModal 0.25s ease;
-}
-
-/* Cabeçalho fixo do modal */
-.visita-modal h3 {
-  grid-column: span 2;
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text);
-  border-bottom: 1px solid rgba(60, 255, 200, 0.1);
-  padding-bottom: 10px;
-}
-
-/* Campos e rótulos */
-.visita-modal .form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.visita-modal .form-row label {
-  font-weight: 600;
-  color: var(--text);
-}
-
-.visita-modal .form-row input,
-.visita-modal .form-row select,
-.visita-modal .form-row textarea {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #2a3f3a;
-  font-size: 0.9rem;
-  transition: 0.2s ease;
-}
-
-.visita-modal .form-row input:focus,
-.visita-modal .form-row select:focus,
-.visita-modal .form-row textarea:focus {
-  outline: none;
-  border-color: #37b67a;
-  box-shadow: 0 0 0 1px #37b67a;
-}
-
-/* Botões e ações */
-.visita-modal .modal-actions {
-  grid-column: span 2;
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.visita-modal .btn-save,
-.visita-modal .btn-cancel,
-.visita-modal .btn-delete {
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  letter-spacing: 0.3px;
-}
-
-/* Botões coloridos */
-.visita-modal .btn-save {
-  background: linear-gradient(90deg, #2dd4bf, #14b8a6);
-  color: #fff;
-}
-.visita-modal .btn-save:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 15px rgba(20, 184, 166, 0.6);
-}
-
-.visita-modal .btn-cancel {
-  background: var(--panel);
-  color: var(--text);
-}
-
-.visita-modal .btn-delete {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
-  color: #fff;
-}
-.visita-modal .btn-delete:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-}
-
-/* =========================================================
-📱 RESPONSIVIDADE — MOBILE
-========================================================= */
-@media (max-width: 900px) {
-  .modal-content.visita-modal {
-    grid-template-columns: 1fr;
-    width: 95vw;
-    max-height: 92vh;
-    padding: 20px;
-  }
-
-  .visita-modal h3 {
-    grid-column: 1;
-    font-size: 1.2rem;
-  }
-
-  .visita-modal .modal-actions {
-    grid-column: 1;
-    justify-content: center;
-  }
-}
-
-/* =========================================================
-❌ BOTÃO DE FECHAR DO MODAL VISITA
-========================================================= */
-.visita-modal .modal-close {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  background: #dc2626 !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 15;
-}
-
-.visita-modal .modal-close:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-}
-/* =========================================================
-🌾 MODAL DE NOVA VISITA — MELHOR DISTRIBUIÇÃO DE CAMPOS
-========================================================= */
-.modal-body .row.g-3 > [class*="col-"] {
-  flex: 1 1 48%;
-  min-width: 320px;
-}
-
-@media (max-width: 768px) {
-  .modal-body .row.g-3 > [class*="col-"] {
-    flex: 1 1 100%;
-    min-width: unset;
-  }
-}
-/* =========================================================
-📌 CABEÇALHO FIXO DENTRO DOS MODAIS
-========================================================= */
-.modal-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--panel);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px 16px 0 0;
-  backdrop-filter: blur(8px) saturate(140%);
-}
-
-/* Evita que o conteúdo suba por baixo do cabeçalho */
-.modal-body {
-  padding-top: 8px;
-}
-
-/* Título do modal */
-.modal-header .modal-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-/* Botão de fechar fixo */
 .modal-header .btn-close {
   position: absolute;
   top: 16px;
@@ -635,13 +182,66 @@ body[data-platform="mobile"] {
   background: #ef4444 !important;
 }
 
-/* Responsivo */
+/* =========================================================
+📌 CABEÇALHO FIXO DENTRO DOS MODAIS
+========================================================= */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 0 0;
+  backdrop-filter: blur(8px) saturate(140%);
+}
+
+.modal-header .modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* =========================================================
+📱 MOBILE — Ajustes de modais e cabeçalho
+========================================================= */
 @media (max-width: 768px) {
+  .modal-content {
+    max-width: 95vw !important;
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+
   .modal-header {
     padding: 12px 16px;
   }
 
   .modal-header .modal-title {
     font-size: 1.05rem;
+  }
+
+  .modal-header .btn-close {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+/* =========================================================
+🌾 MODAL DE NOVA VISITA — AJUSTE DE CAMPOS E DISTRIBUIÇÃO
+========================================================= */
+.modal-body .row.g-3 > [class*="col-"] {
+  flex: 1 1 48%;
+  min-width: 320px;
+}
+
+@media (max-width: 768px) {
+  .modal-body .row.g-3 > [class*="col-"] {
+    flex: 1 1 100%;
+    min-width: unset;
   }
 }
