@@ -2,9 +2,16 @@
    🔝 MODAL SOBRE O CALENDÁRIO
 ===================================================== */
 .modal {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   z-index: 20000 !important;
-  position: relative;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
 }
+
 
 .modal-backdrop {
   z-index: 19999 !important;
