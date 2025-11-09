@@ -12,6 +12,7 @@ type Visit = {
   recommendation?: string;
   culture?: string;
   variety?: string;
+  status?: string;
 };
 
 type Client = { id: number; name: string };
@@ -142,21 +143,6 @@ const Visits: React.FC = () => {
     setFilterVariety("");
   }
 
-  // 🔍 Filtragem combinada
-  const filteredVisits = visits
-    .filter((v) => {
-      if (filterClient && String(v.client_id) !== filterClient) return false;
-      if (filterVariety && v.variety?.toLowerCase() !== filterVariety.toLowerCase()) return false;
-      if (filterStart && v.date && v.date < filterStart) return false;
-      if (filterEnd && v.date && v.date > filterEnd) return false;
-      if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (!a.date) return 1;
-      if (!b.date) return -1;
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
 
   const uniqueVarieties = Array.from(new Set(visits.map((v) => v.variety).filter(Boolean))).sort();
 
