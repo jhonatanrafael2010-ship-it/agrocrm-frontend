@@ -81,10 +81,6 @@ const Visits: React.FC = () => {
     return String(dateStr);
   }
 
-  function openView(v: Visit) {
-    setActiveVisit(v);
-    setViewOpen(true);
-  }
 
   async function handleDelete(id?: number) {
     if (!id) return;
