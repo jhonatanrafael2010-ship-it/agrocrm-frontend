@@ -44,12 +44,20 @@ const Visits: React.FC = () => {
 
   const theme = document.body.getAttribute("data-theme") || "light";
 
+  // ======================
+  // 🔁 CARREGAMENTO DE DADOS
+  // ======================
   useEffect(() => {
     let mounted = true;
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_BASE}visits`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${API_BASE}visits`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => {
+          console.log("📦 Dados recebidos de /api/visits:", data);
+          return data;
+        }),
       fetch(`${API_BASE}clients`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}properties`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}plots`).then((r) => (r.ok ? r.json() : [])),
@@ -57,16 +65,14 @@ const Visits: React.FC = () => {
     ])
       .then(([vs, cs, ps, pls, cons]) => {
         if (!mounted) return;
-        const doneVisits = (vs || []).filter((v: any) => v.status?.toLowerCase() === "done");
-        setVisits(doneVisits);
+        setVisits(vs || []);
         setClients(cs || []);
         setProperties(ps || []);
         setPlots(pls || []);
         setConsultants(cons || []);
       })
-
       .catch((err) => {
-        console.error(err);
+        console.error("❌ Erro ao carregar acompanhamentos:", err);
         setError("Erro ao carregar acompanhamentos");
       })
       .finally(() => setLoading(false));
@@ -75,6 +81,32 @@ const Visits: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  // ======================
+  // 📅 FILTRAGEM DE VISITAS
+  // ======================
+  const filteredVisits = visits
+    .filter((v) => {
+      // garante que só mostre visitas concluídas
+      if (!v.status || v.status.toLowerCase() !== "done") return false;
+
+      if (filterClient && String(v.client_id) !== filterClient) return false;
+      if (filterVariety && v.variety && v.variety.toLowerCase() !== filterVariety.toLowerCase())
+        return false;
+
+      if (filterStart && v.date && new Date(v.date) < new Date(filterStart)) return false;
+      if (filterEnd && v.date && new Date(v.date) > new Date(filterEnd)) return false;
+
+      if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
+
+      return true;
+    })
+    .sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
 
   function formatDateBR(dateStr?: string) {
     if (!dateStr) return "--";
