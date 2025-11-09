@@ -57,12 +57,14 @@ const Visits: React.FC = () => {
     ])
       .then(([vs, cs, ps, pls, cons]) => {
         if (!mounted) return;
-        setVisits(vs || []);
+        const doneVisits = (vs || []).filter((v: any) => v.status?.toLowerCase() === "done");
+        setVisits(doneVisits);
         setClients(cs || []);
         setProperties(ps || []);
         setPlots(pls || []);
         setConsultants(cons || []);
       })
+
       .catch((err) => {
         console.error(err);
         setError("Erro ao carregar acompanhamentos");
