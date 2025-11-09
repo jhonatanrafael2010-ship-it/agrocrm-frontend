@@ -33,8 +33,6 @@ const Visits: React.FC = () => {
   const [clientSearch, setClientSearch] = useState("");
   const [filterClient, setFilterClient] = useState("");
   const [filterVariety, setFilterVariety] = useState("");
-  const [viewOpen, setViewOpen] = useState(false);
-  const [activeVisit, setActiveVisit] = useState<Visit | null>(null);
 
   const today = new Date();
   const todayISO = today.toISOString().slice(0, 10);
@@ -276,7 +274,7 @@ const Visits: React.FC = () => {
                         <td className="text-end">
                           <button
                             className="btn btn-outline-primary btn-sm me-1"
-                            onClick={() => openView(v)}
+                            onClick={() => window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")}
                           >
                             Ver
                           </button>
