@@ -1,59 +1,41 @@
-const CACHE_NAME = "agrocrm-cache-v2";
-const OFFLINE_URL = "/index.html";
+const CACHE_NAME = 'agrocrm-cache-v1';
+const OFFLINE_URLS = [
+  '/',
+  '/index.html',
+  '/vite.svg',
+  '/manifest.json'
+];
 
-self.addEventListener("install", (event) => {
+// Instala o cache inicial
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        OFFLINE_URL,
-        "/manifest.json"
-        ]).catch(err => console.warn("⚠️ Cache parcial: alguns arquivos offline não foram adicionados", err));
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS))
   );
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => key !== CACHE_NAME && caches.delete(key)))
-    )
+// Responde a requisições
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return (
+        response ||
+        fetch(event.request).catch(() => {
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+        })
+      );
+    })
   );
-  self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  // ❌ Evita cachear requisições não-GET (PUT, POST, DELETE, etc)
-  if (req.method !== "GET") {
-    return;
-  }
-
-
-  // ⚙️ Se for navegação (React Router)
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).catch(() =>
-        caches.match(OFFLINE_URL, { cacheName: CACHE_NAME })
-      )
-    );
-    return;
-  }
-
-  // 📦 Cache-first para arquivos estáticos
-  if (url.origin === location.origin) {
-    event.respondWith(
-      caches.match(req).then(
-        (cached) =>
-          cached ||
-          fetch(req).then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-            return response;
-          })
-      )
-    );
-  }
+// Atualiza o cache
+self.addEventListener('activate', (event) => {
+  const whitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((key) => !whitelist.includes(key) && caches.delete(key)))
+    )
+  );
 });

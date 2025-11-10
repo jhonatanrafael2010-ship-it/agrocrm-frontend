@@ -24,12 +24,16 @@
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous"
     />
+
+    <!-- 🔰 PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1B5E20" />
   </head>
 
   <body>
     <div id="root"></div>
 
-    <!-- Bootstrap JS Bundle (Popper incluído) -->
+    <!-- Bootstrap JS Bundle -->
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -38,5 +42,17 @@
 
     <!-- React/Vite -->
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- 🧠 Registro do Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/service-worker.js')
+            .then((reg) => console.log('✅ Service Worker registrado:', reg.scope))
+            .catch((err) => console.log('⚠️ Falha ao registrar SW:', err));
+        });
+      }
+    </script>
   </body>
 </html>

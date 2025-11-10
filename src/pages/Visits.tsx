@@ -68,7 +68,7 @@ const Visits: React.FC = () => {
     async function loadData() {
       try {
         // 1️⃣ Tenta a rota padrão (mantendo lógica do backend)
-        const r1 = await fetch(`${API_BASE}visits`);
+        const r1 = await fetch(`${API_BASE}visits?scope=all`);
         const data1 = r1.ok ? await r1.json() : [];
 
         // 2️⃣ Detecta se o backend devolveu só "Plantio"
