@@ -58,7 +58,7 @@ const Visits: React.FC = () => {
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_BASE}visits?status=done`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${API_BASE}visits`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}clients`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}properties`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}plots`).then((r) => (r.ok ? r.json() : [])),
