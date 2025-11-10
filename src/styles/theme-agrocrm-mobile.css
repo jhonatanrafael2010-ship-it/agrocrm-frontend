@@ -154,31 +154,84 @@ body[data-platform="mobile"] .bottom-nav button:active::after {
 }
 
 /* =========================================================
-➕ Botão Flutuante (FAB)
+➕ Botão Flutuante (FAB) — Material You / Android 14
 ========================================================= */
 body[data-platform="mobile"] .fab {
   position: fixed;
-  bottom: 78px;
+  bottom: 82px; /* ligeiramente acima da bottom-nav */
   right: 20px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent-mobile);
-  color: #fff;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  font-size: 1.8rem;
+  background: linear-gradient(180deg, #42e57b, #26b96a);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  z-index: 9999;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 9999;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: fabIn 0.4s ease forwards;
 }
 
-body[data-platform="mobile"] .fab:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+/* 🔹 Ícone SVG centralizado */
+body[data-platform="mobile"] .fab svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+  transition: transform 0.15s ease;
 }
+
+body[data-platform="mobile"] .fab:active svg,
+body[data-platform="mobile"] .fab.pressed svg {
+  transform: scale(0.9);
+}
+
+/* Toque e sombra */
+body[data-platform="mobile"] .fab:active,
+body[data-platform="mobile"] .fab.pressed {
+  transform: scale(0.93);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Animação de entrada */
+@keyframes fabIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌟 Efeito pulsante suave */
+body[data-platform="mobile"] .fab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: fabPulse 2.8s infinite;
+}
+
+@keyframes fabPulse {
+  0% { box-shadow: 0 0 0 0 rgba(66, 229, 123, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(66, 229, 123, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(66, 229, 123, 0); }
+}
+
+/* Telas menores */
+@media (max-width: 400px) {
+  body[data-platform="mobile"] .fab {
+    width: 58px;
+    height: 58px;
+    bottom: 76px;
+    right: 16px;
+  }
+  body[data-platform="mobile"] .fab svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 
 /* =========================================================
 🎨 Botões e Inputs

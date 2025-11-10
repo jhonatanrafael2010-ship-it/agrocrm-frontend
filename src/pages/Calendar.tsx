@@ -649,7 +649,7 @@ const CalendarPage: React.FC = () => {
       </div>
 
       {/* ➕ FAB no mobile */}
-      {window.innerWidth <= 768 && (
+      {document.body.dataset.platform === "mobile" && (
         <button
           className="fab"
           onClick={() => {
@@ -679,10 +679,14 @@ const CalendarPage: React.FC = () => {
             });
             setOpen(true);
           }}
+          aria-label="Nova visita"
         >
-          +
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5c.552 0 1 .448 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6c0-.552.448-1 1-1z"/>
+          </svg>
         </button>
       )}
+
 
       {/* MODAL */}
       {open && (
