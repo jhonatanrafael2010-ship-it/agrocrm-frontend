@@ -16,15 +16,16 @@ const App: React.FC = () => {
   // ===========================================
   // 🌙 Controle de tema (escuro/claro) — Corrigido
   // ===========================================
-  const [theme, setTheme] = useState(() => {
+  /*const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem("theme");
     if (stored) return stored;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     return prefersDark ? "dark" : "light";
   });
+  */
 
   // 🔧 Função única para aplicar tema global (sincroniza Bootstrap + app)
-  const applyTheme = (themeValue: string) => {
+  /*const applyTheme = (themeValue: string) => {
     document.documentElement.setAttribute("data-theme", themeValue);
     document.body.setAttribute("data-theme", themeValue);
     localStorage.setItem("theme", themeValue);
@@ -36,11 +37,10 @@ const App: React.FC = () => {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+  */
 
-  // Alternar entre temas
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
+  // Alternar tema desativado (modo claro fixo)
+  const toggleTheme = () => {};
 
 
   useEffect(() => {
@@ -108,7 +108,7 @@ const App: React.FC = () => {
           </div>
 
           {/* 🌗 Alternar tema claro/escuro */}
-          <button
+          {/*<button
             onClick={toggleTheme}
             className="btn btn-outline-light d-flex align-items-center gap-2"
           >
@@ -123,7 +123,7 @@ const App: React.FC = () => {
             )}
           </button>
         </div>
-      </nav>
+      </nav>*/}
 
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">

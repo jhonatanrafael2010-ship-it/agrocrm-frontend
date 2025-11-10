@@ -20,7 +20,7 @@ body[data-platform="mobile"][data-theme="light"] {
   --shadow-mobile: rgba(0, 0, 0, 0.08);
 }
 
-/* 🌙 Tema Escuro */
+/* 🌙 Tema Escuro
 body[data-platform="mobile"][data-theme="dark"] {
   --bg-mobile: var(--bg-dark, #0b1620);
   --panel-mobile: var(--panel-dark, #1e293b);
@@ -30,7 +30,7 @@ body[data-platform="mobile"][data-theme="dark"] {
   --border-mobile: var(--border-dark, #334155);
   --shadow-mobile: rgba(0, 0, 0, 0.4);
 }
-
+*/
 
 
 /* =========================================================

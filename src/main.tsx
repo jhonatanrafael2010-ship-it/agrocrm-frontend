@@ -6,37 +6,16 @@ import { getDB } from './db'
 // 🎨 Estilos globais — ORDEM DE CARREGAMENTO CORRETA
 // ============================================================
 
-// 1️⃣ Bootstrap base (estrutura e variáveis)
 import 'bootstrap/dist/css/bootstrap.min.css'
-
-// 2️⃣ Temas personalizados (carregados ANTES do app.css)
 import './styles/theme-base.css'
 import './styles/theme-agrocrm.css'
 import './styles/theme-agrocrm-mobile.css'
-
-// 3️⃣ Estilo do Vite (index.css) — vem ANTES do app.css
 import './styles/index.css'
-
-// 4️⃣ Estilos gerais do app — DEVE SER O ÚLTIMO CSS
-import './styles/app.css'  // ⬅️ este agora fica por último!
-
-// 5️⃣ Bootstrap JS
+import './styles/app.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-
-// 5️⃣ Estilo do Vite (mantém, mas NÃO deve ficar depois do app.css)
-import './styles/index.css'
-
 
 // ============================================================
 // 🚀 Inicialização do app
-// ============================================================
-createRoot(document.getElementById('root')!).render(
-  <App />
-)
-
-
-// ============================================================
-// 🗄️ IndexedDB e inicialização
 // ============================================================
 getDB().then(() => console.log('✅ IndexedDB pronta'))
 
@@ -46,6 +25,16 @@ if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
 } else {
   document.body.setAttribute('data-platform', 'desktop')
 }
+
+// 🔒 Força o modo claro em toda a aplicação
+document.documentElement.setAttribute('data-theme', 'light')
+document.body.setAttribute('data-theme', 'light')
+document.documentElement.setAttribute('data-bs-theme', 'light')
+
+// ============================================================
+// ⚙️ Renderização principal
+// ============================================================
+createRoot(document.getElementById('root')!).render(<App />)
 
 // ============================================================
 // 🔄 Atualização automática de cache (UX aprimorada)
@@ -101,8 +90,3 @@ if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
     console.warn('⚠️ Falha ao verificar cache:', err)
   }
 })()
-
-// ============================================================
-// ⚙️ Renderização principal
-// ============================================================
-createRoot(document.getElementById('root')!).render(<App />)

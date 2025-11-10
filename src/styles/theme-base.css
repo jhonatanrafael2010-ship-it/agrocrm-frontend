@@ -45,16 +45,9 @@ html[data-theme='light'] {
   --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* =========================================================
-🌙 Tema Escuro
-========================================================= */
-html[data-theme='dark'] {
-  --bg: #0b1620;
-  --panel: #0e1c27;
-  --text: #dfeff0;
-  --muted: #9fb3b6;
-  --border: rgba(255, 255, 255, 0.06);
-  --shadow: rgba(0, 0, 0, 0.45);
+body, html {
+  color: #101418 !important;
+  background-color: #ffffff !important;
 }
 
 /* =========================================================
@@ -164,10 +157,6 @@ html[data-theme='light'] .fab {
   color: #fff;
 }
 
-html[data-theme='dark'] .fab {
-  background: var(--accent);
-  color: #fff;
-}
 
 .fab:hover {
   background: var(--accent-hover);
@@ -260,12 +249,6 @@ textarea {
   background: var(--panel);
   color: var(--text);
   font-family: var(--font-family);
-}
-
-html[data-theme='dark'] input,
-html[data-theme='dark'] select,
-html[data-theme='dark'] textarea {
-  background: #0f202b;
 }
 
 
@@ -389,19 +372,6 @@ body[data-theme='light'] {
   --bs-dropdown-link-hover-bg: rgba(45, 211, 111, 0.15);
 }
 
-/* Tema escuro */
-html[data-theme='dark'],
-body[data-theme='dark'] {
-  --bs-body-bg: var(--bg);
-  --bs-body-color: var(--text);
-  --bs-modal-bg: var(--panel);
-  --bs-modal-color: var(--text);
-  --bs-dropdown-bg: var(--panel);
-  --bs-dropdown-color: var(--text);
-  --bs-dropdown-link-color: var(--text);
-  --bs-dropdown-link-hover-color: var(--accent);
-  --bs-dropdown-link-hover-bg: rgba(45, 211, 111, 0.15);
-}
 /* =========================================================
 📸 Galeria de Fotos das Visitas
 ========================================================= */
@@ -447,10 +417,6 @@ html[data-theme='light'] .photo-gallery img {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-html[data-theme='dark'] .photo-gallery img {
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-}
 /* =========================================================
 🖼️ Lightbox (visualizador de fotos ampliadas)
 ========================================================= */
@@ -580,12 +546,12 @@ html[data-theme='dark'] .photo-gallery img {
   color: var(--muted) !important;
 }
 
-body[data-theme='dark'],
 body[data-theme='light'] {
   background: var(--bg);
   color: var(--text);
   transition: background 0.3s ease, color 0.3s ease;
 }
+
 
 /* Força cards, modais e painéis a respeitarem o tema */
 .card,
