@@ -14,8 +14,8 @@ const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
 
   // 🔒 Tema fixo — modo claro
-  const toggleTheme = () => {};
-
+  // (sem necessidade de função toggleTheme)
+  
   // 🔄 Sincronização offline
   useEffect(() => {
     async function syncPending() {
@@ -81,16 +81,6 @@ const App: React.FC = () => {
           </div>
         </div>
       </nav>
-
-      {/*
-        🌗 Alternar tema (desativado)
-        <button
-          onClick={toggleTheme}
-          className="btn btn-outline-light d-flex align-items-center gap-2"
-        >
-          <SunMedium size={18} /> Claro
-        </button>
-      */}
 
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
