@@ -430,21 +430,19 @@ body[data-platform="mobile"] .visit-card {
   }
 }
 /* =========================================================
-📌 HEADER FIXO DO CALENDÁRIO — MOBILE
+📌 HEADER FIXO DO CALENDÁRIO — COMPORTAMENTO CORRIGIDO
 ========================================================= */
 body[data-platform="mobile"] .calendar-page {
   position: relative;
-  padding-top: 120px !important; /* espaço pro header fixo */
+  padding-top: 120px !important; /* espaço pro header dentro do calendário */
 }
 
-/* bloco inteiro que fica em cima (título + filtros) */
+/* Cabeçalho fixo apenas dentro do calendário */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky {
-  position: fixed;
-  top: 58px; /* abaixo do app-header mobile que vc já tem */
-  left: 0;
-  right: 0;
-  z-index: 9990;
-  background: var(--bg-mobile, #0b1620);
+  position: sticky; /* 👉 deixa fixo só dentro da página de calendário */
+  top: 58px;
+  z-index: 10;
+  background: var(--bg-mobile, #fff);
   padding: 10px 12px 6px 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   display: flex;
@@ -452,7 +450,7 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky {
   gap: 8px;
 }
 
-/* linha de título "Agenda de Visitas" */
+/* título e filtros seguem iguais */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky .title-row {
   display: flex;
   align-items: center;
@@ -467,11 +465,9 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky h2 {
   color: var(--accent-mobile, #2dd36f);
 }
 
-/* linha de filtros (consultor / variedade) */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky .filters-row {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
   overflow-x: auto;
 }
 
@@ -479,25 +475,6 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky select {
   min-width: 150px;
 }
 
-/* linha de navegação (Hoje / < > / Mês Semana Dia) */
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row .fc-button,
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row button {
-  border-radius: 999px !important;
-  min-height: 32px;
-  font-size: 0.8rem;
-}
-
-/* garante que o calendário de baixo não suba por baixo do header */
-body[data-platform="mobile"] .calendar-page .fc,
-body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
-  margin-top: 4px !important;
-}
 /* =========================================================
 📌 HEADER FIXO + EXPANSÃO AUTOMÁTICA DE CÉLULAS
 ========================================================= */
@@ -506,20 +483,6 @@ body[data-platform="mobile"] .calendar-page {
   padding-top: 120px !important;
 }
 
-/* Cabeçalho fixo */
-body[data-platform="mobile"] .calendar-header-sticky {
-  position: fixed;
-  top: 56px;
-  left: 0;
-  right: 0;
-  z-index: 9990;
-  background: var(--bg-mobile, #0b1620);
-  padding: 10px 12px 6px 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
 body[data-platform="mobile"] .calendar-header-sticky .title-row {
   display: flex;
