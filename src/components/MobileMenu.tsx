@@ -9,6 +9,8 @@ import {
   LogOut,
 } from "lucide-react";
 import "./MobileMenu.css";
+import logo from "../assets/nutricrm_logo.png";
+
 
 // @ts-ignore
 declare const bootstrap: any;
@@ -44,33 +46,33 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
       id="mobileMenu"
       aria-labelledby="mobileMenuLabel"
     >
-      {/* ========================================================= */}
-      {/* 🔰 Cabeçalho com logo NutriCRM */}
-      {/* ========================================================= */}
-      <div className="offcanvas-header app-logo-container">
-        <img
-          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
-          alt="NutriCRM Logo"
-          className="app-logo"
-        />
-        <button
-          type="button"
-          className="btn-close"
-          data-bs-dismiss="offcanvas"
-          aria-label="Fechar"
-          style={{
-            position: "absolute",
-            top: "12px",
-            right: "14px",
-            filter: "invert(var(--invert-close, 0.5))",
-          }}
-        ></button>
-      </div>
+    {/* ========================================================= */}
+    {/* 🔰 Cabeçalho com logo NutriCRM */}
+    {/* ========================================================= */}
+    <div className="offcanvas-header app-logo-container">
+      <img src={logo} alt="NutriCRM Logo" className="app-logo" />
+      <button
+        type="button"
+        className="btn-close"
+        data-bs-dismiss="offcanvas"
+        aria-label="Fechar"
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "14px",
+          filter: "invert(0.5)",
+        }}
+      ></button>
+    </div>
+
 
       {/* ========================================================= */}
       {/* 🔹 Corpo com links de navegação */}
       {/* ========================================================= */}
-      <div className="offcanvas-body d-flex flex-column justify-content-between p-3">
+      <div
+        className="offcanvas-body d-flex flex-column justify-content-between p-3"
+        role="navigation"
+      >
         <div className="list-group list-group-flush">
           {links.map((item) => {
             const isActive = activeItem === item.label;
