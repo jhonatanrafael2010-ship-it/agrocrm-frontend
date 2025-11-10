@@ -7,42 +7,16 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
-import { Moon, SunMedium } from "lucide-react";
 import { syncPendingVisits } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
-  // ===========================================
-  // 🌙 Controle de tema (escuro/claro) — Corrigido
-  // ===========================================
-  /*const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored) return stored;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
-  });
-  */
 
-  // 🔧 Função única para aplicar tema global (sincroniza Bootstrap + app)
-  /*const applyTheme = (themeValue: string) => {
-    document.documentElement.setAttribute("data-theme", themeValue);
-    document.body.setAttribute("data-theme", themeValue);
-    localStorage.setItem("theme", themeValue);
-  };
-
-
-
-  // Atualiza tema quando o state muda
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-  */
-
-  // Alternar tema desativado (modo claro fixo)
+  // 🔒 Tema fixo — modo claro
   const toggleTheme = () => {};
 
-
+  // 🔄 Sincronização offline
   useEffect(() => {
     async function syncPending() {
       try {
@@ -51,17 +25,14 @@ const App: React.FC = () => {
         console.warn("⚠️ Erro ao tentar sincronizar:", err);
       }
     }
-
     window.addEventListener("online", syncPending);
     if (navigator.onLine) syncPending();
-
-    return () => {
-      window.removeEventListener("online", syncPending);
-    };
+    return () => window.removeEventListener("online", syncPending);
   }, []);
 
   const [isMobileApp, setIsMobileApp] = useState(false);
 
+  // 📱 Detecta mobile vs desktop
   useEffect(() => {
     const detect = () => {
       const isSmallScreen = window.innerWidth <= 900;
@@ -79,7 +50,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", detect);
   }, []);
 
-  // ✅ Força fechamento da offcanvas quando muda de rota
+  // ✅ Fecha o menu lateral quando muda de rota
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
     if (offcanvasEl) {
@@ -90,9 +61,11 @@ const App: React.FC = () => {
 
   return (
     <div className="app d-flex flex-column vh-100">
-      {/* 🔝 Cabeçalho fixo (Bootstrap Navbar) */}
-      <nav className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
-           style={{ background: "var(--panel)", color: "var(--text)" }}>
+      {/* 🔝 Cabeçalho fixo */}
+      <nav
+        className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
+        style={{ background: "var(--panel)", color: "var(--text)" }}
+      >
         <div className="container-fluid">
           <div className="d-flex align-items-center gap-3">
             {/* ☰ Botão de menu mobile */}
@@ -106,24 +79,18 @@ const App: React.FC = () => {
               ☰
             </button>
           </div>
-
-          {/* 🌗 Alternar tema claro/escuro */}
-          {/*<button
-            onClick={toggleTheme}
-            className="btn btn-outline-light d-flex align-items-center gap-2"
-          >
-            {theme === "dark" ? (
-              <>
-                <Moon size={18} /> Escuro
-              </>
-            ) : (
-              <>
-                <SunMedium size={18} /> Claro
-              </>
-            )}
-          </button>
         </div>
-      </nav>*/}
+      </nav>
+
+      {/*
+        🌗 Alternar tema (desativado)
+        <button
+          onClick={toggleTheme}
+          className="btn btn-outline-light d-flex align-items-center gap-2"
+        >
+          <SunMedium size={18} /> Claro
+        </button>
+      */}
 
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
