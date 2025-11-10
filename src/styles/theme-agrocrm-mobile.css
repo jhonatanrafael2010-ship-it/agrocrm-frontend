@@ -8,27 +8,33 @@ Herdando de theme-base.css
 /* =========================================================
 🌿 Tema base — Mantém estrutura e ergonomia
 ========================================================= */
-body[data-platform="mobile"][data-theme="light"],
+
+/* 🌞 Tema Claro */
 @media (prefers-color-scheme: light) {
-  --bg-mobile: var(--bg);
-  --panel-mobile: var(--panel);
-  --text-mobile: var(--text);
-  --muted-mobile: var(--muted);
-  --accent-mobile: var(--accent);
-  --border-mobile: var(--border);
-  --shadow-mobile: var(--shadow);
+  body[data-platform="mobile"][data-theme="light"] {
+    --bg-mobile: var(--bg);
+    --panel-mobile: var(--panel);
+    --text-mobile: var(--text);
+    --muted-mobile: var(--muted);
+    --accent-mobile: var(--accent);
+    --border-mobile: var(--border);
+    --shadow-mobile: var(--shadow);
+  }
 }
 
-body[data-platform="mobile"][data-theme="dark"],
+/* 🌙 Tema Escuro */
 @media (prefers-color-scheme: dark) {
-  --bg-mobile: var(--bg);
-  --panel-mobile: var(--panel);
-  --text-mobile: var(--text);
-  --muted-mobile: var(--muted);
-  --accent-mobile: var(--accent);
-  --border-mobile: var(--border);
-  --shadow-mobile: var(--shadow);
+  body[data-platform="mobile"][data-theme="dark"] {
+    --bg-mobile: var(--bg);
+    --panel-mobile: var(--panel);
+    --text-mobile: var(--text);
+    --muted-mobile: var(--muted);
+    --accent-mobile: var(--accent);
+    --border-mobile: var(--border);
+    --shadow-mobile: var(--shadow);
+  }
 }
+
 
 /* =========================================================
 🧭 Estrutura e comportamento

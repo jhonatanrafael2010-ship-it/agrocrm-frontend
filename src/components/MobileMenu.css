@@ -21,17 +21,26 @@
 }
 
 /* =========================================================
-🔰 Cabeçalho / Logo NutriCRM — versão branca centralizada
+🔰 Cabeçalho / Logo NutriCRM — adapta-se ao tema
 ========================================================= */
 .app-logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff; /* fundo branco */
+  background: var(--panel-mobile, #ffffff); /* usa a cor do tema */
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   padding: 14px 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* sombra leve */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 10px 10px;
+  transition: background 0.3s ease;
 }
+
+/* modo escuro */
+[data-theme='dark'] .app-logo-container {
+  background: var(--panel-mobile, #0f172a); /* tom escuro */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 
 .app-logo {
   width: 160px;
