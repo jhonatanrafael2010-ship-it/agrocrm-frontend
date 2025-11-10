@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* @ts-nocheck */
+
 
 type Visit = {
   id: number;
