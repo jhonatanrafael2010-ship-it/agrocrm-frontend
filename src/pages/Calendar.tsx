@@ -89,7 +89,7 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      const res = await fetch(`${API_BASE}visits`);
+      const res = await fetch(`${API_BASE}visits?scope=all`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const vs: Visit[] = await res.json();
 
