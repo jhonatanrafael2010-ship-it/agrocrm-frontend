@@ -60,7 +60,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
           position: "absolute",
           top: "12px",
           right: "14px",
-          filter: "invert(0.5)",
+          filter: "invert(var(--invert-close, 0.5))"
         }}
       ></button>
     </div>

@@ -3,8 +3,8 @@
 ========================================================= */
 
 .offcanvas {
-  background-color: var(--panel) !important;
-  color: var(--text) !important;
+  background-color: var(--panel-mobile) !important;
+  color: var(--text-mobile) !important;
   z-index: 2000 !important;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);
@@ -37,10 +37,21 @@
 
 /* modo escuro */
 [data-theme='dark'] .app-logo-container {
-  background: var(--panel-mobile, #0f172a); /* tom escuro */
+  background: var(--panel-mobile, #0f172a);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+[data-theme='dark'] .app-logo {
+  filter: brightness(0.9) contrast(1.1);
+}
+
+[data-theme='dark'] {
+  --invert-close: 1;
+}
+
+[data-theme='light'] {
+  --invert-close: 0;
+}
 
 .app-logo {
   width: 160px;

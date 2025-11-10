@@ -10,30 +10,27 @@ Herdando de theme-base.css
 ========================================================= */
 
 /* 🌞 Tema Claro */
-@media (prefers-color-scheme: light) {
-  body[data-platform="mobile"][data-theme="light"] {
-    --bg-mobile: var(--bg);
-    --panel-mobile: var(--panel);
-    --text-mobile: var(--text);
-    --muted-mobile: var(--muted);
-    --accent-mobile: var(--accent);
-    --border-mobile: var(--border);
-    --shadow-mobile: var(--shadow);
-  }
+body[data-platform="mobile"][data-theme="light"] {
+  --bg-mobile: var(--bg-light, #ffffff);
+  --panel-mobile: var(--panel-light, #f9fafb);
+  --text-mobile: var(--text-light, #111827);
+  --muted-mobile: var(--muted-light, #6b7280);
+  --accent-mobile: var(--accent-light, #26b96a);
+  --border-mobile: var(--border-light, #e5e7eb);
+  --shadow-mobile: rgba(0, 0, 0, 0.08);
 }
 
 /* 🌙 Tema Escuro */
-@media (prefers-color-scheme: dark) {
-  body[data-platform="mobile"][data-theme="dark"] {
-    --bg-mobile: var(--bg);
-    --panel-mobile: var(--panel);
-    --text-mobile: var(--text);
-    --muted-mobile: var(--muted);
-    --accent-mobile: var(--accent);
-    --border-mobile: var(--border);
-    --shadow-mobile: var(--shadow);
-  }
+body[data-platform="mobile"][data-theme="dark"] {
+  --bg-mobile: var(--bg-dark, #0b1620);
+  --panel-mobile: var(--panel-dark, #1e293b);
+  --text-mobile: var(--text-dark, #f1f5f9);
+  --muted-mobile: var(--muted-dark, #94a3b8);
+  --accent-mobile: var(--accent-dark, #2dd36f);
+  --border-mobile: var(--border-dark, #334155);
+  --shadow-mobile: rgba(0, 0, 0, 0.4);
 }
+
 
 
 /* =========================================================
