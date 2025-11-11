@@ -291,7 +291,6 @@ const CalendarPage: React.FC = () => {
       return;
     }
 
-    // converte dd/mm/aaaa → yyyy-mm-dd
     const [d, m, y] = form.date.split("/");
     const iso = `${y}-${m}-${d}`;
 
@@ -301,18 +300,14 @@ const CalendarPage: React.FC = () => {
       cultureName = byId ? byId.name : form.culture;
     }
 
-    // 🔎 Normaliza a cultura (sem acento, minúscula)
     const normalize = (s: string | undefined | null) =>
       (s || "")
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim();
 
     const normalizedCulture = normalize(cultureName);
-
-    // ✅ Vai gerar cronograma para milho, soja e algodão,
-    // mesmo que venha "Milho", "milho", "MILHO", "Algodao", "Soja IPRO", etc.
     const isPhenoCulture =
       normalizedCulture.startsWith("milho") ||
       normalizedCulture.startsWith("soja") ||
@@ -330,23 +325,18 @@ const CalendarPage: React.FC = () => {
       recommendation: "Plantio",
       latitude: form.latitude,
       longitude: form.longitude,
-
-      // 👇 sempre manda pros dois campos, como antes
       generate_schedule: isPhenoCulture,
       genPheno: isPhenoCulture,
     };
 
     console.log("📦 Payload enviado:", payload);
 
-
     try {
-      // 🟢 Cria a visita, com suporte offline
+      // 🟢 Cria a visita (com suporte offline)
       const result = await createVisitWithSync(API_BASE, payload);
 
       if (result.offline && !result.synced) {
-        alert("✅ Visita salva offline. Ela será enviada quando você voltar a ter internet.");
-
-        // ⚠️ Adiciona temporariamente ao calendário (offline)
+        alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
         const tempEvent = {
           id: `temp-${Date.now()}`,
           title: `${form.clientSearch || "Visita"} (pendente)`,
@@ -357,69 +347,57 @@ const CalendarPage: React.FC = () => {
           offline: true,
           extendedProps: { raw: { ...payload, client_name: form.clientSearch || "Cliente offline" } },
         };
-
         setEvents((prev) => [...prev, tempEvent]);
       } else {
-        console.log("🔁 Resposta do backend ao criar visita:", result);
         alert("✅ Visita criada e sincronizada com o servidor.");
       }
 
+      // 🟢 Upload de fotos (somente se online)
+      if (navigator.onLine && form.photos && form.photos.length > 0) {
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file, idx) => {
+          fd.append("photos", file);
+          fd.append("captions", form.photoCaptions[idx] || "");
+        });
+
+        const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+
+        if (!photoResp.ok) console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
+        else console.log("📸 Fotos enviadas com sucesso!");
+      }
+
+      // 🔄 Recarrega e limpa
+      await loadVisits();
       setOpen(false);
-      await loadVisits(); // recarrega para garantir que aparece no calendário
+      setForm({
+        id: null,
+        date: "",
+        client_id: "",
+        property_id: "",
+        plot_id: "",
+        consultant_id: "",
+        culture: "",
+        variety: "",
+        recommendation: "",
+        genPheno: true,
+        photos: null,
+        photoPreviews: [],
+        savedPhotos: [],
+        clientSearch: "",
+        latitude: null,
+        longitude: null,
+        photoCaptions: [],
+      });
+
     } catch (err) {
       console.error("❌ Erro ao salvar visita:", err);
       alert("Erro ao salvar visita. Tente novamente.");
     }
-
-
-    // 🟢 Upload de fotos (somente se online)
-    if (navigator.onLine && form.photos && form.photos.length > 0) {
-      const fd = new FormData();
-      Array.from(form.photos).forEach((file, idx) => {
-        fd.append("photos", file);
-        fd.append("captions", form.photoCaptions[idx] || "");
-      });
-
-      const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!photoResp.ok) console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
-      else console.log("📸 Fotos enviadas com sucesso!");
-    }
-
-    // 🔄 Recarrega calendário
-    setOpen(false);
-    await loadVisits();
-
-    // 🧹 Limpa formulário após salvar
-    setForm({
-      id: null,
-      date: "",
-      client_id: "",
-      property_id: "",
-      plot_id: "",
-      consultant_id: "",
-      culture: "",
-      variety: "",
-      recommendation: "",
-      genPheno: true,
-      photos: null,
-      photoPreviews: [],
-      savedPhotos: [],
-      clientSearch: "",
-      latitude: null,
-      longitude: null,
-      photoCaptions: [],
-    });
-
-
-    } catch (e: any) {
-      console.error("❌ Erro ao salvar visita:", e);
-      alert(e?.message || "Erro ao salvar visita");
-    }
   };
+
 
       
 
