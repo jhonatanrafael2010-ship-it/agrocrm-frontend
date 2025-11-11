@@ -1,9 +1,18 @@
 // src/utils/indexedDB.ts
 
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // 🔼 aumente a versão para forçar upgrade no navegador
 
-export type StoreName = "clients" | "properties" | "visits" | "pending_visits";
+// 🔹 Todas as stores usadas no app
+export type StoreName =
+  | "clients"
+  | "properties"
+  | "plots"
+  | "cultures"
+  | "varieties"
+  | "consultants"
+  | "visits"
+  | "pending_visits";
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -12,21 +21,30 @@ function openDB(): Promise<IDBDatabase> {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      if (!db.objectStoreNames.contains("clients")) {
-        db.createObjectStore("clients", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("properties")) {
-        db.createObjectStore("properties", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("visits")) {
-        db.createObjectStore("visits", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("pending_visits")) {
-        db.createObjectStore("pending_visits", {
-          keyPath: "id",
-          autoIncrement: true,
-        });
-      }
+      // 🔹 Cria as stores se ainda não existirem
+      const storeNames: StoreName[] = [
+        "clients",
+        "properties",
+        "plots",
+        "cultures",
+        "varieties",
+        "consultants",
+        "visits",
+        "pending_visits",
+      ];
+
+      storeNames.forEach((name) => {
+        if (!db.objectStoreNames.contains(name)) {
+          if (name === "pending_visits") {
+            db.createObjectStore(name, {
+              keyPath: "id",
+              autoIncrement: true,
+            });
+          } else {
+            db.createObjectStore(name, { keyPath: "id" });
+          }
+        }
+      });
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -34,6 +52,9 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+// ============================================================
+// 🧹 Limpar store
+// ============================================================
 export async function clearStore(store: StoreName): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -45,6 +66,9 @@ export async function clearStore(store: StoreName): Promise<void> {
   });
 }
 
+// ============================================================
+// 💾 Inserir vários itens
+// ============================================================
 export async function putManyInStore(
   store: StoreName,
   items: any[]
@@ -54,7 +78,7 @@ export async function putManyInStore(
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
 
-    // Só limpamos para stores de "coleção"
+    // Só limpamos stores de coleção
     if (store !== "pending_visits") {
       os.clear();
     }
@@ -68,6 +92,9 @@ export async function putManyInStore(
   });
 }
 
+// ============================================================
+// 📦 Buscar todos os itens
+// ============================================================
 export async function getAllFromStore<T = any>(store: StoreName): Promise<T[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -75,15 +102,14 @@ export async function getAllFromStore<T = any>(store: StoreName): Promise<T[]> {
     const os = tx.objectStore(store);
     const req = os.getAll();
 
-    req.onsuccess = () => {
-      resolve(req.result as T[]);
-    };
+    req.onsuccess = () => resolve(req.result as T[]);
     req.onerror = () => reject(req.error);
   });
 }
 
-// ---------- PENDENTES DE SYNC (visitas criadas offline) ----------
-
+// ============================================================
+// 🔄 PENDENTES DE SYNC (visitas offline)
+// ============================================================
 export interface PendingVisit {
   id?: number;
   data: any;
@@ -110,10 +136,7 @@ export async function getAllPendingVisits(): Promise<PendingVisit[]> {
     const tx = db.transaction("pending_visits", "readonly");
     const os = tx.objectStore("pending_visits");
     const req = os.getAll();
-
-    req.onsuccess = () => {
-      resolve(req.result as PendingVisit[]);
-    };
+    req.onsuccess = () => resolve(req.result as PendingVisit[]);
     req.onerror = () => reject(req.error);
   });
 }
