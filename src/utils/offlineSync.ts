@@ -21,8 +21,6 @@ function normalizeBaseUrl(base: string): string {
  * Fetch com cache:
  * - Online: busca na API, salva no IndexedDB e retorna
  * - Offline/erro: lê do IndexedDB
- * @param url Endpoint completo
- * @param store Nome da store correspondente no IndexedDB
  */
 export async function fetchWithCache<T = any>(
   url: string,
@@ -33,9 +31,8 @@ export async function fetchWithCache<T = any>(
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
 
     const data = await res.json();
-
-    // ✅ Salva no IndexedDB
     await putManyInStore(store, data);
+
     console.log(`📦 ${data.length} registros salvos no cache (${store})`);
     return data as T[];
   } catch (err) {
@@ -54,7 +51,7 @@ export async function fetchWithCache<T = any>(
 /**
  * Cria uma visita e tenta enviar para o backend.
  * - Se online: POST normal
- * - Se offline ou erro: salva em pending_visits (IndexedDB) para sync posterior
+ * - Se offline: salva em pending_visits (IndexedDB) para sync depois
  */
 export async function createVisitWithSync(
   apiBase: string,
@@ -87,7 +84,7 @@ export async function createVisitWithSync(
 
 /**
  * Sincroniza todas as visitas pendentes (criadas offline) com o backend.
- * Chamado automaticamente no App.tsx ao reconectar.
+ * Chamado automaticamente no App.tsx quando reconectar.
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -131,18 +128,17 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
+
+  // Só pré-carrega stores existentes no IndexedDB atual
   const endpoints: [string, StoreName][] = [
     [`${base}/clients`, "clients"],
     [`${base}/properties`, "properties"],
-    [`${base}/plots`, "plots"],
-    [`${base}/cultures`, "cultures"],
-    [`${base}/varieties`, "varieties"],
-    [`${base}/consultants`, "consultants"],
     [`${base}/visits?scope=all`, "visits"],
   ];
 
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
   }
+
   console.log("📦 Dados base pré-carregados para uso offline.");
 }

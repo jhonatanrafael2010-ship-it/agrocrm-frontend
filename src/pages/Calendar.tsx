@@ -88,6 +88,11 @@ const CalendarPage: React.FC = () => {
   const [selectedConsultant, setSelectedConsultant] = useState<string>("");
   const [selectedVariety, setSelectedVariety] = useState<string>("");
 
+  // Estado de sincronização
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
+
   // modal
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -233,13 +238,23 @@ const CalendarPage: React.FC = () => {
   // 🔄 Recarregar visitas após sincronização global
   // ============================================================
   useEffect(() => {
-    const reloadAfterSync = () => {
-      console.log("🔄 Sincronização detectada — recarregando visitas...");
-      loadVisits();
+    const handleSync = async () => {
+      console.log("🔄 Iniciando sincronização manual de visitas...");
+      setSyncing(true);
+
+      // Espera um pequeno delay para simular feedback visual
+      await new Promise((res) => setTimeout(res, 800));
+
+      await loadVisits();
+      setLastSync(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+      setSyncing(false);
+      console.log("✅ Sincronização concluída e visitas recarregadas.");
     };
-    window.addEventListener("visits-synced", reloadAfterSync);
-    return () => window.removeEventListener("visits-synced", reloadAfterSync);
+
+    window.addEventListener("visits-synced", handleSync);
+    return () => window.removeEventListener("visits-synced", handleSync);
   }, []);
+
 
 
   // ============================================================
@@ -553,6 +568,45 @@ const CalendarPage: React.FC = () => {
             📴 Você está offline — exibindo dados do cache local
           </div>
         )}
+
+        {/* 🔁 Indicador de sincronização */}
+        {syncing && (
+          <div
+            style={{
+              backgroundColor: "#007bff",
+              color: "#fff",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              animation: "pulse 1.5s infinite",
+            }}
+          >
+            🔁 Sincronizando visitas com o servidor...
+          </div>
+        )}
+
+        {!syncing && lastSync && (
+          <div
+            style={{
+              backgroundColor: "#28a745",
+              color: "#fff",
+              padding: "4px 10px",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              textAlign: "center",
+              fontWeight: 500,
+              fontSize: "0.8rem",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+            }}
+          >
+            ✅ Última sincronização: {lastSync}
+          </div>
+        )}
+
 
         <div className="title-row">
           <h2 className="mb-0">Agenda de Visitas</h2>

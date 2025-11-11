@@ -14,6 +14,9 @@ const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
   const [isMobileApp, setIsMobileApp] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
   const API_BASE = "/api/";
 
   // ============================================================
@@ -22,10 +25,16 @@ const App: React.FC = () => {
   useEffect(() => {
     async function syncPending() {
       try {
+        setSyncing(true);
         await syncPendingVisits("/api/");
         window.dispatchEvent(new Event("visits-synced"));
+        setLastSync(
+          new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        );
       } catch (err) {
         console.warn("⚠️ Erro ao tentar sincronizar:", err);
+      } finally {
+        setTimeout(() => setSyncing(false), 800);
       }
     }
 
@@ -35,7 +44,7 @@ const App: React.FC = () => {
   }, []);
 
   // ============================================================
-  // ⚡ Pré-carregamento de dados base (para uso offline)
+  // ⚡ Pré-carregamento de dados base
   // ============================================================
   useEffect(() => {
     async function loadBaseData() {
@@ -45,12 +54,11 @@ const App: React.FC = () => {
         console.warn("⚠️ Falha ao pré-carregar dados base:", err);
       }
     }
-
     loadBaseData();
   }, []);
 
   // ============================================================
-  // 🌐 Monitorar status de conexão
+  // 🌐 Status de conexão
   // ============================================================
   useEffect(() => {
     const updateOnlineStatus = () => setOffline(!navigator.onLine);
@@ -84,7 +92,7 @@ const App: React.FC = () => {
   }, []);
 
   // ============================================================
-  // ✅ Fecha o menu lateral quando muda de rota
+  // ✅ Fecha menu lateral ao mudar rota
   // ============================================================
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
@@ -120,8 +128,8 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* 🌐 Banner global de modo offline */}
-      {!navigator.onLine && (
+      {/* 🌐 Banner global offline */}
+      {offline && (
         <div
           style={{
             backgroundColor: "#ffcc00",
@@ -139,8 +147,48 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* 🔁 Indicador de sincronização global */}
+      {syncing && (
+        <div
+          style={{
+            backgroundColor: "#007bff",
+            color: "#fff",
+            padding: "6px 12px",
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            borderBottom: "1px solid #005dc1",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            animation: "pulse 1.5s infinite",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <span className="sync-spinner"></span>
+          Sincronizando visitas com o servidor...
+        </div>
+      )}
 
-      {/* 🧭 Sidebar / Menu lateral */}
+      {!syncing && lastSync && !offline && (
+        <div
+          style={{
+            backgroundColor: "#28a745",
+            color: "#fff",
+            padding: "4px 10px",
+            textAlign: "center",
+            fontWeight: 500,
+            fontSize: "0.8rem",
+            borderBottom: "1px solid #1c7a31",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          ✅ Última sincronização: {lastSync}
+        </div>
+      )}
+
+      {/* 🧭 Sidebar / Conteúdo */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
           <MobileMenu onNavigate={setRoute} activeItem={route} />
