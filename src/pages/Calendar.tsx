@@ -163,11 +163,12 @@ const CalendarPage: React.FC = () => {
     Promise.all([
       fetchWithCache(`${API_BASE}clients`, "clients"),
       fetchWithCache(`${API_BASE}properties`, "properties"),
-      fetchWithCache(`${API_BASE}plots`, "properties"),
-      fetchWithCache(`${API_BASE}cultures`, "visits"),
-      fetchWithCache(`${API_BASE}varieties`, "visits"),
-      fetchWithCache(`${API_BASE}consultants`, "visits"),
+      fetchWithCache(`${API_BASE}plots`, "plots"),
+      fetchWithCache(`${API_BASE}cultures`, "visits"),     // pode deixar “visits” por enquanto
+      fetchWithCache(`${API_BASE}varieties`, "visits"),    // idem
+      fetchWithCache(`${API_BASE}consultants`, "visits"),  // idem
     ])
+
 
       .then(([cs, ps, pls, cts, vars, cons]) => {
         setClients(cs || []);
@@ -272,6 +273,7 @@ const CalendarPage: React.FC = () => {
 
 
     try {
+      // 🟢 Cria a visita, com suporte offline
       const result = await createVisitWithSync(API_BASE, payload);
 
       if (result.offline && !result.synced) {
@@ -281,42 +283,27 @@ const CalendarPage: React.FC = () => {
         alert("✅ Visita criada e sincronizada com o servidor.");
       }
 
-
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(body || `Erro ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log("🔁 Resposta do backend ao criar visita:", data);
-
-
-    
-
-      // upload de fotos (se tiver)
+      // 🟢 Upload de fotos (apenas se estiver online)
       if (navigator.onLine && form.photos && form.photos.length > 0) {
-      const fd = new FormData();
-      Array.from(form.photos).forEach((file, idx) => {
-        fd.append("photos", file);
-        fd.append("captions", form.photoCaptions[idx] || "");
-      });
+        const fd = new FormData();
+        Array.from(form.photos).forEach((file, idx) => {
+          fd.append("photos", file);
+          fd.append("captions", form.photoCaptions[idx] || "");
+        });
 
-      const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
-        method: "POST",
-        body: fd,
-      });
+        const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
+          method: "POST",
+          body: fd,
+        });
 
-      if (!photoResp.ok) {
-        console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
-      } else {
-        console.log("📸 Fotos e legendas enviadas com sucesso!");
+        if (!photoResp.ok) {
+          console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
+        } else {
+          console.log("📸 Fotos e legendas enviadas com sucesso!");
+        }
       }
-    }
 
-
-
-
-      // recarrega
+      // 🔄 Recarrega calendário
       setOpen(false);
       await loadVisits();
       setForm({
@@ -332,7 +319,7 @@ const CalendarPage: React.FC = () => {
         genPheno: true,
         photos: null,
         photoPreviews: [],
-        savedPhotos: [], // 🆕 limpa fotos antigas
+        savedPhotos: [],
         clientSearch: "",
         latitude: null,
         longitude: null,
@@ -343,8 +330,8 @@ const CalendarPage: React.FC = () => {
       console.error("❌ Erro ao salvar visita:", e);
       alert(e?.message || "Erro ao salvar visita");
     }
-  };
-  
+
+      
 
   // ============================================================
   // 🗑️ Excluir

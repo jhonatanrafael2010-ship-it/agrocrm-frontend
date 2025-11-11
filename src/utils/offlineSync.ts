@@ -1,13 +1,14 @@
 // src/utils/offlineSync.ts
 
+import type { StoreName } from "./indexedDB";
 import {
-  StoreName,
   getAllFromStore,
   putManyInStore,
   addPendingVisit,
   getAllPendingVisits,
   deletePendingVisit,
 } from "./indexedDB";
+
 
 /**
  * Remove barras duplicadas no final.
