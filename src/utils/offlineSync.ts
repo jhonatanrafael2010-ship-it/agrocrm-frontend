@@ -1,61 +1,122 @@
-import { openDB } from 'idb'
+// src/utils/offlineSync.ts
 
-// Tipagem da visita, compatível com seu backend Flask
-export interface VisitData {
-  id?: number
-  date: string
-  client_id: number
-  property_id: number
-  plot_id: number
-  recommendation?: string
+import {
+  StoreName,
+  getAllFromStore,
+  putManyInStore,
+  addPendingVisit,
+  getAllPendingVisits,
+  deletePendingVisit,
+} from "./indexedDB";
+
+/**
+ * Remove barras duplicadas no final.
+ * Ex: "/api/" -> "/api"
+ */
+function normalizeBaseUrl(base: string): string {
+  return base.replace(/\/+$/, "");
 }
 
-// ===============================================================
-// 💾 Salva uma visita localmente quando o app estiver offline
-// ===============================================================
-export async function saveVisitOffline(visit: VisitData) {
-  const db = await openDB('agrocrm', 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains('pendingVisits')) {
-        db.createObjectStore('pendingVisits', { keyPath: 'id', autoIncrement: true })
-      }
-    },
-  })
-  await db.put('pendingVisits', visit)
-  console.log('💾 Visita salva offline:', visit)
+/**
+ * Fetch com cache:
+ * - Online: busca na API, salva no IndexedDB e retorna
+ * - Offline/erro: lê do IndexedDB
+ */
+export async function fetchWithCache<T = any>(
+  url: string,
+  store: StoreName
+): Promise<T[]> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Erro HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    await putManyInStore(store, data);
+    return data as T[];
+  } catch (err) {
+    console.warn(`⚠️ Offline ou erro na API (${url}), usando cache local:`, err);
+    const cached = await getAllFromStore<T>(store);
+    return cached;
+  }
 }
 
-// ===============================================================
-// 🔄 Sincroniza visitas armazenadas quando o app voltar a ficar online
-// ===============================================================
-export async function syncPendingVisits(apiBase: string = '/api/') {
-  const db = await openDB('agrocrm', 1)
-  const all = await db.getAll('pendingVisits')
+/**
+ * Cria uma visita e tenta enviar para o backend.
+ * - Se online: POST normal
+ * - Se der erro de rede: salva em pending_visits (IndexedDB) para sync depois
+ */
+export async function createVisitWithSync(
+  apiBase: string,
+  payload: any
+): Promise<any> {
+  const base = normalizeBaseUrl(apiBase);
 
-  if (!all.length) {
-    console.log('✅ Nenhuma visita pendente para sincronizar.')
-    return
+  try {
+    const res = await fetch(`${base}/visits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Erro HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    return { ...json, synced: true };
+  } catch (err) {
+    console.warn("📡 Sem conexão, guardando visita para sincronizar depois.", err);
+    await addPendingVisit(payload);
+    return {
+      offline: true,
+      synced: false,
+      message: "Visita salva localmente e será enviada quando houver internet.",
+    };
+  }
+}
+
+/**
+ * Sincroniza todas as visitas pendentes (criadas offline) com o backend.
+ * Chamado no App.tsx quando o evento 'online' dispara.
+ */
+export async function syncPendingVisits(apiBase: string): Promise<void> {
+  const base = normalizeBaseUrl(apiBase);
+
+  if (!navigator.onLine) {
+    console.log("🔌 Ainda offline, não sincronizando.");
+    return;
   }
 
-  console.log(`🔄 Iniciando sincronização de ${all.length} visitas...`)
+  const pendings = await getAllPendingVisits();
+  if (!pendings.length) {
+    console.log("✅ Nenhuma visita pendente para sincronizar.");
+    return;
+  }
 
-  for (const visit of all) {
+  console.log(`🚀 Sincronizando ${pendings.length} visitas pendentes...`);
+
+  for (const p of pendings) {
     try {
-      const res = await fetch(`${apiBase}visits`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(visit),
-      })
+      const res = await fetch(`${base}/visits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(p.data),
+      });
 
       if (res.ok) {
-        await db.delete('pendingVisits', visit.id!)
-        console.log('✅ Visita sincronizada:', visit)
+        console.log(`✅ Visita pendente ${p.id} sincronizada.`);
+        if (typeof p.id === "number") {
+          await deletePendingVisit(p.id);
+        }
       } else {
-        const errText = await res.text()
-        console.error('❌ Falha ao sincronizar visita:', errText)
+        console.warn(
+          `⚠️ Falha ao sincronizar visita pendente ${p.id}:`,
+          res.status
+        );
       }
     } catch (err) {
-      console.warn('⚠️ Offline ou erro de rede, tentativa será repetida:', err)
+      console.warn(`⚠️ Erro de rede ao sincronizar visita pendente ${p.id}:`, err);
     }
   }
 }

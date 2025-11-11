@@ -9,6 +9,8 @@ import "../styles/Calendar.css";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
 import VisitPhotos from "../components/VisitPhotos";
+import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+
 
 
 const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
@@ -159,13 +161,14 @@ const CalendarPage: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      fetch(`${API_BASE}clients`).then((r) => r.json()),
-      fetch(`${API_BASE}properties`).then((r) => r.json()),
-      fetch(`${API_BASE}plots`).then((r) => r.json()),
-      fetch(`${API_BASE}cultures`).then((r) => r.json()),
-      fetch(`${API_BASE}varieties`).then((r) => r.json()),
-      fetch(`${API_BASE}consultants`).then((r) => r.json()),
+      fetchWithCache(`${API_BASE}clients`, "clients"),
+      fetchWithCache(`${API_BASE}properties`, "properties"),
+      fetchWithCache(`${API_BASE}plots`, "properties"),
+      fetchWithCache(`${API_BASE}cultures`, "visits"),
+      fetchWithCache(`${API_BASE}varieties`, "visits"),
+      fetchWithCache(`${API_BASE}consultants`, "visits"),
     ])
+
       .then(([cs, ps, pls, cts, vars, cons]) => {
         setClients(cs || []);
         setProperties(ps || []);
@@ -269,11 +272,15 @@ const CalendarPage: React.FC = () => {
 
 
     try {
-      const res = await fetch(`${API_BASE}visits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const result = await createVisitWithSync(API_BASE, payload);
+
+      if (result.offline && !result.synced) {
+        alert("✅ Visita salva offline. Ela será enviada quando você voltar a ter internet.");
+      } else {
+        console.log("🔁 Resposta do backend ao criar visita:", result);
+        alert("✅ Visita criada e sincronizada com o servidor.");
+      }
+
 
       if (!res.ok) {
         const body = await res.text();
@@ -287,24 +294,25 @@ const CalendarPage: React.FC = () => {
     
 
       // upload de fotos (se tiver)
-      if (form.photos && form.photos.length > 0) {
-        const fd = new FormData();
-        Array.from(form.photos).forEach((file, idx) => {
-          fd.append("photos", file);
-          fd.append("captions", form.photoCaptions[idx] || "");
-        });
+      if (navigator.onLine && form.photos && form.photos.length > 0) {
+      const fd = new FormData();
+      Array.from(form.photos).forEach((file, idx) => {
+        fd.append("photos", file);
+        fd.append("captions", form.photoCaptions[idx] || "");
+      });
 
-        const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
-          method: "POST",
-          body: fd,
-        });
+      const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+        method: "POST",
+        body: fd,
+      });
 
-        if (!photoResp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
-        } else {
-          console.log("📸 Fotos e legendas enviadas com sucesso!");
-        }
+      if (!photoResp.ok) {
+        console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
+      } else {
+        console.log("📸 Fotos e legendas enviadas com sucesso!");
       }
+    }
+
 
 
 
