@@ -583,9 +583,14 @@ const CalendarPage: React.FC = () => {
               fontSize: "0.9rem",
               boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
               animation: "pulse 1.5s infinite",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
             }}
           >
-            🔁 Sincronizando visitas com o servidor...
+            <span className="sync-spinner"></span>
+            Sincronizando visitas com o servidor...
           </div>
         )}
 
@@ -606,6 +611,7 @@ const CalendarPage: React.FC = () => {
             ✅ Última sincronização: {lastSync}
           </div>
         )}
+
 
 
         <div className="title-row">
