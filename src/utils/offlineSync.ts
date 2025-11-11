@@ -101,6 +101,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
   }
 
   console.log(`🚀 Iniciando sync de ${pendings.length} visitas pendentes...`);
+  let syncedCount = 0;
 
   for (const p of pendings) {
     try {
@@ -112,6 +113,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
       if (res.ok) {
         console.log(`✅ Visita pendente ${p.id} sincronizada com sucesso.`);
+        syncedCount++;
         if (typeof p.id === "number") await deletePendingVisit(p.id);
       } else {
         console.warn(`⚠️ Falha ao sincronizar visita ${p.id}:`, res.status);
@@ -119,6 +121,12 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
     } catch (err) {
       console.warn(`⚠️ Erro de rede ao sincronizar visita pendente ${p.id}:`, err);
     }
+  }
+
+  if (syncedCount > 0) {
+    console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
+    // 🔔 Dispara UMA vez só
+    window.dispatchEvent(new Event("visits-synced"));
   }
 }
 

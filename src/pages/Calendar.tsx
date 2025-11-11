@@ -234,26 +234,21 @@ const CalendarPage: React.FC = () => {
   }, []);
 
 
-  // ============================================================
-  // 🔄 Recarregar visitas após sincronização global
-  // ============================================================
   useEffect(() => {
     const handleSync = async () => {
-      console.log("🔄 Iniciando sincronização manual de visitas...");
+      console.log("🔄 Atualizando calendário após sincronização...");
       setSyncing(true);
-
-      // Espera um pequeno delay para simular feedback visual
-      await new Promise((res) => setTimeout(res, 800));
-
       await loadVisits();
-      setLastSync(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+      setLastSync(
+        new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      );
       setSyncing(false);
-      console.log("✅ Sincronização concluída e visitas recarregadas.");
     };
 
     window.addEventListener("visits-synced", handleSync);
     return () => window.removeEventListener("visits-synced", handleSync);
   }, []);
+
 
 
 
@@ -350,53 +345,75 @@ const CalendarPage: React.FC = () => {
 
       if (result.offline && !result.synced) {
         alert("✅ Visita salva offline. Ela será enviada quando você voltar a ter internet.");
+
+        // ⚠️ Adiciona temporariamente ao calendário (offline)
+        const tempEvent = {
+          id: `temp-${Date.now()}`,
+          title: `${form.clientSearch || "Visita"} (pendente)`,
+          start: new Date(payload.date),
+          backgroundColor: "#ffcc00",
+          borderColor: "#ffaa00",
+          textColor: "#000",
+          offline: true,
+          extendedProps: { raw: { ...payload, client_name: form.clientSearch || "Cliente offline" } },
+        };
+
+        setEvents((prev) => [...prev, tempEvent]);
       } else {
         console.log("🔁 Resposta do backend ao criar visita:", result);
         alert("✅ Visita criada e sincronizada com o servidor.");
       }
 
-      // 🟢 Upload de fotos (apenas se estiver online)
-      if (navigator.onLine && form.photos && form.photos.length > 0) {
-        const fd = new FormData();
-        Array.from(form.photos).forEach((file, idx) => {
-          fd.append("photos", file);
-          fd.append("captions", form.photoCaptions[idx] || "");
-        });
-
-        const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
-          method: "POST",
-          body: fd,
-        });
-
-        if (!photoResp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
-        } else {
-          console.log("📸 Fotos e legendas enviadas com sucesso!");
-        }
-      }
-
-      // 🔄 Recarrega calendário
       setOpen(false);
-      await loadVisits();
-      setForm({
-        id: null,
-        date: "",
-        client_id: "",
-        property_id: "",
-        plot_id: "",
-        consultant_id: "",
-        culture: "",
-        variety: "",
-        recommendation: "",
-        genPheno: true,
-        photos: null,
-        photoPreviews: [],
-        savedPhotos: [],
-        clientSearch: "",
-        latitude: null,
-        longitude: null,
-        photoCaptions: [],
+      await loadVisits(); // recarrega para garantir que aparece no calendário
+    } catch (err) {
+      console.error("❌ Erro ao salvar visita:", err);
+      alert("Erro ao salvar visita. Tente novamente.");
+    }
+
+
+    // 🟢 Upload de fotos (somente se online)
+    if (navigator.onLine && form.photos && form.photos.length > 0) {
+      const fd = new FormData();
+      Array.from(form.photos).forEach((file, idx) => {
+        fd.append("photos", file);
+        fd.append("captions", form.photoCaptions[idx] || "");
       });
+
+      const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
+        method: "POST",
+        body: fd,
+      });
+
+      if (!photoResp.ok) console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
+      else console.log("📸 Fotos enviadas com sucesso!");
+    }
+
+    // 🔄 Recarrega calendário
+    setOpen(false);
+    await loadVisits();
+
+    // 🧹 Limpa formulário após salvar
+    setForm({
+      id: null,
+      date: "",
+      client_id: "",
+      property_id: "",
+      plot_id: "",
+      consultant_id: "",
+      culture: "",
+      variety: "",
+      recommendation: "",
+      genPheno: true,
+      photos: null,
+      photoPreviews: [],
+      savedPhotos: [],
+      clientSearch: "",
+      latitude: null,
+      longitude: null,
+      photoCaptions: [],
+    });
+
 
     } catch (e: any) {
       console.error("❌ Erro ao salvar visita:", e);
@@ -773,6 +790,13 @@ const CalendarPage: React.FC = () => {
                 <div className="fc-visit-line">👨‍🌾 {consultant}</div>
               </div>
             );
+          }}
+          eventDidMount={(info) => {
+            if (info.event.extendedProps.offline) {
+              info.el.style.opacity = "0.8";
+              info.el.style.border = "2px dashed #ffaa00";
+              info.el.title = "⚠️ Visita salva offline — aguardando sincronização";
+            }
           }}
         />
       </div>
