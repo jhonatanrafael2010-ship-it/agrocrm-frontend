@@ -52,14 +52,26 @@ const CalendarPage: React.FC = () => {
   const [offline, setOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const updateStatus = () => setOffline(!navigator.onLine);
-    window.addEventListener("online", updateStatus);
-    window.addEventListener("offline", updateStatus);
+    const checkConnection = () => {
+      const status = !navigator.onLine;
+      setOffline(status);
+      console.log(status ? "📴 Offline detectado" : "🌐 Online detectado");
+    };
+
+    // Verifica imediatamente e depois a cada 3s
+    checkConnection();
+    const interval = setInterval(checkConnection, 3000);
+
+    window.addEventListener("online", checkConnection);
+    window.addEventListener("offline", checkConnection);
+
     return () => {
-      window.removeEventListener("online", updateStatus);
-      window.removeEventListener("offline", updateStatus);
+      clearInterval(interval);
+      window.removeEventListener("online", checkConnection);
+      window.removeEventListener("offline", checkConnection);
     };
   }, []);
+
 
 
   // dados base
@@ -104,9 +116,7 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      const res = await fetch(`${API_BASE}visits?scope=all`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const vs: Visit[] = await res.json();
+      const vs: Visit[] = await fetchWithCache(`${API_BASE}visits?scope=all`, "visits");
 
       const cs = clients || [];
       const cons = consultants || [];
@@ -217,6 +227,20 @@ const CalendarPage: React.FC = () => {
 
     loadBaseData();
   }, []);
+
+
+  // ============================================================
+  // 🔄 Recarregar visitas após sincronização global
+  // ============================================================
+  useEffect(() => {
+    const reloadAfterSync = () => {
+      console.log("🔄 Sincronização detectada — recarregando visitas...");
+      loadVisits();
+    };
+    window.addEventListener("visits-synced", reloadAfterSync);
+    return () => window.removeEventListener("visits-synced", reloadAfterSync);
+  }, []);
+
 
   // ============================================================
   // 🎨 Cor dos eventos
@@ -418,6 +442,11 @@ const CalendarPage: React.FC = () => {
     try {
       const position = await Geolocation.getCurrentPosition();
       const { latitude, longitude } = position.coords;
+      setForm((f) => ({ ...f, latitude, longitude }));
+      alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+    } catch {
+      alert("⚠️ Não foi possível obter a localização (modo offline).");
+    }
       setForm((f) => ({
         ...f,
         latitude,

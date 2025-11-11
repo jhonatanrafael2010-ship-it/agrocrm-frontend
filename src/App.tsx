@@ -22,7 +22,8 @@ const App: React.FC = () => {
   useEffect(() => {
     async function syncPending() {
       try {
-        await syncPendingVisits(API_BASE);
+        await syncPendingVisits("/api/");
+        window.dispatchEvent(new Event("visits-synced"));
       } catch (err) {
         console.warn("⚠️ Erro ao tentar sincronizar:", err);
       }
@@ -119,8 +120,8 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* ⚠️ Banner de modo offline */}
-      {offline && (
+      {/* 🌐 Banner global de modo offline */}
+      {!navigator.onLine && (
         <div
           style={{
             backgroundColor: "#ffcc00",
@@ -129,12 +130,15 @@ const App: React.FC = () => {
             textAlign: "center",
             fontWeight: 600,
             fontSize: "0.9rem",
-            zIndex: 1000,
+            borderBottom: "1px solid #d1a800",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            zIndex: 2000,
           }}
         >
-          ⚠️ Modo Offline ativo — alguns dados podem estar desatualizados
+          📴 Você está offline — exibindo dados do cache local
         </div>
       )}
+
 
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
