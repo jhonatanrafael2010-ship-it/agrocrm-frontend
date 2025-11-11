@@ -442,11 +442,14 @@ const CalendarPage: React.FC = () => {
     try {
       const position = await Geolocation.getCurrentPosition();
       const { latitude, longitude } = position.coords;
+
       setForm((f) => ({ ...f, latitude, longitude }));
       alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-    } catch {
+    } catch (err) {
+      console.error("Erro ao obter localização:", err);
       alert("⚠️ Não foi possível obter a localização (modo offline).");
     }
+  };
       setForm((f) => ({
         ...f,
         latitude,
