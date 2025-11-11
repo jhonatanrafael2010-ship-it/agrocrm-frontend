@@ -330,6 +330,7 @@ const CalendarPage: React.FC = () => {
       console.error("❌ Erro ao salvar visita:", e);
       alert(e?.message || "Erro ao salvar visita");
     }
+  };
 
       
 
