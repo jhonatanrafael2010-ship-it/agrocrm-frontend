@@ -9,7 +9,6 @@ import {
   deletePendingVisit,
 } from "./indexedDB";
 
-
 /**
  * Remove barras duplicadas no final.
  * Ex: "/api/" -> "/api"
@@ -22,30 +21,40 @@ function normalizeBaseUrl(base: string): string {
  * Fetch com cache:
  * - Online: busca na API, salva no IndexedDB e retorna
  * - Offline/erro: lê do IndexedDB
+ * @param url Endpoint completo
+ * @param store Nome da store correspondente no IndexedDB
  */
 export async function fetchWithCache<T = any>(
   url: string,
   store: StoreName
 ): Promise<T[]> {
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Erro HTTP ${res.status}`);
-    }
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+
     const data = await res.json();
+
+    // ✅ Salva no IndexedDB
     await putManyInStore(store, data);
+    console.log(`📦 ${data.length} registros salvos no cache (${store})`);
     return data as T[];
   } catch (err) {
-    console.warn(`⚠️ Offline ou erro na API (${url}), usando cache local:`, err);
-    const cached = await getAllFromStore<T>(store);
-    return cached;
+    console.warn(`⚠️ Offline ou erro na API (${store}), usando cache local.`);
+    try {
+      const cached = await getAllFromStore<T>(store);
+      console.log(`💾 ${cached.length} registros carregados do cache (${store})`);
+      return cached;
+    } catch (cacheErr) {
+      console.error(`❌ Erro ao ler cache (${store}):`, cacheErr);
+      return [];
+    }
   }
 }
 
 /**
  * Cria uma visita e tenta enviar para o backend.
  * - Se online: POST normal
- * - Se der erro de rede: salva em pending_visits (IndexedDB) para sync depois
+ * - Se offline ou erro: salva em pending_visits (IndexedDB) para sync posterior
  */
 export async function createVisitWithSync(
   apiBase: string,
@@ -60,32 +69,31 @@ export async function createVisitWithSync(
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) {
-      throw new Error(`Erro HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
 
     const json = await res.json();
+    console.log("✅ Visita criada online:", json);
     return { ...json, synced: true };
   } catch (err) {
-    console.warn("📡 Sem conexão, guardando visita para sincronizar depois.", err);
+    console.warn("📡 Sem conexão, salvando visita localmente:", err);
     await addPendingVisit(payload);
     return {
       offline: true,
       synced: false,
-      message: "Visita salva localmente e será enviada quando houver internet.",
+      message: "Visita salva localmente. Será enviada quando houver internet.",
     };
   }
 }
 
 /**
  * Sincroniza todas as visitas pendentes (criadas offline) com o backend.
- * Chamado no App.tsx quando o evento 'online' dispara.
+ * Chamado automaticamente no App.tsx ao reconectar.
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
 
   if (!navigator.onLine) {
-    console.log("🔌 Ainda offline, não sincronizando.");
+    console.log("🔌 Ainda offline — não sincronizando.");
     return;
   }
 
@@ -95,7 +103,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
     return;
   }
 
-  console.log(`🚀 Sincronizando ${pendings.length} visitas pendentes...`);
+  console.log(`🚀 Iniciando sync de ${pendings.length} visitas pendentes...`);
 
   for (const p of pendings) {
     try {
@@ -106,18 +114,35 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
       });
 
       if (res.ok) {
-        console.log(`✅ Visita pendente ${p.id} sincronizada.`);
-        if (typeof p.id === "number") {
-          await deletePendingVisit(p.id);
-        }
+        console.log(`✅ Visita pendente ${p.id} sincronizada com sucesso.`);
+        if (typeof p.id === "number") await deletePendingVisit(p.id);
       } else {
-        console.warn(
-          `⚠️ Falha ao sincronizar visita pendente ${p.id}:`,
-          res.status
-        );
+        console.warn(`⚠️ Falha ao sincronizar visita ${p.id}:`, res.status);
       }
     } catch (err) {
       console.warn(`⚠️ Erro de rede ao sincronizar visita pendente ${p.id}:`, err);
     }
   }
+}
+
+/**
+ * Pré-carrega entidades base (clientes, culturas, etc.)
+ * para garantir funcionamento offline antes do usuário precisar delas.
+ */
+export async function preloadOfflineData(apiBase: string): Promise<void> {
+  const base = normalizeBaseUrl(apiBase);
+  const endpoints: [string, StoreName][] = [
+    [`${base}/clients`, "clients"],
+    [`${base}/properties`, "properties"],
+    [`${base}/plots`, "plots"],
+    [`${base}/cultures`, "cultures"],
+    [`${base}/varieties`, "varieties"],
+    [`${base}/consultants`, "consultants"],
+    [`${base}/visits?scope=all`, "visits"],
+  ];
+
+  for (const [url, store] of endpoints) {
+    await fetchWithCache(url, store);
+  }
+  console.log("📦 Dados base pré-carregados para uso offline.");
 }

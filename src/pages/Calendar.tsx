@@ -48,6 +48,19 @@ type Photo = {
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
+  // 🛰️ Status de conexão
+  const [offline, setOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const updateStatus = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    return () => {
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
+    };
+  }, []);
+
 
   // dados base
   const [events, setEvents] = useState<any[]>([]);
@@ -159,30 +172,50 @@ const CalendarPage: React.FC = () => {
   // 🚀 Load inicial
   // ============================================================
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      fetchWithCache(`${API_BASE}clients`, "clients"),
-      fetchWithCache(`${API_BASE}properties`, "properties"),
-      fetchWithCache(`${API_BASE}plots`, "plots"),
-      fetchWithCache(`${API_BASE}cultures`, "visits"),     // pode deixar “visits” por enquanto
-      fetchWithCache(`${API_BASE}varieties`, "visits"),    // idem
-      fetchWithCache(`${API_BASE}consultants`, "visits"),  // idem
-    ])
+    async function loadBaseData() {
+      setLoading(true);
+      try {
+        const [
+          cs = [],
+          ps = [],
+          pls = [],
+          cts = [],
+          vars = [],
+          cons = [],
+        ] = await Promise.all([
+          fetchWithCache(`${API_BASE}clients`, "clients"),
+          fetchWithCache(`${API_BASE}properties`, "properties"),
+          fetchWithCache(`${API_BASE}plots`, "plots"),
+          fetchWithCache(`${API_BASE}cultures`, "cultures"),
+          fetchWithCache(`${API_BASE}varieties`, "varieties"),
+          fetchWithCache(`${API_BASE}consultants`, "consultants"),
+        ]);
 
+        setClients(cs);
+        setProperties(ps);
+        setPlots(pls);
+        setCultures(cts);
+        setVarieties(vars);
+        setConsultants(cons);
 
-      .then(([cs, ps, pls, cts, vars, cons]) => {
-        setClients(cs || []);
-        setProperties(ps || []);
-        setPlots(pls || []);
-        setCultures(cts || []);
-        setVarieties(vars || []);
-        setConsultants(cons || []);
-      })
-      .catch(console.error)
-      .finally(() => {
-        loadVisits();
+        console.log("📦 Dados carregados (online ou cache).");
+      } catch (err) {
+        console.warn("⚠️ Falha geral ao carregar dados base:", err);
+        alert("⚠️ Sem conexão — dados limitados disponíveis.");
+        // evita erro de render
+        setClients([]);
+        setProperties([]);
+        setPlots([]);
+        setCultures([]);
+        setVarieties([]);
+        setConsultants([]);
+      } finally {
+        await loadVisits();
         setLoading(false);
-      });
+      }
+    }
+
+    loadBaseData();
   }, []);
 
   // ============================================================
@@ -482,9 +515,30 @@ const CalendarPage: React.FC = () => {
     <div className="calendar-page">
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
+
+        {/* 🛰️ Banner de modo offline */}
+        {offline && (
+          <div
+            style={{
+              backgroundColor: "#ffcc00",
+              color: "#000",
+              padding: "6px 12px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            }}
+          >
+            📴 Você está offline — exibindo dados do cache local
+          </div>
+        )}
+
         <div className="title-row">
           <h2 className="mb-0">Agenda de Visitas</h2>
         </div>
+
 
         <div className="filters-row">
           <select

@@ -7,32 +7,64 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
-import { syncPendingVisits } from "./utils/offlineSync";
+import { syncPendingVisits, preloadOfflineData } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
 
 const App: React.FC = () => {
   const [route, setRoute] = useState<string>("Dashboard");
+  const [isMobileApp, setIsMobileApp] = useState(false);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  const API_BASE = "/api/";
 
-  // 🔒 Tema fixo — modo claro
-  // (sem necessidade de função toggleTheme)
-  
-  // 🔄 Sincronização offline
+  // ============================================================
+  // 🔄 Sincronização automática de visitas pendentes
+  // ============================================================
   useEffect(() => {
     async function syncPending() {
       try {
-        await syncPendingVisits("/api/");
+        await syncPendingVisits(API_BASE);
       } catch (err) {
         console.warn("⚠️ Erro ao tentar sincronizar:", err);
       }
     }
+
     window.addEventListener("online", syncPending);
     if (navigator.onLine) syncPending();
     return () => window.removeEventListener("online", syncPending);
   }, []);
 
-  const [isMobileApp, setIsMobileApp] = useState(false);
+  // ============================================================
+  // ⚡ Pré-carregamento de dados base (para uso offline)
+  // ============================================================
+  useEffect(() => {
+    async function loadBaseData() {
+      try {
+        await preloadOfflineData(API_BASE);
+      } catch (err) {
+        console.warn("⚠️ Falha ao pré-carregar dados base:", err);
+      }
+    }
 
-  // 📱 Detecta mobile vs desktop
+    loadBaseData();
+  }, []);
+
+  // ============================================================
+  // 🌐 Monitorar status de conexão
+  // ============================================================
+  useEffect(() => {
+    const updateOnlineStatus = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+    };
+  }, []);
+
+  // ============================================================
+  // 📱 Detectar mobile vs desktop
+  // ============================================================
   useEffect(() => {
     const detect = () => {
       const isSmallScreen = window.innerWidth <= 900;
@@ -50,7 +82,9 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", detect);
   }, []);
 
+  // ============================================================
   // ✅ Fecha o menu lateral quando muda de rota
+  // ============================================================
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
     if (offcanvasEl) {
@@ -59,6 +93,9 @@ const App: React.FC = () => {
     }
   }, [route]);
 
+  // ============================================================
+  // Render
+  // ============================================================
   return (
     <div className="app d-flex flex-column vh-100">
       {/* 🔝 Cabeçalho fixo */}
@@ -81,6 +118,23 @@ const App: React.FC = () => {
           </div>
         </div>
       </nav>
+
+      {/* ⚠️ Banner de modo offline */}
+      {offline && (
+        <div
+          style={{
+            backgroundColor: "#ffcc00",
+            color: "#000",
+            padding: "6px 12px",
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            zIndex: 1000,
+          }}
+        >
+          ⚠️ Modo Offline ativo — alguns dados podem estar desatualizados
+        </div>
+      )}
 
       {/* 🧭 Sidebar / Menu lateral */}
       <div className="d-flex flex-grow-1">
