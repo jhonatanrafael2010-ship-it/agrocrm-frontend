@@ -450,16 +450,34 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const handleGetLocation = async () => {
     try {
+      if (!navigator.onLine) {
+        // 🔸 Fallback básico: usa cache local do navegador
+        const cached = localStorage.getItem("lastLocation");
+        if (cached) {
+          const { latitude, longitude } = JSON.parse(cached);
+          setForm((f) => ({ ...f, latitude, longitude }));
+          alert(`📍 Localização recuperada do cache: ${latitude}, ${longitude}`);
+        } else {
+          alert("⚠️ Sem conexão — não foi possível obter localização.");
+        }
+        return;
+      }
+
+      // 🌐 Online → usa Capacitor
       const position = await Geolocation.getCurrentPosition();
       const { latitude, longitude } = position.coords;
 
+      // ✅ Salva a localização no formulário e no cache
       setForm((f) => ({ ...f, latitude, longitude }));
+      localStorage.setItem("lastLocation", JSON.stringify({ latitude, longitude }));
+
       alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
       console.error("Erro ao obter localização:", err);
-      alert("⚠️ Não foi possível obter a localização (modo offline).");
+      alert("⚠️ Falha ao capturar localização.");
     }
   };
+
 
   // ============================================================
   // ✅ Concluir

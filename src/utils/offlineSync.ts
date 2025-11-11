@@ -53,10 +53,7 @@ export async function fetchWithCache<T = any>(
  * - Se online: POST normal
  * - Se offline: salva em pending_visits (IndexedDB) para sync depois
  */
-export async function createVisitWithSync(
-  apiBase: string,
-  payload: any
-): Promise<any> {
+export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
 
   try {
@@ -67,13 +64,25 @@ export async function createVisitWithSync(
     });
 
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
-
     const json = await res.json();
+
     console.log("✅ Visita criada online:", json);
     return { ...json, synced: true };
   } catch (err) {
     console.warn("📡 Sem conexão, salvando visita localmente:", err);
+
+    // 🔹 Salva em pending_visits
     await addPendingVisit(payload);
+
+    // 🔹 Também guarda no cache "visits" para aparecer no calendário
+    const offlineVisit = {
+      ...payload,
+      id: Date.now(), // id temporário
+      offline: true,
+    };
+    const oldVisits = await getAllFromStore("visits");
+    await putManyInStore("visits", [...oldVisits, offlineVisit]);
+
     return {
       offline: true,
       synced: false,
@@ -81,6 +90,7 @@ export async function createVisitWithSync(
     };
   }
 }
+
 
 /**
  * Sincroniza todas as visitas pendentes (criadas offline) com o backend.
@@ -125,10 +135,10 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
   if (syncedCount > 0) {
     console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
-    // 🔔 Dispara UMA vez só
+    await fetchWithCache(`${base}/visits?scope=all`, "visits"); // 🔁 atualiza cache local
     window.dispatchEvent(new Event("visits-synced"));
   }
-}
+  }
 
 /**
  * Pré-carrega entidades base (clientes, culturas, etc.)
