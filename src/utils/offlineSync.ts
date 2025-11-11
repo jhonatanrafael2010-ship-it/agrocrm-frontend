@@ -7,6 +7,7 @@ import {
   addPendingVisit,
   getAllPendingVisits,
   deletePendingVisit,
+  appendToStore,
 } from "./indexedDB";
 
 /**
@@ -77,11 +78,11 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     // 🔹 Também guarda no cache "visits" para aparecer no calendário
     const offlineVisit = {
       ...payload,
-      id: Date.now(), // id temporário
+      id: Date.now() + Math.floor(Math.random() * 1000), // id único temporário
       offline: true,
     };
-    const oldVisits = await getAllFromStore("visits");
-    await putManyInStore("visits", [...oldVisits, offlineVisit]);
+    await appendToStore("visits", offlineVisit);
+
 
     return {
       offline: true,

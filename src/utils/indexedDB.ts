@@ -92,6 +92,22 @@ export async function putManyInStore(
   });
 }
 
+
+// ============================================================
+// ➕ Adicionar item sem limpar a store (usado para salvar visitas offline)
+// ============================================================
+export async function appendToStore(store: StoreName, item: any): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    const os = tx.objectStore(store);
+    os.put(item); // não limpa nada, apenas adiciona ou atualiza
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+
 // ============================================================
 // 📦 Buscar todos os itens
 // ============================================================
