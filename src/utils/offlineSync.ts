@@ -1,5 +1,4 @@
 // src/utils/offlineSync.ts
-
 import type { StoreName } from "./indexedDB";
 import {
   getAllFromStore,
@@ -10,10 +9,6 @@ import {
   appendToStore,
 } from "./indexedDB";
 
-/**
- * Remove barras duplicadas no final.
- * Ex: "/api/" -> "/api"
- */
 function normalizeBaseUrl(base: string): string {
   return base.replace(/\/+$/, "");
 }
@@ -21,7 +16,7 @@ function normalizeBaseUrl(base: string): string {
 /**
  * Fetch com cache:
  * - Online: busca na API, salva no IndexedDB e retorna
- * - Offline/erro: lê do IndexedDB
+ * - Offline: lê do IndexedDB
  */
 export async function fetchWithCache<T = any>(
   url: string,
@@ -30,10 +25,8 @@ export async function fetchWithCache<T = any>(
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
-
     const data = await res.json();
     await putManyInStore(store, data);
-
     console.log(`📦 ${data.length} registros salvos no cache (${store})`);
     return data as T[];
   } catch (err) {
@@ -50,9 +43,7 @@ export async function fetchWithCache<T = any>(
 }
 
 /**
- * Cria uma visita e tenta enviar para o backend.
- * - Se online: POST normal
- * - Se offline: salva em pending_visits (IndexedDB) para sync depois
+ * Cria visita com suporte offline
  */
 export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
@@ -63,10 +54,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
     const json = await res.json();
-
     console.log("✅ Visita criada online:", json);
     return { ...json, synced: true };
   } catch (err) {
@@ -75,14 +64,32 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     // 🔹 Salva em pending_visits
     await addPendingVisit(payload);
 
-    // 🔹 Também guarda no cache "visits" para aparecer no calendário
+    // 🔹 Cria visita offline com ID único
     const offlineVisit = {
       ...payload,
-      id: Date.now() + Math.floor(Math.random() * 1000), // id único temporário
+      id: Date.now() + Math.floor(Math.random() * 1000),
       offline: true,
     };
-    await appendToStore("visits", offlineVisit);
 
+    // 🧮 Gera cronograma fenológico simulado offline
+    if (payload.genPheno || payload.generate_schedule) {
+      const stages = ["Plantio", "Emergência", "V2", "V5", "R1", "R5", "R8"];
+      const baseDate = new Date(payload.date);
+      for (let i = 0; i < stages.length; i++) {
+        const newDate = new Date(baseDate);
+        newDate.setDate(baseDate.getDate() + i * 15); // espaçamento de 15 dias
+        const stageVisit = {
+          ...offlineVisit,
+          id: Date.now() + i + Math.floor(Math.random() * 1000),
+          date: newDate.toISOString().slice(0, 10),
+          recommendation: stages[i],
+        };
+        await appendToStore("visits", stageVisit);
+      }
+      console.log("🌱 Cronograma fenológico gerado offline.");
+    } else {
+      await appendToStore("visits", offlineVisit);
+    }
 
     return {
       offline: true,
@@ -92,10 +99,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
   }
 }
 
-
 /**
- * Sincroniza todas as visitas pendentes (criadas offline) com o backend.
- * Chamado automaticamente no App.tsx quando reconectar.
+ * Sincroniza visitas pendentes (quando reconectar)
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -123,11 +128,11 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
       });
 
       if (res.ok) {
-        console.log(`✅ Visita pendente ${p.id} sincronizada com sucesso.`);
         syncedCount++;
+        console.log(`✅ Visita pendente ${p.id} sincronizada.`);
         if (typeof p.id === "number") await deletePendingVisit(p.id);
       } else {
-        console.warn(`⚠️ Falha ao sincronizar visita ${p.id}:`, res.status);
+        console.warn(`⚠️ Falha ao sincronizar visita ${p.id}: ${res.status}`);
       }
     } catch (err) {
       console.warn(`⚠️ Erro de rede ao sincronizar visita pendente ${p.id}:`, err);
@@ -136,28 +141,27 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
   if (syncedCount > 0) {
     console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
-    await fetchWithCache(`${base}/visits?scope=all`, "visits"); // 🔁 atualiza cache local
+    await fetchWithCache(`${base}/visits?scope=all`, "visits"); // 🔁 Atualiza cache local
     window.dispatchEvent(new Event("visits-synced"));
   }
-  }
+}
 
 /**
- * Pré-carrega entidades base (clientes, culturas, etc.)
- * para garantir funcionamento offline antes do usuário precisar delas.
+ * Pré-carrega entidades base (para uso offline)
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
-
-  // Só pré-carrega stores existentes no IndexedDB atual
   const endpoints: [string, StoreName][] = [
     [`${base}/clients`, "clients"],
     [`${base}/properties`, "properties"],
+    [`${base}/plots`, "plots"],
+    [`${base}/cultures`, "cultures"],
+    [`${base}/varieties`, "varieties"],
+    [`${base}/consultants`, "consultants"],
     [`${base}/visits?scope=all`, "visits"],
   ];
-
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
   }
-
   console.log("📦 Dados base pré-carregados para uso offline.");
 }

@@ -78,10 +78,11 @@ export async function putManyInStore(
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
 
-    // Só limpamos stores de coleção
-    if (store !== "pending_visits") {
+    // ⚡ Só limpa se estiver online
+    if (store !== "pending_visits" && navigator.onLine) {
       os.clear();
     }
+
 
     for (const item of items) {
       os.put(item);

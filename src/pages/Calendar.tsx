@@ -451,24 +451,23 @@ const CalendarPage: React.FC = () => {
   const handleGetLocation = async () => {
     try {
       if (!navigator.onLine) {
-        // 🔸 Fallback básico: usa cache local do navegador
         const cached = localStorage.getItem("lastLocation");
         if (cached) {
           const { latitude, longitude } = JSON.parse(cached);
           setForm((f) => ({ ...f, latitude, longitude }));
-          alert(`📍 Localização recuperada do cache: ${latitude}, ${longitude}`);
+          alert(`📍 Localização recuperada: ${latitude}, ${longitude}`);
         } else {
-          alert("⚠️ Sem conexão — não foi possível obter localização.");
+          alert("⚠️ Sem conexão — localização anterior não encontrada.");
         }
         return;
       }
 
-      // 🌐 Online → usa Capacitor
-      const position = await Geolocation.getCurrentPosition();
+      // 🌐 Online: usa Capacitor
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
       const { latitude, longitude } = position.coords;
-
-      // ✅ Salva a localização no formulário e no cache
       setForm((f) => ({ ...f, latitude, longitude }));
+
+      // salva no cache local
       localStorage.setItem("lastLocation", JSON.stringify({ latitude, longitude }));
 
       alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
@@ -477,6 +476,7 @@ const CalendarPage: React.FC = () => {
       alert("⚠️ Falha ao capturar localização.");
     }
   };
+
 
 
   // ============================================================
@@ -581,6 +581,27 @@ const CalendarPage: React.FC = () => {
             📴 Você está offline — exibindo dados do cache local
           </div>
         )}
+
+        {/* 🔸 Alerta de visitas pendentes de sincronização */}
+        {events.some(e => e.extendedProps?.raw?.offline) && (
+          <div
+            style={{
+              backgroundColor: "#ffcc00",
+              color: "#000",
+              padding: "4px 8px",
+              borderRadius: "6px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "center",
+              marginBottom: "8px",
+              boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+            }}
+          >
+            ⚠️ Existem visitas pendentes de sincronização (
+            {events.filter(e => e.extendedProps?.raw?.offline).length})
+          </div>
+        )}
+
 
         {/* 🔁 Indicador de sincronização */}
         {syncing && (
@@ -763,13 +784,15 @@ const CalendarPage: React.FC = () => {
 
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};
-            const bg = colorFor(v?.date || arg.event.startStr, v?.status);
+            const isOffline = v?.offline === true;
+
+            const bg = isOffline
+              ? "#ffcc00" // amarelo offline
+              : colorFor(v?.date || arg.event.startStr, v?.status);
 
             const stage =
-              (
-                (v?.recommendation?.split("—").pop() || v?.recommendation || "") +
-                ""
-              ).trim() || "-";
+              ((v?.recommendation?.split("—").pop() || v?.recommendation || "") + "")
+                .trim() || "-";
 
             const clientName = v?.client_name || "—";
             const variety = v?.variety || "—";
@@ -778,20 +801,44 @@ const CalendarPage: React.FC = () => {
             return (
               <div
                 className="fc-visit-card"
-                style={{ backgroundColor: bg, borderColor: bg }}
+                style={{
+                  backgroundColor: bg,
+                  borderColor: isOffline ? "#ffaa00" : bg,
+                  color: isOffline ? "#000" : "#fff",
+                  borderStyle: isOffline ? "dashed" : "solid",
+                  opacity: isOffline ? 0.9 : 1,
+                }}
               >
-                <div className="fc-visit-line">👤 {clientName}</div>
+                <div className="fc-visit-line">
+                  {isOffline ? "🔸" : "👤"} {clientName}
+                </div>
                 <div className="fc-visit-line">🌱 {variety}</div>
                 <div className="fc-visit-line">📍 {stage}</div>
                 <div className="fc-visit-line">👨‍🌾 {consultant}</div>
+                {isOffline && (
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "#663c00",
+                      textAlign: "center",
+                      marginTop: "2px",
+                    }}
+                  >
+                    ⚠️ Offline – aguardando sync
+                  </div>
+                )}
               </div>
             );
           }}
+
           eventDidMount={(info) => {
-            if (info.event.extendedProps.offline) {
-              info.el.style.opacity = "0.8";
+            const v = info.event.extendedProps?.raw as any;
+            if (v?.offline) {
               info.el.style.border = "2px dashed #ffaa00";
-              info.el.title = "⚠️ Visita salva offline — aguardando sincronização";
+              info.el.style.opacity = "0.9";
+              info.el.title =
+                "⚠️ Visita salva offline — será sincronizada quando a internet voltar.";
             }
           }}
         />
