@@ -17,18 +17,25 @@ self.addEventListener('install', (event) => {
 // Responde a requisições
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return (
-        response ||
-        fetch(event.request).catch(() => {
+    fetch(event.request)
+      .then((response) => {
+        // ❗ Evita salvar respostas inválidas no cache
+        if (!response || response.status === 404) {
+          return caches.match(event.request);
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((response) => {
+          if (response) return response;
           if (event.request.mode === 'navigate') {
             return caches.match('/index.html');
           }
-        })
-      );
-    })
+        });
+      })
   );
 });
+
 
 // Atualiza o cache
 self.addEventListener('activate', (event) => {

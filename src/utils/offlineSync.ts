@@ -71,6 +71,10 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       offline: true,
     };
 
+    offlineVisit.client_name = payload.client_name || payload.clientSearch || "Cliente offline";
+    offlineVisit.consultant_name = payload.consultant_name || "—";
+
+
     // 🧮 Gera cronograma fenológico simulado offline
     if (payload.genPheno || payload.generate_schedule) {
       const stages = ["Plantio", "Emergência", "V2", "V5", "R1", "R5", "R8"];

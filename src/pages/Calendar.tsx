@@ -794,9 +794,16 @@ const CalendarPage: React.FC = () => {
               ((v?.recommendation?.split("—").pop() || v?.recommendation || "") + "")
                 .trim() || "-";
 
-            const clientName = v?.client_name || "—";
+            const clientName =
+              v.client_name ||
+              v.clientSearch ||
+              cs.find((c) => c.id === v.client_id)?.name ||
+              "Cliente offline";
             const variety = v?.variety || "—";
-            const consultant = v?.consultant_name || "—";
+            const consultant =
+              v.consultant_name ||
+              cons.find((x) => x.id === v.consultant_id)?.name ||
+              "—";
 
             return (
               <div
