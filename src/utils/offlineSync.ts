@@ -9,14 +9,22 @@ import {
   appendToStore,
 } from "./indexedDB";
 
+/**
+ * Normaliza a URL base da API.
+ * Garante fallback seguro caso a variável venha vazia.
+ */
 function normalizeBaseUrl(base: string): string {
+  if (!base) {
+    console.warn("⚠️ API base não definida, usando backend padrão Render.");
+    return "https://agrocrm-backend.onrender.com/api";
+  }
   return base.replace(/\/+$/, "");
 }
 
 /**
- * Fetch com cache:
- * - Online: busca na API, salva no IndexedDB e retorna
- * - Offline: lê do IndexedDB
+ * Busca com cache offline:
+ * - Online → consulta API, salva no IndexedDB e retorna
+ * - Offline → lê diretamente do IndexedDB
  */
 export async function fetchWithCache<T = any>(
   url: string,
@@ -43,13 +51,13 @@ export async function fetchWithCache<T = any>(
 }
 
 /**
- * Cria visita com suporte offline
+ * Cria visita com suporte offline e gera cronograma fenológico local
  */
 export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
 
   try {
-    // 🌐 Tentativa de salvar online
+    // 🌐 Tenta criar visita online
     const res = await fetch(`${base}/visits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,21 +70,21 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
   } catch (err) {
     console.warn("📡 Sem conexão, salvando visita localmente:", err);
 
-    // 🔹 Salva em pending_visits
+    // 🔹 Guarda em pending_visits para sincronizar depois
     await addPendingVisit(payload);
 
-    // 🔹 Cria visita offline com ID único
+    // 🔹 Cria objeto da visita offline
     const offlineVisit = {
       ...payload,
       id: Date.now() + Math.floor(Math.random() * 1000),
       offline: true,
     };
 
-    // 🔹 Corrige nomes para exibição no calendário
+    // 🔹 Corrige nomes de exibição
     offlineVisit.client_name = payload.client_name || payload.clientSearch || "Cliente offline";
     offlineVisit.consultant_name = payload.consultant_name || "—";
 
-    // 🧮 Gera cronograma fenológico simulado offline (intervalos corretos)
+    // 🧮 Gera cronograma fenológico simulado offline
     if (payload.genPheno || payload.generate_schedule) {
       const stages = [
         { name: "Plantio", days: 0 },
@@ -87,8 +95,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
         { name: "R5", days: 50 },
         { name: "R8", days: 65 },
       ];
-      const baseDate = new Date(payload.date);
 
+      const baseDate = new Date(payload.date);
       for (const stage of stages) {
         const newDate = new Date(baseDate);
         newDate.setDate(baseDate.getDate() + stage.days);
@@ -105,6 +113,9 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       await appendToStore("visits", offlineVisit);
     }
 
+    // 🔔 Atualiza o calendário imediatamente
+    window.dispatchEvent(new Event("visits-updated"));
+
     return {
       offline: true,
       synced: false,
@@ -114,7 +125,7 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
 }
 
 /**
- * Sincroniza visitas pendentes (quando reconectar)
+ * Sincroniza visitas pendentes quando a internet volta
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -155,14 +166,18 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
   if (syncedCount > 0) {
     console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
-    // ✅ Corrige URL (não depende mais de ?scope=all)
-    await fetchWithCache(`${base}/visits`, "visits");
-    window.dispatchEvent(new Event("visits-synced"));
+    console.log("🔗 Atualizando cache após sync com base:", base);
+    try {
+      await fetchWithCache(`${base}/visits`, "visits");
+      window.dispatchEvent(new Event("visits-synced"));
+    } catch (err) {
+      console.warn("⚠️ Erro ao atualizar cache após sync:", err);
+    }
   }
 }
 
 /**
- * Pré-carrega entidades base (para uso offline)
+ * Pré-carrega entidades base para uso offline
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -173,11 +188,12 @@ export async function preloadOfflineData(apiBase: string): Promise<void> {
     [`${base}/cultures`, "cultures"],
     [`${base}/varieties`, "varieties"],
     [`${base}/consultants`, "consultants"],
-    [`${base}/visits`, "visits"], // 🔁 sem ?scope=all
+    [`${base}/visits`, "visits"],
   ];
 
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
   }
+
   console.log("📦 Dados base pré-carregados para uso offline.");
 }
