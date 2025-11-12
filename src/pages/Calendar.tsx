@@ -787,22 +787,25 @@ const CalendarPage: React.FC = () => {
             const isOffline = v?.offline === true;
 
             const bg = isOffline
-              ? "#ffcc00" // amarelo offline
+              ? "#ffcc00"
               : colorFor(v?.date || arg.event.startStr, v?.status);
 
             const stage =
               ((v?.recommendation?.split("—").pop() || v?.recommendation || "") + "")
                 .trim() || "-";
 
+            // 🔧 Aqui usamos diretamente o estado do React, e não variáveis locais inexistentes
             const clientName =
               v.client_name ||
               v.clientSearch ||
-              cs.find((c) => c.id === v.client_id)?.name ||
+              clients.find((c: any) => c.id === v.client_id)?.name ||
               "Cliente offline";
+
             const variety = v?.variety || "—";
+
             const consultant =
               v.consultant_name ||
-              cons.find((x) => x.id === v.consultant_id)?.name ||
+              consultants.find((x: any) => x.id === v.consultant_id)?.name ||
               "—";
 
             return (
@@ -838,6 +841,7 @@ const CalendarPage: React.FC = () => {
               </div>
             );
           }}
+
 
           eventDidMount={(info) => {
             const v = info.event.extendedProps?.raw as any;
