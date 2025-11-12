@@ -49,6 +49,7 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
   const base = normalizeBaseUrl(apiBase);
 
   try {
+    // 🌐 Tentativa de salvar online
     const res = await fetch(`${base}/visits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -71,26 +72,35 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       offline: true,
     };
 
+    // 🔹 Corrige nomes para exibição no calendário
     offlineVisit.client_name = payload.client_name || payload.clientSearch || "Cliente offline";
     offlineVisit.consultant_name = payload.consultant_name || "—";
 
-
-    // 🧮 Gera cronograma fenológico simulado offline
+    // 🧮 Gera cronograma fenológico simulado offline (intervalos corretos)
     if (payload.genPheno || payload.generate_schedule) {
-      const stages = ["Plantio", "Emergência", "V2", "V5", "R1", "R5", "R8"];
+      const stages = [
+        { name: "Plantio", days: 0 },
+        { name: "Emergência", days: 7 },
+        { name: "V2", days: 14 },
+        { name: "V5", days: 21 },
+        { name: "R1", days: 35 },
+        { name: "R5", days: 50 },
+        { name: "R8", days: 65 },
+      ];
       const baseDate = new Date(payload.date);
-      for (let i = 0; i < stages.length; i++) {
+
+      for (const stage of stages) {
         const newDate = new Date(baseDate);
-        newDate.setDate(baseDate.getDate() + i * 15); // espaçamento de 15 dias
+        newDate.setDate(baseDate.getDate() + stage.days);
         const stageVisit = {
           ...offlineVisit,
-          id: Date.now() + i + Math.floor(Math.random() * 1000),
+          id: Date.now() + Math.floor(Math.random() * 10000),
           date: newDate.toISOString().slice(0, 10),
-          recommendation: stages[i],
+          recommendation: stage.name,
         };
         await appendToStore("visits", stageVisit);
       }
-      console.log("🌱 Cronograma fenológico gerado offline.");
+      console.log("🌱 Cronograma fenológico gerado offline (intervalos corrigidos).");
     } else {
       await appendToStore("visits", offlineVisit);
     }
@@ -145,7 +155,8 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
   if (syncedCount > 0) {
     console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
-    await fetchWithCache(`${base}/visits?scope=all`, "visits"); // 🔁 Atualiza cache local
+    // ✅ Corrige URL (não depende mais de ?scope=all)
+    await fetchWithCache(`${base}/visits`, "visits");
     window.dispatchEvent(new Event("visits-synced"));
   }
 }
@@ -162,8 +173,9 @@ export async function preloadOfflineData(apiBase: string): Promise<void> {
     [`${base}/cultures`, "cultures"],
     [`${base}/varieties`, "varieties"],
     [`${base}/consultants`, "consultants"],
-    [`${base}/visits?scope=all`, "visits"],
+    [`${base}/visits`, "visits"], // 🔁 sem ?scope=all
   ];
+
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
   }
