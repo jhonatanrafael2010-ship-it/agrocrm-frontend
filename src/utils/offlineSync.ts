@@ -78,36 +78,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     offlineVisit.consultant_name =
       payload.consultant_name || "—";
 
-    // Cronograma fenológico gerado offline
-    if (payload.genPheno || payload.generate_schedule) {
-      const stages = [
-        { name: "Plantio", days: 0 },
-        { name: "Emergência", days: 7 },
-        { name: "V2", days: 14 },
-        { name: "V5", days: 21 },
-        { name: "R1", days: 35 },
-        { name: "R5", days: 50 },
-        { name: "R8", days: 65 },
-      ];
-
-      const baseDate = new Date(payload.date);
-
-      for (const stage of stages) {
-        const newDate = new Date(baseDate);
-        newDate.setDate(baseDate.getDate() + stage.days);
-
-        const stageVisit = {
-          ...offlineVisit,
-          id: Date.now() + Math.floor(Math.random() * 10000),
-          date: newDate.toISOString().slice(0, 10),
-          recommendation: stage.name,
-        };
-
-        await appendToStore("visits", stageVisit);
-      }
-    } else {
-      await appendToStore("visits", offlineVisit);
-    }
+    // 🔥 NOVO — SEM CRONOGRAMA OFFLINE
+    await appendToStore("visits", offlineVisit);
 
     window.dispatchEvent(new Event("visits-updated"));
 
@@ -119,6 +91,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     };
   }
 }
+
+
 
 /**
  * Sincronizar fotos armazenadas offline
@@ -139,8 +113,8 @@ export async function syncPendingPhotos(API_BASE: string) {
       });
 
       if (res.ok) {
-        if (typeof p.id === "number") {
-          await deletePendingPhoto(p.id);
+        if (p.id != null) {
+            await deletePendingPhoto(p.id);
         }
       }
     } catch (err) {
@@ -205,5 +179,41 @@ export async function preloadOfflineData(apiBase: string): Promise<void> {
 
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
+  }
+}
+
+
+/**
+ * Atualizar visita com suporte offline
+ */
+export async function updateVisitWithSync(apiBase: string, visitId: number, payload: any) {
+  const base = normalizeBaseUrl(apiBase);
+
+  try {
+    const res = await fetch(`${base}/visits/${visitId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error("Erro HTTP " + res.status);
+
+    const json = await res.json();
+    return { ...json, synced: true };
+
+  } catch (err) {
+    // offline → salvar como pending_visit_update
+    await addPendingVisit({
+      ...payload,
+      __update: true,
+      visit_id: visitId,
+    });
+
+    return {
+      id: visitId,
+      offline: true,
+      synced: false,
+      message: "Atualização salva offline",
+    };
   }
 }

@@ -6,12 +6,16 @@ import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import DarkSelect from "../components/DarkSelect";
 import "../styles/Calendar.css";
-import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
 import VisitPhotos from "../components/VisitPhotos";
-import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+import {
+  fetchWithCache,
+  createVisitWithSync,
+  updateVisitWithSync,
+} from "../utils/offlineSync";
 import { API_BASE } from "../config";
 import { savePendingPhoto } from "../utils/indexedDB";
+
 
 type Client = { id: number; name: string };
 type Property = { id: number; client_id: number; name: string };
@@ -385,7 +389,9 @@ const CalendarPage: React.FC = () => {
       }
 
       // 🟢 Upload de fotos (somente se online)
-      if (navigator.onLine && form.photos && form.photos.length > 0) {
+      if (!navigator.onLine) {
+        console.log("📵 Offline — pulando upload online dentro do Calendar");
+      } else if (form.photos && form.photos.length > 0) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
@@ -451,31 +457,6 @@ const CalendarPage: React.FC = () => {
   };
 
   // ============================================================
-  // 📸 Tirar foto (captura para preview – opcional)
-  // ============================================================
-  const handleTakePhoto = async () => {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 85,
-        allowEditing: false,
-        resultType: CameraResultType.Base64,
-      });
-
-      if (image.base64String) {
-        const base64 = `data:image/jpeg;base64,${image.base64String}`;
-        setForm((f) => ({
-          ...f,
-          photoPreviews: [...(f.photoPreviews || []), base64],
-        }));
-        alert("📸 Foto capturada com sucesso!");
-      }
-    } catch (err) {
-      console.error("Erro ao tirar foto:", err);
-      alert("Erro ao capturar foto");
-    }
-  };
-
-  // ============================================================
   // 📍 GPS
   // ============================================================
   const handleGetLocation = async () => {
@@ -513,48 +494,58 @@ const CalendarPage: React.FC = () => {
   };
 
   // ============================================================
-  // ✅ Concluir
+  // ✅ Concluir (com suporte offline real)
   // ============================================================
   const markDone = async () => {
     if (!form.id) return;
 
     try {
-      if (form.photos && form.photos.length > 0 && navigator.onLine) {
+      // 🔵 ONLINE → envia fotos antes de concluir
+      if (navigator.onLine && form.photos && form.photos.length > 0) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
           fd.append("captions", form.photoCaptions[idx] || "");
         });
-        const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+
+        const resp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
           method: "POST",
           body: fd,
         });
-        if (!photoResp.ok) {
-          console.warn(
-            "⚠️ Falha ao enviar fotos antes de concluir:",
-            photoResp.status
-          );
-        } else {
-          console.log("📸 Fotos enviadas com sucesso antes de concluir!");
+
+        if (!resp.ok) {
+          console.warn("⚠️ Falha ao enviar fotos antes de concluir:", resp.status);
         }
       }
 
-      const r = await fetch(`${API_BASE}visits/${form.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "done" }),
+      // 🟠 OFFLINE → apenas salvar status no IndexedDB
+      if (!navigator.onLine) {
+        await updateVisitWithSync(API_BASE, form.id as number, { status: "done" });
+        alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
+        setOpen(false);
+        return;
+      }
+
+      // 🟢 ONLINE → envia PUT normal
+      const result = await updateVisitWithSync(API_BASE, form.id as number, {
+        status: "done",
       });
 
-      if (!r.ok) throw new Error("Erro HTTP " + r.status);
+      if (result.synced) {
+        alert("✅ Visita concluída com sucesso!");
+      } else {
+        alert("🟠 Visita concluída offline (pendente de sync).");
+      }
 
       await loadVisits();
       setOpen(false);
-      alert("✅ Visita concluída e fotos salvas com sucesso!");
-    } catch (e) {
-      console.error("Erro ao concluir:", e);
-      alert("Erro ao concluir visita");
+    } catch (err) {
+      console.error("Erro ao concluir:", err);
+      alert("❌ Erro ao concluir visita.");
     }
   };
+
+
 
   // ============================================================
   // 🖼️ Lightbox
@@ -795,7 +786,7 @@ const CalendarPage: React.FC = () => {
               genPheno: false,
               photos: null,
               photoPreviews: [],
-              savedPhotos: v.photos || [],
+              savedPhotos: navigator.onLine ? (v.photos || []) : [],
               clientSearch: clientName,
               latitude: v.latitude || null,
               longitude: v.longitude || null,
@@ -947,9 +938,9 @@ const CalendarPage: React.FC = () => {
                 ></button>
               </div>
 
-              {/* Corpo */}
               <div className="modal-body">
                 <div className="row g-3">
+
                   {/* Data */}
                   <div className="col-md-4">
                     <label className="form-label fw-semibold">Data</label>
@@ -967,7 +958,7 @@ const CalendarPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* Cliente busca digitável */}
+                  {/* Cliente com busca */}
                   <div className="col-12 position-relative">
                     <label className="form-label fw-semibold">Cliente</label>
                     <input
@@ -979,21 +970,17 @@ const CalendarPage: React.FC = () => {
                         borderColor: "var(--border)",
                       }}
                       value={
-                        clients.find((c) => String(c.id) === form.client_id)
-                          ?.name ||
+                        clients.find((c) => String(c.id) === form.client_id)?.name ||
                         form.clientSearch ||
                         ""
                       }
                       onChange={(e) => {
                         const value = e.target.value;
-                        setForm((f) => ({
-                          ...f,
-                          clientSearch: value,
-                          client_id: "",
-                        }));
+                        setForm((f) => ({ ...f, clientSearch: value, client_id: "" }));
                       }}
                       placeholder="Digite o nome do cliente..."
                     />
+
                     {form.clientSearch && (
                       <ul
                         className="list-group position-absolute w-100 mt-1"
@@ -1005,9 +992,7 @@ const CalendarPage: React.FC = () => {
                       >
                         {clients
                           .filter((c) =>
-                            c.name
-                              .toLowerCase()
-                              .startsWith(form.clientSearch.toLowerCase())
+                            c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase())
                           )
                           .map((c) => (
                             <li
@@ -1017,13 +1002,13 @@ const CalendarPage: React.FC = () => {
                                   ? "active bg-success text-white"
                                   : "bg-dark text-light"
                               }`}
-                              onClick={() => {
+                              onClick={() =>
                                 setForm((f) => ({
                                   ...f,
                                   client_id: String(c.id),
                                   clientSearch: c.name,
-                                }));
-                              }}
+                                }))
+                              }
                               style={{ cursor: "pointer" }}
                             >
                               {c.name}
@@ -1035,9 +1020,7 @@ const CalendarPage: React.FC = () => {
 
                   {/* Propriedade */}
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">
-                      Propriedade
-                    </label>
+                    <label className="form-label fw-semibold">Propriedade</label>
                     <DarkSelect
                       name="property_id"
                       value={form.property_id}
@@ -1049,7 +1032,7 @@ const CalendarPage: React.FC = () => {
                           label: p.name,
                         })),
                       ]}
-                      onChange={(e: any) =>
+                      onChange={(e) =>
                         setForm((f) => ({
                           ...f,
                           property_id: e.target.value,
@@ -1073,7 +1056,7 @@ const CalendarPage: React.FC = () => {
                           label: pl.name,
                         })),
                       ]}
-                      onChange={handleChange as any}
+                      onChange={handleChange}
                     />
                   </div>
 
@@ -1126,9 +1109,7 @@ const CalendarPage: React.FC = () => {
                       <option value="">Selecione</option>
                       {varieties
                         .filter(
-                          (v) =>
-                            v.culture.toLowerCase() ===
-                            (form.culture || "").toLowerCase()
+                          (v) => v.culture.toLowerCase() === form.culture.toLowerCase()
                         )
                         .map((v) => (
                           <option key={v.id} value={v.name}>
@@ -1145,10 +1126,7 @@ const CalendarPage: React.FC = () => {
                       name="consultant_id"
                       value={form.consultant_id}
                       onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          consultant_id: e.target.value,
-                        }))
+                        setForm((f) => ({ ...f, consultant_id: e.target.value }))
                       }
                       className="form-select"
                       style={{
@@ -1166,7 +1144,7 @@ const CalendarPage: React.FC = () => {
                     </select>
                   </div>
 
-                  {/* Checkbox */}
+                  {/* Checkbox fenológico */}
                   <div className="col-12 form-check mt-3">
                     <input
                       id="genPheno"
@@ -1182,8 +1160,8 @@ const CalendarPage: React.FC = () => {
                     </label>
                   </div>
 
-                  {/* Botões de captura */}
-                  <div className="col-12 d-flex justify-content-between mt-3">
+                  {/* Botão localização */}
+                  <div className="col-12 mt-3">
                     <button
                       type="button"
                       className="btn btn-outline-info"
@@ -1191,27 +1169,16 @@ const CalendarPage: React.FC = () => {
                     >
                       📍 Capturar Localização
                     </button>
-
-                    {/* Opcional: botão para testar a câmera */}
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={handleTakePhoto}
-                    >
-                      📷 Testar Câmera (preview)
-                    </button>
                   </div>
 
                   {/* Recomendação */}
                   <div className="col-12">
-                    <label className="form-label fw-semibold">
-                      Recomendação
-                    </label>
+                    <label className="form-label fw-semibold">Recomendação</label>
                     <textarea
                       name="recommendation"
                       value={form.recommendation}
                       onChange={handleChange}
-                      placeholder="Observações ou anotações técnicas..."
+                      placeholder="Observações..."
                       className="form-control"
                       style={{
                         background: "var(--input-bg)",
@@ -1221,7 +1188,7 @@ const CalendarPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* 📸 Seção de fotos já salvas */}
+                  {/* Fotos */}
                   <VisitPhotos
                     visitId={form.id}
                     existingPhotos={form.savedPhotos}
@@ -1297,7 +1264,7 @@ const CalendarPage: React.FC = () => {
                       {loading ? "Gerando..." : "📄 PDF"}
                     </button>
 
-                    <button className="btn btn.success" onClick={markDone}>
+                    <button className="btn btn-success" onClick={markDone}>
                       ✅ Concluir
                     </button>
 

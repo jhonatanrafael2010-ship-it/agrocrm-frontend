@@ -17,8 +17,6 @@ import {
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
 
-import { getNetworkStatus, listenNetworkStatus } from "./utils/safeNetwork";
-
 function App() {
   const [route, setRoute] = useState<string>("Dashboard");
   const [isMobileApp, setIsMobileApp] = useState(false);
@@ -26,22 +24,11 @@ function App() {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-  // ============================================================
-  // 🌐 Controle unificado de rede
-  // ============================================================
+
   useEffect(() => {
-    async function check() {
-      const status = await getNetworkStatus();
-      setOffline(!status.connected);
-    }
-
-    check();
-
-    listenNetworkStatus((connected) => {
-      setOffline(!connected);
-    });
-
     const update = () => setOffline(!navigator.onLine);
+
+    update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
 
@@ -50,6 +37,8 @@ function App() {
       window.removeEventListener("offline", update);
     };
   }, []);
+
+
 
   // ============================================================
   // 🔄 Sincronização automática

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE } from "../config";
-
+import { savePendingPhoto } from "../utils/indexedDB"; // <-- CORRETO AGORA
 
 type Photo = {
   id: number;
@@ -25,16 +25,24 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   const [photoCaptions, setPhotoCaptions] = useState<string[]>([]);
   const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
 
+  // ============================================================
+  // 🧩 Atualiza lista se fotos externas mudarem
+  // ============================================================
   useEffect(() => {
     if (!existingPhotos) return;
     setSavedPhotos((prev) =>
       existingPhotos.map((photo) => {
         const local = prev.find((p) => p.id === photo.id);
-        return local ? { ...photo, caption: local.caption ?? photo.caption } : photo;
+        return local
+          ? { ...photo, caption: local.caption ?? photo.caption }
+          : photo;
       })
     );
   }, [existingPhotos]);
 
+  // ============================================================
+  // 🔗 Resolve URL absoluta da foto
+  // ============================================================
   const resolvePhotoUrl = (photo: Photo): string => {
     if (!photo.url) return "";
     if (photo.url.startsWith("http")) return photo.url;
@@ -43,8 +51,36 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     return `${base}${path}`;
   };
 
+  // ============================================================
+  // 📸 Upload de fotos (com suporte OFFLINE)
+  // ============================================================
   const handleUpload = async () => {
     if (!visitId || !filesToUpload || filesToUpload.length === 0) return;
+
+    // 🟠 OFFLINE — salvar no IndexedDB
+    if (!navigator.onLine) {
+      Array.from(filesToUpload).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          await savePendingPhoto({
+            visit_id: visitId,
+            fileName: file.name,
+            mime: file.type,
+            dataUrl: reader.result as string,
+            synced: false,
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+      alert("🟠 Fotos salvas offline! Serão enviadas quando voltar à internet.");
+      setFilesToUpload(null);
+      setPhotoPreviews([]);
+      setPhotoCaptions([]);
+      return;
+    }
+
+    // 🟢 ONLINE — envia para backend
     const fd = new FormData();
     Array.from(filesToUpload).forEach((file, idx) => {
       fd.append("photos", file);
@@ -53,23 +89,35 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
 
     try {
       const resp = await axios.post(`${API_BASE}visits/${visitId}/photos`, fd);
-      const data = resp.data;
-      alert("📸 Fotos enviadas com sucesso!");
+
+      alert("📸 Fotos enviadas!");
+
       setFilesToUpload(null);
       setPhotoPreviews([]);
       setPhotoCaptions([]);
-      if (data && Array.isArray(data.photos)) {
-        setSavedPhotos((prev) => [...prev, ...data.photos]);
+
+      if (resp.data && Array.isArray(resp.data.photos)) {
+        setSavedPhotos((prev) => [...prev, ...resp.data.photos]);
       }
+
       onRefresh();
     } catch (err) {
       console.error("Erro ao enviar fotos:", err);
-      alert("❌ Falha ao enviar fotos.");
+      alert("❌ Falha ao enviar.");
     }
   };
 
+  // ============================================================
+  // ❌ Excluir foto — somente online
+  // ============================================================
   const handleDeletePhoto = async (photoId: number) => {
+    if (!navigator.onLine) {
+      alert("🟠 Não é possível excluir foto offline.");
+      return;
+    }
+
     if (!window.confirm("Excluir esta foto?")) return;
+
     try {
       await axios.delete(`${API_BASE}photos/${photoId}`);
       setSavedPhotos((prev) => prev.filter((p) => p.id !== photoId));
@@ -80,27 +128,44 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     }
   };
 
+  // ============================================================
+  // ✏️ Alteração local da legenda
+  // ============================================================
   const handleLocalCaptionChange = (photoId: number, newCaption: string) => {
     setSavedPhotos((prev) =>
       prev.map((p) => (p.id === photoId ? { ...p, caption: newCaption } : p))
     );
   };
 
+  // ============================================================
+  // 💾 Salvar legenda no backend — somente online
+  // ============================================================
   const handleCaptionBlur = async (photoId: number, caption: string) => {
+    if (!navigator.onLine) {
+      alert("🟠 Não é possível alterar legenda offline.");
+      return;
+    }
+
     try {
       await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-      setSavedPhotos((prev) =>
-        prev.map((p) => (p.id === photoId ? { ...p, caption } : p))
-      );
     } catch (err) {
       console.error("Erro ao atualizar legenda:", err);
       alert("❌ Falha ao salvar legenda.");
     }
   };
 
+  // ============================================================
+  // 🔄 Carregar fotos do backend (somente online)
+  // ============================================================
   useEffect(() => {
     const fetchPhotos = async () => {
       if (!visitId) return;
+
+      if (!navigator.onLine) {
+        console.warn("Offline — não carregando fotos do servidor.");
+        return;
+      }
+
       try {
         const res = await fetch(`${API_BASE}visits/${visitId}/photos`);
         if (res.ok) {
@@ -111,9 +176,13 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         console.error("⚠️ Falha ao carregar fotos:", err);
       }
     };
+
     fetchPhotos();
   }, [visitId]);
 
+  // ============================================================
+  // Renderização
+  // ============================================================
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos da Visita</label>
@@ -192,7 +261,7 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         </>
       )}
 
-      {/* Fotos salvas */}
+      {/* Fotos já salvas */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos Salvas</label>
@@ -220,6 +289,7 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                     marginBottom: "6px",
                   }}
                 />
+
                 <button
                   onClick={() => handleDeletePhoto(photo.id)}
                   title="Excluir"

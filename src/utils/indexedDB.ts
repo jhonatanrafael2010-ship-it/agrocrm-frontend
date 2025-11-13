@@ -90,10 +90,16 @@ export async function putManyInStore(
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
 
-    // ⚠️ Nunca limpar stores de pendências
-    if (navigator.onLine && store !== "pending_visits" && store !== "pending_photos") {
+    // ⚠️ Nunca limpar "visits", senão visitas offline somem!
+    if (
+      navigator.onLine &&
+      store !== "visits" &&
+      store !== "pending_visits" &&
+      store !== "pending_photos"
+    ) {
       os.clear();
     }
+
 
     items.forEach((item) => os.put(item));
 
@@ -148,6 +154,7 @@ export async function addPendingVisit(data: any): Promise<void> {
     os.transaction.onerror = () => reject(os.transaction.error);
   });
 }
+
 
 export async function getAllPendingVisits(): Promise<PendingVisit[]> {
   const db = await openDB();
