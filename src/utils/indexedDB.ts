@@ -72,7 +72,7 @@ export async function clearStore(store: StoreName): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
     tx.objectStore(store).clear();
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
@@ -97,7 +97,7 @@ export async function putManyInStore(
 
     items.forEach((item) => os.put(item));
 
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
@@ -111,7 +111,7 @@ export async function appendToStore(store: StoreName, item: any): Promise<void> 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
     tx.objectStore(store).put(item);
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
@@ -144,7 +144,7 @@ export async function addPendingVisit(data: any): Promise<void> {
   return new Promise((resolve, reject) => {
     const os = db.transaction("pending_visits", "readwrite").objectStore("pending_visits");
     os.add({ data, createdAt: Date.now() });
-    os.transaction.oncomplete = resolve;
+    os.transaction.oncomplete = () => resolve();
     os.transaction.onerror = () => reject(os.transaction.error);
   });
 }
@@ -163,7 +163,7 @@ export async function deletePendingVisit(id: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction("pending_visits", "readwrite");
     tx.objectStore("pending_visits").delete(id);
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
@@ -186,7 +186,7 @@ export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction("pending_photos", "readwrite");
     tx.objectStore("pending_photos").add(photo);
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
@@ -205,7 +205,7 @@ export async function deletePendingPhoto(id: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction("pending_photos", "readwrite");
     tx.objectStore("pending_photos").delete(id);
-    tx.oncomplete = resolve;
+    tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }

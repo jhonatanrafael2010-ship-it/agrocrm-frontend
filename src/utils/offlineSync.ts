@@ -139,7 +139,9 @@ export async function syncPendingPhotos(API_BASE: string) {
       });
 
       if (res.ok) {
-        await deletePendingPhoto(p.id);
+        if (typeof p.id === "number") {
+          await deletePendingPhoto(p.id);
+        }
       }
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar foto:", err);

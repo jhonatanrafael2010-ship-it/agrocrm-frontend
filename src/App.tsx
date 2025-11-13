@@ -16,7 +16,17 @@ import {
 
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
-import { Network } from "@capacitor/network";
+let Network: any = null;
+
+(async () => {
+  try {
+    const mod = await import("@capacitor/network");
+    Network = mod.Network;
+  } catch (err) {
+    console.log("ℹ️ Network plugin não disponível no ambiente web.");
+  }
+})();
+
 
 function App() {
   const [route, setRoute] = useState<string>("Dashboard");
