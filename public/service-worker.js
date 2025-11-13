@@ -1,9 +1,8 @@
-const CACHE_NAME = "agrocrm-cache-v2";
+const CACHE_NAME = "agrocrm-cache-v3";
 const OFFLINE_URLS = [
   "/",
   "/index.html",
-  "/vite.svg",
-  "/manifest.json",
+  "/manifest.webmanifest"
 ];
 
 // Instala o cache inicial
@@ -14,61 +13,52 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Intercepta todas as requisições
+// Intercepta requisições
 self.addEventListener("fetch", (event) => {
-  const request = event.request;
+  const req = event.request;
 
-  // Ignora requisições externas (como Render, Google Fonts, etc.)
-  if (!request.url.startsWith(self.location.origin)) return;
+  // ❌ NÃO cachear POST / PUT / DELETE / PATCH
+  if (req.method !== "GET") {
+    return event.respondWith(
+      fetch(req).catch(() => new Response(null))
+    );
+  }
 
+  // Apenas GET segue o fluxo de cache
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // ⚠️ Garante que é uma resposta válida antes de salvar no cache
-        if (!response || response.status !== 200 || response.type !== "basic") {
-          return response;
+    fetch(req)
+      .then((res) => {
+        if (!res || res.status !== 200 || res.type !== "basic") {
+          return res;
         }
 
-        const responseToCache = response.clone();
+        const clone = res.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache).catch((err) => {
-            console.warn("⚠️ Falha ao armazenar no cache:", err);
+          cache.put(req, clone).catch((err) => {
+            console.warn("⚠️ Cache PUT falhou:", err);
           });
         });
-        return response;
+
+        return res;
       })
-      .catch(async () => {
-        // 🔁 Tenta retornar do cache
-        const cached = await caches.match(request);
-        if (cached) return cached;
+      .catch(() => {
+        return caches.match(req).then((cached) => {
+          if (cached) return cached;
 
-        // 🧭 Se for navegação (HTML), retorna index.html offline
-        if (request.mode === "navigate") {
-          return caches.match("/index.html");
-        }
+          if (req.mode === "navigate") return caches.match("/index.html");
 
-        // ❌ Garante que sempre retorna um Response válido
-        return new Response("Offline", {
-          status: 503,
-          statusText: "Offline",
-          headers: { "Content-Type": "text/plain" },
+          return new Response("Offline", { status: 503 });
         });
       })
   );
 });
 
-// Atualiza o cache, removendo versões antigas
+// Atualização de cache
 self.addEventListener("activate", (event) => {
-  const whitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.map((key) => {
-          if (!whitelist.includes(key)) {
-            console.log(`🧹 Removendo cache antigo: ${key}`);
-            return caches.delete(key);
-          }
-        })
+        keys.map((key) => key !== CACHE_NAME && caches.delete(key))
       )
     )
   );
