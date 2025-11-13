@@ -30,7 +30,7 @@ function App() {
     async function syncPending() {
       try {
         setSyncing(true);
-        await syncPendingVisits("/api/");
+        await syncPendingVisits(API_BASE);
         window.dispatchEvent(new Event("visits-synced"));
         setLastSync(
           new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })

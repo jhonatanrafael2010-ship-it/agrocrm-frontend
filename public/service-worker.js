@@ -1,11 +1,11 @@
-const CACHE_NAME = "agrocrm-cache-v3";
+const CACHE_NAME = "agrocrm-cache-v2";
 const OFFLINE_URLS = [
   "/",
   "/index.html",
-  "/manifest.webmanifest"
+  "/vite.svg",
+  "/manifest.json",
 ];
 
-// Instala o cache inicial
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS))
@@ -13,52 +13,56 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Intercepta requisições
 self.addEventListener("fetch", (event) => {
-  const req = event.request;
+  const request = event.request;
 
-  // ❌ NÃO cachear POST / PUT / DELETE / PATCH
-  if (req.method !== "GET") {
-    return event.respondWith(
-      fetch(req).catch(() => new Response(null))
-    );
-  }
+  // Não cacheia POST, PUT, DELETE etc
+  if (request.method !== "GET") return;
 
-  // Apenas GET segue o fluxo de cache
+  if (!request.url.startsWith(self.location.origin)) return;
+
   event.respondWith(
-    fetch(req)
-      .then((res) => {
-        if (!res || res.status !== 200 || res.type !== "basic") {
-          return res;
+    fetch(request)
+      .then((response) => {
+        if (!response || response.status !== 200 || response.type !== "basic") {
+          return response;
         }
 
-        const clone = res.clone();
+        const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(req, clone).catch((err) => {
-            console.warn("⚠️ Cache PUT falhou:", err);
+          cache.put(request, responseToCache).catch((err) => {
+            console.warn("⚠️ Falha ao armazenar no cache:", err);
           });
         });
-
-        return res;
+        return response;
       })
-      .catch(() => {
-        return caches.match(req).then((cached) => {
-          if (cached) return cached;
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
 
-          if (req.mode === "navigate") return caches.match("/index.html");
+        if (request.mode === "navigate") {
+          return caches.match("/index.html");
+        }
 
-          return new Response("Offline", { status: 503 });
+        return new Response("Offline", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" },
         });
       })
   );
 });
 
-// Atualização de cache
 self.addEventListener("activate", (event) => {
+  const whitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.map((key) => key !== CACHE_NAME && caches.delete(key))
+        keys.map((key) => {
+          if (!whitelist.includes(key)) {
+            console.log(`🧹 Removendo cache antigo: ${key}`);
+            return caches.delete(key);
+          }
+        })
       )
     )
   );
