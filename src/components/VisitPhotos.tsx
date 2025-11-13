@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../config";
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
 
 type Photo = {
   id: number;

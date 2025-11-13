@@ -3,6 +3,8 @@ import pencilIcon from "../assets/pencil.svg";
 import trashIcon from "../assets/trash.svg";
 import DarkSelect from "../components/DarkSelect";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { API_BASE } from "../config";
+
 
 type Opportunity = {
   id: number;
@@ -14,7 +16,6 @@ type Opportunity = {
 
 type Client = { id: number; name: string };
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api/";
 
 const STAGES = [
   { key: "prospecção", label: "Prospecção" },

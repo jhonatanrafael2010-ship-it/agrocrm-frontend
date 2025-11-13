@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Clients from "./pages/Clients";
 import PropertiesPage from "./pages/Properties";
@@ -7,67 +7,82 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
-import { Moon, SunMedium } from "lucide-react";
-import { syncPendingVisits } from "./utils/offlineSync";
+import { syncPendingVisits, preloadOfflineData } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
+import { API_BASE } from "./config";
 
-const App: React.FC = () => {
+
+
+
+function App() {
   const [route, setRoute] = useState<string>("Dashboard");
-  // ===========================================
-  // 🌙 Controle de tema (escuro/claro) — Corrigido
-  // ===========================================
-  const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored) return stored;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
-  });
-
-  // 🔧 Função única para aplicar tema global (sincroniza Bootstrap + app)
-  const applyTheme = (themeValue: string) => {
-    document.documentElement.setAttribute("data-theme", themeValue);
-    document.body.setAttribute("data-theme", themeValue);
-    localStorage.setItem("theme", themeValue);
-  };
+  const [isMobileApp, setIsMobileApp] = useState(false);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
 
 
 
-  // Atualiza tema quando o state muda
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  // Alternar entre temas
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
-
+  // ============================================================
+  // 🔄 Sincronização automática de visitas pendentes
+  // ============================================================
   useEffect(() => {
     async function syncPending() {
       try {
-        await syncPendingVisits("/api/");
+        setSyncing(true);
+        await syncPendingVisits(API_BASE);
+        window.dispatchEvent(new Event("visits-synced"));
+        setLastSync(
+          new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        );
       } catch (err) {
         console.warn("⚠️ Erro ao tentar sincronizar:", err);
+      } finally {
+        setTimeout(() => setSyncing(false), 800);
       }
     }
 
     window.addEventListener("online", syncPending);
     if (navigator.onLine) syncPending();
+    return () => window.removeEventListener("online", syncPending);
+  }, []);
 
+  // ============================================================
+  // ⚡ Pré-carregamento de dados base
+  // ============================================================
+  useEffect(() => {
+    async function loadBaseData() {
+      try {
+        await preloadOfflineData(API_BASE);
+      } catch (err) {
+        console.warn("⚠️ Falha ao pré-carregar dados base:", err);
+      }
+    }
+    loadBaseData();
+  }, []);
+
+  // ============================================================
+  // 🌐 Status de conexão
+  // ============================================================
+  useEffect(() => {
+    const updateOnlineStatus = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
     return () => {
-      window.removeEventListener("online", syncPending);
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
 
-  const [isMobileApp, setIsMobileApp] = useState(false);
-
+  // ============================================================
+  // 📱 Detectar mobile vs desktop
+  // ============================================================
   useEffect(() => {
     const detect = () => {
       const isSmallScreen = window.innerWidth <= 900;
       const ua = navigator.userAgent.toLowerCase();
-      const runningInApk =
-        ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
+      const runningInApk = ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
 
       const mobile = isSmallScreen || runningInApk;
       setIsMobileApp(mobile);
@@ -79,7 +94,9 @@ const App: React.FC = () => {
     return () => window.removeEventListener("resize", detect);
   }, []);
 
-  // ✅ Força fechamento da offcanvas quando muda de rota
+  // ============================================================
+  // ✅ Fecha menu lateral ao mudar rota
+  // ============================================================
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
     if (offcanvasEl) {
@@ -88,11 +105,16 @@ const App: React.FC = () => {
     }
   }, [route]);
 
+  // ============================================================
+  // Render
+  // ============================================================
   return (
     <div className="app d-flex flex-column vh-100">
-      {/* 🔝 Cabeçalho fixo (Bootstrap Navbar) */}
-      <nav className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
-           style={{ background: "var(--panel)", color: "var(--text)" }}>
+      {/* 🔝 Cabeçalho fixo */}
+      <nav
+        className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
+        style={{ background: "var(--panel)", color: "var(--text)" }}
+      >
         <div className="container-fluid">
           <div className="d-flex align-items-center gap-3">
             {/* ☰ Botão de menu mobile */}
@@ -106,26 +128,70 @@ const App: React.FC = () => {
               ☰
             </button>
           </div>
-
-          {/* 🌗 Alternar tema claro/escuro */}
-          <button
-            onClick={toggleTheme}
-            className="btn btn-outline-light d-flex align-items-center gap-2"
-          >
-            {theme === "dark" ? (
-              <>
-                <Moon size={18} /> Escuro
-              </>
-            ) : (
-              <>
-                <SunMedium size={18} /> Claro
-              </>
-            )}
-          </button>
         </div>
       </nav>
 
-      {/* 🧭 Sidebar / Menu lateral */}
+      {/* 🌐 Banner global offline */}
+      {offline && (
+        <div
+          style={{
+            backgroundColor: "#ffcc00",
+            color: "#000",
+            padding: "6px 12px",
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            borderBottom: "1px solid #d1a800",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            zIndex: 2000,
+          }}
+        >
+          📴 Você está offline — exibindo dados do cache local
+        </div>
+      )}
+
+      {/* 🔁 Indicador de sincronização global */}
+      {syncing && (
+        <div
+          style={{
+            backgroundColor: "#007bff",
+            color: "#fff",
+            padding: "6px 12px",
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+            borderBottom: "1px solid #005dc1",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            animation: "pulse 1.5s infinite",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <span className="sync-spinner"></span>
+          Sincronizando visitas com o servidor...
+        </div>
+      )}
+
+      {!syncing && lastSync && !offline && (
+        <div
+          style={{
+            backgroundColor: "#28a745",
+            color: "#fff",
+            padding: "4px 10px",
+            textAlign: "center",
+            fontWeight: 500,
+            fontSize: "0.8rem",
+            borderBottom: "1px solid #1c7a31",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          ✅ Última sincronização: {lastSync}
+        </div>
+      )}
+
+      {/* 🧭 Sidebar / Conteúdo */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
           <MobileMenu onNavigate={setRoute} activeItem={route} />
@@ -163,6 +229,6 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default App;

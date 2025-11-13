@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react'
 import pencilIcon from '../assets/pencil.svg'
 import trashIcon from '../assets/trash.svg'
 import DarkSelect from '../components/DarkSelect'
+import { API_BASE } from "../config";
+
 
 type Plot = { id: number; name: string }
 type Planting = { id: number; plot_id: number; culture?: string; variety?: string; planting_date?: string }
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api/'
+
 
 const PlantingsPage: React.FC = () => {
   const [plots, setPlots] = useState<Plot[]>([])

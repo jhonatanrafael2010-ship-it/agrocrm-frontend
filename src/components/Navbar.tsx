@@ -9,7 +9,6 @@ import {
   LogOut,
 } from "lucide-react";
 import "./Navbar.css";
-import ThemeToggle from "../components/ThemeToggle";
 
 type Props = {
   activeItem?: string;
@@ -32,9 +31,7 @@ const Navbar: React.FC<Props> = ({
   return (
     <aside
       className="d-flex flex-column border-end h-100 p-3 sidebar-panel"
-      style={{
-        width: 240,
-      }}
+      style={{ width: 240 }}
     >
       {/* 🔹 Logo NutriCRM */}
       <div className="sidebar-logo text-center py-2">
@@ -67,9 +64,8 @@ const Navbar: React.FC<Props> = ({
         </div>
       </nav>
 
-      {/* 🔹 Rodapé (Tema + Logout) */}
+      {/* 🔹 Rodapé (Logout) */}
       <div className="mt-auto pt-3 border-top sidebar-footer">
-        <ThemeToggle />
         <button
           className="btn navbar-logout-btn w-100 d-flex align-items-center justify-content-center gap-2 mt-3"
           onClick={() => alert("🚪 Logout realizado!")}

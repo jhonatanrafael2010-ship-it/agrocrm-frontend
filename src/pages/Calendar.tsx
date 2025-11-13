@@ -9,9 +9,12 @@ import "../styles/Calendar.css";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
 import VisitPhotos from "../components/VisitPhotos";
+import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+import { API_BASE } from "../config";
+  
 
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
+
 
 type Client = { id: number; name: string };
 type Property = { id: number; client_id: number; name: string };
@@ -46,6 +49,31 @@ type Photo = {
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
+  // 🛰️ Status de conexão
+  const [offline, setOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const checkConnection = () => {
+      const status = !navigator.onLine;
+      setOffline(status);
+      console.log(status ? "📴 Offline detectado" : "🌐 Online detectado");
+    };
+
+    // Verifica imediatamente e depois a cada 3s
+    checkConnection();
+    const interval = setInterval(checkConnection, 3000);
+
+    window.addEventListener("online", checkConnection);
+    window.addEventListener("offline", checkConnection);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("online", checkConnection);
+      window.removeEventListener("offline", checkConnection);
+    };
+  }, []);
+
+
 
   // dados base
   const [events, setEvents] = useState<any[]>([]);
@@ -60,6 +88,11 @@ const CalendarPage: React.FC = () => {
   // filtros
   const [selectedConsultant, setSelectedConsultant] = useState<string>("");
   const [selectedVariety, setSelectedVariety] = useState<string>("");
+
+  // Estado de sincronização
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
 
   // modal
   const [open, setOpen] = useState(false);
@@ -89,9 +122,7 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      const res = await fetch(`${API_BASE}visits`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const vs: Visit[] = await res.json();
+      const vs: Visit[] = await fetchWithCache(`${API_BASE}visits?scope=all`, "visits");
 
       const cs = clients || [];
       const cons = consultants || [];
@@ -157,29 +188,70 @@ const CalendarPage: React.FC = () => {
   // 🚀 Load inicial
   // ============================================================
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      fetch(`${API_BASE}clients`).then((r) => r.json()),
-      fetch(`${API_BASE}properties`).then((r) => r.json()),
-      fetch(`${API_BASE}plots`).then((r) => r.json()),
-      fetch(`${API_BASE}cultures`).then((r) => r.json()),
-      fetch(`${API_BASE}varieties`).then((r) => r.json()),
-      fetch(`${API_BASE}consultants`).then((r) => r.json()),
-    ])
-      .then(([cs, ps, pls, cts, vars, cons]) => {
-        setClients(cs || []);
-        setProperties(ps || []);
-        setPlots(pls || []);
-        setCultures(cts || []);
-        setVarieties(vars || []);
-        setConsultants(cons || []);
-      })
-      .catch(console.error)
-      .finally(() => {
-        loadVisits();
+    async function loadBaseData() {
+      setLoading(true);
+      try {
+        const [
+          cs = [],
+          ps = [],
+          pls = [],
+          cts = [],
+          vars = [],
+          cons = [],
+        ] = await Promise.all([
+          fetchWithCache(`${API_BASE}clients`, "clients"),
+          fetchWithCache(`${API_BASE}properties`, "properties"),
+          fetchWithCache(`${API_BASE}plots`, "plots"),
+          fetchWithCache(`${API_BASE}cultures`, "cultures"),
+          fetchWithCache(`${API_BASE}varieties`, "varieties"),
+          fetchWithCache(`${API_BASE}consultants`, "consultants"),
+        ]);
+
+        setClients(cs);
+        setProperties(ps);
+        setPlots(pls);
+        setCultures(cts);
+        setVarieties(vars);
+        setConsultants(cons);
+
+        console.log("📦 Dados carregados (online ou cache).");
+      } catch (err) {
+        console.warn("⚠️ Falha geral ao carregar dados base:", err);
+        alert("⚠️ Sem conexão — dados limitados disponíveis.");
+        // evita erro de render
+        setClients([]);
+        setProperties([]);
+        setPlots([]);
+        setCultures([]);
+        setVarieties([]);
+        setConsultants([]);
+      } finally {
+        await loadVisits();
         setLoading(false);
-      });
+      }
+    }
+
+    loadBaseData();
   }, []);
+
+
+  useEffect(() => {
+    const handleSync = async () => {
+      console.log("🔄 Atualizando calendário após sincronização...");
+      setSyncing(true);
+      await loadVisits();
+      setLastSync(
+        new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      );
+      setSyncing(false);
+    };
+
+    window.addEventListener("visits-synced", handleSync);
+    return () => window.removeEventListener("visits-synced", handleSync);
+  }, []);
+
+
+
 
   // ============================================================
   // 🎨 Cor dos eventos
@@ -220,7 +292,6 @@ const CalendarPage: React.FC = () => {
       return;
     }
 
-    // converte dd/mm/aaaa → yyyy-mm-dd
     const [d, m, y] = form.date.split("/");
     const iso = `${y}-${m}-${d}`;
 
@@ -230,18 +301,14 @@ const CalendarPage: React.FC = () => {
       cultureName = byId ? byId.name : form.culture;
     }
 
-    // 🔎 Normaliza a cultura (sem acento, minúscula)
     const normalize = (s: string | undefined | null) =>
       (s || "")
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim();
 
     const normalizedCulture = normalize(cultureName);
-
-    // ✅ Vai gerar cronograma para milho, soja e algodão,
-    // mesmo que venha "Milho", "milho", "MILHO", "Algodao", "Soja IPRO", etc.
     const isPhenoCulture =
       normalizedCulture.startsWith("milho") ||
       normalizedCulture.startsWith("soja") ||
@@ -259,58 +326,53 @@ const CalendarPage: React.FC = () => {
       recommendation: "Plantio",
       latitude: form.latitude,
       longitude: form.longitude,
-
-      // 👇 sempre manda pros dois campos, como antes
       generate_schedule: isPhenoCulture,
       genPheno: isPhenoCulture,
     };
 
     console.log("📦 Payload enviado:", payload);
 
-
     try {
-      const res = await fetch(`${API_BASE}visits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      // 🟢 Cria a visita (com suporte offline)
+      const result = await createVisitWithSync(API_BASE, payload);
 
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(body || `Erro ${res.status}`);
+      if (result.offline && !result.synced) {
+        alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
+        const tempEvent = {
+          id: `temp-${Date.now()}`,
+          title: `${form.clientSearch || "Visita"} (pendente)`,
+          start: new Date(payload.date),
+          backgroundColor: "#ffcc00",
+          borderColor: "#ffaa00",
+          textColor: "#000",
+          offline: true,
+          extendedProps: { raw: { ...payload, client_name: form.clientSearch || "Cliente offline" } },
+        };
+        setEvents((prev) => [...prev, tempEvent]);
+      } else {
+        alert("✅ Visita criada e sincronizada com o servidor.");
       }
 
-      const data = await res.json();
-      console.log("🔁 Resposta do backend ao criar visita:", data);
-
-
-    
-
-      // upload de fotos (se tiver)
-      if (form.photos && form.photos.length > 0) {
+      // 🟢 Upload de fotos (somente se online)
+      if (navigator.onLine && form.photos && form.photos.length > 0) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
           fd.append("captions", form.photoCaptions[idx] || "");
         });
 
-        const photoResp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
+        const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
           method: "POST",
           body: fd,
         });
 
-        if (!photoResp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos e legendas:", photoResp.status);
-        } else {
-          console.log("📸 Fotos e legendas enviadas com sucesso!");
-        }
+        if (!photoResp.ok) console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
+        else console.log("📸 Fotos enviadas com sucesso!");
       }
 
-
-
-      // recarrega
-      setOpen(false);
+      // 🔄 Recarrega e limpa
       await loadVisits();
+      setOpen(false);
       setForm({
         id: null,
         date: "",
@@ -324,19 +386,21 @@ const CalendarPage: React.FC = () => {
         genPheno: true,
         photos: null,
         photoPreviews: [],
-        savedPhotos: [], // 🆕 limpa fotos antigas
+        savedPhotos: [],
         clientSearch: "",
         latitude: null,
         longitude: null,
         photoCaptions: [],
       });
 
-    } catch (e: any) {
-      console.error("❌ Erro ao salvar visita:", e);
-      alert(e?.message || "Erro ao salvar visita");
+    } catch (err) {
+      console.error("❌ Erro ao salvar visita:", err);
+      alert("Erro ao salvar visita. Tente novamente.");
     }
   };
-  
+
+
+      
 
   // ============================================================
   // 🗑️ Excluir
@@ -387,21 +451,34 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const handleGetLocation = async () => {
     try {
-      const position = await Geolocation.getCurrentPosition();
+      if (!navigator.onLine) {
+        const cached = localStorage.getItem("lastLocation");
+        if (cached) {
+          const { latitude, longitude } = JSON.parse(cached);
+          setForm((f) => ({ ...f, latitude, longitude }));
+          alert(`📍 Localização recuperada: ${latitude}, ${longitude}`);
+        } else {
+          alert("⚠️ Sem conexão — localização anterior não encontrada.");
+        }
+        return;
+      }
+
+      // 🌐 Online: usa Capacitor
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
       const { latitude, longitude } = position.coords;
-      setForm((f) => ({
-        ...f,
-        latitude,
-        longitude,
-      }));
-      alert(
-        `📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-      );
+      setForm((f) => ({ ...f, latitude, longitude }));
+
+      // salva no cache local
+      localStorage.setItem("lastLocation", JSON.stringify({ latitude, longitude }));
+
+      alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
       console.error("Erro ao obter localização:", err);
-      alert("Erro ao capturar localização");
+      alert("⚠️ Falha ao capturar localização.");
     }
   };
+
+
 
   // ============================================================
   // ✅ Concluir
@@ -486,9 +563,96 @@ const CalendarPage: React.FC = () => {
     <div className="calendar-page">
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
+
+        {/* 🛰️ Banner de modo offline */}
+        {offline && (
+          <div
+            style={{
+              backgroundColor: "#ffcc00",
+              color: "#000",
+              padding: "6px 12px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            }}
+          >
+            📴 Você está offline — exibindo dados do cache local
+          </div>
+        )}
+
+        {/* 🔸 Alerta de visitas pendentes de sincronização */}
+        {events.some(e => e.extendedProps?.raw?.offline) && (
+          <div
+            style={{
+              backgroundColor: "#ffcc00",
+              color: "#000",
+              padding: "4px 8px",
+              borderRadius: "6px",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "center",
+              marginBottom: "8px",
+              boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+            }}
+          >
+            ⚠️ Existem visitas pendentes de sincronização (
+            {events.filter(e => e.extendedProps?.raw?.offline).length})
+          </div>
+        )}
+
+
+        {/* 🔁 Indicador de sincronização */}
+        {syncing && (
+          <div
+            style={{
+              backgroundColor: "#007bff",
+              color: "#fff",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              animation: "pulse 1.5s infinite",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            <span className="sync-spinner"></span>
+            Sincronizando visitas com o servidor...
+          </div>
+        )}
+
+        {!syncing && lastSync && (
+          <div
+            style={{
+              backgroundColor: "#28a745",
+              color: "#fff",
+              padding: "4px 10px",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              textAlign: "center",
+              fontWeight: 500,
+              fontSize: "0.8rem",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+            }}
+          >
+            ✅ Última sincronização: {lastSync}
+          </div>
+        )}
+
+
+
         <div className="title-row">
           <h2 className="mb-0">Agenda de Visitas</h2>
         </div>
+
 
         <div className="filters-row">
           <select
@@ -621,35 +785,79 @@ const CalendarPage: React.FC = () => {
 
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};
-            const bg = colorFor(v?.date || arg.event.startStr, v?.status);
+            const isOffline = v?.offline === true;
+
+            const bg = isOffline
+              ? "#ffcc00"
+              : colorFor(v?.date || arg.event.startStr, v?.status);
 
             const stage =
-              (
-                (v?.recommendation?.split("—").pop() || v?.recommendation || "") +
-                ""
-              ).trim() || "-";
+              ((v?.recommendation?.split("—").pop() || v?.recommendation || "") + "")
+                .trim() || "-";
 
-            const clientName = v?.client_name || "—";
+            // 🔧 Aqui usamos diretamente o estado do React, e não variáveis locais inexistentes
+            const clientName =
+              v.client_name ||
+              v.clientSearch ||
+              clients.find((c: any) => c.id === v.client_id)?.name ||
+              "Cliente offline";
+
             const variety = v?.variety || "—";
-            const consultant = v?.consultant_name || "—";
+
+            const consultant =
+              v.consultant_name ||
+              consultants.find((x: any) => x.id === v.consultant_id)?.name ||
+              "—";
 
             return (
               <div
                 className="fc-visit-card"
-                style={{ backgroundColor: bg, borderColor: bg }}
+                style={{
+                  backgroundColor: bg,
+                  borderColor: isOffline ? "#ffaa00" : bg,
+                  color: isOffline ? "#000" : "#fff",
+                  borderStyle: isOffline ? "dashed" : "solid",
+                  opacity: isOffline ? 0.9 : 1,
+                }}
               >
-                <div className="fc-visit-line">👤 {clientName}</div>
+                <div className="fc-visit-line">
+                  {isOffline ? "🔸" : "👤"} {clientName}
+                </div>
                 <div className="fc-visit-line">🌱 {variety}</div>
                 <div className="fc-visit-line">📍 {stage}</div>
                 <div className="fc-visit-line">👨‍🌾 {consultant}</div>
+                {isOffline && (
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "#663c00",
+                      textAlign: "center",
+                      marginTop: "2px",
+                    }}
+                  >
+                    ⚠️ Offline – aguardando sync
+                  </div>
+                )}
               </div>
             );
+          }}
+
+
+          eventDidMount={(info) => {
+            const v = info.event.extendedProps?.raw as any;
+            if (v?.offline) {
+              info.el.style.border = "2px dashed #ffaa00";
+              info.el.style.opacity = "0.9";
+              info.el.title =
+                "⚠️ Visita salva offline — será sincronizada quando a internet voltar.";
+            }
           }}
         />
       </div>
 
       {/* ➕ FAB no mobile */}
-      {window.innerWidth <= 768 && (
+      {document.body.dataset.platform === "mobile" && (
         <button
           className="fab"
           onClick={() => {
@@ -679,10 +887,14 @@ const CalendarPage: React.FC = () => {
             });
             setOpen(true);
           }}
+          aria-label="Nova visita"
         >
-          +
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5c.552 0 1 .448 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6c0-.552.448-1 1-1z"/>
+          </svg>
         </button>
       )}
+
 
       {/* MODAL */}
       {open && (

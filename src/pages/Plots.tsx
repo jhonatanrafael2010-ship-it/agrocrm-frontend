@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DarkSelect from "../components/DarkSelect";
+import { API_BASE } from "../config";
+
 
 type Property = { id: number; name: string };
 type Plot = {
@@ -10,7 +12,7 @@ type Plot = {
   irrigated?: boolean;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api/";
+
 
 const Plots: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);

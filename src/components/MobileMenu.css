@@ -3,8 +3,8 @@
 ========================================================= */
 
 .offcanvas {
-  background-color: var(--panel) !important;
-  color: var(--text) !important;
+  background-color: var(--panel-mobile) !important;
+  color: var(--text-mobile) !important;
   z-index: 2000 !important;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);
@@ -16,43 +16,40 @@
   border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-[data-theme='dark'] .offcanvas {
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
 
 /* =========================================================
-🔰 Cabeçalho / Logo NutriCRM (corrigido)
+🔰 Cabeçalho / Logo NutriCRM — adapta-se ao tema
 ========================================================= */
 .app-logo-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, var(--accent), var(--accent-hover));
-  border-bottom: 1px solid var(--border);
-  padding: 18px 0 12px 0;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: var(--panel-mobile, #ffffff); /* usa a cor do tema */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 14px 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 10px 10px;
+  transition: background 0.3s ease;
 }
 
-
-/* Remove qualquer faixa verde fixa antiga */
-.app-logo-container::before {
-  content: none !important;
+[data-theme='light'] {
+  --invert-close: 0;
 }
 
-/* Logo NutriCRM — centralizada, maior e com sombra suave */
 .app-logo {
-  width: 180px;
+  width: 160px;
   height: auto;
   object-fit: contain;
-  border-radius: 10px;
-  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
   transition: transform 0.25s ease-in-out;
 }
 
 .app-logo:hover {
-  transform: scale(1.04);
+  transform: scale(1.03);
+}
+
+.app-logo-container {
+  border-radius: 0 0 10px 10px;
 }
 
 /* =========================================================

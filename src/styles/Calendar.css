@@ -508,3 +508,12 @@ body[data-theme='light'] .fc .fc-daygrid-day {
     height: 42px;
   }
 }
+
+.calendar-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--panel);
+  padding-bottom: 4px;
+  transition: background 0.3s ease;
+}

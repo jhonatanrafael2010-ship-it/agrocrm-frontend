@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+{/*import React, { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
 const ThemeToggle: React.FC = () => {
@@ -59,4 +59,4 @@ const ThemeToggle: React.FC = () => {
   );
 };
 
-export default ThemeToggle;
+export default ThemeToggle;*/}

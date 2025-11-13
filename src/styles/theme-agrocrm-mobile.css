@@ -8,27 +8,30 @@ Herdando de theme-base.css
 /* =========================================================
 🌿 Tema base — Mantém estrutura e ergonomia
 ========================================================= */
-body[data-platform="mobile"][data-theme="light"],
-@media (prefers-color-scheme: light) {
-  --bg-mobile: var(--bg);
-  --panel-mobile: var(--panel);
-  --text-mobile: var(--text);
-  --muted-mobile: var(--muted);
-  --accent-mobile: var(--accent);
-  --border-mobile: var(--border);
-  --shadow-mobile: var(--shadow);
+
+/* 🌞 Tema Claro */
+body[data-platform="mobile"][data-theme="light"] {
+  --bg-mobile: var(--bg-light, #ffffff);
+  --panel-mobile: var(--panel-light, #f9fafb);
+  --text-mobile: var(--text-light, #111827);
+  --muted-mobile: var(--muted-light, #6b7280);
+  --accent-mobile: var(--accent-light, #26b96a);
+  --border-mobile: var(--border-light, #e5e7eb);
+  --shadow-mobile: rgba(0, 0, 0, 0.08);
 }
 
-body[data-platform="mobile"][data-theme="dark"],
-@media (prefers-color-scheme: dark) {
-  --bg-mobile: var(--bg);
-  --panel-mobile: var(--panel);
-  --text-mobile: var(--text);
-  --muted-mobile: var(--muted);
-  --accent-mobile: var(--accent);
-  --border-mobile: var(--border);
-  --shadow-mobile: var(--shadow);
+/* 🌙 Tema Escuro
+body[data-platform="mobile"][data-theme="dark"] {
+  --bg-mobile: var(--bg-dark, #0b1620);
+  --panel-mobile: var(--panel-dark, #1e293b);
+  --text-mobile: var(--text-dark, #f1f5f9);
+  --muted-mobile: var(--muted-dark, #94a3b8);
+  --accent-mobile: var(--accent-dark, #2dd36f);
+  --border-mobile: var(--border-dark, #334155);
+  --shadow-mobile: rgba(0, 0, 0, 0.4);
 }
+*/
+
 
 /* =========================================================
 🧭 Estrutura e comportamento
@@ -151,31 +154,84 @@ body[data-platform="mobile"] .bottom-nav button:active::after {
 }
 
 /* =========================================================
-➕ Botão Flutuante (FAB)
+➕ Botão Flutuante (FAB) — Material You / Android 14
 ========================================================= */
 body[data-platform="mobile"] .fab {
   position: fixed;
-  bottom: 78px;
+  bottom: 82px; /* ligeiramente acima da bottom-nav */
   right: 20px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent-mobile);
-  color: #fff;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  font-size: 1.8rem;
+  background: linear-gradient(180deg, #42e57b, #26b96a);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  z-index: 9999;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 9999;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: fabIn 0.4s ease forwards;
 }
 
-body[data-platform="mobile"] .fab:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+/* 🔹 Ícone SVG centralizado */
+body[data-platform="mobile"] .fab svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+  transition: transform 0.15s ease;
 }
+
+body[data-platform="mobile"] .fab:active svg,
+body[data-platform="mobile"] .fab.pressed svg {
+  transform: scale(0.9);
+}
+
+/* Toque e sombra */
+body[data-platform="mobile"] .fab:active,
+body[data-platform="mobile"] .fab.pressed {
+  transform: scale(0.93);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Animação de entrada */
+@keyframes fabIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌟 Efeito pulsante suave */
+body[data-platform="mobile"] .fab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: fabPulse 2.8s infinite;
+}
+
+@keyframes fabPulse {
+  0% { box-shadow: 0 0 0 0 rgba(66, 229, 123, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(66, 229, 123, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(66, 229, 123, 0); }
+}
+
+/* Telas menores */
+@media (max-width: 400px) {
+  body[data-platform="mobile"] .fab {
+    width: 58px;
+    height: 58px;
+    bottom: 76px;
+    right: 16px;
+  }
+  body[data-platform="mobile"] .fab svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 
 /* =========================================================
 🎨 Botões e Inputs
@@ -430,21 +486,19 @@ body[data-platform="mobile"] .visit-card {
   }
 }
 /* =========================================================
-📌 HEADER FIXO DO CALENDÁRIO — MOBILE
+📌 HEADER FIXO DO CALENDÁRIO — COMPORTAMENTO CORRIGIDO
 ========================================================= */
 body[data-platform="mobile"] .calendar-page {
   position: relative;
-  padding-top: 120px !important; /* espaço pro header fixo */
+  padding-top: 120px !important; /* espaço pro header dentro do calendário */
 }
 
-/* bloco inteiro que fica em cima (título + filtros) */
+/* Cabeçalho fixo apenas dentro do calendário */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky {
-  position: fixed;
-  top: 58px; /* abaixo do app-header mobile que vc já tem */
-  left: 0;
-  right: 0;
-  z-index: 9990;
-  background: var(--bg-mobile, #0b1620);
+  position: sticky; /* 👉 deixa fixo só dentro da página de calendário */
+  top: 58px;
+  z-index: 10;
+  background: var(--bg-mobile, #fff);
   padding: 10px 12px 6px 12px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   display: flex;
@@ -452,7 +506,7 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky {
   gap: 8px;
 }
 
-/* linha de título "Agenda de Visitas" */
+/* título e filtros seguem iguais */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky .title-row {
   display: flex;
   align-items: center;
@@ -467,11 +521,9 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky h2 {
   color: var(--accent-mobile, #2dd36f);
 }
 
-/* linha de filtros (consultor / variedade) */
 body[data-platform="mobile"] .calendar-page .calendar-header-sticky .filters-row {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
   overflow-x: auto;
 }
 
@@ -479,25 +531,6 @@ body[data-platform="mobile"] .calendar-page .calendar-header-sticky select {
   min-width: 150px;
 }
 
-/* linha de navegação (Hoje / < > / Mês Semana Dia) */
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row .fc-button,
-body[data-platform="mobile"] .calendar-page .calendar-header-sticky .nav-row button {
-  border-radius: 999px !important;
-  min-height: 32px;
-  font-size: 0.8rem;
-}
-
-/* garante que o calendário de baixo não suba por baixo do header */
-body[data-platform="mobile"] .calendar-page .fc,
-body[data-platform="mobile"] .calendar-page .fc-scrollgrid {
-  margin-top: 4px !important;
-}
 /* =========================================================
 📌 HEADER FIXO + EXPANSÃO AUTOMÁTICA DE CÉLULAS
 ========================================================= */
@@ -506,20 +539,6 @@ body[data-platform="mobile"] .calendar-page {
   padding-top: 120px !important;
 }
 
-/* Cabeçalho fixo */
-body[data-platform="mobile"] .calendar-header-sticky {
-  position: fixed;
-  top: 56px;
-  left: 0;
-  right: 0;
-  z-index: 9990;
-  background: var(--bg-mobile, #0b1620);
-  padding: 10px 12px 6px 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
 body[data-platform="mobile"] .calendar-header-sticky .title-row {
   display: flex;
