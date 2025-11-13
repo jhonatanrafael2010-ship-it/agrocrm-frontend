@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Clients from "./pages/Clients";
 import PropertiesPage from "./pages/Properties";
@@ -10,6 +10,7 @@ import "./styles/app.css";
 import { syncPendingVisits, preloadOfflineData } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
+
 
 
 
