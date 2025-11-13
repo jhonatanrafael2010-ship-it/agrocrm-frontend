@@ -7,24 +7,24 @@ import {
   getAllPendingVisits,
   deletePendingVisit,
   appendToStore,
+  getAllPendingPhotos,
+  deletePendingPhoto,
+  dataURLtoBlob
 } from "./indexedDB";
 
 /**
  * Normaliza a URL base da API.
- * Garante fallback seguro caso a variável venha vazia.
  */
 function normalizeBaseUrl(base: string): string {
   if (!base) {
-    console.warn("⚠️ API base não definida, usando backend padrão Render.");
+    console.warn("⚠️ API base não definida, usando Render.");
     return "https://agrocrm-backend.onrender.com/api";
   }
   return base.replace(/\/+$/, "");
 }
 
 /**
- * Busca com cache offline:
- * - Online → consulta API, salva no IndexedDB e retorna
- * - Offline → lê diretamente do IndexedDB
+ * Fetch com suporte offline/cache
  */
 export async function fetchWithCache<T = any>(
   url: string,
@@ -33,58 +33,52 @@ export async function fetchWithCache<T = any>(
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+
     const data = await res.json();
     await putManyInStore(store, data);
-    console.log(`📦 ${data.length} registros salvos no cache (${store})`);
     return data as T[];
-  } catch (err) {
-    console.warn(`⚠️ Offline ou erro na API (${store}), usando cache local.`);
-    try {
-      const cached = await getAllFromStore<T>(store);
-      console.log(`💾 ${cached.length} registros carregados do cache (${store})`);
-      return cached;
-    } catch (cacheErr) {
-      console.error(`❌ Erro ao ler cache (${store}):`, cacheErr);
-      return [];
-    }
+  } catch {
+    const cached = await getAllFromStore<T>(store);
+    return cached;
   }
 }
 
 /**
- * Cria visita com suporte offline e gera cronograma fenológico local
+ * Criar visita com suporte offline + cronograma
  */
 export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
 
   try {
-    // 🌐 Tenta criar visita online
+    // ON-LINE
     const res = await fetch(`${base}/visits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
-    const json = await res.json();
-    console.log("✅ Visita criada online:", json);
-    return { ...json, synced: true };
-  } catch (err) {
-    console.warn("📡 Sem conexão, salvando visita localmente:", err);
 
-    // 🔹 Guarda em pending_visits para sincronizar depois
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+
+    const json = await res.json();
+    return { ...json, synced: true };
+
+  } catch {
+    // OFFLINE
     await addPendingVisit(payload);
 
-    // 🔹 Cria objeto da visita offline
     const offlineVisit = {
       ...payload,
-      id: Date.now() + Math.floor(Math.random() * 1000),
+      id: Date.now() + Math.floor(Math.random() * 1000), // ID REAL OFFLINE
       offline: true,
     };
 
-    // 🔹 Corrige nomes de exibição
-    offlineVisit.client_name = payload.client_name || payload.clientSearch || "Cliente offline";
-    offlineVisit.consultant_name = payload.consultant_name || "—";
+    offlineVisit.client_name =
+      payload.client_name || payload.clientSearch || "Cliente offline";
 
-    // 🧮 Gera cronograma fenológico simulado offline
+    offlineVisit.consultant_name =
+      payload.consultant_name || "—";
+
+    // Cronograma fenológico gerado offline
     if (payload.genPheno || payload.generate_schedule) {
       const stages = [
         { name: "Plantio", days: 0 },
@@ -97,51 +91,73 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       ];
 
       const baseDate = new Date(payload.date);
+
       for (const stage of stages) {
         const newDate = new Date(baseDate);
         newDate.setDate(baseDate.getDate() + stage.days);
+
         const stageVisit = {
           ...offlineVisit,
           id: Date.now() + Math.floor(Math.random() * 10000),
           date: newDate.toISOString().slice(0, 10),
           recommendation: stage.name,
         };
+
         await appendToStore("visits", stageVisit);
       }
-      console.log("🌱 Cronograma fenológico gerado offline (intervalos corrigidos).");
     } else {
       await appendToStore("visits", offlineVisit);
     }
 
-    // 🔔 Atualiza o calendário imediatamente
     window.dispatchEvent(new Event("visits-updated"));
 
     return {
+      id: offlineVisit.id,      // 🔥 ESSENCIAL
       offline: true,
       synced: false,
-      message: "Visita salva localmente. Será enviada quando houver internet.",
+      message: "Visita salva localmente. Será sincronizada."
     };
   }
 }
 
 /**
- * Sincroniza visitas pendentes quando a internet volta
+ * Sincronizar fotos armazenadas offline
+ */
+export async function syncPendingPhotos(API_BASE: string) {
+  const base = normalizeBaseUrl(API_BASE);
+  const photos = await getAllPendingPhotos();
+  if (!photos.length) return;
+
+  for (const p of photos) {
+    const form = new FormData();
+    form.append("photos", dataURLtoBlob(p.dataUrl), p.fileName);
+
+    try {
+      const res = await fetch(`${base}/visits/${p.visit_id}/photos`, {
+        method: "POST",
+        body: form,
+      });
+
+      if (res.ok) {
+        await deletePendingPhoto(p.id);
+      }
+    } catch (err) {
+      console.warn("⚠️ Erro ao sincronizar foto:", err);
+    }
+  }
+}
+
+/**
+ * Sincronizar visitas pendentes
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
 
-  if (!navigator.onLine) {
-    console.log("🔌 Ainda offline — não sincronizando.");
-    return;
-  }
+  if (!navigator.onLine) return;
 
   const pendings = await getAllPendingVisits();
-  if (!pendings.length) {
-    console.log("✅ Nenhuma visita pendente para sincronizar.");
-    return;
-  }
+  if (!pendings.length) return;
 
-  console.log(`🚀 Iniciando sync de ${pendings.length} visitas pendentes...`);
   let syncedCount = 0;
 
   for (const p of pendings) {
@@ -154,30 +170,24 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
       if (res.ok) {
         syncedCount++;
-        console.log(`✅ Visita pendente ${p.id} sincronizada.`);
-        if (typeof p.id === "number") await deletePendingVisit(p.id);
-      } else {
-        console.warn(`⚠️ Falha ao sincronizar visita ${p.id}: ${res.status}`);
+        await deletePendingVisit(p.id!);
       }
     } catch (err) {
-      console.warn(`⚠️ Erro de rede ao sincronizar visita pendente ${p.id}:`, err);
+      console.warn("⚠️ Erro ao sincronizar visita:", err);
     }
   }
 
   if (syncedCount > 0) {
-    console.log(`📡 ${syncedCount} visitas sincronizadas com sucesso.`);
-    console.log("🔗 Atualizando cache após sync com base:", base);
-    try {
-      await fetchWithCache(`${base}/visits`, "visits");
-      window.dispatchEvent(new Event("visits-synced"));
-    } catch (err) {
-      console.warn("⚠️ Erro ao atualizar cache após sync:", err);
-    }
+    // 🔥 Agora sincroniza fotos após visitas
+    await syncPendingPhotos(apiBase);
+
+    await fetchWithCache(`${base}/visits`, "visits");
+    window.dispatchEvent(new Event("visits-synced"));
   }
 }
 
 /**
- * Pré-carrega entidades base para uso offline
+ * Pré-carregar dados offline
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -194,6 +204,4 @@ export async function preloadOfflineData(apiBase: string): Promise<void> {
   for (const [url, store] of endpoints) {
     await fetchWithCache(url, store);
   }
-
-  console.log("📦 Dados base pré-carregados para uso offline.");
 }

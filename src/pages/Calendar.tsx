@@ -11,10 +11,7 @@ import { Geolocation } from "@capacitor/geolocation";
 import VisitPhotos from "../components/VisitPhotos";
 import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
 import { API_BASE } from "../config";
-  
-
-
-
+import { savePendingPhoto } from "../utils/indexedDB";
 
 type Client = { id: number; name: string };
 type Property = { id: number; client_id: number; name: string };
@@ -22,6 +19,12 @@ type Plot = { id: number; property_id: number; name: string };
 type Culture = { id: number; name: string };
 type Variety = { id: number; name: string; culture: string };
 type Consultant = { id: number; name: string };
+
+type Photo = {
+  id: number;
+  url: string;
+  caption?: string;
+};
 
 type Visit = {
   id: number;
@@ -40,15 +43,10 @@ type Visit = {
   client_name?: string;
   consultant_name?: string;
 };
-type Photo = {
-  id: number;
-  url: string;
-  caption?: string;
-};
-
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
+
   // 🛰️ Status de conexão
   const [offline, setOffline] = useState(!navigator.onLine);
 
@@ -59,7 +57,6 @@ const CalendarPage: React.FC = () => {
       console.log(status ? "📴 Offline detectado" : "🌐 Online detectado");
     };
 
-    // Verifica imediatamente e depois a cada 3s
     checkConnection();
     const interval = setInterval(checkConnection, 3000);
 
@@ -72,8 +69,6 @@ const CalendarPage: React.FC = () => {
       window.removeEventListener("offline", checkConnection);
     };
   }, []);
-
-
 
   // dados base
   const [events, setEvents] = useState<any[]>([]);
@@ -93,7 +88,6 @@ const CalendarPage: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-
   // modal
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -110,12 +104,36 @@ const CalendarPage: React.FC = () => {
     genPheno: true,
     photos: null as FileList | null,
     photoPreviews: [] as string[],
-    savedPhotos: [] as any[], // 🆕 fotos já salvas da visita
+    savedPhotos: [] as any[],
     clientSearch: "",
     latitude: null as number | null,
     longitude: null as number | null,
   });
 
+  // ============================================================
+  // 🎨 Cor dos eventos
+  // ============================================================
+  const colorFor = (dateISO?: string, status?: string): string => {
+    const s = (status || "").toLowerCase();
+
+    if (s.includes("done") || s.includes("conclu")) return "#2dd36f";
+
+    let d: Date | null = null;
+    if (dateISO) {
+      const [y, m, day] = dateISO.split("-");
+      if (y && m && day) {
+        d = new Date(Number(y), Number(m) - 1, Number(day), 0, 0, 0, 0);
+      } else {
+        d = new Date(dateISO);
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (d && d.getTime() < today.getTime()) return "#dc3545";
+    return "#2563eb";
+  };
 
   // ============================================================
   // 🔁 Carregar visitas -> monta eventos
@@ -169,6 +187,7 @@ const CalendarPage: React.FC = () => {
         });
 
       setEvents(evs);
+
       if (form.id) {
         const updatedVisit = vs.find((v) => v.id === form.id);
         if (updatedVisit) {
@@ -178,6 +197,7 @@ const CalendarPage: React.FC = () => {
           }));
         }
       }
+
       console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
     } catch (err) {
       console.error("❌ Erro ao carregar visitas:", err);
@@ -218,7 +238,6 @@ const CalendarPage: React.FC = () => {
       } catch (err) {
         console.warn("⚠️ Falha geral ao carregar dados base:", err);
         alert("⚠️ Sem conexão — dados limitados disponíveis.");
-        // evita erro de render
         setClients([]);
         setProperties([]);
         setPlots([]);
@@ -234,14 +253,17 @@ const CalendarPage: React.FC = () => {
     loadBaseData();
   }, []);
 
-
+  // Reagir a "visits-synced" (quando voltar internet)
   useEffect(() => {
     const handleSync = async () => {
       console.log("🔄 Atualizando calendário após sincronização...");
       setSyncing(true);
       await loadVisits();
       setLastSync(
-        new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        new Date().toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       );
       setSyncing(false);
     };
@@ -249,34 +271,6 @@ const CalendarPage: React.FC = () => {
     window.addEventListener("visits-synced", handleSync);
     return () => window.removeEventListener("visits-synced", handleSync);
   }, []);
-
-
-
-
-  // ============================================================
-  // 🎨 Cor dos eventos
-  // ============================================================
-  const colorFor = (dateISO?: string, status?: string): string => {
-    const s = (status || "").toLowerCase();
-
-    // concluído
-    if (s.includes("done") || s.includes("conclu")) return "#2dd36f"; // verde da sua UI
-
-    // normaliza data
-    let d: Date | null = null;
-    if (dateISO) {
-      const [y, m, day] = dateISO.split("-");
-      if (y && m && day)
-        d = new Date(Number(y), Number(m) - 1, Number(day), 0, 0, 0, 0);
-      else d = new Date(dateISO);
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (d && d.getTime() < today.getTime()) return "#dc3545"; // atrasado
-    return "#2563eb"; // planejado
-  };
 
   // ============================================================
   // 📝 Form handlers
@@ -286,6 +280,26 @@ const CalendarPage: React.FC = () => {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
+  // ============================================================
+  // 📸 Salvar foto offline (IndexedDB)
+  // ============================================================
+  function savePhotoOffline(visitId: number, file: File) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      await savePendingPhoto({
+        visit_id: visitId,
+        fileName: file.name,
+        mime: file.type,
+        dataUrl: reader.result as string,
+        synced: false,
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ============================================================
+  // 💾 Criar/atualizar visita
+  // ============================================================
   const handleCreateOrUpdate = async () => {
     if (!form.date || !form.client_id) {
       alert("Data e cliente são obrigatórios");
@@ -333,24 +347,41 @@ const CalendarPage: React.FC = () => {
     console.log("📦 Payload enviado:", payload);
 
     try {
-      // 🟢 Cria a visita (com suporte offline)
       const result = await createVisitWithSync(API_BASE, payload);
+      const visitId = result.id || form.id || Date.now();
 
       if (result.offline && !result.synced) {
         alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
+
         const tempEvent = {
-          id: `temp-${Date.now()}`,
+          id: `temp-${visitId}`,
           title: `${form.clientSearch || "Visita"} (pendente)`,
           start: new Date(payload.date),
           backgroundColor: "#ffcc00",
           borderColor: "#ffaa00",
           textColor: "#000",
           offline: true,
-          extendedProps: { raw: { ...payload, client_name: form.clientSearch || "Cliente offline" } },
+          extendedProps: {
+            raw: {
+              ...payload,
+              id: visitId,
+              client_name: form.clientSearch || "Cliente offline",
+              offline: true,
+            },
+          },
         };
+
         setEvents((prev) => [...prev, tempEvent]);
       } else {
         alert("✅ Visita criada e sincronizada com o servidor.");
+      }
+
+      // 🟠 Se estiver OFFLINE, salvar fotos no IndexedDB com o ID da visita offline
+      if (!navigator.onLine && form.photos && form.photos.length > 0) {
+        console.log("📸 Salvando fotos offline...");
+        Array.from(form.photos).forEach((file) => {
+          savePhotoOffline(visitId as number, file);
+        });
       }
 
       // 🟢 Upload de fotos (somente se online)
@@ -361,16 +392,19 @@ const CalendarPage: React.FC = () => {
           fd.append("captions", form.photoCaptions[idx] || "");
         });
 
-        const photoResp = await fetch(`${API_BASE}visits/${result.id || form.id}/photos`, {
-          method: "POST",
-          body: fd,
-        });
+        const photoResp = await fetch(
+          `${API_BASE}visits/${result.id || form.id}/photos`,
+          {
+            method: "POST",
+            body: fd,
+          }
+        );
 
-        if (!photoResp.ok) console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
+        if (!photoResp.ok)
+          console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
         else console.log("📸 Fotos enviadas com sucesso!");
       }
 
-      // 🔄 Recarrega e limpa
       await loadVisits();
       setOpen(false);
       setForm({
@@ -392,15 +426,11 @@ const CalendarPage: React.FC = () => {
         longitude: null,
         photoCaptions: [],
       });
-
     } catch (err) {
       console.error("❌ Erro ao salvar visita:", err);
       alert("Erro ao salvar visita. Tente novamente.");
     }
   };
-
-
-      
 
   // ============================================================
   // 🗑️ Excluir
@@ -415,14 +445,13 @@ const CalendarPage: React.FC = () => {
       if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
       await loadVisits();
       setOpen(false);
-      await loadVisits();
     } catch (e) {
       alert("Erro ao excluir");
     }
   };
 
   // ============================================================
-  // 📸 Tirar foto
+  // 📸 Tirar foto (captura para preview – opcional)
   // ============================================================
   const handleTakePhoto = async () => {
     try {
@@ -463,22 +492,25 @@ const CalendarPage: React.FC = () => {
         return;
       }
 
-      // 🌐 Online: usa Capacitor
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+      });
       const { latitude, longitude } = position.coords;
       setForm((f) => ({ ...f, latitude, longitude }));
 
-      // salva no cache local
-      localStorage.setItem("lastLocation", JSON.stringify({ latitude, longitude }));
+      localStorage.setItem(
+        "lastLocation",
+        JSON.stringify({ latitude, longitude })
+      );
 
-      alert(`📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      alert(
+        `📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+      );
     } catch (err) {
       console.error("Erro ao obter localização:", err);
       alert("⚠️ Falha ao capturar localização.");
     }
   };
-
-
 
   // ============================================================
   // ✅ Concluir
@@ -487,8 +519,7 @@ const CalendarPage: React.FC = () => {
     if (!form.id) return;
 
     try {
-      // ✅ Se houver fotos, envia primeiro
-      if (form.photos && form.photos.length > 0) {
+      if (form.photos && form.photos.length > 0 && navigator.onLine) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
@@ -499,13 +530,15 @@ const CalendarPage: React.FC = () => {
           body: fd,
         });
         if (!photoResp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos antes de concluir:", photoResp.status);
+          console.warn(
+            "⚠️ Falha ao enviar fotos antes de concluir:",
+            photoResp.status
+          );
         } else {
           console.log("📸 Fotos enviadas com sucesso antes de concluir!");
         }
       }
 
-      // ✅ Depois, atualiza o status para concluído
       const r = await fetch(`${API_BASE}visits/${form.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -524,27 +557,23 @@ const CalendarPage: React.FC = () => {
   };
 
   // ============================================================
-  // 🖼️ Lightbox (visualizador de fotos)
+  // 🖼️ Lightbox
   // ============================================================
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxPhotos] = useState<string[]>([]);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
 
   const handleCloseLightbox = () => {
     setLightboxOpen(false);
     setLightboxUrl(null);
   };
-  
-
-  // ============================================================
-  // ⬅️➡️ Navegação entre fotos no lightbox
-  // ============================================================
-  const [lightboxPhotos] = useState<string[]>([]);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
-
 
   const handlePrevLightbox = () => {
     if (lightboxPhotos.length === 0) return;
-    const prevIndex = (currentPhotoIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+    const prevIndex =
+      (currentPhotoIndex - 1 + lightboxPhotos.length) %
+      lightboxPhotos.length;
     setCurrentPhotoIndex(prevIndex);
     setLightboxUrl(lightboxPhotos[prevIndex]);
   };
@@ -563,7 +592,6 @@ const CalendarPage: React.FC = () => {
     <div className="calendar-page">
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
-
         {/* 🛰️ Banner de modo offline */}
         {offline && (
           <div
@@ -584,7 +612,7 @@ const CalendarPage: React.FC = () => {
         )}
 
         {/* 🔸 Alerta de visitas pendentes de sincronização */}
-        {events.some(e => e.extendedProps?.raw?.offline) && (
+        {events.some((e) => e.extendedProps?.raw?.offline) && (
           <div
             style={{
               backgroundColor: "#ffcc00",
@@ -599,10 +627,9 @@ const CalendarPage: React.FC = () => {
             }}
           >
             ⚠️ Existem visitas pendentes de sincronização (
-            {events.filter(e => e.extendedProps?.raw?.offline).length})
+            {events.filter((e) => e.extendedProps?.raw?.offline).length})
           </div>
         )}
-
 
         {/* 🔁 Indicador de sincronização */}
         {syncing && (
@@ -647,12 +674,9 @@ const CalendarPage: React.FC = () => {
           </div>
         )}
 
-
-
         <div className="title-row">
           <h2 className="mb-0">Agenda de Visitas</h2>
         </div>
-
 
         <div className="filters-row">
           <select
@@ -682,7 +706,6 @@ const CalendarPage: React.FC = () => {
           </select>
         </div>
       </div>
-
 
       {loading && <div className="text-muted mb-2">Carregando...</div>}
 
@@ -721,7 +744,6 @@ const CalendarPage: React.FC = () => {
             return matchesConsultant && matchesVariety;
           })}
           dateClick={(info) => {
-            // mobile não abre modal
             const isMobile =
               window.innerWidth <= 768 ||
               document.body.dataset.platform === "mobile";
@@ -751,38 +773,37 @@ const CalendarPage: React.FC = () => {
             setOpen(true);
           }}
           eventClick={(info) => {
-          const v = info.event.extendedProps?.raw as Visit | undefined;
-          if (!v) return;
-          const d = v.date ? new Date(v.date) : null;
+            const v = info.event.extendedProps?.raw as Visit | undefined;
+            if (!v) return;
+            const d = v.date ? new Date(v.date) : null;
 
-          const clientName =
-            v.client_name ||
-            clients.find((c) => c.id === v.client_id)?.name ||
-            "";
+            const clientName =
+              v.client_name ||
+              clients.find((c) => c.id === v.client_id)?.name ||
+              "";
 
-          setForm({
-            id: v.id,
-            date: d ? d.toLocaleDateString("pt-BR") : "",
-            client_id: String(v.client_id || ""),
-            property_id: String(v.property_id || ""),
-            plot_id: String(v.plot_id || ""),
-            consultant_id: String(v.consultant_id || ""),
-            culture: v.culture || "",
-            variety: v.variety || "",
-            recommendation: v.recommendation || "",
-            genPheno: false,
-            photos: null,
-            photoPreviews: [],
-            savedPhotos: v.photos || [], // 🆕 carrega fotos já salvas
-            clientSearch: clientName,
-            latitude: v.latitude || null,
-            longitude: v.longitude || null,
-            photoCaptions: [],
-          });
+            setForm({
+              id: v.id,
+              date: d ? d.toLocaleDateString("pt-BR") : "",
+              client_id: String(v.client_id || ""),
+              property_id: String(v.property_id || ""),
+              plot_id: String(v.plot_id || ""),
+              consultant_id: String(v.consultant_id || ""),
+              culture: v.culture || "",
+              variety: v.variety || "",
+              recommendation: v.recommendation || "",
+              genPheno: false,
+              photos: null,
+              photoPreviews: [],
+              savedPhotos: v.photos || [],
+              clientSearch: clientName,
+              latitude: v.latitude || null,
+              longitude: v.longitude || null,
+              photoCaptions: [],
+            });
 
-          setOpen(true);
-        }}
-
+            setOpen(true);
+          }}
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};
             const isOffline = v?.offline === true;
@@ -792,10 +813,9 @@ const CalendarPage: React.FC = () => {
               : colorFor(v?.date || arg.event.startStr, v?.status);
 
             const stage =
-              ((v?.recommendation?.split("—").pop() || v?.recommendation || "") + "")
-                .trim() || "-";
+              ((v?.recommendation?.split("—").pop() || v?.recommendation || "") +
+                "").trim() || "-";
 
-            // 🔧 Aqui usamos diretamente o estado do React, e não variáveis locais inexistentes
             const clientName =
               v.client_name ||
               v.clientSearch ||
@@ -842,8 +862,6 @@ const CalendarPage: React.FC = () => {
               </div>
             );
           }}
-
-
           eventDidMount={(info) => {
             const v = info.event.extendedProps?.raw as any;
             if (v?.offline) {
@@ -890,11 +908,10 @@ const CalendarPage: React.FC = () => {
           aria-label="Nova visita"
         >
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5c.552 0 1 .448 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6c0-.552.448-1 1-1z"/>
+            <path d="M12 5c.552 0 1 .448 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6c0-.552.448-1 1-1z" />
           </svg>
         </button>
       )}
-
 
       {/* MODAL */}
       {open && (
@@ -945,7 +962,7 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                     />
                   </div>
@@ -959,10 +976,11 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                       value={
-                        clients.find((c) => String(c.id) === form.client_id)?.name ||
+                        clients.find((c) => String(c.id) === form.client_id)
+                          ?.name ||
                         form.clientSearch ||
                         ""
                       }
@@ -987,7 +1005,9 @@ const CalendarPage: React.FC = () => {
                       >
                         {clients
                           .filter((c) =>
-                            c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase())
+                            c.name
+                              .toLowerCase()
+                              .startsWith(form.clientSearch.toLowerCase())
                           )
                           .map((c) => (
                             <li
@@ -1015,7 +1035,9 @@ const CalendarPage: React.FC = () => {
 
                   {/* Propriedade */}
                   <div className="col-md-6">
-                    <label className="form-label fw-semibold">Propriedade</label>
+                    <label className="form-label fw-semibold">
+                      Propriedade
+                    </label>
                     <DarkSelect
                       name="property_id"
                       value={form.property_id}
@@ -1072,7 +1094,7 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                     >
                       <option value="">Selecione</option>
@@ -1098,7 +1120,7 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                     >
                       <option value="">Selecione</option>
@@ -1132,7 +1154,7 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                     >
                       <option value="">Selecione</option>
@@ -1164,23 +1186,27 @@ const CalendarPage: React.FC = () => {
                   <div className="col-12 d-flex justify-content-between mt-3">
                     <button
                       type="button"
-                      className="btn btn-outline-light"
-                      onClick={handleTakePhoto}
-                    >
-                      📸 Tirar Foto
-                    </button>
-                    <button
-                      type="button"
                       className="btn btn-outline-info"
                       onClick={handleGetLocation}
                     >
                       📍 Capturar Localização
                     </button>
+
+                    {/* Opcional: botão para testar a câmera */}
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={handleTakePhoto}
+                    >
+                      📷 Testar Câmera (preview)
+                    </button>
                   </div>
 
                   {/* Recomendação */}
                   <div className="col-12">
-                    <label className="form-label fw-semibold">Recomendação</label>
+                    <label className="form-label fw-semibold">
+                      Recomendação
+                    </label>
                     <textarea
                       name="recommendation"
                       value={form.recommendation}
@@ -1190,12 +1216,12 @@ const CalendarPage: React.FC = () => {
                       style={{
                         background: "var(--input-bg)",
                         color: "var(--text)",
-                        borderColor: "var(--border)"
+                        borderColor: "var(--border)",
                       }}
                     />
                   </div>
 
-                  {/* 📸 Seção de fotos */}
+                  {/* 📸 Seção de fotos já salvas */}
                   <VisitPhotos
                     visitId={form.id}
                     existingPhotos={form.savedPhotos}
@@ -1271,7 +1297,7 @@ const CalendarPage: React.FC = () => {
                       {loading ? "Gerando..." : "📄 PDF"}
                     </button>
 
-                    <button className="btn btn-success" onClick={markDone}>
+                    <button className="btn btn.success" onClick={markDone}>
                       ✅ Concluir
                     </button>
 

@@ -7,12 +7,16 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
-import { syncPendingVisits, preloadOfflineData } from "./utils/offlineSync";
+
+import {
+  syncPendingVisits,
+  syncPendingPhotos,
+  preloadOfflineData,
+} from "./utils/offlineSync";
+
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
-
-
-
+import { Network } from "@capacitor/network";
 
 function App() {
   const [route, setRoute] = useState<string>("Dashboard");
@@ -21,58 +25,86 @@ function App() {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-
-
   // ============================================================
-  // 🔄 Sincronização automática de visitas pendentes
+  // 🌐 Controle unificado de conexão (Capacitor + fallback)
   // ============================================================
   useEffect(() => {
-    async function syncPending() {
+    async function checkStatus() {
       try {
-        setSyncing(true);
-        await syncPendingVisits(API_BASE);
-        window.dispatchEvent(new Event("visits-synced"));
-        setLastSync(
-          new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-        );
-      } catch (err) {
-        console.warn("⚠️ Erro ao tentar sincronizar:", err);
-      } finally {
-        setTimeout(() => setSyncing(false), 800);
+        const status = await Network.getStatus();
+        setOffline(!status.connected);
+      } catch {
+        // fallback caso Capacitor falhe (web)
+        setOffline(!navigator.onLine);
       }
     }
 
-    window.addEventListener("online", syncPending);
-    if (navigator.onLine) syncPending();
-    return () => window.removeEventListener("online", syncPending);
+    checkStatus();
+
+    const listener = Network.addListener("networkStatusChange", (status) => {
+      setOffline(!status.connected);
+    });
+
+    // fallback adicional para web
+    const updateWebStatus = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", updateWebStatus);
+    window.addEventListener("offline", updateWebStatus);
+
+    return () => {
+      listener.remove();
+      window.removeEventListener("online", updateWebStatus);
+      window.removeEventListener("offline", updateWebStatus);
+    };
   }, []);
 
   // ============================================================
-  // ⚡ Pré-carregamento de dados base
+  // 🔄 Sincronização automática (dispara ao voltar online)
   // ============================================================
   useEffect(() => {
-    async function loadBaseData() {
+    async function doSync() {
+      try {
+        if (offline) return;
+
+        setSyncing(true);
+
+        const before = Date.now();
+
+        await syncPendingVisits(API_BASE);
+        await syncPendingPhotos(API_BASE);
+
+        // Só dispara evento de sync se realmente demorou ou houve itens
+        if (Date.now() - before > 200) {
+          window.dispatchEvent(new Event("visits-synced"));
+        }
+
+        setLastSync(
+          new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
+      } catch (err) {
+        console.warn("⚠️ Erro ao sincronizar:", err);
+      } finally {
+        setSyncing(false);
+      }
+    }
+
+    if (!offline) doSync(); // quando voltar online → sincroniza automaticamente
+  }, [offline]);
+
+  // ============================================================
+  // ⚡ Pré-carregamento offline inicial
+  // ============================================================
+  useEffect(() => {
+    async function load() {
       try {
         await preloadOfflineData(API_BASE);
       } catch (err) {
-        console.warn("⚠️ Falha ao pré-carregar dados base:", err);
+        console.log("⚠️ Falha ao pré-carregar cache:", err);
       }
     }
-    loadBaseData();
-  }, []);
-
-  // ============================================================
-  // 🌐 Status de conexão
-  // ============================================================
-  useEffect(() => {
-    const updateOnlineStatus = () => setOffline(!navigator.onLine);
-    window.addEventListener("online", updateOnlineStatus);
-    window.addEventListener("offline", updateOnlineStatus);
-    updateOnlineStatus();
-    return () => {
-      window.removeEventListener("online", updateOnlineStatus);
-      window.removeEventListener("offline", updateOnlineStatus);
-    };
+    load();
   }, []);
 
   // ============================================================
@@ -82,7 +114,8 @@ function App() {
     const detect = () => {
       const isSmallScreen = window.innerWidth <= 900;
       const ua = navigator.userAgent.toLowerCase();
-      const runningInApk = ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
+      const runningInApk =
+        ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
 
       const mobile = isSmallScreen || runningInApk;
       setIsMobileApp(mobile);
@@ -95,7 +128,7 @@ function App() {
   }, []);
 
   // ============================================================
-  // ✅ Fecha menu lateral ao mudar rota
+  // 🧭 Fecha menu ao mudar rota
   // ============================================================
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
@@ -117,7 +150,7 @@ function App() {
       >
         <div className="container-fluid">
           <div className="d-flex align-items-center gap-3">
-            {/* ☰ Botão de menu mobile */}
+            {/* ☰ Botão mobile */}
             <button
               className="btn btn-outline-light d-lg-none"
               type="button"
@@ -131,11 +164,11 @@ function App() {
         </div>
       </nav>
 
-      {/* 🌐 Banner global offline */}
+      {/* 🌐 Banner Global OFFLINE */}
       {offline && (
         <div
           style={{
-            backgroundColor: "#ffcc00",
+            background: "#ffcc00",
             color: "#000",
             padding: "6px 12px",
             textAlign: "center",
@@ -143,15 +176,14 @@ function App() {
             fontSize: "0.9rem",
             borderBottom: "1px solid #d1a800",
             boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-            zIndex: 2000,
           }}
         >
-          📴 Você está offline — exibindo dados do cache local
+          📴 Você está offline — exibindo dados do cache
         </div>
       )}
 
-      {/* 🔁 Indicador de sincronização global */}
-      {syncing && (
+      {/* 🔁 Banner Global de Sync */}
+      {syncing && !offline && (
         <div
           style={{
             backgroundColor: "#007bff",
@@ -159,9 +191,6 @@ function App() {
             padding: "6px 12px",
             textAlign: "center",
             fontWeight: 600,
-            fontSize: "0.9rem",
-            borderBottom: "1px solid #005dc1",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             animation: "pulse 1.5s infinite",
             display: "flex",
             alignItems: "center",
@@ -170,10 +199,11 @@ function App() {
           }}
         >
           <span className="sync-spinner"></span>
-          Sincronizando visitas com o servidor...
+          Sincronizando dados...
         </div>
       )}
 
+      {/* Último sync */}
       {!syncing && lastSync && !offline && (
         <div
           style={{
@@ -183,15 +213,13 @@ function App() {
             textAlign: "center",
             fontWeight: 500,
             fontSize: "0.8rem",
-            borderBottom: "1px solid #1c7a31",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
           ✅ Última sincronização: {lastSync}
         </div>
       )}
 
-      {/* 🧭 Sidebar / Conteúdo */}
+      {/* Conteúdo */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
           <MobileMenu onNavigate={setRoute} activeItem={route} />
@@ -204,7 +232,6 @@ function App() {
           </div>
         )}
 
-        {/* 📄 Conteúdo principal */}
         <main
           key={route}
           className="flex-grow-1 overflow-auto p-3"
