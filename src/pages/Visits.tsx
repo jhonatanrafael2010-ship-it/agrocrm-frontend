@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE } from "../config";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* @ts-nocheck */
 
@@ -23,7 +24,7 @@ type Consultant = { id: number; name: string };
 type Culture = { id: number; name: string };
 type Variety = { id: number; culture: string; name: string };
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api/";
+
 
 const Visits: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);

@@ -2,6 +2,8 @@ import React from "react";
 import DarkSelect from "../components/DarkSelect";
 import trashIcon from "../assets/trash.svg";
 import pencilIcon from "../assets/pencil.svg";
+import { API_BASE } from "../config";
+
 
 type Client = { id: number; name: string };
 type Property = {
@@ -26,7 +28,6 @@ type Planting = {
   planting_date?: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api/";
 
 const Properties: React.FC = () => {
   const [clients, setClients] = React.useState<Client[]>([]);

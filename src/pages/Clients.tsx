@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import pencilIcon from "../assets/pencil.svg";
 import trashIcon from "../assets/trash.svg";
+import { API_BASE } from "../config";
+
+
 
 type Client = {
   id: number;
@@ -10,7 +13,6 @@ type Client = {
   vendor?: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api/";
 
 const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);

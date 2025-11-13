@@ -10,10 +10,11 @@ import { Camera, CameraResultType } from "@capacitor/camera";
 import { Geolocation } from "@capacitor/geolocation";
 import VisitPhotos from "../components/VisitPhotos";
 import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+import { API_BASE } from "../config";
+  
 
 
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || "/api/";
 
 type Client = { id: number; name: string };
 type Property = { id: number; client_id: number; name: string };

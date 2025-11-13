@@ -9,15 +9,18 @@ import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
 import { syncPendingVisits, preloadOfflineData } from "./utils/offlineSync";
 import MobileMenu from "./components/MobileMenu";
+import { API_BASE } from "./config";
 
-const App: React.FC = () => {
+
+
+function App() {
   const [route, setRoute] = useState<string>("Dashboard");
   const [isMobileApp, setIsMobileApp] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-  const API_BASE = "/api/";
+
 
   // ============================================================
   // 🔄 Sincronização automática de visitas pendentes
@@ -78,8 +81,7 @@ const App: React.FC = () => {
     const detect = () => {
       const isSmallScreen = window.innerWidth <= 900;
       const ua = navigator.userAgent.toLowerCase();
-      const runningInApk =
-        ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
+      const runningInApk = ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
 
       const mobile = isSmallScreen || runningInApk;
       setIsMobileApp(mobile);
@@ -226,6 +228,6 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default App;
