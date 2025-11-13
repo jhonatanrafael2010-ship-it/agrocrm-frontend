@@ -16,17 +16,8 @@ import {
 
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
-let Network: any = null;
 
-(async () => {
-  try {
-    const mod = await import("@capacitor/network");
-    Network = mod.Network;
-  } catch (err) {
-    console.log("ℹ️ Network plugin não disponível no ambiente web.");
-  }
-})();
-
+import { getNetworkStatus, listenNetworkStatus } from "./utils/safeNetwork";
 
 function App() {
   const [route, setRoute] = useState<string>("Dashboard");
@@ -36,39 +27,32 @@ function App() {
   const [lastSync, setLastSync] = useState<string | null>(null);
 
   // ============================================================
-  // 🌐 Controle unificado de conexão (Capacitor + fallback)
+  // 🌐 Controle unificado de rede
   // ============================================================
   useEffect(() => {
-    async function checkStatus() {
-      try {
-        const status = await Network.getStatus();
-        setOffline(!status.connected);
-      } catch {
-        // fallback caso Capacitor falhe (web)
-        setOffline(!navigator.onLine);
-      }
+    async function check() {
+      const status = await getNetworkStatus();
+      setOffline(!status.connected);
     }
 
-    checkStatus();
+    check();
 
-    const listener = Network.addListener("networkStatusChange", (status) => {
-      setOffline(!status.connected);
+    listenNetworkStatus((connected) => {
+      setOffline(!connected);
     });
 
-    // fallback adicional para web
-    const updateWebStatus = () => setOffline(!navigator.onLine);
-    window.addEventListener("online", updateWebStatus);
-    window.addEventListener("offline", updateWebStatus);
+    const update = () => setOffline(!navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
 
     return () => {
-      listener.remove();
-      window.removeEventListener("online", updateWebStatus);
-      window.removeEventListener("offline", updateWebStatus);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
     };
   }, []);
 
   // ============================================================
-  // 🔄 Sincronização automática (dispara ao voltar online)
+  // 🔄 Sincronização automática
   // ============================================================
   useEffect(() => {
     async function doSync() {
@@ -77,15 +61,10 @@ function App() {
 
         setSyncing(true);
 
-        const before = Date.now();
-
         await syncPendingVisits(API_BASE);
         await syncPendingPhotos(API_BASE);
 
-        // Só dispara evento de sync se realmente demorou ou houve itens
-        if (Date.now() - before > 200) {
-          window.dispatchEvent(new Event("visits-synced"));
-        }
+        window.dispatchEvent(new Event("visits-synced"));
 
         setLastSync(
           new Date().toLocaleTimeString("pt-BR", {
@@ -93,47 +72,40 @@ function App() {
             minute: "2-digit",
           })
         );
-      } catch (err) {
-        console.warn("⚠️ Erro ao sincronizar:", err);
       } finally {
         setSyncing(false);
       }
     }
 
-    if (!offline) doSync(); // quando voltar online → sincroniza automaticamente
+    if (!offline) doSync();
   }, [offline]);
 
   // ============================================================
-  // ⚡ Pré-carregamento offline inicial
+  // ⚡ Pré-carregar cache offline
   // ============================================================
   useEffect(() => {
-    async function load() {
-      try {
-        await preloadOfflineData(API_BASE);
-      } catch (err) {
-        console.log("⚠️ Falha ao pré-carregar cache:", err);
-      }
-    }
-    load();
+    preloadOfflineData(API_BASE);
   }, []);
 
   // ============================================================
-  // 📱 Detectar mobile vs desktop
+  // 📱 Detectar mobile
   // ============================================================
   useEffect(() => {
     const detect = () => {
-      const isSmallScreen = window.innerWidth <= 900;
+      const isSmall = window.innerWidth <= 900;
       const ua = navigator.userAgent.toLowerCase();
       const runningInApk =
         ua.includes("wv") || ua.includes("android") || ua.includes("agrocrm-apk");
 
-      const mobile = isSmallScreen || runningInApk;
+      const mobile = isSmall || runningInApk;
+
       setIsMobileApp(mobile);
       document.body.setAttribute("data-platform", mobile ? "mobile" : "desktop");
     };
 
     detect();
     window.addEventListener("resize", detect);
+
     return () => window.removeEventListener("resize", detect);
   }, []);
 
@@ -149,32 +121,28 @@ function App() {
   }, [route]);
 
   // ============================================================
-  // Render
+  // RENDER
   // ============================================================
   return (
     <div className="app d-flex flex-column vh-100">
-      {/* 🔝 Cabeçalho fixo */}
+      {/* navbar */}
       <nav
         className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
         style={{ background: "var(--panel)", color: "var(--text)" }}
       >
         <div className="container-fluid">
-          <div className="d-flex align-items-center gap-3">
-            {/* ☰ Botão mobile */}
-            <button
-              className="btn btn-outline-light d-lg-none"
-              type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#mobileMenu"
-              aria-controls="mobileMenu"
-            >
-              ☰
-            </button>
-          </div>
+          <button
+            className="btn btn-outline-light d-lg-none"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#mobileMenu"
+          >
+            ☰
+          </button>
         </div>
       </nav>
 
-      {/* 🌐 Banner Global OFFLINE */}
+      {/* offline bar */}
       {offline && (
         <div
           style={{
@@ -183,53 +151,43 @@ function App() {
             padding: "6px 12px",
             textAlign: "center",
             fontWeight: 600,
-            fontSize: "0.9rem",
-            borderBottom: "1px solid #d1a800",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
           }}
         >
-          📴 Você está offline — exibindo dados do cache
+          📴 Você está offline — dados do cache
         </div>
       )}
 
-      {/* 🔁 Banner Global de Sync */}
+      {/* syncing bar */}
       {syncing && !offline && (
         <div
           style={{
-            backgroundColor: "#007bff",
+            background: "#007bff",
             color: "#fff",
             padding: "6px 12px",
             textAlign: "center",
             fontWeight: 600,
             animation: "pulse 1.5s infinite",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
           }}
         >
-          <span className="sync-spinner"></span>
           Sincronizando dados...
         </div>
       )}
 
-      {/* Último sync */}
       {!syncing && lastSync && !offline && (
         <div
           style={{
-            backgroundColor: "#28a745",
+            background: "#28a745",
             color: "#fff",
             padding: "4px 10px",
             textAlign: "center",
             fontWeight: 500,
-            fontSize: "0.8rem",
           }}
         >
           ✅ Última sincronização: {lastSync}
         </div>
       )}
 
-      {/* Conteúdo */}
+      {/* conteúdo */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
           <MobileMenu onNavigate={setRoute} activeItem={route} />
@@ -242,11 +200,7 @@ function App() {
           </div>
         )}
 
-        <main
-          key={route}
-          className="flex-grow-1 overflow-auto p-3"
-          style={{ minHeight: "calc(100vh - 56px)" }}
-        >
+        <main className="flex-grow-1 overflow-auto p-3">
           {route === "Clientes" ? (
             <Clients />
           ) : route === "Propriedades" ? (
@@ -257,10 +211,8 @@ function App() {
             <OpportunitiesPage />
           ) : route === "Acompanhamentos" ? (
             <VisitsPage />
-          ) : route === "Dashboard" ? (
-            <Dashboard />
           ) : (
-            <Clients />
+            <Dashboard />
           )}
         </main>
       </div>
