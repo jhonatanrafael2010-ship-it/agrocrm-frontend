@@ -353,21 +353,26 @@ const CalendarPage: React.FC = () => {
 
     try {
       const result = await createVisitWithSync(API_BASE, payload);
-      const visitId = result.id || form.id || Date.now();
+      const visitId = Number(result.id);
 
+      console.log("🔵 ID gerado para visita (online ou offline):", visitId);
+
+      // ⚠ ESSENCIAL: atribuir ID IMEDIATAMENTE no form
+      setForm((f) => ({
+        ...f,
+        id: visitId,
+      }));
+
+      if (!visitId) {
+        console.error("❌ ERRO: visita offline criada sem ID!");
+      }
+
+      // 🔶 Caso esteja offline, criar evento temporário
       if (result.offline && !result.synced) {
         alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
 
-        const offlineId = result.id; // <-- pega ID offline gerado no offlineSync
-
-        // 🔥 FIX ESSENCIAL: já atribui o ID ao formulário
-        setForm((f) => ({
-          ...f,
-          id: offlineId,
-        }));
-
         const tempEvent = {
-          id: `temp-${offlineId}`,
+          id: `temp-${visitId}`,
           title: `${form.clientSearch || "Visita"} (pendente)`,
           start: new Date(payload.date),
           backgroundColor: "#ffcc00",
@@ -377,7 +382,7 @@ const CalendarPage: React.FC = () => {
           extendedProps: {
             raw: {
               ...payload,
-              id: offlineId,
+              id: visitId,
               client_name: form.clientSearch || "Cliente offline",
               offline: true,
             },
@@ -391,16 +396,15 @@ const CalendarPage: React.FC = () => {
 
       // 🟠 Se estiver OFFLINE, salvar fotos no IndexedDB com o ID da visita offline
       if (!navigator.onLine && form.photos && form.photos.length > 0) {
-        console.log("📸 Salvando fotos offline...");
+        console.log("📸 Salvando fotos offline com ID:", visitId);
+
         Array.from(form.photos).forEach((file) => {
-          savePhotoOffline(visitId as number, file);
+          savePhotoOffline(visitId, file);
         });
       }
 
       // 🟢 Upload de fotos (somente se online)
-      if (!navigator.onLine) {
-        console.log("📵 Offline — pulando upload online dentro do Calendar");
-      } else if (form.photos && form.photos.length > 0) {
+      if (navigator.onLine && form.photos && form.photos.length > 0) {
         const fd = new FormData();
         Array.from(form.photos).forEach((file, idx) => {
           fd.append("photos", file);
@@ -408,7 +412,7 @@ const CalendarPage: React.FC = () => {
         });
 
         const photoResp = await fetch(
-          `${API_BASE}visits/${result.id || form.id}/photos`,
+          `${API_BASE}visits/${visitId}/photos`,
           {
             method: "POST",
             body: fd,
@@ -422,6 +426,8 @@ const CalendarPage: React.FC = () => {
 
       await loadVisits();
       setOpen(false);
+
+      // 🔄 reset do form
       setForm({
         id: null,
         date: "",
@@ -442,10 +448,11 @@ const CalendarPage: React.FC = () => {
         photoCaptions: [],
       });
     } catch (err) {
-      console.error("❌ Erro ao salvar visita:", err);
-      alert("Erro ao salvar visita. Tente novamente.");
-    }
-  };
+    console.error("❌ Erro ao salvar visita:", err);
+    alert("Erro ao salvar visita. Tente novamente.");
+  }
+};
+
 
   // ============================================================
   // 🗑️ Excluir
@@ -1198,8 +1205,7 @@ const CalendarPage: React.FC = () => {
                   </div>
 
                   {/* Fotos */}
-                  <VisitPhotos
-                    visitId={form.id}
+                  <VisitPhotos visitId={Number(form.id)}
                     existingPhotos={form.savedPhotos || []}
                     onRefresh={async () => {
                       await loadVisits();
