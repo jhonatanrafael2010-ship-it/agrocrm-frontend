@@ -199,6 +199,7 @@ const CalendarPage: React.FC = () => {
             ...f,
             savedPhotos: updatedVisit.photos || [],
           }));
+          await new Promise((r) => setTimeout(r, 50));  // força re-render
         }
       }
 
@@ -357,8 +358,16 @@ const CalendarPage: React.FC = () => {
       if (result.offline && !result.synced) {
         alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
 
+        const offlineId = result.id; // <-- pega ID offline gerado no offlineSync
+
+        // 🔥 FIX ESSENCIAL: já atribui o ID ao formulário
+        setForm((f) => ({
+          ...f,
+          id: offlineId,
+        }));
+
         const tempEvent = {
-          id: `temp-${visitId}`,
+          id: `temp-${offlineId}`,
           title: `${form.clientSearch || "Visita"} (pendente)`,
           start: new Date(payload.date),
           backgroundColor: "#ffcc00",
@@ -368,7 +377,7 @@ const CalendarPage: React.FC = () => {
           extendedProps: {
             raw: {
               ...payload,
-              id: visitId,
+              id: offlineId,
               client_name: form.clientSearch || "Cliente offline",
               offline: true,
             },
@@ -377,7 +386,7 @@ const CalendarPage: React.FC = () => {
 
         setEvents((prev) => [...prev, tempEvent]);
       } else {
-        alert("✅ Visita criada e sincronizada com o servidor.");
+        alert("✔️ Visita criada no servidor.");
       }
 
       // 🟠 Se estiver OFFLINE, salvar fotos no IndexedDB com o ID da visita offline
@@ -1191,8 +1200,10 @@ const CalendarPage: React.FC = () => {
                   {/* Fotos */}
                   <VisitPhotos
                     visitId={form.id}
-                    existingPhotos={form.savedPhotos}
-                    onRefresh={loadVisits}
+                    existingPhotos={form.savedPhotos || []}
+                    onRefresh={async () => {
+                      await loadVisits();
+                    }}
                   />
                 </div>
               </div>

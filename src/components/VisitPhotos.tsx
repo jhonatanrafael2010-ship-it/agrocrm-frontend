@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE } from "../config";
-import { savePendingPhoto } from "../utils/indexedDB"; // <-- CORRETO AGORA
+import {
+  savePendingPhoto,
+  getAllPendingPhotos,
+} from "../utils/indexedDB";
 
 type Photo = {
-  id: number;
-  url: string;
+  id?: number;
+  url?: string;
   caption?: string;
+
+  // para fotos offline:
+  dataUrl?: string;
+  fileName?: string;
+  mime?: string;
+  pending?: boolean;
+  visit_id?: number;
 };
 
 interface VisitPhotosProps {
@@ -26,61 +36,97 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   const [savedPhotos, setSavedPhotos] = useState<Photo[]>(existingPhotos || []);
 
   // ============================================================
-  // 🧩 Atualiza lista se fotos externas mudarem
+  // 🔄 Carregar fotos salvas offline para esta visita
   // ============================================================
-  useEffect(() => {
-    if (!existingPhotos) return;
-    setSavedPhotos((prev) =>
-      existingPhotos.map((photo) => {
-        const local = prev.find((p) => p.id === photo.id);
-        return local
-          ? { ...photo, caption: local.caption ?? photo.caption }
-          : photo;
-      })
-    );
-  }, [existingPhotos]);
+  async function loadOfflinePhotos() {
+    if (!visitId) return;
+
+    const pending = await getAllPendingPhotos();
+    const filtered = pending.filter((p) => p.visit_id === visitId);
+
+    const converted: Photo[] = filtered.map((p) => ({
+      id: undefined,
+      url: p.dataUrl,
+      caption: "",
+      dataUrl: p.dataUrl,
+      pending: true,
+    }));
+
+    return converted;
+  }
 
   // ============================================================
-  // 🔗 Resolve URL absoluta da foto
+  // 🧩 Atualiza lista quando abrir modal
+  // ============================================================
+  useEffect(() => {
+    async function mergePhotos() {
+      const offlineOnes = await loadOfflinePhotos();
+      const onlineOnes = existingPhotos || [];
+      setSavedPhotos([...onlineOnes, ...(offlineOnes || [])]);
+    }
+    mergePhotos();
+  }, [existingPhotos, visitId]);
+
+  // ============================================================
+  // 🔗 Resolve URL absoluta
   // ============================================================
   const resolvePhotoUrl = (photo: Photo): string => {
+    if (photo.dataUrl) return photo.dataUrl; // foto offline
     if (!photo.url) return "";
     if (photo.url.startsWith("http")) return photo.url;
+
     const base = API_BASE.replace(/\/api\/?$/, "");
     const path = photo.url.startsWith("/") ? photo.url : `/${photo.url}`;
     return `${base}${path}`;
   };
 
   // ============================================================
-  // 📸 Upload de fotos (com suporte OFFLINE)
+  // 📸 Upload / Salvamento offline de fotos
   // ============================================================
   const handleUpload = async () => {
     if (!visitId || !filesToUpload || filesToUpload.length === 0) return;
 
-    // 🟠 OFFLINE — salvar no IndexedDB
+    // ============================
+    // 🔴 OFFLINE — salva e mostra
+    // ============================
     if (!navigator.onLine) {
-      Array.from(filesToUpload).forEach((file) => {
+      Array.from(filesToUpload).forEach((file, idx) => {
         const reader = new FileReader();
         reader.onload = async () => {
+          const dataUrl = reader.result as string;
+
           await savePendingPhoto({
             visit_id: visitId,
             fileName: file.name,
             mime: file.type,
-            dataUrl: reader.result as string,
+            dataUrl,
             synced: false,
           });
+
+          // 👉 aparece na hora no modal
+          setSavedPhotos((prev) => [
+            ...prev,
+            {
+              dataUrl,
+              caption: photoCaptions[idx] || "",
+              pending: true,
+            },
+          ]);
         };
         reader.readAsDataURL(file);
       });
 
-      alert("🟠 Fotos salvas offline! Serão enviadas quando voltar à internet.");
+      alert("🟠 Fotos salvas offline! Serão enviadas quando voltar a internet.");
+
       setFilesToUpload(null);
       setPhotoPreviews([]);
       setPhotoCaptions([]);
       return;
     }
 
-    // 🟢 ONLINE — envia para backend
+    // ============================
+    // 🟢 ONLINE — envia pro backend
+    // ============================
     const fd = new FormData();
     Array.from(filesToUpload).forEach((file, idx) => {
       fd.append("photos", file);
@@ -92,13 +138,13 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
 
       alert("📸 Fotos enviadas!");
 
-      setFilesToUpload(null);
-      setPhotoPreviews([]);
-      setPhotoCaptions([]);
-
       if (resp.data && Array.isArray(resp.data.photos)) {
         setSavedPhotos((prev) => [...prev, ...resp.data.photos]);
       }
+
+      setFilesToUpload(null);
+      setPhotoPreviews([]);
+      setPhotoCaptions([]);
 
       onRefresh();
     } catch (err) {
@@ -110,11 +156,18 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // ============================================================
   // ❌ Excluir foto — somente online
   // ============================================================
-  const handleDeletePhoto = async (photoId: number) => {
+  const handleDeletePhoto = async (photoId?: number, pending?: boolean) => {
+    if (pending) {
+      alert("🟠 Não é possível excluir foto offline.");
+      return;
+    }
+
     if (!navigator.onLine) {
       alert("🟠 Não é possível excluir foto offline.");
       return;
     }
+
+    if (!photoId) return;
 
     if (!window.confirm("Excluir esta foto?")) return;
 
@@ -129,109 +182,40 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   };
 
   // ============================================================
-  // ✏️ Alteração local da legenda
-  // ============================================================
-  const handleLocalCaptionChange = (photoId: number, newCaption: string) => {
-    setSavedPhotos((prev) =>
-      prev.map((p) => (p.id === photoId ? { ...p, caption: newCaption } : p))
-    );
-  };
-
-  // ============================================================
-  // 💾 Salvar legenda no backend — somente online
-  // ============================================================
-  const handleCaptionBlur = async (photoId: number, caption: string) => {
-    if (!navigator.onLine) {
-      alert("🟠 Não é possível alterar legenda offline.");
-      return;
-    }
-
-    try {
-      await axios.put(`${API_BASE}photos/${photoId}`, { caption });
-    } catch (err) {
-      console.error("Erro ao atualizar legenda:", err);
-      alert("❌ Falha ao salvar legenda.");
-    }
-  };
-
-  // ============================================================
-  // 🔄 Carregar fotos do backend (somente online)
-  // ============================================================
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      if (!visitId) return;
-
-      if (!navigator.onLine) {
-        console.warn("Offline — não carregando fotos do servidor.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_BASE}visits/${visitId}/photos`);
-        if (res.ok) {
-          const data = await res.json();
-          setSavedPhotos(data);
-        }
-      } catch (err) {
-        console.error("⚠️ Falha ao carregar fotos:", err);
-      }
-    };
-
-    fetchPhotos();
-  }, [visitId]);
-
-  // ============================================================
-  // Renderização
+  // Render
   // ============================================================
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos da Visita</label>
 
+      {/* Campo de Upload */}
       <input
         type="file"
         multiple
         accept="image/*"
         className="form-control"
-        style={{
-          background: "var(--input-bg)",
-          color: "var(--text)",
-          borderColor: "var(--border)",
-        }}
         onChange={(e) => {
           const files = e.target.files;
           if (!files) return;
-          const previews = Array.from(files).map((f) => URL.createObjectURL(f));
-          const emptyCaptions = Array.from(files).map(() => "");
           setFilesToUpload(files);
-          setPhotoPreviews(previews);
-          setPhotoCaptions(emptyCaptions);
+          setPhotoPreviews(Array.from(files).map((f) => URL.createObjectURL(f)));
+          setPhotoCaptions(Array.from(files).map(() => ""));
         }}
       />
 
-      {/* Novas fotos */}
+      {/* Previews antes do upload */}
       {photoPreviews.length > 0 && (
         <>
           <div className="d-flex flex-wrap gap-3 mt-3">
             {photoPreviews.map((preview, i) => (
-              <div
-                key={i}
-                style={{
-                  width: "140px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
+              <div key={i} style={{ width: "140px" }}>
                 <img
                   src={preview}
-                  alt={`Foto ${i + 1}`}
                   style={{
                     width: "130px",
                     height: "130px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "1px solid var(--border)",
-                    marginBottom: "6px",
                   }}
                 />
                 <input
@@ -239,101 +223,62 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                   placeholder="Legenda..."
                   value={photoCaptions[i] || ""}
                   onChange={(e) => {
-                    const newCaps = [...photoCaptions];
-                    newCaps[i] = e.target.value;
-                    setPhotoCaptions(newCaps);
+                    const updated = [...photoCaptions];
+                    updated[i] = e.target.value;
+                    setPhotoCaptions(updated);
                   }}
-                  className="form-control form-control-sm"
-                  style={{
-                    background: "var(--input-bg)",
-                    color: "var(--text)",
-                    borderColor: "var(--border)",
-                  }}
+                  className="form-control form-control-sm mt-1"
                 />
               </div>
             ))}
           </div>
-          <div className="mt-2">
-            <button className="btn btn-success btn-sm" onClick={handleUpload}>
-              💾 Enviar Fotos
-            </button>
-          </div>
+
+          <button className="btn btn-success btn-sm mt-2" onClick={handleUpload}>
+            💾 Enviar Fotos
+          </button>
         </>
       )}
 
-      {/* Fotos já salvas */}
+      {/* FOTOS SALVAS */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos Salvas</label>
+
           <div className="d-flex flex-wrap gap-3">
-            {savedPhotos.map((photo) => (
-              <div
-                key={photo.id}
-                style={{
-                  width: "140px",
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
+            {savedPhotos.map((photo, idx) => (
+              <div key={idx} style={{ width: "140px", position: "relative" }}>
                 <img
                   src={resolvePhotoUrl(photo)}
-                  alt="Foto"
                   style={{
                     width: "130px",
                     height: "130px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "1px solid var(--border)",
-                    marginBottom: "6px",
                   }}
                 />
 
-                <button
-                  onClick={() => handleDeletePhoto(photo.id)}
-                  title="Excluir"
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    backgroundColor: "var(--accent)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "22px",
-                    height: "22px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    transition: "background 0.3s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#d32f2f")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "var(--accent)")
-                  }
-                >
-                  🗑
-                </button>
+                {/* Offline não permite excluir */}
+                {!photo.pending && (
+                  <button
+                    onClick={() => handleDeletePhoto(photo.id, photo.pending)}
+                    className="btn btn-danger btn-sm"
+                    style={{
+                      position: "absolute",
+                      top: -10,
+                      right: -10,
+                      borderRadius: "50%",
+                    }}
+                  >
+                    🗑
+                  </button>
+                )}
 
+                {/* Legenda */}
                 <input
                   type="text"
                   value={photo.caption || ""}
-                  placeholder="Legenda..."
-                  onChange={(e) =>
-                    handleLocalCaptionChange(photo.id, e.target.value)
-                  }
-                  onBlur={(e) =>
-                    handleCaptionBlur(photo.id, e.target.value || "")
-                  }
-                  className="form-control form-control-sm"
-                  style={{
-                    background: "var(--input-bg)",
-                    color: "var(--text)",
-                    borderColor: "var(--border)",
-                    fontSize: "12px",
-                  }}
+                  disabled={photo.pending}
+                  className="form-control form-control-sm mt-1"
                 />
               </div>
             ))}
