@@ -1,5 +1,7 @@
 // src/utils/offlineSync.ts
+
 import type { StoreName } from "./indexedDB";
+
 import {
   getAllFromStore,
   putManyInStore,
@@ -9,8 +11,10 @@ import {
   appendToStore,
   getAllPendingPhotos,
   deletePendingPhoto,
-  dataURLtoBlob
+  dataURLtoBlob,
+  updatePendingPhotosVisitId, // 🔥 IMPORTANTE!
 } from "./indexedDB";
+
 
 /**
  * Normaliza a URL base da API.
@@ -22,6 +26,7 @@ function normalizeBaseUrl(base: string): string {
   }
   return base.replace(/\/+$/, "");
 }
+
 
 /**
  * Fetch com suporte offline/cache
@@ -43,14 +48,15 @@ export async function fetchWithCache<T = any>(
   }
 }
 
+
 /**
- * Criar visita com suporte offline + cronograma
+ * Criar visita com suporte offline
  */
 export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
 
   try {
-    // ON-LINE
+    // 🔵 ONLINE
     const res = await fetch(`${base}/visits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,41 +66,44 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
 
     const json = await res.json();
-    return { ...json, synced: true };
 
-    } catch {
-      // OFFLINE
-      await addPendingVisit(payload);
+    return {
+      ...json,
+      synced: true,
+      offline: false,
+    };
 
-      const offlineVisit = {
-        ...payload,
-        id: Date.now() + Math.floor(Math.random() * 1000), // ID REAL OFFLINE
-        offline: true,
-      };
+  } catch {
+    // 🔴 OFFLINE
+    const offlineId = Date.now() + Math.floor(Math.random() * 1000);
 
-      offlineVisit.client_name =
-        payload.client_name || payload.clientSearch || "Cliente offline";
+    // salva pendente
+    await addPendingVisit({
+      ...payload,
+      idOffline: offlineId,
+      createdAt: Date.now(),
+    });
 
-      offlineVisit.consultant_name =
-        payload.consultant_name || "—";
+    const offlineVisit = {
+      ...payload,
+      id: offlineId,
+      offline: true,
+      synced: false,
+      client_name: payload.client_name || payload.clientSearch || "Cliente offline",
+      consultant_name: payload.consultant_name || "—",
+    };
 
-      // 🔥 NOVO — SEM CRONOGRAMA OFFLINE
-      await appendToStore("visits", offlineVisit);
+    await appendToStore("visits", offlineVisit);
 
-      window.dispatchEvent(new Event("visits-updated"));
+    window.dispatchEvent(new Event("visits-updated"));
 
-      return {
-        id: offlineVisit.id,      // 🔥 ESSENCIAL
-        offline: true,
-        synced: false,
-        message: "Visita salva localmente. Será sincronizada."
-      };
-  }   //  ✅ FECHAVA AQUI E ESTAVA FALTANDO
-}     //  ✅ ESTA LINHA ERA A QUEBRA DO BUILD
+    return offlineVisit;
+  }
+}
 
 
 /**
- * Sincronizar fotos armazenadas offline
+ * Sincronizar fotos offline
  */
 export async function syncPendingPhotos(API_BASE: string) {
   const base = normalizeBaseUrl(API_BASE);
@@ -111,16 +120,16 @@ export async function syncPendingPhotos(API_BASE: string) {
         body: form,
       });
 
-      if (res.ok) {
-        if (p.id != null) {
-            await deletePendingPhoto(p.id);
-        }
+      if (res.ok && p.id != null) {
+        await deletePendingPhoto(p.id);
       }
+
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar foto:", err);
     }
   }
 }
+
 
 /**
  * Sincronizar visitas pendentes
@@ -143,29 +152,47 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
         body: JSON.stringify(p.data),
       });
 
-      if (res.ok) {
-        syncedCount++;
-        await deletePendingVisit(p.id!);
+      if (!res.ok) continue;
+
+      const json = await res.json();
+
+      // 🔥 1. Atualizar fotos que estavam com idOffline
+      if (p.data.idOffline) {
+        await updatePendingPhotosVisitId(p.data.idOffline, json.id);
       }
+
+      // 🔥 2. Registrar visita sincronizada no store principal
+      await appendToStore("visits", json);
+
+      // 🔥 3. Remover pendente
+      await deletePendingVisit(p.id);
+
+      syncedCount++;
+
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar visita:", err);
     }
   }
 
   if (syncedCount > 0) {
-    // 🔥 Agora sincroniza fotos após visitas
+
+    // 🔥 Agora sim, sincroniza fotos
     await syncPendingPhotos(apiBase);
 
+    // atualizar visitas na UI
     await fetchWithCache(`${base}/visits`, "visits");
+
     window.dispatchEvent(new Event("visits-synced"));
   }
 }
+
 
 /**
  * Pré-carregar dados offline
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
+
   const endpoints: [string, StoreName][] = [
     [`${base}/clients`, "clients"],
     [`${base}/properties`, "properties"],
@@ -200,12 +227,12 @@ export async function updateVisitWithSync(apiBase: string, visitId: number, payl
     const json = await res.json();
     return { ...json, synced: true };
 
-  } catch (err) {
-    // offline → salvar como pending_visit_update
+  } catch {
     await addPendingVisit({
       ...payload,
       __update: true,
       visit_id: visitId,
+      createdAt: Date.now(),
     });
 
     return {

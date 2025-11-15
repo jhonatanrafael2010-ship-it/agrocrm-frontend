@@ -236,3 +236,23 @@ export function dataURLtoBlob(dataUrl: string): Blob {
 
   return new Blob([buffer], { type: mime });
 }
+
+export async function updatePendingPhotosVisitId(oldId: number, newId: number) {
+  const photos = await getAllPendingPhotos();
+  const db = await openDB();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction("pending_photos", "readwrite");
+    const store = tx.objectStore("pending_photos");
+
+    photos.forEach((p) => {
+      if (p.visit_id === oldId) {
+        const updated = { ...p, visit_id: newId };
+        store.put(updated);
+      }
+    });
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
