@@ -62,94 +62,64 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     const json = await res.json();
     return { ...json, synced: true };
 
-  } catch {
-    // OFFLINE
-    await addPendingVisit(payload);
+    } catch {
+      // OFFLINE
+      await addPendingVisit(payload);
 
-    const offlineVisit = {
-      ...payload,
-      id: Date.now() + Math.floor(Math.random() * 1000), // ID REAL OFFLINE
-      offline: true,
-    };
+      const offlineVisit = {
+        ...payload,
+        id: Date.now() + Math.floor(Math.random() * 1000), // ID REAL OFFLINE
+        offline: true,
+      };
 
-    offlineVisit.client_name =
-      payload.client_name || payload.clientSearch || "Cliente offline";
+      offlineVisit.client_name =
+        payload.client_name || payload.clientSearch || "Cliente offline";
 
-    offlineVisit.consultant_name =
-      payload.consultant_name || "—";
+      offlineVisit.consultant_name =
+        payload.consultant_name || "—";
 
-    // 🔥 NOVO — SEM CRONOGRAMA OFFLINE
-    await appendToStore("visits", offlineVisit);
+      // 🔥 NOVO — SEM CRONOGRAMA OFFLINE
+      await appendToStore("visits", offlineVisit);
 
-    window.dispatchEvent(new Event("visits-updated"));
+      window.dispatchEvent(new Event("visits-updated"));
 
-    return {
-      id: offlineVisit.id,      // 🔥 ESSENCIAL
-      offline: true,
-      synced: false,
-      message: "Visita salva localmente. Será sincronizada."
-    };
-  }
-}
-
+      return {
+        id: offlineVisit.id,      // 🔥 ESSENCIAL
+        offline: true,
+        synced: false,
+        message: "Visita salva localmente. Será sincronizada."
+      };
+    }
 
 
 /**
- * Criar visita com suporte offline + cronograma
+ * Sincronizar fotos armazenadas offline
  */
-export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
-  const base = normalizeBaseUrl(apiBase);
+export async function syncPendingPhotos(API_BASE: string) {
+  const base = normalizeBaseUrl(API_BASE);
+  const photos = await getAllPendingPhotos();
+  if (!photos.length) return;
 
-  try {
-    // =============================
-    // 🌐 TENTATIVA ONLINE
-    // =============================
-    const res = await fetch(`${base}/visits`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  for (const p of photos) {
+    const form = new FormData();
+    form.append("photos", dataURLtoBlob(p.dataUrl), p.fileName);
 
-    if (!res.ok) {
-      throw new Error(`Erro HTTP ${res.status}`);
+    try {
+      const res = await fetch(`${base}/visits/${p.visit_id}/photos`, {
+        method: "POST",
+        body: form,
+      });
+
+      if (res.ok) {
+        if (p.id != null) {
+            await deletePendingPhoto(p.id);
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Erro ao sincronizar foto:", err);
     }
-
-    const json = await res.json();
-
-    return {
-      ...json,
-      synced: true,
-      offline: false,
-    };
-
-  } catch (err) {
-    console.warn("⚠️ Sem internet, salvando visita offline:", err);
-
-    // Marca para posterior sincronização
-    await addPendingVisit(payload);
-
-    // Cria ID confiável para o modo offline
-    const offlineId = Date.now() + Math.floor(Math.random() * 1000);
-
-    const offlineVisit = {
-      ...payload,
-      id: offlineId,
-      offline: true,
-      synced: false,
-      client_name: payload.client_name || payload.clientSearch || "Cliente offline",
-      consultant_name: payload.consultant_name || "—",
-    };
-
-    // Salva a visita local
-    await appendToStore("visits", offlineVisit);
-
-    // Atualizar UI
-    window.dispatchEvent(new Event("visits-updated"));
-
-    return offlineVisit;
   }
 }
-
 
 /**
  * Sincronizar visitas pendentes
