@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">NutriCRM</string>
-    <string name="title_activity_main">AgroCRM</string>
-    <string name="package_name">com.agrocrm.app</string>
-    <string name="custom_url_scheme">com.agrocrm.app</string>
+    <string name="title_activity_main">NutriCRM</string>
+    <string name="package_name">com.nutricrm.app</string>
+    <string name="custom_url_scheme">com.nutricrm.app</string>
 </resources>

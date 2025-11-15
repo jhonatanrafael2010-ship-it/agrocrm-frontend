@@ -425,28 +425,34 @@ const CalendarPage: React.FC = () => {
       }
 
       await loadVisits();
-      setOpen(false);
 
-      // 🔄 reset do form
-      setForm({
-        id: null,
-        date: "",
-        client_id: "",
-        property_id: "",
-        plot_id: "",
-        consultant_id: "",
-        culture: "",
-        variety: "",
-        recommendation: "",
-        genPheno: true,
-        photos: null,
-        photoPreviews: [],
-        savedPhotos: [],
-        clientSearch: "",
-        latitude: null,
-        longitude: null,
-        photoCaptions: [],
-      });
+      // 🔥 Se estiver offline, mantenha o modal aberto
+      if (navigator.onLine) {
+        setOpen(false);
+      }
+
+      // 🔄 reset apenas se online, senão o ID some
+      if (navigator.onLine) {
+        setForm({
+          id: null,
+          date: "",
+          client_id: "",
+          property_id: "",
+          plot_id: "",
+          consultant_id: "",
+          culture: "",
+          variety: "",
+          recommendation: "",
+          genPheno: true,
+          photos: null,
+          photoPreviews: [],
+          savedPhotos: [],
+          clientSearch: "",
+          latitude: null,
+          longitude: null,
+          photoCaptions: [],
+        });
+      }
     } catch (err) {
     console.error("❌ Erro ao salvar visita:", err);
     alert("Erro ao salvar visita. Tente novamente.");

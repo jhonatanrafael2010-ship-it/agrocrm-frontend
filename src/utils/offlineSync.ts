@@ -95,33 +95,61 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
 
 
 /**
- * Sincronizar fotos armazenadas offline
+ * Criar visita com suporte offline + cronograma
  */
-export async function syncPendingPhotos(API_BASE: string) {
-  const base = normalizeBaseUrl(API_BASE);
-  const photos = await getAllPendingPhotos();
-  if (!photos.length) return;
+export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
+  const base = normalizeBaseUrl(apiBase);
 
-  for (const p of photos) {
-    const form = new FormData();
-    form.append("photos", dataURLtoBlob(p.dataUrl), p.fileName);
+  try {
+    // =============================
+    // 🌐 TENTATIVA ONLINE
+    // =============================
+    const res = await fetch(`${base}/visits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    try {
-      const res = await fetch(`${base}/visits/${p.visit_id}/photos`, {
-        method: "POST",
-        body: form,
-      });
-
-      if (res.ok) {
-        if (p.id != null) {
-            await deletePendingPhoto(p.id);
-        }
-      }
-    } catch (err) {
-      console.warn("⚠️ Erro ao sincronizar foto:", err);
+    if (!res.ok) {
+      throw new Error(`Erro HTTP ${res.status}`);
     }
+
+    const json = await res.json();
+
+    return {
+      ...json,
+      synced: true,
+      offline: false,
+    };
+
+  } catch (err) {
+    console.warn("⚠️ Sem internet, salvando visita offline:", err);
+
+    // Marca para posterior sincronização
+    await addPendingVisit(payload);
+
+    // Cria ID confiável para o modo offline
+    const offlineId = Date.now() + Math.floor(Math.random() * 1000);
+
+    const offlineVisit = {
+      ...payload,
+      id: offlineId,
+      offline: true,
+      synced: false,
+      client_name: payload.client_name || payload.clientSearch || "Cliente offline",
+      consultant_name: payload.consultant_name || "—",
+    };
+
+    // Salva a visita local
+    await appendToStore("visits", offlineVisit);
+
+    // Atualizar UI
+    window.dispatchEvent(new Event("visits-updated"));
+
+    return offlineVisit;
   }
 }
+
 
 /**
  * Sincronizar visitas pendentes
