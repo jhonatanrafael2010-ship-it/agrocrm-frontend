@@ -89,7 +89,8 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
         synced: false,
         message: "Visita salva localmente. Será sincronizada."
       };
-    }
+  }   //  ✅ FECHAVA AQUI E ESTAVA FALTANDO
+}     //  ✅ ESTA LINHA ERA A QUEBRA DO BUILD
 
 
 /**
