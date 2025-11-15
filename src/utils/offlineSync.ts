@@ -164,10 +164,13 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
       // 🔥 2. Registrar visita sincronizada no store principal
       await appendToStore("visits", json);
 
-      // 🔥 3. Remover pendente
-      await deletePendingVisit(p.id);
+      // 🔥 3. Remover pendente (somente se tiver ID)
+      if (p.id != null) {
+        await deletePendingVisit(p.id);
+      }
 
       syncedCount++;
+
 
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar visita:", err);
