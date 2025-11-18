@@ -36,8 +36,8 @@ type Photo = {
 type Visit = {
   id: number;
   client_id: number;
-  property_id: number;
-  plot_id: number;
+  property_id?: number | null;
+  plot_id?: number | null;
   consultant_id?: number | null;
   date: string;
   recommendation?: string;
@@ -49,8 +49,9 @@ type Visit = {
   longitude?: number | null;
   client_name?: string;
   consultant_name?: string;
-  offline?: boolean;   // 🔥 agora o TS entende visitas offline
+  offline?: boolean;
 };
+
 
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
@@ -99,7 +100,6 @@ const CalendarPage: React.FC = () => {
   // modal
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    photoCaptions: [] as string[],
     id: null as number | null,
     date: "",
     client_id: "",
@@ -110,8 +110,6 @@ const CalendarPage: React.FC = () => {
     variety: "",
     recommendation: "",
     genPheno: true,
-    photos: null as FileList | null,
-    photoPreviews: [] as string[],
     savedPhotos: [] as any[],
     clientSearch: "",
     latitude: null as number | null,
@@ -397,35 +395,35 @@ const CalendarPage: React.FC = () => {
       }
 
 
-      // 🟠 Se estiver OFFLINE, salvar fotos no IndexedDB com o ID da visita offline
-      if (!navigator.onLine && form.photos && form.photos.length > 0) {
-        console.log("📸 Salvando fotos offline com ID:", visitId);
+      // ============================================================
+      // 📸 FOTOS — nova versão (totalmente compatível)
+      // ============================================================
+      const fileInput = document.querySelector(
+        "input[type='file']"
+      ) as HTMLInputElement | null;
 
-        Array.from(form.photos).forEach((file) => {
-          savePhotoOffline(visitId, file);
-        });
+      const files = fileInput?.files;
+
+      // 🟠 OFFLINE — salvar no IndexedDB
+      if (!navigator.onLine && files && files.length > 0) {
+        console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
+        Array.from(files).forEach((file) => savePhotoOffline(visitId, file));
       }
 
-      // 🟢 Upload de fotos (somente se online)
-      if (navigator.onLine && form.photos && form.photos.length > 0) {
+      // 🟢 ONLINE — upload automático
+      if (navigator.onLine && files && files.length > 0) {
         const fd = new FormData();
-        Array.from(form.photos).forEach((file, idx) => {
-          fd.append("photos", file);
-          fd.append("captions", form.photoCaptions[idx] || "");
+        Array.from(files).forEach((file) => fd.append("photos", file));
+
+        const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+          method: "POST",
+          body: fd,
         });
 
-        const photoResp = await fetch(
-          `${API_BASE}visits/${visitId}/photos`,
-          {
-            method: "POST",
-            body: fd,
-          }
-        );
-
-        if (!photoResp.ok)
-          console.warn("⚠️ Falha ao enviar fotos:", photoResp.status);
+        if (!resp.ok) console.warn("⚠️ Falha ao enviar fotos:", resp.status);
         else console.log("📸 Fotos enviadas com sucesso!");
       }
+
 
       await loadVisits();
 
@@ -447,13 +445,10 @@ const CalendarPage: React.FC = () => {
           variety: "",
           recommendation: "",
           genPheno: true,
-          photos: null,
-          photoPreviews: [],
           savedPhotos: [],
           clientSearch: "",
           latitude: null,
           longitude: null,
-          photoCaptions: [],
         });
       }
     } catch (err) {
@@ -521,54 +516,36 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   // ✅ Concluir (com suporte offline real)
   // ============================================================
-  const markDone = async () => {
-    if (!form.id) return;
+    const markDone = async () => {
+      if (!form.id) return;
 
-    try {
-      // 🔵 ONLINE → envia fotos antes de concluir
-      if (navigator.onLine && form.photos && form.photos.length > 0) {
-        const fd = new FormData();
-        Array.from(form.photos).forEach((file, idx) => {
-          fd.append("photos", file);
-          fd.append("captions", form.photoCaptions[idx] || "");
-        });
-
-        const resp = await fetch(`${API_BASE}visits/${form.id}/photos`, {
-          method: "POST",
-          body: fd,
-        });
-
-        if (!resp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos antes de concluir:", resp.status);
+      try {
+        // 🟠 OFFLINE → apenas salvar status no IndexedDB
+        if (!navigator.onLine) {
+          await updateVisitWithSync(API_BASE, form.id as number, { status: "done" });
+          alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
+          setOpen(false);
+          return;
         }
-      }
 
-      // 🟠 OFFLINE → apenas salvar status no IndexedDB
-      if (!navigator.onLine) {
-        await updateVisitWithSync(API_BASE, form.id as number, { status: "done" });
-        alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
+        // 🟢 ONLINE → envia PUT normal
+        const result = await updateVisitWithSync(API_BASE, form.id as number, {
+          status: "done",
+        });
+
+        if (result.synced) {
+          alert("✅ Visita concluída com sucesso!");
+        } else {
+          alert("🟠 Visita concluída offline (pendente de sync).");
+        }
+
+        await loadVisits();
         setOpen(false);
-        return;
+      } catch (err) {
+        console.error("Erro ao concluir:", err);
+        alert("❌ Erro ao concluir visita.");
       }
-
-      // 🟢 ONLINE → envia PUT normal
-      const result = await updateVisitWithSync(API_BASE, form.id as number, {
-        status: "done",
-      });
-
-      if (result.synced) {
-        alert("✅ Visita concluída com sucesso!");
-      } else {
-        alert("🟠 Visita concluída offline (pendente de sync).");
-      }
-
-      await loadVisits();
-      setOpen(false);
-    } catch (err) {
-      console.error("Erro ao concluir:", err);
-      alert("❌ Erro ao concluir visita.");
-    }
-  };
+    };
 
 
 
@@ -779,12 +756,9 @@ const CalendarPage: React.FC = () => {
               recommendation: "",
               genPheno: true,
               savedPhotos: [],
-              photos: null,
-              photoPreviews: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
-              photoCaptions: [],
             });
             setOpen(true);
           }}
@@ -809,13 +783,10 @@ const CalendarPage: React.FC = () => {
               variety: v.variety || "",
               recommendation: v.recommendation || "",
               genPheno: false,
-              photos: null,
-              photoPreviews: [],
               savedPhotos: v.photos || [],
               clientSearch: clientName,
               latitude: v.latitude || null,
               longitude: v.longitude || null,
-              photoCaptions: [],
             });
 
             setOpen(true);
@@ -912,12 +883,9 @@ const CalendarPage: React.FC = () => {
               recommendation: "",
               genPheno: true,
               savedPhotos: [],
-              photos: null,
-              photoPreviews: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
-              photoCaptions: [],
             });
             setOpen(true);
           }}
