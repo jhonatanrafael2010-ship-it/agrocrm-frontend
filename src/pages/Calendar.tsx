@@ -148,17 +148,23 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      // 1) Carregar visitas do servidor (ou cache)
-      const vs: Visit[] = await fetchWithCache(`${API_BASE}visits?scope=all`, "visits");
+      // 1) visitas online
+      const onlineVisits: Visit[] = await fetchWithCache(
+        `${API_BASE}visits?scope=all`,
+        "visits"
+      );
 
-      // 2) Carregar todas as visitas do IndexedDB
+      // 2) visitas locais
       const localVisits = await getAllFromStore<Visit>("visits");
 
-      // 3) Separar apenas visitas offline
-      const offlineVisits = localVisits.filter((v) => v.offline === true);
+      // 3) manter apenas visitas realmente offline
+      const offlineVisits = localVisits.filter(
+        (v) => v.offline === true && !onlineVisits.some((s) => s.id === v.id)
+      );
 
-      // 4) Unir servidor + offline
-      const allVisits = [...vs, ...offlineVisits];
+      // 4) unir
+      const allVisits = [...onlineVisits, ...offlineVisits];
+
 
       const cs = clients || [];
       const cons = consultants || [];
@@ -390,32 +396,6 @@ const CalendarPage: React.FC = () => {
         console.error("❌ ERRO: visita offline criada sem ID!");
       }
 
-      // 🔶 Caso esteja offline, criar evento temporário
-      if (result.offline && !result.synced) {
-        alert("✅ Visita salva offline. Será enviada quando voltar a ter internet.");
-
-        const tempEvent = {
-          id: `temp-${visitId}`,
-          title: `${form.clientSearch || "Visita"} (pendente)`,
-          start: new Date(payload.date),
-          backgroundColor: "#ffcc00",
-          borderColor: "#ffaa00",
-          textColor: "#000",
-          offline: true,
-          extendedProps: {
-            raw: {
-              ...payload,
-              id: visitId,
-              client_name: form.clientSearch || "Cliente offline",
-              offline: true,
-            },
-          },
-        };
-
-        setEvents((prev) => [...prev, tempEvent]);
-      } else {
-        alert("✔️ Visita criada no servidor.");
-      }
 
       // 🟠 Se estiver OFFLINE, salvar fotos no IndexedDB com o ID da visita offline
       if (!navigator.onLine && form.photos && form.photos.length > 0) {
@@ -831,7 +811,7 @@ const CalendarPage: React.FC = () => {
               genPheno: false,
               photos: null,
               photoPreviews: [],
-              savedPhotos: navigator.onLine ? (v.photos || []) : [],
+              savedPhotos: v.photos || [],
               clientSearch: clientName,
               latitude: v.latitude || null,
               longitude: v.longitude || null,
@@ -842,7 +822,7 @@ const CalendarPage: React.FC = () => {
           }}
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};
-            const isOffline = v?.offline === true;
+            const isOffline = v.offline === true;
 
             const bg = isOffline
               ? "#ffcc00"

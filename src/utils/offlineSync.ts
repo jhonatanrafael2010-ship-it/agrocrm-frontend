@@ -13,7 +13,7 @@ import {
   deletePendingPhoto,
   dataURLtoBlob,
   updatePendingPhotosVisitId,
-  deleteFromStore, // 🔥 NOVO
+  deleteFromStore, // usado para remover visitas offline após sync
 } from "./indexedDB";
 
 /**
@@ -74,9 +74,9 @@ export async function createVisitWithSync(
       offline: false,
     };
 
-    // ❗ NÃO precisamos gravar aqui na IndexedDB, porque
-    // o Calendar vai chamar fetchWithCache("/visits") depois.
-    // Isso evita DataError caso o backend não devolva "id".
+    // ❗ Não gravamos aqui na IndexedDB.
+    // O Calendar chama fetchWithCache("/visits") depois
+    // e isso deixa tudo consistente sem risco de DataError.
     window.dispatchEvent(new Event("visits-updated"));
 
     return visitOnline;
@@ -86,7 +86,7 @@ export async function createVisitWithSync(
     // 🔴 OFFLINE
     const offlineId = Date.now() + Math.floor(Math.random() * 1000);
 
-    // Salva pendente seguindo o formato do IndexedDB:
+    // Salva pendente seguindo o formato do IndexedDB
     await addPendingVisit({
       data: {
         ...payload,
@@ -115,7 +115,8 @@ export async function createVisitWithSync(
 }
 
 /**
- * Sincronizar fotos offline
+ * Sincronizar fotos offline (pending_photos → backend)
+//  - assume que as visitas já foram sincronizadas e visit_id é real
  */
 export async function syncPendingPhotos(API_BASE: string) {
   const base = normalizeBaseUrl(API_BASE);
@@ -228,16 +229,15 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
         const json = await res.json();
 
-        // 🔥 1. Atualizar fotos que estavam com idOffline
+        // 🔥 1. Atualizar fotos que estavam com idOffline -> id real
         if (offlineId && json?.id) {
-          // atualiza fotos pendentes para usarem o ID real
           await updatePendingPhotosVisitId(offlineId, json.id);
 
-          // 🔥 remove a visita offline antiga da store "visits"
+          // 🔥 2. Remover a visita offline antiga da store "visits"
           await deleteFromStore("visits", offlineId);
         }
 
-        // ❗ NÃO gravamos json direto na store "visits" aqui.
+        // ❗ Não gravamos json direto na store "visits" aqui.
         // Quem vai trazer a versão certa é o fetchWithCache no final.
         if (p.id != null) {
           await deletePendingVisit(p.id);
@@ -254,7 +254,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
     // 🔥 Agora sim, sincroniza fotos (já com visit_id real atualizado)
     await syncPendingPhotos(apiBase);
 
-    // Atualizar visitas na UI — agora só dados do servidor (mais quaisquer offline novas)
+    // Atualizar visitas na UI — agora só dados do servidor
     await fetchWithCache(`${base}/visits`, "visits");
 
     window.dispatchEvent(new Event("visits-synced"));
@@ -262,7 +262,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 }
 
 /**
- * Pré-carregar dados offline
+ * Pré-carregar dados offline (para primeira carga da PWA)
  */
 export async function preloadOfflineData(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
