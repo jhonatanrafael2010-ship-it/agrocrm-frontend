@@ -15,6 +15,9 @@ import {
 } from "../utils/offlineSync";
 import { API_BASE } from "../config";
 import { savePendingPhoto } from "../utils/indexedDB";
+import { getAllFromStore } from "../utils/indexedDB";
+
+
 
 
 type Client = { id: number; name: string };
@@ -46,6 +49,7 @@ type Visit = {
   longitude?: number | null;
   client_name?: string;
   consultant_name?: string;
+  offline?: boolean;   // 🔥 agora o TS entende visitas offline
 };
 
 const CalendarPage: React.FC = () => {
@@ -144,12 +148,22 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
+      // 1) Carregar visitas do servidor (ou cache)
       const vs: Visit[] = await fetchWithCache(`${API_BASE}visits?scope=all`, "visits");
+
+      // 2) Carregar todas as visitas do IndexedDB
+      const localVisits = await getAllFromStore<Visit>("visits");
+
+      // 3) Separar apenas visitas offline
+      const offlineVisits = localVisits.filter((v) => v.offline === true);
+
+      // 4) Unir servidor + offline
+      const allVisits = [...vs, ...offlineVisits];
 
       const cs = clients || [];
       const cons = consultants || [];
 
-      const evs = (vs || [])
+      const evs = allVisits
         .filter((v) => v.date)
         .map((v) => {
           const clientName =
@@ -173,41 +187,50 @@ const CalendarPage: React.FC = () => {
           }
 
           const tooltip = `
-👤 ${clientName}
-🌱 ${variety || "-"}
-📍 ${stage || "-"}
-👨‍🌾 ${consultant || "-"}
+  👤 ${clientName}
+  🌱 ${variety || "-"}
+  📍 ${stage || "-"}
+  👨‍🌾 ${consultant || "-"}
           `.trim();
+
+          // 🔥 AQUI está a magia que faltava:
+          const isOffline = v.offline === true;
 
           return {
             id: `visit-${v.id}`,
             title: clientName,
             start: v.date,
-            backgroundColor: colorFor(v.date, v.status),
-            borderColor: colorFor(v.date, v.status),
-            extendedProps: { type: "visit", raw: v, tooltip },
+
+            // 🔥 COR AMARELA para OFFLINE
+            backgroundColor: isOffline
+              ? "#ffcc00"
+              : colorFor(v.date, v.status),
+
+            borderColor: isOffline
+              ? "#ffaa00"
+              : colorFor(v.date, v.status),
+
+            extendedProps: {
+              type: "visit",
+              raw: {
+                ...v,
+                offline: isOffline,     // 🔥 ESSENCIAL
+              },
+              tooltip,
+            },
+
             classNames: ["visit-event"],
           };
         });
 
       setEvents(evs);
 
-      if (form.id) {
-        const updatedVisit = vs.find((v) => v.id === form.id);
-        if (updatedVisit) {
-          setForm((f) => ({
-            ...f,
-            savedPhotos: updatedVisit.photos || [],
-          }));
-          await new Promise((r) => setTimeout(r, 50));  // força re-render
-        }
-      }
-
       console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
     } catch (err) {
       console.error("❌ Erro ao carregar visitas:", err);
     }
   };
+
 
   // ============================================================
   // 🚀 Load inicial
