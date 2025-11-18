@@ -4,7 +4,7 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 5; // 🔼 aumente se ALTERAR a estrutura das stores
+const DB_VERSION = 6; // 🔼 aumente sempre que alterar schema
 
 // 🔹 Todas as stores válidas
 export type StoreName =
@@ -28,7 +28,7 @@ function openDB(): Promise<IDBDatabase> {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      const mainStores: StoreName[] = [
+      const stores: StoreName[] = [
         "clients",
         "properties",
         "plots",
@@ -40,7 +40,7 @@ function openDB(): Promise<IDBDatabase> {
         "pending_photos",
       ];
 
-      mainStores.forEach((name) => {
+      stores.forEach((name) => {
         if (!db.objectStoreNames.contains(name)) {
           if (name === "pending_visits" || name === "pending_photos") {
             db.createObjectStore(name, {
@@ -75,7 +75,7 @@ export async function clearStore(store: StoreName): Promise<void> {
 }
 
 // ============================================================
-// 💾 Inserir vários itens (com limpeza automática se online)
+// 💾 Inserir vários itens
 // ============================================================
 export async function putManyInStore(
   store: StoreName,
@@ -86,7 +86,7 @@ export async function putManyInStore(
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
 
-    // ⚠️ Nunca limpar "visits", "pending_visits" e "pending_photos"
+    // nunca apagar stores críticas
     if (
       navigator.onLine &&
       store !== "visits" &&
@@ -96,7 +96,13 @@ export async function putManyInStore(
       os.clear();
     }
 
-    items.forEach((item) => os.put(item));
+    for (const item of items) {
+      try {
+        os.put(item);
+      } catch (err) {
+        console.warn("⚠ IndexedDB put error:", err, item);
+      }
+    }
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
@@ -104,22 +110,26 @@ export async function putManyInStore(
 }
 
 // ============================================================
-// ➕ Append (sem limpar, usado p/ visitas offline, etc.)
+// ➕ Append (usar para visitas offline)
 // ============================================================
-export async function appendToStore(
-  store: StoreName,
-  item: any
-): Promise<void> {
+export async function appendToStore(store: StoreName, item: any): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
-    tx.objectStore(store).put(item);
+    try {
+      tx.objectStore(store).put(item);
+    } catch (err) {
+      console.warn("⚠ appendToStore error:", err);
+    }
+
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
 
-// ✅ Remover item por ID (usado p/ tirar visitas offline após sync)
+// ============================================================
+// ❌ Remover item
+// ============================================================
 export async function deleteFromStore(
   store: StoreName,
   id: number | string
@@ -134,17 +144,13 @@ export async function deleteFromStore(
 }
 
 // ============================================================
-// 📦 Buscar todos os itens de uma store
+// 📦 Buscar todos itens
 // ============================================================
-export async function getAllFromStore<T = any>(
-  store: StoreName
-): Promise<T[]> {
+export async function getAllFromStore<T = any>(store: StoreName): Promise<T[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const req = db
-      .transaction(store, "readonly")
-      .objectStore(store)
-      .getAll();
+    const req = db.transaction(store, "readonly").objectStore(store).getAll();
+
     req.onsuccess = () => resolve(req.result as T[]);
     req.onerror = () => reject(req.error);
   });
@@ -155,13 +161,10 @@ export async function getAllFromStore<T = any>(
 // ============================================================
 export interface PendingVisit {
   id?: number;
-  data: any; // { ...payload, idOffline?, __update?, visit_id? }
+  data: any;
   createdAt: number;
 }
 
-/**
- * Adicionar pendência de visita
- */
 export async function addPendingVisit(entry: {
   data: any;
   createdAt: number;
@@ -179,9 +182,6 @@ export async function addPendingVisit(entry: {
   });
 }
 
-/**
- * Buscar todas pendências de visitas
- */
 export async function getAllPendingVisits(): Promise<PendingVisit[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -189,15 +189,11 @@ export async function getAllPendingVisits(): Promise<PendingVisit[]> {
       .transaction("pending_visits", "readonly")
       .objectStore("pending_visits")
       .getAll();
-
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
 
-/**
- * Deletar pendência de visita
- */
 export async function deletePendingVisit(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -209,35 +205,34 @@ export async function deletePendingVisit(id: number): Promise<void> {
 }
 
 // ============================================================
-// 📸 PENDENTES — FOTOS OFFLINE
+// 📸 PENDENTES — FOTOS
 // ============================================================
 export interface PendingPhoto {
   id?: number;
-  visit_id: number; // pode ser offlineId ou id real
+  visit_id: number;
   fileName: string;
   mime: string;
   dataUrl: string;
+  caption?: string;
   synced: boolean;
 }
 
-/**
- * Salvar foto offline (pendente de sync)
- */
-export async function savePendingPhoto(
-  photo: PendingPhoto
-): Promise<void> {
+export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   const db = await openDB();
+
   return new Promise((resolve, reject) => {
-    const tx = db.transaction("pending_photos", "readwrite");
-    tx.objectStore("pending_photos").add(photo);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
+    try {
+      const tx = db.transaction("pending_photos", "readwrite");
+      tx.objectStore("pending_photos").add(photo);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    } catch (err) {
+      console.warn("Erro ao salvar foto offline:", err, photo);
+      reject(err);
+    }
   });
 }
 
-/**
- * Buscar todas fotos pendentes
- */
 export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -251,9 +246,6 @@ export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   });
 }
 
-/**
- * Deletar foto pendente
- */
 export async function deletePendingPhoto(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -265,7 +257,7 @@ export async function deletePendingPhoto(id: number): Promise<void> {
 }
 
 // ============================================================
-// 🧪 Converter Base64 → Blob (para upload HTTP)
+// 🧪 Base64 → Blob
 // ============================================================
 export function dataURLtoBlob(dataUrl: string): Blob {
   const parts = dataUrl.split(",");
@@ -284,7 +276,7 @@ export function dataURLtoBlob(dataUrl: string): Blob {
 }
 
 // ============================================================
-// 🔄 Atualizar visit_id de fotos quando sync gerar ID real
+// 🔄 Atualizar visit_id das fotos offline quando sincronizar
 // ============================================================
 export async function updatePendingPhotosVisitId(
   oldId: number,
@@ -299,8 +291,7 @@ export async function updatePendingPhotosVisitId(
 
     photos.forEach((p) => {
       if (p.visit_id === oldId) {
-        const updated = { ...p, visit_id: newId };
-        store.put(updated);
+        store.put({ ...p, visit_id: newId });
       }
     });
 

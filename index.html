@@ -2,14 +2,22 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- Mobile-friendly -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+
     <title>AgroCRM v1.0.5</title>
 
-    <!-- Ícone e fontes -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- SEO -->
+    <meta name="description" content="AgroCRM — CRM inteligente para o agronegócio" />
+
+    <!-- Ícone padrão -->
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+
+    <!-- Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -25,16 +33,28 @@
       crossorigin="anonymous"
     />
 
-    <!-- PWA iOS Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="AgroCRM" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-
-
+    <!-- =============================== -->
     <!-- 🔰 PWA -->
+    <!-- =============================== -->
+
+    <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Tema da barra superior -->
     <meta name="theme-color" content="#1B5E20" />
+
+    <!-- Suporte total iOS (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AgroCRM" />
+
+    <!-- Ícones Apple -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+
+    <!-- Previne delay de clique no iOS -->
+    <meta name="format-detection" content="telephone=no" />
+
   </head>
 
   <body>
@@ -52,12 +72,12 @@
 
     <!-- 🧠 Registro do Service Worker -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
           navigator.serviceWorker
-            .register('/service-worker.js')
-            .then((reg) => console.log('✅ Service Worker registrado:', reg.scope))
-            .catch((err) => console.log('⚠️ Falha ao registrar SW:', err));
+            .register("/service-worker.js")
+            .then((reg) => console.log("✅ Service Worker registrado:", reg.scope))
+            .catch((err) => console.log("⚠️ Falha ao registrar SW:", err));
         });
       }
     </script>

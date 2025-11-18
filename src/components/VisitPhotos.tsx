@@ -2,13 +2,12 @@ import React, { useEffect, useState } from "react";
 import { API_BASE } from "../config";
 import { getAllPendingPhotos } from "../utils/indexedDB";
 
-// Tipo unificado de foto
 type UnifiedPhoto = {
   id?: number;
   url?: string;
   caption?: string;
 
-  // offline
+  // Offline
   pending?: boolean;
   dataUrl?: string;
   visit_id?: number;
@@ -17,42 +16,46 @@ type UnifiedPhoto = {
 interface Props {
   visitId: number | null;
   existingPhotos: UnifiedPhoto[];
-  onRefresh?: () => void | Promise<void>;
+  onFilesSelected?: (files: File[], captions: string[]) => void;
 }
 
-
 /**
- * VisitPhotos — APENAS UI
+ * VisitPhotos — SOMENTE UI
  *
- * - mostra fotos do backend
- * - mostra fotos offline
- * - mostra previews das fotos escolhidas
+ * - Mostra fotos do backend
+ * - Mostra fotos offline
+ * - Mostra previews das fotos novas
  *
  * NÃO envia fotos
- * NÃO salva offline
- *
- * Todo o processamento real está no Calendar.tsx
+ * NÃO salva offline (isso é feito no Calendar.tsx)
  */
-const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
+const VisitPhotos: React.FC<Props> = ({
+  visitId,
+  existingPhotos,
+  onFilesSelected
+}) => {
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
 
   // Carregar fotos offline
   async function loadOffline() {
     if (!visitId) return [];
+
     const all = await getAllPendingPhotos();
+
     return all
       .filter((p) => p.visit_id === visitId)
       .map((p) => ({
         pending: true,
         dataUrl: p.dataUrl,
-        caption: "",
-        visit_id: p.visit_id,
+        caption: p.caption || "",
+        visit_id: p.visit_id
       }));
   }
 
-  // Merge de fotos online + offline
+  // Merge online + offline
   useEffect(() => {
     async function merge() {
       const off = await loadOffline();
@@ -61,14 +64,43 @@ const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
     merge();
   }, [visitId, existingPhotos]);
 
-  // Resolve URL real
+  // Resolver URL
   function resolvePhotoUrl(p: UnifiedPhoto) {
     if (p.dataUrl) return p.dataUrl; // offline
     if (!p.url) return "";
     if (p.url.startsWith("http")) return p.url;
+
     const base = API_BASE.replace("/api", "");
     return `${base}${p.url}`;
   }
+
+  // Quando selecionar arquivos
+  function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!visitId) {
+      alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
+      return;
+    }
+
+    const files = e.target.files;
+    if (!files) return;
+
+    const arr = Array.from(files);
+
+    setNewFiles(arr);
+    setNewPreviews(arr.map((f) => URL.createObjectURL(f)));
+    setCaptions(arr.map(() => "")); // cria legendas vazias
+
+    if (onFilesSelected) {
+      onFilesSelected(arr, arr.map(() => ""));
+    }
+  }
+
+  // Quando legendas mudarem → notifica o Calendar
+  useEffect(() => {
+    if (onFilesSelected && newFiles.length > 0) {
+      onFilesSelected(newFiles, captions);
+    }
+  }, [captions]);
 
   return (
     <div className="col-12 mt-3">
@@ -80,20 +112,9 @@ const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
         multiple
         accept="image/*"
         className="form-control"
-        disabled={!visitId}     // 🔥 impede fotos sem ID
-        onChange={(e) => {
-          if (!visitId) {
-            alert("⚠️ Primeiro clique em SALVAR a visita antes de adicionar fotos.");
-            return;
-          }
-          const files = e.target.files;
-          if (!files) return;
-  
-          setNewPreviews(Array.from(files).map((f) => URL.createObjectURL(f)));
-          setCaptions(Array.from(files).map(() => ""));
-        }}
+        disabled={!visitId}
+        onChange={handleSelectFiles}
       />
-
 
       {/* Previews */}
       {newPreviews.length > 0 && (
@@ -106,7 +127,7 @@ const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
                   width: "130px",
                   height: "130px",
                   objectFit: "cover",
-                  borderRadius: 10,
+                  borderRadius: 10
                 }}
               />
               <input
@@ -139,7 +160,7 @@ const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
                     width: "130px",
                     height: "130px",
                     objectFit: "cover",
-                    borderRadius: 10,
+                    borderRadius: 10
                   }}
                 />
                 <input
@@ -154,8 +175,7 @@ const VisitPhotos: React.FC<Props> = ({ visitId, existingPhotos }) => {
         </div>
       )}
 
-      {/* Expor dados ao pai */}
-      <input type="hidden" name="photoFiles" value="" />
+      <input type="hidden" />
     </div>
   );
 };
