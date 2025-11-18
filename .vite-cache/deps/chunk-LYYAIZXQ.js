@@ -479,7 +479,6 @@ var CapacitorHttp = registerPlugin("CapacitorHttp", {
 });
 
 export {
-  CapacitorException,
   registerPlugin,
   WebPlugin
 };
@@ -488,4 +487,4 @@ export {
 @capacitor/core/dist/index.js:
   (*! Capacitor: https://capacitorjs.com/ - MIT License *)
 */
-//# sourceMappingURL=chunk-RQHQO3DB.js.map
+//# sourceMappingURL=chunk-LYYAIZXQ.js.map

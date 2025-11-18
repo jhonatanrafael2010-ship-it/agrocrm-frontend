@@ -1,6 +1,6 @@
 import {
   WebPlugin
-} from "./chunk-RQHQO3DB.js";
+} from "./chunk-LYYAIZXQ.js";
 import "./chunk-G3PMV62Z.js";
 
 // node_modules/@capacitor/geolocation/dist/esm/web.js
@@ -43,4 +43,4 @@ export {
   Geolocation,
   GeolocationWeb
 };
-//# sourceMappingURL=web-RWGO5ROS.js.map
+//# sourceMappingURL=web-MH2G3R7Z.js.map

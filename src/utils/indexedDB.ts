@@ -4,7 +4,7 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 5; // 🔼 aumente sempre que alterar stores
+const DB_VERSION = 5; // 🔼 aumente se alterar a estrutura das stores
 
 // 🔹 Todas as stores válidas
 export type StoreName =
@@ -28,7 +28,6 @@ function openDB(): Promise<IDBDatabase> {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
 
-      // --- Stores principais para dados sincronizáveis
       const mainStores: StoreName[] = [
         "clients",
         "properties",
@@ -120,6 +119,20 @@ export async function appendToStore(
   });
 }
 
+// ✅ NOVO: remover item por ID (usado p/ tirar visitas offline após sync)
+export async function deleteFromStore(
+  store: StoreName,
+  id: number | string
+): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // ============================================================
 // 📦 Buscar todos os itens
 // ============================================================
@@ -146,9 +159,6 @@ export interface PendingVisit {
   createdAt: number;
 }
 
-/**
- * Adicionar pendência de visita
- */
 export async function addPendingVisit(entry: {
   data: any;
   createdAt: number;
@@ -166,9 +176,6 @@ export async function addPendingVisit(entry: {
   });
 }
 
-/**
- * Buscar todas pendências de visitas
- */
 export async function getAllPendingVisits(): Promise<PendingVisit[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -182,9 +189,6 @@ export async function getAllPendingVisits(): Promise<PendingVisit[]> {
   });
 }
 
-/**
- * Deletar pendência de visita
- */
 export async function deletePendingVisit(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -207,9 +211,6 @@ export interface PendingPhoto {
   synced: boolean;
 }
 
-/**
- * Salvar foto offline
- */
 export async function savePendingPhoto(
   photo: PendingPhoto
 ): Promise<void> {
@@ -222,9 +223,6 @@ export async function savePendingPhoto(
   });
 }
 
-/**
- * Buscar todas fotos pendentes
- */
 export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -238,9 +236,6 @@ export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   });
 }
 
-/**
- * Deletar foto pendente
- */
 export async function deletePendingPhoto(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
