@@ -7,16 +7,16 @@ import {
 } from "../utils/indexedDB";
 
 type Photo = {
-  id?: number;
-  url?: string;
+  id?: number;        // id real no backend
+  url?: string;       // URL online no backend
   caption?: string;
 
-  // para fotos offline:
-  dataUrl?: string;
+  // 🔥 campos usados para fotos offline:
+  dataUrl?: string;   // Base64
   fileName?: string;
   mime?: string;
-  pending?: boolean;
-  visit_id?: number;
+  pending?: boolean;  // true = offline
+  visit_id?: number;  // id offline ou id real
 };
 
 interface VisitPhotosProps {
@@ -39,7 +39,7 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
   // 🔄 Carregar fotos salvas offline para esta visita
   // ============================================================
   async function loadOfflinePhotos() {
-    if (!visitId) return;
+    if (!visitId) return [];
 
     const pending = await getAllPendingPhotos();
     const filtered = pending.filter((p) => p.visit_id === visitId);
@@ -50,31 +50,39 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
       caption: "",
       dataUrl: p.dataUrl,
       pending: true,
+      visit_id: p.visit_id,
     }));
 
     return converted;
   }
 
   // ============================================================
-  // 🧩 Atualiza lista quando abrir modal
+  // 🧩 Atualiza lista quando abrir modal ou mudar visita
   // ============================================================
   useEffect(() => {
     async function mergePhotos() {
       const offlineOnes = await loadOfflinePhotos();
       const onlineOnes = existingPhotos || [];
-      setSavedPhotos([...onlineOnes, ...(offlineOnes || [])]);
+
+      // Evitar duplicados (apenas precaução)
+      const merged = [...onlineOnes, ...offlineOnes];
+      setSavedPhotos(merged);
     }
     mergePhotos();
   }, [existingPhotos, visitId]);
 
   // ============================================================
-  // 🔗 Resolve URL absoluta
+  // 🔗 Resolve URL absoluta correta
   // ============================================================
   const resolvePhotoUrl = (photo: Photo): string => {
-    if (photo.dataUrl) return photo.dataUrl; // foto offline
+    // 🔥 Foto offline → já tem dataUrl
+    if (photo.dataUrl) return photo.dataUrl;
     if (!photo.url) return "";
+
+    // 🔥 Foto online com URL absoluta
     if (photo.url.startsWith("http")) return photo.url;
 
+    // 🔥 Foto online com URL relativa
     const base = API_BASE.replace(/\/api\/?$/, "");
     const path = photo.url.startsWith("/") ? photo.url : `/${photo.url}`;
     return `${base}${path}`;
@@ -92,9 +100,11 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
     if (!navigator.onLine) {
       Array.from(filesToUpload).forEach((file, idx) => {
         const reader = new FileReader();
+
         reader.onload = async () => {
           const dataUrl = reader.result as string;
 
+          // 🔥 salva no IndexedDB
           await savePendingPhoto({
             visit_id: visitId,
             fileName: file.name,
@@ -103,21 +113,22 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
             synced: false,
           });
 
-          // 👉 aparece na hora no modal
+          // 🔥 aparece imediatamente
           setSavedPhotos((prev) => [
             ...prev,
             {
               dataUrl,
               caption: photoCaptions[idx] || "",
               pending: true,
+              visit_id: visitId,
             },
           ]);
         };
+
         reader.readAsDataURL(file);
       });
 
-      alert("🟠 Fotos salvas offline! Serão enviadas quando voltar a internet.");
-
+      alert("🟠 Fotos salvas offline! Sincronizarão automaticamente depois.");
       setFilesToUpload(null);
       setPhotoPreviews([]);
       setPhotoCaptions([]);
@@ -148,7 +159,7 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
 
       onRefresh();
     } catch (err) {
-      console.error("Erro ao enviar fotos:", err);
+      console.error("❌ Erro ao enviar fotos:", err);
       alert("❌ Falha ao enviar.");
     }
   };
@@ -197,8 +208,11 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
         onChange={(e) => {
           const files = e.target.files;
           if (!files) return;
+
           setFilesToUpload(files);
-          setPhotoPreviews(Array.from(files).map((f) => URL.createObjectURL(f)));
+          setPhotoPreviews(
+            Array.from(files).map((f) => URL.createObjectURL(f))
+          );
           setPhotoCaptions(Array.from(files).map(() => ""));
         }}
       />
@@ -233,7 +247,10 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
             ))}
           </div>
 
-          <button className="btn btn-success btn-sm mt-2" onClick={handleUpload}>
+          <button
+            className="btn btn-success btn-sm mt-2"
+            onClick={handleUpload}
+          >
             💾 Enviar Fotos
           </button>
         </>
@@ -257,10 +274,12 @@ const VisitPhotos: React.FC<VisitPhotosProps> = ({
                   }}
                 />
 
-                {/* Offline não permite excluir */}
+                {/* Botão excluir (somente online) */}
                 {!photo.pending && (
                   <button
-                    onClick={() => handleDeletePhoto(photo.id, photo.pending)}
+                    onClick={() =>
+                      handleDeletePhoto(photo.id, photo.pending)
+                    }
                     className="btn btn-danger btn-sm"
                     style={{
                       position: "absolute",

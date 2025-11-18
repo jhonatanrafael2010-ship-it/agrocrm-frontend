@@ -4,7 +4,7 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 4; // 🔼 aumente sempre que alterar stores
+const DB_VERSION = 5; // 🔼 aumente sempre que alterar stores
 
 // 🔹 Todas as stores válidas
 export type StoreName =
@@ -17,7 +17,6 @@ export type StoreName =
   | "visits"
   | "pending_visits"
   | "pending_photos";
-
 
 // ============================================================
 // 🔓 Abrir banco
@@ -55,14 +54,13 @@ function openDB(): Promise<IDBDatabase> {
         }
       });
 
-      console.log("🔧 Banco atualizado:", DB_VERSION);
+      console.log("🔧 Banco atualizado para versão:", DB_VERSION);
     };
 
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
-
 
 // ============================================================
 // 🧹 Limpar store
@@ -77,7 +75,6 @@ export async function clearStore(store: StoreName): Promise<void> {
   });
 }
 
-
 // ============================================================
 // 💾 Inserir vários itens (com limpeza automática se online)
 // ============================================================
@@ -90,7 +87,7 @@ export async function putManyInStore(
     const tx = db.transaction(store, "readwrite");
     const os = tx.objectStore(store);
 
-    // ⚠️ Nunca limpar "visits", senão visitas offline somem!
+    // ⚠️ Nunca limpar "visits", "pending_visits" e "pending_photos"
     if (
       navigator.onLine &&
       store !== "visits" &&
@@ -100,7 +97,6 @@ export async function putManyInStore(
       os.clear();
     }
 
-
     items.forEach((item) => os.put(item));
 
     tx.oncomplete = () => resolve();
@@ -108,11 +104,13 @@ export async function putManyInStore(
   });
 }
 
-
 // ============================================================
 // ➕ Append (sem limpar, usado p/ visitas offline)
 // ============================================================
-export async function appendToStore(store: StoreName, item: any): Promise<void> {
+export async function appendToStore(
+  store: StoreName,
+  item: any
+): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
@@ -122,49 +120,71 @@ export async function appendToStore(store: StoreName, item: any): Promise<void> 
   });
 }
 
-
 // ============================================================
 // 📦 Buscar todos os itens
 // ============================================================
-export async function getAllFromStore<T = any>(store: StoreName): Promise<T[]> {
+export async function getAllFromStore<T = any>(
+  store: StoreName
+): Promise<T[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const req = db.transaction(store, "readonly").objectStore(store).getAll();
+    const req = db
+      .transaction(store, "readonly")
+      .objectStore(store)
+      .getAll();
     req.onsuccess = () => resolve(req.result as T[]);
     req.onerror = () => reject(req.error);
   });
 }
-
 
 // ============================================================
 // 🔄 PENDENTES — VISITAS
 // ============================================================
 export interface PendingVisit {
   id?: number;
-  data: any;
+  data: any;        // { ...payload, idOffline?, __update?, visit_id? }
   createdAt: number;
 }
 
-export async function addPendingVisit(data: any): Promise<void> {
+/**
+ * Adicionar pendência de visita
+ */
+export async function addPendingVisit(entry: {
+  data: any;
+  createdAt: number;
+}): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const os = db.transaction("pending_visits", "readwrite").objectStore("pending_visits");
-    os.add({ data, createdAt: Date.now() });
+    const os = db
+      .transaction("pending_visits", "readwrite")
+      .objectStore("pending_visits");
+
+    os.add(entry);
+
     os.transaction.oncomplete = () => resolve();
     os.transaction.onerror = () => reject(os.transaction.error);
   });
 }
 
-
+/**
+ * Buscar todas pendências de visitas
+ */
 export async function getAllPendingVisits(): Promise<PendingVisit[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const req = db.transaction("pending_visits", "readonly").objectStore("pending_visits").getAll();
+    const req = db
+      .transaction("pending_visits", "readonly")
+      .objectStore("pending_visits")
+      .getAll();
+
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
 
+/**
+ * Deletar pendência de visita
+ */
 export async function deletePendingVisit(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -175,20 +195,24 @@ export async function deletePendingVisit(id: number): Promise<void> {
   });
 }
 
-
 // ============================================================
 // 📸 PENDENTES — FOTOS OFFLINE
 // ============================================================
 export interface PendingPhoto {
   id?: number;
-  visit_id: number;
+  visit_id: number; // pode ser offlineId ou id real
   fileName: string;
   mime: string;
   dataUrl: string;
   synced: boolean;
 }
 
-export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
+/**
+ * Salvar foto offline
+ */
+export async function savePendingPhoto(
+  photo: PendingPhoto
+): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction("pending_photos", "readwrite");
@@ -198,15 +222,25 @@ export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   });
 }
 
+/**
+ * Buscar todas fotos pendentes
+ */
 export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const req = db.transaction("pending_photos", "readonly").objectStore("pending_photos").getAll();
+    const req = db
+      .transaction("pending_photos", "readonly")
+      .objectStore("pending_photos")
+      .getAll();
+
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
 
+/**
+ * Deletar foto pendente
+ */
 export async function deletePendingPhoto(id: number): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -216,7 +250,6 @@ export async function deletePendingPhoto(id: number): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
 }
-
 
 // ============================================================
 // 🧪 Converter Base64 → Blob (para upload)
@@ -237,7 +270,13 @@ export function dataURLtoBlob(dataUrl: string): Blob {
   return new Blob([buffer], { type: mime });
 }
 
-export async function updatePendingPhotosVisitId(oldId: number, newId: number) {
+// ============================================================
+// 🔄 Atualizar visit_id de fotos quando sync gerar ID real
+// ============================================================
+export async function updatePendingPhotosVisitId(
+  oldId: number,
+  newId: number
+) {
   const photos = await getAllPendingPhotos();
   const db = await openDB();
 

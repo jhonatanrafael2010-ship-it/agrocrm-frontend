@@ -15,7 +15,6 @@ import {
   updatePendingPhotosVisitId, // 🔥 IMPORTANTE!
 } from "./indexedDB";
 
-
 /**
  * Normaliza a URL base da API.
  */
@@ -26,7 +25,6 @@ function normalizeBaseUrl(base: string): string {
   }
   return base.replace(/\/+$/, "");
 }
-
 
 /**
  * Fetch com suporte offline/cache
@@ -48,11 +46,13 @@ export async function fetchWithCache<T = any>(
   }
 }
 
-
 /**
  * Criar visita com suporte offline
  */
-export async function createVisitWithSync(apiBase: string, payload: any): Promise<any> {
+export async function createVisitWithSync(
+  apiBase: string,
+  payload: any
+): Promise<any> {
   const base = normalizeBaseUrl(apiBase);
 
   try {
@@ -67,20 +67,30 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
 
     const json = await res.json();
 
-    return {
+    const visitOnline = {
       ...json,
       synced: true,
       offline: false,
     };
 
-  } catch {
+    // opcional: garantir que a store "visits" receba o dado on-line também
+    await appendToStore("visits", visitOnline);
+    window.dispatchEvent(new Event("visits-updated"));
+
+    return visitOnline;
+  } catch (err) {
+    console.warn("📴 Criando visita OFFLINE:", err);
+
     // 🔴 OFFLINE
     const offlineId = Date.now() + Math.floor(Math.random() * 1000);
 
-    // salva pendente
+    // Salva pendente seguindo o formato do IndexedDB:
+    // { id?: number, data: any, createdAt: number }
     await addPendingVisit({
-      ...payload,
-      idOffline: offlineId,
+      data: {
+        ...payload,
+        idOffline: offlineId,
+      },
       createdAt: Date.now(),
     });
 
@@ -89,10 +99,12 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
       id: offlineId,
       offline: true,
       synced: false,
-      client_name: payload.client_name || payload.clientSearch || "Cliente offline",
+      client_name:
+        payload.client_name || payload.clientSearch || "Cliente offline",
       consultant_name: payload.consultant_name || "—",
     };
 
+    // Mantém a visita offline visível no calendário / lista
     await appendToStore("visits", offlineVisit);
 
     window.dispatchEvent(new Event("visits-updated"));
@@ -100,7 +112,6 @@ export async function createVisitWithSync(apiBase: string, payload: any): Promis
     return offlineVisit;
   }
 }
-
 
 /**
  * Sincronizar fotos offline
@@ -123,16 +134,14 @@ export async function syncPendingPhotos(API_BASE: string) {
       if (res.ok && p.id != null) {
         await deletePendingPhoto(p.id);
       }
-
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar foto:", err);
     }
   }
 }
 
-
 /**
- * Sincronizar visitas pendentes
+ * Sincronizar visitas pendentes (criação + atualização)
  */
 export async function syncPendingVisits(apiBase: string): Promise<void> {
   const base = normalizeBaseUrl(apiBase);
@@ -146,49 +155,121 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
   for (const p of pendings) {
     try {
-      const res = await fetch(`${base}/visits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(p.data),
-      });
-
-      if (!res.ok) continue;
-
-      const json = await res.json();
-
-      // 🔥 1. Atualizar fotos que estavam com idOffline
-      if (p.data.idOffline) {
-        await updatePendingPhotosVisitId(p.data.idOffline, json.id);
+      const payload = p.data;
+      if (!payload) {
+        // dado pendente corrompido, remove
+        if (p.id != null) {
+          await deletePendingVisit(p.id);
+        }
+        continue;
       }
 
-      // 🔥 2. Registrar visita sincronizada no store principal
-      await appendToStore("visits", json);
+      const isUpdate = payload.__update === true;
 
-      // 🔥 3. Remover pendente (somente se tiver ID)
-      if (p.id != null) {
-        await deletePendingVisit(p.id);
+      if (isUpdate) {
+        // =====================================================
+        // 🟡 ATUALIZAÇÃO OFFLINE → PUT /visits/:id
+        // =====================================================
+        const visitId = payload.visit_id;
+        if (!visitId) {
+          console.warn(
+            "⚠️ Pendência de update sem visit_id, ignorando:",
+            payload
+          );
+          if (p.id != null) {
+            await deletePendingVisit(p.id);
+          }
+          continue;
+        }
+
+        // Clona e remove meta-campos antes de enviar
+        const bodyToSend = { ...payload };
+        delete bodyToSend.__update;
+        delete bodyToSend.visit_id;
+
+        const res = await fetch(`${base}/visits/${visitId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyToSend),
+        });
+
+        if (!res.ok) {
+          console.warn("⚠️ Falha ao sincronizar update de visita:", res.status);
+          continue;
+        }
+
+        const json = await res.json();
+
+        // Atualiza em "visits"
+        await appendToStore("visits", {
+          ...json,
+          synced: true,
+          offline: false,
+        });
+
+        // Remove pendência
+        if (p.id != null) {
+          await deletePendingVisit(p.id);
+        }
+
+        syncedCount++;
+      } else {
+        // =====================================================
+        // 🟢 CRIAÇÃO OFFLINE → POST /visits
+        // =====================================================
+        const bodyToSend = { ...payload };
+        const offlineId = bodyToSend.idOffline;
+        if (offlineId) {
+          delete bodyToSend.idOffline;
+        }
+
+        const res = await fetch(`${base}/visits`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyToSend),
+        });
+
+        if (!res.ok) {
+          console.warn("⚠️ Falha ao sincronizar criação de visita:", res.status);
+          continue;
+        }
+
+        const json = await res.json();
+
+        // 🔥 1. Atualizar fotos que estavam com idOffline
+        if (offlineId) {
+          await updatePendingPhotosVisitId(offlineId, json.id);
+        }
+
+        // 🔥 2. Registrar visita sincronizada no store principal
+        await appendToStore("visits", {
+          ...json,
+          synced: true,
+          offline: false,
+        });
+
+        // 🔥 3. Remover pendente (somente se tiver ID)
+        if (p.id != null) {
+          await deletePendingVisit(p.id);
+        }
+
+        syncedCount++;
       }
-
-      syncedCount++;
-
-
     } catch (err) {
       console.warn("⚠️ Erro ao sincronizar visita:", err);
     }
   }
 
   if (syncedCount > 0) {
-
-    // 🔥 Agora sim, sincroniza fotos
+    // 🔥 Agora sim, sincroniza fotos (já com visit_id real atualizado)
     await syncPendingPhotos(apiBase);
 
-    // atualizar visitas na UI
+    // Atualizar visitas na UI (sem apagar visitas offline ainda não sincronizadas)
     await fetchWithCache(`${base}/visits`, "visits");
 
     window.dispatchEvent(new Event("visits-synced"));
   }
 }
-
 
 /**
  * Pré-carregar dados offline
@@ -211,11 +292,14 @@ export async function preloadOfflineData(apiBase: string): Promise<void> {
   }
 }
 
-
 /**
  * Atualizar visita com suporte offline
  */
-export async function updateVisitWithSync(apiBase: string, visitId: number, payload: any) {
+export async function updateVisitWithSync(
+  apiBase: string,
+  visitId: number,
+  payload: any
+) {
   const base = normalizeBaseUrl(apiBase);
 
   try {
@@ -228,13 +312,17 @@ export async function updateVisitWithSync(apiBase: string, visitId: number, payl
     if (!res.ok) throw new Error("Erro HTTP " + res.status);
 
     const json = await res.json();
-    return { ...json, synced: true };
+    return { ...json, synced: true, offline: false };
+  } catch (err) {
+    console.warn("📴 Salvando atualização de visita OFFLINE:", err);
 
-  } catch {
+    // Salva como pendência de UPDATE
     await addPendingVisit({
-      ...payload,
-      __update: true,
-      visit_id: visitId,
+      data: {
+        ...payload,
+        __update: true,
+        visit_id: visitId,
+      },
       createdAt: Date.now(),
     });
 
