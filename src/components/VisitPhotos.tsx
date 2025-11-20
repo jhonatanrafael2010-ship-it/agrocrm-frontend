@@ -81,17 +81,16 @@ const VisitPhotos: React.FC<Props> = ({
   function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
     console.log("🔥 handleSelectFiles DISPAROU!");
     console.log("visitId:", visitId);
-    console.log("🔥 Arquivos selecionados:", files);
-    console.log("🔥 visitId recebido:", visitId);
-    console.log("🔥 captions inicial:", captions);
 
+    const files = e.target.files;
+    console.log("🔥 Arquivos selecionados:", files);
+    console.log("🔥 captions inicial:", captions);
 
     if (!visitId || Number(visitId) < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
       return;
     }
 
-    const files = e.target.files;
     if (!files) return;
 
     const arr = Array.from(files);
@@ -104,6 +103,7 @@ const VisitPhotos: React.FC<Props> = ({
       onFilesSelected(arr, arr.map(() => ""));
     }
   }
+
 
   // Quando legendas mudarem → notifica o Calendar
   useEffect(() => {
