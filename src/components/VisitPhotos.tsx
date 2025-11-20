@@ -76,6 +76,7 @@ const VisitPhotos: React.FC<Props> = ({
     return `${base}${p.url}`;
   }
 
+
   // Quando selecionar arquivos
   function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
     if (!visitId) {

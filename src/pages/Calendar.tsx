@@ -55,8 +55,8 @@ type Visit = {
   client_name?: string;
   consultant_name?: string;
   offline?: boolean;
-  offlinePhotos?: any[];
 };
+
 
 
 const CalendarPage: React.FC = () => {
@@ -162,6 +162,21 @@ const CalendarPage: React.FC = () => {
         "visits"
       );
 
+      // 🔄 Carregar fotos offline ligadas a cada visita
+      const pending = await getAllPendingPhotos();
+
+      const offlinePhotosMap = pending.reduce((acc, p) => {
+        if (!acc[p.visit_id]) acc[p.visit_id] = [];
+        acc[p.visit_id].push({
+          id: p.id,
+          dataUrl: p.dataUrl,
+          caption: p.caption || "",
+          pending: true,
+        });
+        return acc;
+      }, {} as Record<number, any[]>);
+
+
       // 🔥 Normalizar — visitas online nunca são offline
       const cleanOnline = onlineVisits.map((v) => ({
         ...v,
@@ -229,7 +244,7 @@ const CalendarPage: React.FC = () => {
               raw: {
                 ...v,
                 offline: isOffline,
-                offlinePhotos: v.offlinePhotos || [], // 🔥 alinhado com VisitPhotos
+                offlinePhotos: offlinePhotosMap[v.id] ?? [],
               },
               tooltip,
             },
@@ -622,6 +637,39 @@ const handleCreateOrUpdate = async () => {
     }, [form.id]);
 
 
+    // ============================================================
+    // 🔄 FINALIZADOR GLOBAL DE SINCRONIZAÇÃO (REVISADO)
+    // ============================================================
+    useEffect(() => {
+      async function finalizeSync() {
+        if (!navigator.onLine) return;
+
+        try {
+          await loadVisits();
+
+          setLastSync(
+            new Date().toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          );
+
+          console.log("✅ Sync finalizada e calendário atualizado.");
+        } catch (err) {
+          console.warn("⚠️ Erro ao finalizar sync:", err);
+        }
+      }
+
+      window.addEventListener("visits-synced", finalizeSync);
+      window.addEventListener("visits-updated", finalizeSync);
+
+      return () => {
+        window.removeEventListener("visits-synced", finalizeSync);
+        window.removeEventListener("visits-updated", finalizeSync);
+      };
+    }, []);
+
+
 
   // ============================================================
   // 🖼️ Lightbox
@@ -858,8 +906,8 @@ const handleCreateOrUpdate = async () => {
               recommendation: v.recommendation || "",
               genPheno: false,
               savedPhotos: [
-                ...(v.photos || []),              // fotos do servidor
-                ...(v.offlinePhotos || []),       // fotos offline carregadas do IndexedDB
+                ...(v.photos || []),
+                ...((v as any).offlinePhotos || []),
               ],
               clientSearch: clientName,
               latitude: v.latitude || null,

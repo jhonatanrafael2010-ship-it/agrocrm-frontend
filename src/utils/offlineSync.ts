@@ -48,10 +48,7 @@ export async function fetchWithCache<T = any>(
 /**
  * Criar visita com suporte offline
  */
-export async function createVisitWithSync(
-  apiBase: string,
-  payload: any
-): Promise<any> {
+export async function createVisitWithSync(apiBase: string, payload: any) {
   const base = normalizeBaseUrl(apiBase);
 
   try {
@@ -65,19 +62,19 @@ export async function createVisitWithSync(
 
     const json = await res.json();
 
+    const realVisit = json.visit || json;   // ← pega sempre o objeto real
+    const realId = Number(realVisit.id);
+
     window.dispatchEvent(new Event("visits-updated"));
 
-    return { ...json, synced: true, offline: false };
-  } catch (err) {
-    console.warn("📴 Criando visita OFFLINE:", err);
+    return { ...realVisit, id: realId, synced: true, offline: false };
 
+  } catch {
+    // 🔥 modo offline
     const offlineId = Date.now() + Math.floor(Math.random() * 9999);
 
     await addPendingVisit({
-      data: {
-        ...payload,
-        idOffline: offlineId,
-      },
+      data: { ...payload, idOffline: offlineId },
       createdAt: Date.now(),
     });
 
@@ -86,8 +83,7 @@ export async function createVisitWithSync(
       id: offlineId,
       offline: true,
       synced: false,
-      client_name:
-        payload.client_name || payload.clientSearch || "Cliente offline",
+      client_name: payload.client_name || payload.clientSearch || "Cliente offline",
       consultant_name: payload.consultant_name || "—",
     };
 
@@ -98,6 +94,7 @@ export async function createVisitWithSync(
     return offlineVisit;
   }
 }
+
 
 /**
  * Sincronizar fotos offline
@@ -194,12 +191,16 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
 
       if (!res.ok) continue;
 
-      const json = await res.json();
+      const resp = await res.json();
+      const serverVisit = resp.visit || resp;
+      const realId = Number(serverVisit.id);
 
-      if (offlineId && json.id) {
-        await updatePendingPhotosVisitId(offlineId, json.id);
-        await deleteFromStore("visits", offlineId);
+      // 🔥 atualizar fotos offline com o ID certo
+      if (offlineId && realId) {
+          await updatePendingPhotosVisitId(offlineId, realId);
+          await deleteFromStore("visits", offlineId);
       }
+
 
       if (p.id != null) await deletePendingVisit(p.id);
 
