@@ -485,6 +485,7 @@ const handleCreateOrUpdate = async () => {
           console.log("📸 Fotos enviadas com sucesso!");
         }
       }
+    }
 
 
     // RESET
