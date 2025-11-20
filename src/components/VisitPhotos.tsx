@@ -79,7 +79,14 @@ const VisitPhotos: React.FC<Props> = ({
 
   // Quando selecionar arquivos
   function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!visitId) {
+    console.log("🔥 handleSelectFiles DISPAROU!");
+    console.log("visitId:", visitId);
+    console.log("🔥 Arquivos selecionados:", files);
+    console.log("🔥 visitId recebido:", visitId);
+    console.log("🔥 captions inicial:", captions);
+
+
+    if (!visitId || Number(visitId) < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
       return;
     }
