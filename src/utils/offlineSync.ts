@@ -87,18 +87,14 @@ export async function createVisitWithSync(apiBase: string, payload: any) {
       consultant_name: payload.consultant_name || "—",
     };
 
-    await appendToStore("visits", {
-      ...realVisit,
-      id: realId,
-      synced: true,
-      offline: false,
-    });
-
+    // salva a visita offline localmente
+    await appendToStore("visits", offlineVisit);
 
     window.dispatchEvent(new Event("visits-updated"));
 
     return offlineVisit;
   }
+
 }
 
 
