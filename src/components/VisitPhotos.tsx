@@ -116,7 +116,7 @@ const VisitPhotos: React.FC<Props> = ({
         multiple
         accept="image/*"
         className="form-control"
-        disabled={!visitId}
+        disabled={false}
         onChange={handleSelectFiles}
       />
 
