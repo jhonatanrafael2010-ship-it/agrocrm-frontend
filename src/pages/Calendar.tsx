@@ -466,13 +466,15 @@ const handleCreateOrUpdate = async () => {
 
         const fd = new FormData();
 
-        selectedFiles.forEach((file) => {
+        selectedFiles.forEach((file, i) => {
           fd.append("photos", file, file.name);
+          fd.append("captions", selectedCaptions[i] || "");
         });
 
-        selectedCaptions.forEach((c) => fd.append("captions", c || ""));
+        const url = `${API_BASE}/visits/${visitId}/photos`;
+        console.log("📤 Enviando para:", url);
 
-        const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+        const resp = await fetch(url, {
           method: "POST",
           body: fd,
         });
@@ -483,7 +485,7 @@ const handleCreateOrUpdate = async () => {
           console.log("📸 Fotos enviadas com sucesso!");
         }
       }
-    }
+
 
     // RESET
     setSelectedFiles([]);
@@ -1317,19 +1319,16 @@ const handleCreateOrUpdate = async () => {
                       setSelectedFiles(files);
                       setSelectedCaptions(captions);
 
-                      // 🔥 Salvar previews temporárias dentro do form
+                      // Previews temporários apenas para exibição antes do envio real
                       const previews = files.map((f) => URL.createObjectURL(f));
 
                       setForm((f) => ({
                         ...f,
-                        savedPhotos: [
-                          ...f.savedPhotos,
-                          ...previews.map((url, i) => ({
-                            id: Date.now() + i,
-                            url,
-                            caption: captions[i]
-                          }))
-                        ]
+                        savedPhotos: previews.map((url, i) => ({
+                          id: Date.now() + i,
+                          url,
+                          caption: captions[i] || ""
+                        }))
                       }));
                     }}
                   />
