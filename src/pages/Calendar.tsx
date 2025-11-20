@@ -1311,11 +1311,26 @@ const handleCreateOrUpdate = async () => {
                     visitId={Number(form.id)}
                     existingPhotos={[
                       ...(form.savedPhotos || []),
-                      ...pendingPhotos, // ← agora vem do estado, sem await no JSX
+                      ...pendingPhotos,
                     ]}
                     onFilesSelected={(files, captions) => {
                       setSelectedFiles(files);
                       setSelectedCaptions(captions);
+
+                      // 🔥 Salvar previews temporárias dentro do form
+                      const previews = files.map((f) => URL.createObjectURL(f));
+
+                      setForm((f) => ({
+                        ...f,
+                        savedPhotos: [
+                          ...f.savedPhotos,
+                          ...previews.map((url, i) => ({
+                            id: Date.now() + i,
+                            url,
+                            caption: captions[i]
+                          }))
+                        ]
+                      }));
                     }}
                   />
                 </div>

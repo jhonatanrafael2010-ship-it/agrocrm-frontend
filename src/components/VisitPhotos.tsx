@@ -97,6 +97,7 @@ const VisitPhotos: React.FC<Props> = ({
 
     setNewFiles(arr);
     setNewPreviews(arr.map((f) => URL.createObjectURL(f)));
+    console.log("🔥 Previews gerados:", arr.map((f) => URL.createObjectURL(f)));
     setCaptions(arr.map(() => "")); // cria legendas vazias
 
     if (onFilesSelected) {
