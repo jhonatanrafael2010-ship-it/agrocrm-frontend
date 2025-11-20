@@ -87,7 +87,13 @@ export async function createVisitWithSync(apiBase: string, payload: any) {
       consultant_name: payload.consultant_name || "—",
     };
 
-    await appendToStore("visits", offlineVisit);
+    await appendToStore("visits", {
+      ...realVisit,
+      id: realId,
+      synced: true,
+      offline: false,
+    });
+
 
     window.dispatchEvent(new Event("visits-updated"));
 
@@ -195,15 +201,19 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
       const serverVisit = resp.visit || resp;
       const realId = Number(serverVisit.id);
 
-      // 🔥 atualizar fotos offline com o ID certo
+      // 🔥 atualizar fotos offline com o ID certo + substituir visita no IndexedDB
       if (offlineId && realId) {
           await updatePendingPhotosVisitId(offlineId, realId);
           await deleteFromStore("visits", offlineId);
+          await appendToStore("visits", {
+              ...serverVisit,
+              id: realId,
+              synced: true,
+              offline: false,
+          });
       }
 
-
       if (p.id != null) await deletePendingVisit(p.id);
-
       syncedCount++;
     } catch (err) {
       console.warn("⚠ Sync erro:", err);

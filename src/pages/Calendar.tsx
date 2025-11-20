@@ -1325,11 +1325,14 @@ const handleCreateOrUpdate = async () => {
 
                       setForm((f) => ({
                         ...f,
-                        savedPhotos: previews.map((url, i) => ({
-                          id: Date.now() + i,
-                          url,
-                          caption: captions[i] || ""
-                        }))
+                        savedPhotos: [
+                          ...(f.savedPhotos || []),
+                          ...previews.map((url, i) => ({
+                            id: Date.now() + i,
+                            url,
+                            caption: captions[i] || ""
+                          }))
+                        ]
                       }));
                     }}
                   />

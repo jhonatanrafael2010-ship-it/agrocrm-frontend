@@ -205,22 +205,6 @@ export async function deletePendingVisit(id: number): Promise<void> {
 }
 
 
-
-
-// 🔥 Helper: normalizar estrutura das fotos offline
-function normalizePendingPhoto(p: any) {
-  return {
-    id: p.id,
-    visit_id: p.visit_id,
-    dataUrl: p.dataUrl,
-    fileName: p.fileName,
-    mime: p.mime,
-    caption: p.caption || "",
-    pending: true,
-    synced: false,
-  };
-}
-
 // ============================================================
 // 📸 PENDENTES — FOTOS
 // ============================================================
@@ -237,17 +221,19 @@ export interface PendingPhoto {
 export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   const db = await openDB();
 
+  // 🔥 gera nome único mesmo offline
+  const uniqueName = `${crypto.randomUUID()}_${photo.fileName}`;
+
   return new Promise((resolve, reject) => {
     try {
       const tx = db.transaction("pending_photos", "readwrite");
       const store = tx.objectStore("pending_photos");
 
-      // 🔥 garante que cada foto tenha ID
-      if (!photo.id) {
-        photo.id = Date.now() + Math.floor(Math.random() * 9999);
-      }
+      store.put({
+        ...photo,
+        fileName: uniqueName,   // ← AQUI FAZ O NOME ÚNICO
+      });
 
-      store.put(photo);
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     } catch (err) {
@@ -256,6 +242,7 @@ export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
     }
   });
 }
+
 
 export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
   const db = await openDB();
@@ -266,7 +253,7 @@ export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
       .getAll();
 
     req.onsuccess = () =>
-      resolve(req.result.map((p) => normalizePendingPhoto(p)));
+      resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 }
