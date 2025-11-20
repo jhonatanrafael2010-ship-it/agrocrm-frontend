@@ -150,23 +150,29 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      // 1) visitas online
+      // 1) Buscar visitas online
       const onlineVisits: Visit[] = await fetchWithCache(
         `${API_BASE}visits?scope=all`,
         "visits"
       );
 
-      // 2) visitas locais
+      // 🔥 Normalizar — visitas online nunca são offline
+      const cleanOnline = onlineVisits.map((v) => ({
+        ...v,
+        offline: false,
+        offlinePhotos: [], // estrutura garantida
+      }));
+
+      // 2) Buscar visitas locais do IndexedDB
       const localVisits = await getAllFromStore<Visit>("visits");
 
-      // 3) manter apenas visitas realmente offline
+      // 3) Offline = só as que não existem no servidor
       const offlineVisits = localVisits.filter(
-        (v) => v.offline === true && !onlineVisits.some((s) => s.id === v.id)
+        (v) => v.offline === true && !cleanOnline.some((o) => o.id === v.id)
       );
 
-      // 4) unir
-      const allVisits = [...onlineVisits, ...offlineVisits];
-
+      // 4) Unir final
+      const allVisits = [...cleanOnline, ...offlineVisits];
 
       const cs = clients || [];
       const cons = consultants || [];
@@ -189,8 +195,7 @@ const CalendarPage: React.FC = () => {
 
           let stage = "";
           if (v.recommendation) {
-            stage =
-              v.recommendation.split("—").pop()?.trim() || v.recommendation;
+            stage = v.recommendation.split("—").pop()?.trim() || v.recommendation;
             stage = stage.replace(/\s*\(.*?\)\s*/g, "").trim();
           }
 
@@ -201,7 +206,6 @@ const CalendarPage: React.FC = () => {
   👨‍🌾 ${consultant || "-"}
           `.trim();
 
-          // 🔥 AQUI está a magia que faltava:
           const isOffline = v.offline === true;
 
           return {
@@ -209,20 +213,16 @@ const CalendarPage: React.FC = () => {
             title: clientName,
             start: v.date,
 
-            // 🔥 COR AMARELA para OFFLINE
-            backgroundColor: isOffline
-              ? "#ffcc00"
-              : colorFor(v.date, v.status),
-
-            borderColor: isOffline
-              ? "#ffaa00"
-              : colorFor(v.date, v.status),
+            // amarelo = offline
+            backgroundColor: isOffline ? "#ffcc00" : colorFor(v.date, v.status),
+            borderColor: isOffline ? "#ffaa00" : colorFor(v.date, v.status),
 
             extendedProps: {
               type: "visit",
               raw: {
                 ...v,
-                offline: isOffline,     // 🔥 ESSENCIAL
+                offline: isOffline,
+                offlinePhotos: v.offlinePhotos || [], // 🔥 alinhado com VisitPhotos
               },
               tooltip,
             },
@@ -238,6 +238,7 @@ const CalendarPage: React.FC = () => {
       console.error("❌ Erro ao carregar visitas:", err);
     }
   };
+
 
 
   // ============================================================
@@ -320,8 +321,12 @@ const CalendarPage: React.FC = () => {
   // 📸 Salvar foto offline (IndexedDB)
   // ============================================================
   function savePhotoOffline(visitId: number, file: File, caption: string) {
-    const reader = new FileReader();
+    if (!visitId || isNaN(visitId)) {
+      console.error("❌ ERRO: visitId inválido ao salvar foto offline:", visitId);
+      return;
+    }
 
+    const reader = new FileReader();
     reader.onload = async () => {
       await savePendingPhoto({
         visit_id: visitId,
@@ -331,6 +336,7 @@ const CalendarPage: React.FC = () => {
         caption: caption || "",
         synced: false,
       });
+      console.log("🟠 Foto salva offline:", file.name);
     };
 
     reader.readAsDataURL(file);
@@ -338,138 +344,154 @@ const CalendarPage: React.FC = () => {
 
 
 
-  // ============================================================
-  // 💾 Criar/atualizar visita
-  // ============================================================
-  const handleCreateOrUpdate = async () => {
-    if (!form.date || !form.client_id) {
-      alert("Data e cliente são obrigatórios");
+// ============================================================
+// 💾 Criar/atualizar visita (VERSÃO REVISADA)
+// ============================================================
+const handleCreateOrUpdate = async () => {
+  if (!form.date || !form.client_id) {
+    alert("Data e cliente são obrigatórios");
+    return;
+  }
+
+  const [d, m, y] = form.date.split("/");
+  const iso = `${y}-${m}-${d}`;
+
+  let cultureName = "";
+  if (form.culture) {
+    const byId = cultures.find((c) => String(c.id) === String(form.culture));
+    cultureName = byId ? byId.name : form.culture;
+  }
+
+  const normalize = (s: string | undefined | null) =>
+    (s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const normalizedCulture = normalize(cultureName);
+  const isPhenoCulture =
+    normalizedCulture.startsWith("milho") ||
+    normalizedCulture.startsWith("soja") ||
+    normalizedCulture.startsWith("algodao");
+
+  const payload: any = {
+    client_id: Number(form.client_id),
+    property_id: form.property_id ? Number(form.property_id) : null,
+    plot_id: form.plot_id ? Number(form.plot_id) : null,
+    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+    date: iso,
+    status: "planned",
+    culture: cultureName || "",
+    variety: form.variety || "",
+    recommendation: "Plantio",
+    latitude: form.latitude,
+    longitude: form.longitude,
+    generate_schedule: isPhenoCulture,
+    genPheno: isPhenoCulture,
+  };
+
+  console.log("📦 Payload enviado:", payload);
+
+  try {
+    let result;
+
+    // 🔵 EDITAR
+    if (form.id) {
+      console.log("🟦 Atualizando visita existente:", form.id);
+      result = await updateVisitWithSync(API_BASE, Number(form.id), payload);
+    }
+
+    // 🟢 CRIAR
+    else {
+      console.log("🟩 Criando visita nova...");
+      result = await createVisitWithSync(API_BASE, payload);
+    }
+
+    // 🔥 AGORA pegamos o ID corretamente
+    const visitId = Number(result.id);
+
+    if (!visitId || isNaN(visitId)) {
+      console.error("❌ ERRO: ID inválido retornado:", result);
+      alert("Erro ao obter ID da visita. Tente novamente.");
       return;
     }
 
-    const [d, m, y] = form.date.split("/");
-    const iso = `${y}-${m}-${d}`;
+    console.log("🔵 ID da visita (real ou offline):", visitId);
 
-    let cultureName = "";
-    if (form.culture) {
-      const byId = cultures.find((c) => String(c.id) === String(form.culture));
-      cultureName = byId ? byId.name : form.culture;
-    }
+    setForm((f) => ({ ...f, id: visitId }));
 
-    const normalize = (s: string | undefined | null) =>
-      (s || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
+    // ============================================================
+    // 📸 FOTOS (ONLINE ou OFFLINE)
+    // ============================================================
+    if (selectedFiles.length > 0) {
+      // OFFLINE
+      if (!navigator.onLine) {
+        console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
 
-    const normalizedCulture = normalize(cultureName);
-    const isPhenoCulture =
-      normalizedCulture.startsWith("milho") ||
-      normalizedCulture.startsWith("soja") ||
-      normalizedCulture.startsWith("algodao");
-
-    const payload: any = {
-      client_id: Number(form.client_id),
-      property_id: form.property_id ? Number(form.property_id) : null,
-      plot_id: form.plot_id ? Number(form.plot_id) : null,
-      consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
-      date: iso,
-      status: "planned",
-      culture: cultureName || "",
-      variety: form.variety || "",
-      recommendation: "Plantio",
-      latitude: form.latitude,
-      longitude: form.longitude,
-      generate_schedule: isPhenoCulture,
-      genPheno: isPhenoCulture,
-    };
-
-    console.log("📦 Payload enviado:", payload);
-
-    try {
-      const result = await createVisitWithSync(API_BASE, payload);
-      const visitId = Number(result.id);
-
-      console.log("🔵 ID gerado para visita (online ou offline):", visitId);
-
-      setForm((f) => ({ ...f, id: visitId }));
-
-      if (!visitId) {
-        console.error("❌ ERRO: visita offline criada sem ID!");
-      }
-
-      // ============================================================
-      // 📸 FOTOS — novo fluxo consolidado
-      // ============================================================
-
-      if (selectedFiles.length > 0) {
-        if (!navigator.onLine) {
-          console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
-
-          for (let i = 0; i < selectedFiles.length; i++) {
-            await savePhotoOffline(
-              visitId,
-              selectedFiles[i],
-              selectedCaptions[i] || ""
-            );
-          }
-
-          console.log("🟠 Fotos salvas offline!");
-        } else {
-          console.log("📸 Enviando fotos ONLINE...");
-
-          const fd = new FormData();
-          selectedFiles.forEach((file, i) => {
-            fd.append("photos", file);
-            fd.append("captions", selectedCaptions[i] || "");
-          });
-
-          const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
-            method: "POST",
-            body: fd,
-          });
-
-          if (!resp.ok) {
-            console.warn("⚠️ Falha ao enviar fotos:", resp.status);
-          } else {
-            console.log("📸 Fotos enviadas com sucesso!");
-          }
+        for (let i = 0; i < selectedFiles.length; i++) {
+          await savePhotoOffline(
+            visitId,
+            selectedFiles[i],
+            selectedCaptions[i] || ""
+          );
         }
       }
 
+      // ONLINE
+      else {
+        console.log("📸 Enviando fotos ONLINE...");
 
-      // RESETAR ARQUIVOS
-      setSelectedFiles([]);
-      setSelectedCaptions([]);
+        const fd = new FormData();
 
-      await loadVisits();
-
-      if (navigator.onLine) {
-        setOpen(false);
-
-        setForm({
-          id: null,
-          date: "",
-          client_id: "",
-          property_id: "",
-          plot_id: "",
-          consultant_id: "",
-          culture: "",
-          variety: "",
-          recommendation: "",
-          genPheno: true,
-          savedPhotos: [],
-          clientSearch: "",
-          latitude: null,
-          longitude: null,
+        selectedFiles.forEach((file, i) => {
+          fd.append("photos", file, file.name);
         });
+
+        selectedCaptions.forEach((c) => fd.append("captions", c || ""));
+
+        const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+          method: "POST",
+          body: fd,
+        });
+
+        if (!resp.ok) {
+          console.warn("⚠️ Falha ao enviar fotos:", resp.status);
+        } else {
+          console.log("📸 Fotos enviadas com sucesso!");
+        }
       }
-    } catch (err) {
-      console.error("❌ Erro ao salvar visita:", err);
-      alert("Erro ao salvar visita. Tente novamente.");
     }
-  };
+
+    // RESET
+    setSelectedFiles([]);
+    setSelectedCaptions([]);
+
+    if (navigator.onLine) {
+      setOpen(false);
+      setForm({
+        id: null,
+        date: "",
+        client_id: "",
+        property_id: "",
+        plot_id: "",
+        consultant_id: "",
+        culture: "",
+        variety: "",
+        recommendation: "",
+        genPheno: true,
+        savedPhotos: [],
+        clientSearch: "",
+        latitude: null,
+        longitude: null,
+      });
+    }
+  } catch (err) {
+    console.error("❌ Erro ao salvar visita:", err);
+    alert("Erro ao salvar visita. Tente novamente.");
+  }
+};
+
 
 
 
@@ -798,7 +820,10 @@ const CalendarPage: React.FC = () => {
               variety: v.variety || "",
               recommendation: v.recommendation || "",
               genPheno: false,
-              savedPhotos: v.photos || [],
+              savedPhotos: [
+                ...(v.photos || []),              // fotos do servidor
+                ...(v.offlinePhotos || []),       // fotos offline carregadas do IndexedDB
+              ],
               clientSearch: clientName,
               latitude: v.latitude || null,
               longitude: v.longitude || null,
@@ -1199,7 +1224,21 @@ const CalendarPage: React.FC = () => {
                   {/* Fotos */}
                   <VisitPhotos
                     visitId={Number(form.id)}
-                    existingPhotos={form.savedPhotos || []}
+                    existingPhotos={[
+                      ...(form.savedPhotos || []),
+                      // 🔥 GARANTE fotos offline no modal mesmo antes de sincronizar
+                      ...await getAllPendingPhotos().then(arr =>
+                        arr
+                          .filter(p => p.visit_id === Number(form.id))
+                          .map(p => ({
+                            id: p.id,
+                            dataUrl: p.dataUrl,
+                            caption: p.caption || "",
+                            pending: true,
+                            visit_id: p.visit_id
+                          }))
+                      )
+                    ]}
                     onFilesSelected={(files, captions) => {
                       setSelectedFiles(files);
                       setSelectedCaptions(captions);

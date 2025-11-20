@@ -48,6 +48,7 @@ const VisitPhotos: React.FC<Props> = ({
       return all
         .filter((p) => p.visit_id === visitId)
         .map((p) => ({
+          id: p.id,           // 🔥 manter ID se existir
           pending: true,
           dataUrl: p.dataUrl,
           caption: p.caption || "", // 🔥 importante
