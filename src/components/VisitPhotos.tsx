@@ -39,21 +39,22 @@ const VisitPhotos: React.FC<Props> = ({
   const [captions, setCaptions] = useState<string[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
-  // Carregar fotos offline
-  async function loadOffline() {
-    if (!visitId) return [];
+    // Carregar fotos offline
+    async function loadOffline() {
+      if (!visitId) return [];
 
-    const all = await getAllPendingPhotos();
+      const all = await getAllPendingPhotos();
 
-    return all
-      .filter((p) => p.visit_id === visitId)
-      .map((p) => ({
-        pending: true,
-        dataUrl: p.dataUrl,
-        caption: p.caption || "",
-        visit_id: p.visit_id
-      }));
-  }
+      return all
+        .filter((p) => p.visit_id === visitId)
+        .map((p) => ({
+          pending: true,
+          dataUrl: p.dataUrl,
+          caption: p.caption || "", // 🔥 importante
+          visit_id: p.visit_id,
+        }));
+    }
+
 
   // Merge online + offline
   useEffect(() => {
@@ -100,7 +101,8 @@ const VisitPhotos: React.FC<Props> = ({
     if (onFilesSelected && newFiles.length > 0) {
       onFilesSelected(newFiles, captions);
     }
-  }, [captions]);
+  }, [captions, newFiles]);
+
 
   return (
     <div className="col-12 mt-3">

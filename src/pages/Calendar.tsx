@@ -321,18 +321,21 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   function savePhotoOffline(visitId: number, file: File, caption: string) {
     const reader = new FileReader();
+
     reader.onload = async () => {
       await savePendingPhoto({
         visit_id: visitId,
         fileName: file.name,
         mime: file.type,
         dataUrl: reader.result as string,
-        caption,
+        caption: caption || "",
         synced: false,
       });
     };
+
     reader.readAsDataURL(file);
   }
+
 
 
   // ============================================================
@@ -397,46 +400,44 @@ const CalendarPage: React.FC = () => {
       }
 
       // ============================================================
-      // 📸 FOTOS — NOVO FLUXO
+      // 📸 FOTOS — novo fluxo consolidado
       // ============================================================
 
-      // 🟠 OFFLINE — salvar no IndexedDB
-      if (!navigator.onLine && selectedFiles.length > 0) {
-        console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
+      if (selectedFiles.length > 0) {
+        if (!navigator.onLine) {
+          console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
 
-        for (let i = 0; i < selectedFiles.length; i++) {
-          await savePhotoOffline(
-            visitId,
-            selectedFiles[i],
-            selectedCaptions[i] || ""
-          );
-        }
+          for (let i = 0; i < selectedFiles.length; i++) {
+            await savePhotoOffline(
+              visitId,
+              selectedFiles[i],
+              selectedCaptions[i] || ""
+            );
+          }
 
-        console.log("🟠 Fotos armazenadas offline com sucesso!");
-      }
-
-      // 🟢 ONLINE — enviar ao backend
-      if (navigator.onLine && selectedFiles.length > 0) {
-        const fd = new FormData();
-
-        selectedFiles.forEach((file, i) => {
-          fd.append("photos", file);
-          fd.append("captions", selectedCaptions[i] || "");
-        });
-
-        console.log("📸 Enviando fotos ONLINE...");
-
-        const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
-          method: "POST",
-          body: fd,
-        });
-
-        if (!resp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos:", resp.status);
+          console.log("🟠 Fotos salvas offline!");
         } else {
-          console.log("📸 Fotos enviadas com sucesso!");
+          console.log("📸 Enviando fotos ONLINE...");
+
+          const fd = new FormData();
+          selectedFiles.forEach((file, i) => {
+            fd.append("photos", file);
+            fd.append("captions", selectedCaptions[i] || "");
+          });
+
+          const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+            method: "POST",
+            body: fd,
+          });
+
+          if (!resp.ok) {
+            console.warn("⚠️ Falha ao enviar fotos:", resp.status);
+          } else {
+            console.log("📸 Fotos enviadas com sucesso!");
+          }
         }
       }
+
 
       // RESETAR ARQUIVOS
       setSelectedFiles([]);
