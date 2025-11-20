@@ -14,8 +14,13 @@ import {
   updateVisitWithSync,
 } from "../utils/offlineSync";
 import { API_BASE } from "../config";
-import { savePendingPhoto } from "../utils/indexedDB";
-import { getAllFromStore } from "../utils/indexedDB";
+import {
+  savePendingPhoto,
+  getAllPendingPhotos,
+  getAllFromStore,   // ← ADICIONADO
+} from "../utils/indexedDB";
+
+
 
 
 
@@ -50,6 +55,7 @@ type Visit = {
   client_name?: string;
   consultant_name?: string;
   offline?: boolean;
+  offlinePhotos?: any[];
 };
 
 
@@ -168,7 +174,8 @@ const CalendarPage: React.FC = () => {
 
       // 3) Offline = só as que não existem no servidor
       const offlineVisits = localVisits.filter(
-        (v) => v.offline === true && !cleanOnline.some((o) => o.id === v.id)
+        (v: any) =>
+          v.offline === true && !cleanOnline.some((o) => o.id === v.id)
       );
 
       // 4) Unir final
@@ -444,7 +451,7 @@ const handleCreateOrUpdate = async () => {
 
         const fd = new FormData();
 
-        selectedFiles.forEach((file, i) => {
+        selectedFiles.forEach((file) => {
           fd.append("photos", file, file.name);
         });
 
@@ -583,6 +590,36 @@ const handleCreateOrUpdate = async () => {
         alert("❌ Erro ao concluir visita.");
       }
     };
+    
+
+    // ============================================================
+    // 📌 FOTOS OFFLINE — carregar para o modal
+    // ============================================================
+    const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
+
+    useEffect(() => {
+      async function loadPending() {
+        if (!form.id) {
+          setPendingPhotos([]);
+          return;
+        }
+
+        const arr = await getAllPendingPhotos();
+        const filtered = arr
+          .filter((p: any) => p.visit_id === Number(form.id))
+          .map((p: any) => ({
+            id: p.id,
+            dataUrl: p.dataUrl,
+            caption: p.caption || "",
+            pending: true,
+            visit_id: p.visit_id,
+          }));
+
+        setPendingPhotos(filtered);
+      }
+
+      loadPending();
+    }, [form.id]);
 
 
 
@@ -1226,18 +1263,7 @@ const handleCreateOrUpdate = async () => {
                     visitId={Number(form.id)}
                     existingPhotos={[
                       ...(form.savedPhotos || []),
-                      // 🔥 GARANTE fotos offline no modal mesmo antes de sincronizar
-                      ...await getAllPendingPhotos().then(arr =>
-                        arr
-                          .filter(p => p.visit_id === Number(form.id))
-                          .map(p => ({
-                            id: p.id,
-                            dataUrl: p.dataUrl,
-                            caption: p.caption || "",
-                            pending: true,
-                            visit_id: p.visit_id
-                          }))
-                      )
+                      ...pendingPhotos, // ← agora vem do estado, sem await no JSX
                     ]}
                     onFilesSelected={(files, captions) => {
                       setSelectedFiles(files);
