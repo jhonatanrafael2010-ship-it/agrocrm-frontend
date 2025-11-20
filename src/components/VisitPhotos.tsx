@@ -79,10 +79,9 @@ const VisitPhotos: React.FC<Props> = ({
 
   // Quando selecionar arquivos
   function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
     console.log("🔥 handleSelectFiles DISPAROU!");
     console.log("visitId:", visitId);
-
-    const files = e.target.files;
     console.log("🔥 Arquivos selecionados:", files);
     console.log("🔥 captions inicial:", captions);
 
@@ -97,13 +96,14 @@ const VisitPhotos: React.FC<Props> = ({
 
     setNewFiles(arr);
     setNewPreviews(arr.map((f) => URL.createObjectURL(f)));
-    console.log("🔥 Previews gerados:", arr.map((f) => URL.createObjectURL(f)));
-    setCaptions(arr.map(() => "")); // cria legendas vazias
+    setCaptions(arr.map(() => ""));
 
+    // 🔥 Aqui é o que estava FALHANDO → repassar corretamente ao Calendar
     if (onFilesSelected) {
       onFilesSelected(arr, arr.map(() => ""));
     }
   }
+
 
 
   // Quando legendas mudarem → notifica o Calendar
