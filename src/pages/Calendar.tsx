@@ -471,7 +471,7 @@ const handleCreateOrUpdate = async () => {
           fd.append("captions", selectedCaptions[i] || "");
         });
 
-        const url = `${API_BASE}/visits/${visitId}/photos`;
+        const url = `${API_BASE}visits/${visitId}/photos`;
         console.log("📤 Enviando para:", url);
 
         const resp = await fetch(url, {
