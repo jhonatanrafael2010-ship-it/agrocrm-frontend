@@ -533,6 +533,58 @@ const handleCreateOrUpdate = async () => {
 
 
 
+const handleSavePhotos = async () => {
+  if (!form.id) {
+    alert("ID da visita não encontrado.");
+    return;
+  }
+
+  const visitId = Number(form.id);
+
+  if (!navigator.onLine) {
+    console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      await savePhotoOffline(
+        visitId,
+        selectedFiles[i],
+        selectedCaptions[i] || ""
+      );
+    }
+
+    alert("🟠 Fotos salvas offline! Serão enviadas quando voltar a internet.");
+    return;
+  }
+
+  // ONLINE
+  console.log("📸 Enviando fotos ONLINE...");
+
+  const fd = new FormData();
+  selectedFiles.forEach((file, i) => {
+    fd.append("photos", file, file.name);
+    fd.append("captions", selectedCaptions[i] || "");
+  });
+
+  const url = `${API_BASE}visits/${visitId}/photos`;
+  const resp = await fetch(url, { method: "POST", body: fd });
+
+  if (!resp.ok) {
+    alert("⚠️ Falha ao enviar fotos.");
+    return;
+  }
+
+  console.log("📸 Fotos enviadas com sucesso!");
+  alert("📸 Fotos enviadas!");
+
+  // Limpa seleção
+  setSelectedFiles([]);
+  setSelectedCaptions([]);
+
+  // Recarrega a visita no calendário
+  await loadVisits();
+};
+
+
 
   // ============================================================
   // 🗑️ Excluir
@@ -607,7 +659,9 @@ const handleCreateOrUpdate = async () => {
         // 🟢 ONLINE → envia PUT normal
         const result = await updateVisitWithSync(API_BASE, form.id as number, {
           status: "done",
+          preserve_date: true,   // 🔥 sinalizador
         });
+
 
         if (result.synced) {
           alert("✅ Visita concluída com sucesso!");
@@ -1340,7 +1394,7 @@ const handleCreateOrUpdate = async () => {
                   {form.id && selectedFiles.length > 0 && (
                     <button
                       className="btn btn-success mt-3"
-                      onClick={handleCreateOrUpdate}
+                      onClick={handleSavePhotos}
                     >
                       💾 Salvar Fotos
                     </button>
