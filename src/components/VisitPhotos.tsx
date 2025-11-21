@@ -99,7 +99,13 @@ const VisitPhotos: React.FC<Props> = ({
         allowEditing: false,
       });
 
-      const dataUrl = img.dataUrl;
+      const dataUrl = img.dataUrl || "";
+
+      if (!dataUrl) {
+        alert("❌ Erro: a câmera não retornou imagem.");
+        return;
+      }
+
       const fileName = `foto_${Date.now()}.jpg`;
 
       await savePendingPhoto({
@@ -116,6 +122,7 @@ const VisitPhotos: React.FC<Props> = ({
       // 🔥 MOSTRAR A FOTO IMEDIATAMENTE NO MODAL
       const off = await loadOffline();
       setSavedPhotos([...(existingPhotos || []), ...off]);
+
 
     } catch (err) {
       console.error("Erro ao capturar foto:", err);
