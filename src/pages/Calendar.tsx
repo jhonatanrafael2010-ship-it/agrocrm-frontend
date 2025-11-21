@@ -1309,33 +1309,28 @@ const handleCreateOrUpdate = async () => {
                     />
                   </div>
 
-                  {/* Fotos */}
-                  <VisitPhotos
-                    visitId={Number(form.id)}
-                    existingPhotos={[
-                      ...(form.savedPhotos || []),
-                      ...pendingPhotos,
-                    ]}
-                    onFilesSelected={(files, captions) => {
-                      setSelectedFiles(files);
-                      setSelectedCaptions(captions);
-
-                      // Previews temporários apenas para exibição antes do envio real
-                      const previews = files.map((f) => URL.createObjectURL(f));
-
-                      setForm((f) => ({
-                        ...f,
-                        savedPhotos: [
-                          ...(f.savedPhotos || []),
-                          ...previews.map((url, i) => ({
-                            id: Date.now() + i,
-                            url,
-                            caption: captions[i] || ""
-                          }))
-                        ]
-                      }));
-                    }}
-                  />
+                  {/* Fotos só aparecem depois que a visita existe */}
+                  {form.id && (
+                    <VisitPhotos
+                      visitId={Number(form.id)}
+                      existingPhotos={[
+                        ...(form.savedPhotos || []),
+                        ...pendingPhotos,
+                      ]}
+                      onFilesSelected={(files, captions) => {
+                        setSelectedFiles(files);
+                        setSelectedCaptions(captions);
+                      }}
+                    />
+                  )}
+                  {form.id && selectedFiles.length > 0 && (
+                    <button
+                      className="btn btn-success mt-3"
+                      onClick={handleCreateOrUpdate}
+                    >
+                      💾 Salvar Fotos
+                    </button>
+                  )}
                 </div>
               </div>
 
