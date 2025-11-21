@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE } from "../config";
 import { getAllPendingPhotos } from "../utils/indexedDB";
+import { Camera, CameraResultType } from "@capacitor/camera";
+import { savePendingPhoto } from "../utils/indexedDB";
+
 
 type UnifiedPhoto = {
   id?: number;
@@ -35,6 +38,14 @@ const VisitPhotos: React.FC<Props> = ({
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
+
+
+  // Detecta se está no APK (Capacitor)
+  const isMobileApp =
+    typeof window !== "undefined" &&
+    (window as any).Capacitor &&
+    (window as any).Capacitor.isNativePlatform;
+
 
   // ======================================================
   // 🔄 1) Carregar fotos OFFLINE corretamente
@@ -73,6 +84,46 @@ const VisitPhotos: React.FC<Props> = ({
       mounted = false;
     };
   }, [existingPhotos, loadOffline]);
+
+
+  async function handleCameraCapture() {
+    if (!visitId || Number(visitId) < 1) {
+      alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
+      return;
+    }
+
+    try {
+      const img = await Camera.getPhoto({
+        quality: 80,
+        resultType: CameraResultType.DataUrl,
+        allowEditing: false,
+      });
+
+      const dataUrl = img.dataUrl;
+      const fileName = `foto_${Date.now()}.jpg`;
+
+      await savePendingPhoto({
+        visit_id: visitId,
+        fileName,
+        mime: "image/jpeg",
+        dataUrl,
+        caption: "",
+        synced: false,
+      });
+
+      alert("📸 Foto salva offline!");
+
+      // 🔥 MOSTRAR A FOTO IMEDIATAMENTE NO MODAL
+      const off = await loadOffline();
+      setSavedPhotos([...(existingPhotos || []), ...off]);
+
+    } catch (err) {
+      console.error("Erro ao capturar foto:", err);
+      alert("❌ Falha ao capturar foto.");
+    }
+  }
+
+
 
   // ======================================================
   // 🖼 Resolver URL (online ou offline)
@@ -128,13 +179,26 @@ const VisitPhotos: React.FC<Props> = ({
       <label className="form-label fw-semibold">📸 Fotos</label>
 
       {/* Campo de upload */}
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        className="form-control"
-        onChange={handleSelectFiles}
-      />
+      {/* APK (Capacitor) usa a câmera nativa */}
+      {isMobileApp ? (
+        <button
+          type="button"
+          className="btn btn-primary w-100"
+          onClick={handleCameraCapture}
+        >
+          📸 Tirar Foto
+        </button>
+      ) : (
+        /* Web/PWA usa input normal */
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          className="form-control"
+          onChange={handleSelectFiles}
+        />
+      )}
+
 
       {/* PREVIEWS NOVOS */}
       {previews.length > 0 && (
