@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE } from "../config";
 import { getAllPendingPhotos } from "../utils/indexedDB";
 
@@ -7,7 +7,7 @@ type UnifiedPhoto = {
   url?: string;
   caption?: string;
 
-  // Offline
+  // offline
   pending?: boolean;
   dataUrl?: string;
   visit_id?: number;
@@ -20,53 +20,63 @@ interface Props {
 }
 
 /**
- * VisitPhotos — SOMENTE UI
- *
- * - Mostra fotos do backend
- * - Mostra fotos offline
- * - Mostra previews das fotos novas
- *
- * NÃO envia fotos
- * NÃO salva offline (isso é feito no Calendar.tsx)
+ * VisitPhotos — 100% UI
+ * - mostra fotos online
+ * - mostra fotos offline
+ * - mostra previews corretos (sem duplicar)
+ * - envia arquivos para o Calendar APENAS UMA VEZ
  */
 const VisitPhotos: React.FC<Props> = ({
   visitId,
   existingPhotos,
-  onFilesSelected
+  onFilesSelected,
 }) => {
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
-  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
 
-    // Carregar fotos offline
-    async function loadOffline() {
-      if (!visitId) return [];
+  // ======================================================
+  // 🔄 1) Carregar fotos OFFLINE corretamente
+  // ======================================================
+  const loadOffline = useCallback(async () => {
+    if (!visitId) return [];
 
-      const all = await getAllPendingPhotos();
+    const all = await getAllPendingPhotos();
 
-      return all
-        .filter((p) => p.visit_id === visitId)
-        .map((p) => ({
-          id: p.id,           // 🔥 manter ID se existir
-          pending: true,
-          dataUrl: p.dataUrl,
-          caption: p.caption || "", // 🔥 importante
-          visit_id: p.visit_id,
-        }));
-    }
+    return all
+      .filter((p) => p.visit_id === visitId)
+      .map((p) => ({
+        id: p.id,
+        pending: true,
+        dataUrl: p.dataUrl,
+        caption: p.caption || "",
+        visit_id: p.visit_id,
+      }));
+  }, [visitId]);
 
-
-  // Merge online + offline
+  // ======================================================
+  // 🔄 2) Merge das fotos online + offline (apenas 1 vez)
+  // ======================================================
   useEffect(() => {
+    let mounted = true;
+
     async function merge() {
       const off = await loadOffline();
-      setSavedPhotos([...(existingPhotos || []), ...off]);
+      if (mounted) {
+        setSavedPhotos([...(existingPhotos || []), ...off]);
+      }
     }
-    merge();
-  }, [visitId, existingPhotos]);
 
-  // Resolver URL
+    merge();
+    return () => {
+      mounted = false;
+    };
+  }, [existingPhotos, loadOffline]);
+
+  // ======================================================
+  // 🖼 Resolver URL (online ou offline)
+  // ======================================================
   function resolvePhotoUrl(p: UnifiedPhoto) {
     if (p.dataUrl) return p.dataUrl; // offline
     if (!p.url) return "";
@@ -76,81 +86,79 @@ const VisitPhotos: React.FC<Props> = ({
     return `${base}${p.url}`;
   }
 
-
-  // Quando selecionar arquivos
-  function handleSelectFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    console.log("🔥 handleSelectFiles DISPAROU!");
+  // ======================================================
+  // 📸 3) Selecionar arquivos → cria previews e inicializa legendas
+  // ======================================================
+  const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("🔥 handleSelectFiles DISPAROU");
     console.log("visitId:", visitId);
-    console.log("🔥 Arquivos selecionados:", files);
-    console.log("🔥 captions inicial:", captions);
 
     if (!visitId || Number(visitId) < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
       return;
     }
 
-    if (!files) return;
+    const fl = e.target.files;
+    if (!fl) return;
 
-    const arr = Array.from(files);
+    const arr = Array.from(fl);
 
-    setNewFiles(arr);
-    setNewPreviews(arr.map((f) => URL.createObjectURL(f)));
+    setFiles(arr);
+    setPreviews(arr.map((f) => URL.createObjectURL(f)));
     setCaptions(arr.map(() => ""));
 
-    // 🔥 Aqui é o que estava FALHANDO → repassar corretamente ao Calendar
+    // Envia para o Calendar apenas 1 vez, com legendas vazias
     if (onFilesSelected) {
       onFilesSelected(arr, arr.map(() => ""));
     }
-  }
+  };
 
-
-
-  // Quando legendas mudarem → notifica o Calendar
+  // ======================================================
+  // 📝 4) Se legenda mudar → envia atualização para o Calendar
+  // ======================================================
   useEffect(() => {
-    if (onFilesSelected && newFiles.length > 0) {
-      onFilesSelected(newFiles, captions);
-    }
-  }, [captions, newFiles]);
+    if (!onFilesSelected) return;
+    if (files.length === 0) return;
 
+    onFilesSelected(files, captions);
+  }, [captions]);
 
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos</label>
 
-      {/* Upload */}
+      {/* Campo de upload */}
       <input
         type="file"
         multiple
         accept="image/*"
         className="form-control"
-        disabled={false}
         onChange={handleSelectFiles}
       />
 
-      {/* Previews */}
-      {newPreviews.length > 0 && (
+      {/* PREVIEWS NOVOS */}
+      {previews.length > 0 && (
         <div className="d-flex flex-wrap gap-3 mt-3">
-          {newPreviews.map((prev, i) => (
-            <div key={i} style={{ width: 130 }}>
+          {previews.map((src, idx) => (
+            <div key={idx} style={{ width: 130 }}>
               <img
-                src={prev}
+                src={src}
                 style={{
                   width: "130px",
                   height: "130px",
                   objectFit: "cover",
-                  borderRadius: 10
+                  borderRadius: 10,
                 }}
               />
               <input
                 type="text"
                 placeholder="Legenda..."
                 className="form-control form-control-sm mt-1"
-                value={captions[i]}
+                value={captions[idx]}
                 onChange={(e) => {
-                  const c = [...captions];
-                  c[i] = e.target.value;
-                  setCaptions(c);
+                  const arr = [...captions];
+                  arr[idx] = e.target.value;
+                  setCaptions(arr);
                 }}
               />
             </div>
@@ -158,27 +166,28 @@ const VisitPhotos: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Fotos salvas */}
+      {/* FOTOS JA SALVAS */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos salvas</label>
 
           <div className="d-flex flex-wrap gap-3">
-            {savedPhotos.map((p, i) => (
-              <div key={i} style={{ width: 130 }}>
+            {savedPhotos.map((p, idx) => (
+              <div key={idx} style={{ width: 130 }}>
                 <img
                   src={resolvePhotoUrl(p)}
                   style={{
                     width: "130px",
                     height: "130px",
                     objectFit: "cover",
-                    borderRadius: 10
+                    borderRadius: 10,
                   }}
                 />
+
                 <input
                   type="text"
-                  disabled
                   className="form-control form-control-sm mt-1"
+                  disabled
                   value={p.caption || ""}
                 />
               </div>
@@ -186,8 +195,6 @@ const VisitPhotos: React.FC<Props> = ({
           </div>
         </div>
       )}
-
-      <input type="hidden" />
     </div>
   );
 };
