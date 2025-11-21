@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE } from "../config";
-import { getAllPendingPhotos } from "../utils/indexedDB";
+import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
-import { savePendingPhoto } from "../utils/indexedDB";
-
 
 type UnifiedPhoto = {
   id?: number;
@@ -23,11 +21,11 @@ interface Props {
 }
 
 /**
- * VisitPhotos — 100% UI
- * - mostra fotos online
- * - mostra fotos offline
- * - mostra previews corretos (sem duplicar)
- * - envia arquivos para o Calendar APENAS UMA VEZ
+ * VisitPhotos — UI pura
+ * - Web: input file normal
+ * - APK: botão da câmera
+ * - exibe fotos online + offline
+ * - exibe previews SEM duplicar
  */
 const VisitPhotos: React.FC<Props> = ({
   visitId,
@@ -39,16 +37,14 @@ const VisitPhotos: React.FC<Props> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
 
-
-  // Detecta se está no APK (Capacitor)
+  // 🔍 DETECÇÃO SEGURA DO APK
   const isMobileApp =
     typeof window !== "undefined" &&
-    (window as any).Capacitor &&
-    (window as any).Capacitor.isNativePlatform;
-
+    (window as any).Capacitor?.isNativePlatform === true &&
+    !window.location.href.startsWith("http");
 
   // ======================================================
-  // 🔄 1) Carregar fotos OFFLINE corretamente
+  // 🔄 Carregar fotos OFFLINE corretamente
   // ======================================================
   const loadOffline = useCallback(async () => {
     if (!visitId) return [];
@@ -67,7 +63,7 @@ const VisitPhotos: React.FC<Props> = ({
   }, [visitId]);
 
   // ======================================================
-  // 🔄 2) Merge das fotos online + offline (apenas 1 vez)
+  // 🔄 Merge inicial: online + offline
   // ======================================================
   useEffect(() => {
     let mounted = true;
@@ -85,7 +81,9 @@ const VisitPhotos: React.FC<Props> = ({
     };
   }, [existingPhotos, loadOffline]);
 
-
+  // ======================================================
+  // 📸 APK — captura via câmera nativa
+  // ======================================================
   async function handleCameraCapture() {
     if (!visitId || Number(visitId) < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
@@ -119,10 +117,9 @@ const VisitPhotos: React.FC<Props> = ({
 
       alert("📸 Foto salva offline!");
 
-      // 🔥 MOSTRAR A FOTO IMEDIATAMENTE NO MODAL
+      // Atualiza a lista imediatamente
       const off = await loadOffline();
       setSavedPhotos([...(existingPhotos || []), ...off]);
-
 
     } catch (err) {
       console.error("Erro ao capturar foto:", err);
@@ -130,13 +127,11 @@ const VisitPhotos: React.FC<Props> = ({
     }
   }
 
-
-
   // ======================================================
-  // 🖼 Resolver URL (online ou offline)
+  // 🖼 Resolver URL
   // ======================================================
   function resolvePhotoUrl(p: UnifiedPhoto) {
-    if (p.dataUrl) return p.dataUrl; // offline
+    if (p.dataUrl) return p.dataUrl;
     if (!p.url) return "";
     if (p.url.startsWith("http")) return p.url;
 
@@ -145,11 +140,10 @@ const VisitPhotos: React.FC<Props> = ({
   }
 
   // ======================================================
-  // 📸 3) Selecionar arquivos → cria previews e inicializa legendas
+  // 📁 Web — selecionar arquivos
   // ======================================================
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log("🔥 handleSelectFiles DISPAROU");
-    console.log("visitId:", visitId);
 
     if (!visitId || Number(visitId) < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
@@ -163,16 +157,18 @@ const VisitPhotos: React.FC<Props> = ({
 
     setFiles(arr);
     setPreviews(arr.map((f) => URL.createObjectURL(f)));
+
+    // captions sempre com o mesmo número de itens
     setCaptions(arr.map(() => ""));
 
-    // Envia para o Calendar apenas 1 vez, com legendas vazias
+    // notifica apenas 1 vez
     if (onFilesSelected) {
       onFilesSelected(arr, arr.map(() => ""));
     }
   };
 
   // ======================================================
-  // 📝 4) Se legenda mudar → envia atualização para o Calendar
+  // 📝 Atualiza legendas
   // ======================================================
   useEffect(() => {
     if (!onFilesSelected) return;
@@ -181,12 +177,17 @@ const VisitPhotos: React.FC<Props> = ({
     onFilesSelected(files, captions);
   }, [captions]);
 
+  // ======================================================
+  // 🛑 Garantia de sincronização (evita legenda travar)
+  // ======================================================
+  if (previews.length !== captions.length) {
+    setCaptions(previews.map(() => ""));
+  }
+
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos</label>
 
-      {/* Campo de upload */}
-      {/* APK (Capacitor) usa a câmera nativa */}
       {isMobileApp ? (
         <button
           type="button"
@@ -196,7 +197,6 @@ const VisitPhotos: React.FC<Props> = ({
           📸 Tirar Foto
         </button>
       ) : (
-        /* Web/PWA usa input normal */
         <input
           type="file"
           multiple
@@ -205,7 +205,6 @@ const VisitPhotos: React.FC<Props> = ({
           onChange={handleSelectFiles}
         />
       )}
-
 
       {/* PREVIEWS NOVOS */}
       {previews.length > 0 && (
@@ -221,11 +220,12 @@ const VisitPhotos: React.FC<Props> = ({
                   borderRadius: 10,
                 }}
               />
+
               <input
                 type="text"
                 placeholder="Legenda..."
                 className="form-control form-control-sm mt-1"
-                value={captions[idx]}
+                value={captions[idx] || ""}
                 onChange={(e) => {
                   const arr = [...captions];
                   arr[idx] = e.target.value;
@@ -237,7 +237,7 @@ const VisitPhotos: React.FC<Props> = ({
         </div>
       )}
 
-      {/* FOTOS JA SALVAS */}
+      {/* FOTOS SALVAS */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos salvas</label>

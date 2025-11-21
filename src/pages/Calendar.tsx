@@ -457,50 +457,6 @@ const handleCreateOrUpdate = async () => {
     // garante que o form conheça esse ID
     setForm((f) => ({ ...f, id: visitId }));
 
-    // ============================================================
-    // 📸 FOTOS (ONLINE ou OFFLINE)
-    // ============================================================
-    if (selectedFiles.length > 0) {
-      // OFFLINE
-      if (!navigator.onLine) {
-        console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
-
-        for (let i = 0; i < selectedFiles.length; i++) {
-          await savePhotoOffline(
-            visitId,
-            selectedFiles[i],
-            selectedCaptions[i] || ""
-          );
-        }
-      }
-
-      // ONLINE
-      else {
-        console.log("📸 Enviando fotos ONLINE...");
-
-        const fd = new FormData();
-
-        selectedFiles.forEach((file, i) => {
-          fd.append("photos", file, file.name);
-          fd.append("captions", selectedCaptions[i] || "");
-        });
-
-        const url = `${API_BASE}visits/${visitId}/photos`;
-        console.log("📤 Enviando para:", url);
-
-        const resp = await fetch(url, {
-          method: "POST",
-          body: fd,
-        });
-
-        if (!resp.ok) {
-          console.warn("⚠️ Falha ao enviar fotos:", resp.status);
-        } else {
-          console.log("📸 Fotos enviadas com sucesso!");
-        }
-      }
-    }
-
 
     // RESET
     setSelectedFiles([]);
@@ -552,9 +508,27 @@ const handleSavePhotos = async () => {
       );
     }
 
+    // 🔥 Atualiza o modal imediatamente
+    const off = await getAllPendingPhotos();
+    setForm((f) => ({
+      ...f,
+      savedPhotos: [
+        ...(f.savedPhotos || []),
+        ...off
+          .filter((p) => p.visit_id === visitId)
+          .map((p) => ({
+            id: p.id,
+            dataUrl: p.dataUrl,
+            caption: p.caption,
+            pending: true,
+          })),
+      ],
+    }));
+
     alert("🟠 Fotos salvas offline! Serão enviadas quando voltar a internet.");
     return;
   }
+
 
   // ONLINE
   console.log("📸 Enviando fotos ONLINE...");
@@ -677,36 +651,6 @@ const handleSavePhotos = async () => {
       }
     };
     
-
-    // ============================================================
-    // 📌 FOTOS OFFLINE — carregar para o modal
-    // ============================================================
-    const [pendingPhotos, setPendingPhotos] = useState<any[]>([]);
-
-    useEffect(() => {
-      async function loadPending() {
-        if (!form.id) {
-          setPendingPhotos([]);
-          return;
-        }
-
-        const arr = await getAllPendingPhotos();
-        const filtered = arr
-          .filter((p: any) => p.visit_id === Number(form.id))
-          .map((p: any) => ({
-            id: p.id,
-            dataUrl: p.dataUrl,
-            caption: p.caption || "",
-            pending: true,
-            visit_id: p.visit_id,
-          }));
-
-        setPendingPhotos(filtered);
-      }
-
-      loadPending();
-    }, [form.id]);
-
 
     // ============================================================
     // 🔄 FINALIZADOR GLOBAL DE SINCRONIZAÇÃO (REVISADO)
@@ -953,6 +897,8 @@ const handleSavePhotos = async () => {
               latitude: null,
               longitude: null,
             });
+            setSelectedFiles([]);
+            setSelectedCaptions([]);
             setOpen(true);
           }}
           eventClick={(info) => {
@@ -984,7 +930,8 @@ const handleSavePhotos = async () => {
               latitude: v.latitude || null,
               longitude: v.longitude || null,
             });
-
+            setSelectedFiles([]);
+            setSelectedCaptions([]);
             setOpen(true);
           }}
           eventContent={(arg) => {
@@ -1378,19 +1325,16 @@ const handleSavePhotos = async () => {
                   </div>
 
                   {/* Fotos só aparecem depois que a visita existe */}
-                  {form.id && (
-                    <VisitPhotos
-                      visitId={Number(form.id)}
-                      existingPhotos={[
-                        ...(form.savedPhotos || []),
-                        ...pendingPhotos,
-                      ]}
-                      onFilesSelected={(files, captions) => {
-                        setSelectedFiles(files);
-                        setSelectedCaptions(captions);
-                      }}
-                    />
-                  )}
+                    {form.id && (
+                      <VisitPhotos
+                        visitId={Number(form.id)}
+                        existingPhotos={form.savedPhotos}
+                        onFilesSelected={(files, captions) => {
+                          setSelectedFiles(files);
+                          setSelectedCaptions(captions);
+                        }}
+                      />
+                    )}
                   {form.id && selectedFiles.length > 0 && (
                     <button
                       className="btn btn-success mt-3"
