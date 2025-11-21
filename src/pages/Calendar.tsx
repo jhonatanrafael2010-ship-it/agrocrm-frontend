@@ -430,8 +430,21 @@ const handleCreateOrUpdate = async () => {
       result = await createVisitWithSync(API_BASE, payload);
     }
 
-    // 🔥 AGORA pegamos o ID corretamente
-    const visitId = Number(result.id);
+    // 🔥 Garantir ID da visita tanto em criação quanto em edição
+    let visitId: number;
+
+    if (form.id) {
+      // EDIÇÃO → o ID já é conhecido
+      visitId = Number(form.id);
+    } else {
+      // CRIAÇÃO → pega do retorno da API
+      const rawId =
+        (result as any)?.id ??
+        (result as any)?.visit?.id ??
+        null;
+
+      visitId = rawId ? Number(rawId) : NaN;
+    }
 
     if (!visitId || isNaN(visitId)) {
       console.error("❌ ERRO: ID inválido retornado:", result);
@@ -441,6 +454,7 @@ const handleCreateOrUpdate = async () => {
 
     console.log("🔵 ID da visita (real ou offline):", visitId);
 
+    // garante que o form conheça esse ID
     setForm((f) => ({ ...f, id: visitId }));
 
     // ============================================================
