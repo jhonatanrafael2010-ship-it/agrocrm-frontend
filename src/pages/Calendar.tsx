@@ -19,6 +19,7 @@ import {
   getAllPendingPhotos,
   getAllFromStore,   // ← ADICIONADO
 } from "../utils/indexedDB";
+import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
 
 
 
@@ -27,15 +28,14 @@ import {
 // ============================================================
 async function hasInternet(): Promise<boolean> {
   try {
-    const resp = await fetch("https://www.google.com", {
-      method: "HEAD",
-      cache: "no-cache",
-    });
+    // Testa diretamente sua API (método recomendado para Capacitor)
+    const resp = await fetch(`${API_BASE}ping`, { method: "GET", cache: "no-cache" });
     return resp.ok;
   } catch {
     return false;
   }
 }
+
 
 
 type Client = { id: number; name: string };
@@ -595,22 +595,35 @@ const handleSavePhotos = async () => {
 
 
 
-
   // ============================================================
-  // 🗑️ Excluir
+  // 🗑️ Excluir (AGORA CORRIGIDO)
   // ============================================================
   const handleDelete = async () => {
     if (!form.id) return;
     if (!confirm("🗑 Deseja realmente excluir esta visita?")) return;
+
     try {
-      const resp = await fetch(`${API_BASE}visits/${form.id}`, {
-        method: "DELETE",
-      });
-      if (!resp.ok) throw new Error("Erro HTTP " + resp.status);
+      const id = Number(form.id);
+
+      // 1️⃣ Se estiver online, apaga do servidor
+      if (navigator.onLine) {
+        try {
+          await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
+        } catch {
+          console.warn("⚠️ Falha ao excluir no servidor (offline)");
+        }
+      }
+
+      // 2️⃣ SEMPRE remove localmente — online ou offline
+      await deleteLocalVisit(id);
+
+      // 3️⃣ Atualiza agenda
       await loadVisits();
       setOpen(false);
+
     } catch (e) {
-      alert("Erro ao excluir");
+      console.error("Erro ao excluir:", e);
+      alert("Erro ao excluir a visita.");
     }
   };
 

@@ -144,6 +144,23 @@ export async function deleteFromStore(
 }
 
 // ============================================================
+// ❌ Remover VISITA localmente (correção para visitas antigas offline)
+// ============================================================
+export async function deleteLocalVisit(visitId: number) {
+  const db = await openDB();
+  const tx = db.transaction("visits", "readwrite");
+
+  tx.objectStore("visits").delete(visitId);
+
+  // ✔ correção para IndexedDB nativo
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+
+// ============================================================
 // 📦 Buscar todos itens
 // ============================================================
 export async function getAllFromStore<T = any>(store: StoreName): Promise<T[]> {
