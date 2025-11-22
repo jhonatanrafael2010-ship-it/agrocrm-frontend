@@ -22,7 +22,20 @@ import {
 
 
 
-
+// ============================================================
+// 🌐 Função definitiva para detectar internet real no APK
+// ============================================================
+async function hasInternet(): Promise<boolean> {
+  try {
+    const resp = await fetch("https://www.google.com", {
+      method: "HEAD",
+      cache: "no-cache",
+    });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
 
 
 type Client = { id: number; name: string };
@@ -497,7 +510,17 @@ const handleSavePhotos = async () => {
 
   const visitId = Number(form.id);
 
-  if (!navigator.onLine) {
+  // ============================================================
+  // 🌐 DETECÇÃO REAL DE OFFLINE (APK + navegador)
+  // ============================================================
+  const isReallyOffline =
+    !navigator.onLine ||
+    ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+  // ============================================================
+  // 🟠 SALVAR OFFLINE
+  // ============================================================
+  if (isReallyOffline) {
     console.log("📸 Salvando fotos OFFLINE com ID:", visitId);
 
     for (let i = 0; i < selectedFiles.length; i++) {
@@ -508,8 +531,9 @@ const handleSavePhotos = async () => {
       );
     }
 
-    // 🔥 Atualiza o modal imediatamente
+    // Atualiza o modal imediatamente
     const off = await getAllPendingPhotos();
+
     setForm((f) => ({
       ...f,
       savedPhotos: [
@@ -525,12 +549,20 @@ const handleSavePhotos = async () => {
       ],
     }));
 
-    alert("🟠 Fotos salvas offline! Serão enviadas quando voltar a internet.");
+    alert(
+      "🟠 Fotos salvas OFFLINE! Serão sincronizadas automaticamente quando a internet voltar."
+    );
+
+    // reseta estado local
+    setSelectedFiles([]);
+    setSelectedCaptions([]);
+
     return;
   }
 
-
-  // ONLINE
+  // ============================================================
+  // 🟢 SALVAR ONLINE
+  // ============================================================
   console.log("📸 Enviando fotos ONLINE...");
 
   const fd = new FormData();
@@ -540,7 +572,10 @@ const handleSavePhotos = async () => {
   });
 
   const url = `${API_BASE}visits/${visitId}/photos`;
-  const resp = await fetch(url, { method: "POST", body: fd });
+  const resp = await fetch(url, {
+    method: "POST",
+    body: fd,
+  });
 
   if (!resp.ok) {
     alert("⚠️ Falha ao enviar fotos.");
@@ -554,9 +589,10 @@ const handleSavePhotos = async () => {
   setSelectedFiles([]);
   setSelectedCaptions([]);
 
-  // Recarrega a visita no calendário
+  // Recarrega visitas
   await loadVisits();
 };
+
 
 
 
@@ -583,7 +619,12 @@ const handleSavePhotos = async () => {
   // ============================================================
   const handleGetLocation = async () => {
     try {
-      if (!navigator.onLine) {
+      const isReallyOffline =
+        !navigator.onLine ||
+        ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+      if (isReallyOffline) {
+
         const cached = localStorage.getItem("lastLocation");
         if (cached) {
           const { latitude, longitude } = JSON.parse(cached);
@@ -623,7 +664,12 @@ const handleSavePhotos = async () => {
 
       try {
         // 🟠 OFFLINE → apenas salvar status no IndexedDB
-        if (!navigator.onLine) {
+        const isReallyOffline =
+          !navigator.onLine ||
+          ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+        if (isReallyOffline) {
+
           await updateVisitWithSync(API_BASE, form.id as number, { status: "done" });
           alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
           setOpen(false);
@@ -657,7 +703,13 @@ const handleSavePhotos = async () => {
     // ============================================================
     useEffect(() => {
       async function finalizeSync() {
-        if (!navigator.onLine) return;
+        const isReallyOffline =
+          !navigator.onLine ||
+          ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+        if (isReallyOffline) {
+          return;
+        }
 
         try {
           await loadVisits();
