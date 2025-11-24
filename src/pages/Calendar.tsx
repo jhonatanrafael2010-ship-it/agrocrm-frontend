@@ -493,35 +493,39 @@ const handleCreateOrUpdate = async () => {
     setForm((f) => ({ ...f, id: visitId }));
 
 
-    // RESET
+    
+    // RESET APENAS DAS FOTOS
     setSelectedFiles([]);
     setSelectedCaptions([]);
 
+    // Mantém o modal aberto com ID válido
+    alert("Visita salva com sucesso! Agora você pode adicionar fotos.");
+
+    // Atualiza calendário
+    await loadVisits();
+
+    // 🔄 Recarrega a visita do backend para atualizar savedPhotos no modal
     if (navigator.onLine) {
-      setOpen(false);
-      setForm({
-        id: null,
-        date: "",
-        client_id: "",
-        property_id: "",
-        plot_id: "",
-        consultant_id: "",
-        culture: "",
-        variety: "",
-        recommendation: "",
-        genPheno: true,
-        savedPhotos: [],
-        clientSearch: "",
-        latitude: null,
-        longitude: null,
-        status: "planned",
-      });
+      try {
+        const updated = await fetch(`${API_BASE}visits/${visitId}`);
+        if (updated.ok) {
+          const data = await updated.json();
+          setForm((f) => ({
+            ...f,
+            savedPhotos: data.photos || []
+          }));
+        }
+      } catch (e) {
+        console.warn("⚠️ Não foi possível atualizar fotos após salvar visita.");
+      }
     }
-  } catch (err) {
-    console.error("❌ Erro ao salvar visita:", err);
-    alert("Erro ao salvar visita. Tente novamente.");
-  }
-};
+
+    } catch (err) {
+      console.error("❌ Erro ao salvar visita:", err);
+      alert("Erro ao salvar visita. Tente novamente.");
+    }
+    };
+
 
 
 
@@ -1538,6 +1542,11 @@ const handleSavePhotos = async () => {
                     <button
                       className="btn btn-outline-primary d-flex align-items-center"
                       onClick={async () => {
+                        if (!form.id) {
+                          alert("⚠️ Salve a visita antes de gerar o PDF.");
+                          return;
+                        }
+
                         setLoading(true);
                         try {
                           const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
@@ -1567,7 +1576,17 @@ const handleSavePhotos = async () => {
                     <button
                       className="btn btn-success d-flex align-items-center"
                       onClick={async () => {
+                        if (!form.id) {
+                          alert("⚠️ Salve a visita antes de compartilhar o PDF.");
+                          return;
+                        }
+
                         const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                        if (!res.ok) {
+                          alert("❌ Falha ao gerar PDF para compartilhamento.");
+                          return;
+                        }
+
                         const blob = await res.blob();
 
                         const clientName =
