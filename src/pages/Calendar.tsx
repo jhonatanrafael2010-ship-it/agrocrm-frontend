@@ -7,6 +7,9 @@ import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import DarkSelect from "../components/DarkSelect";
 import "../styles/Calendar.css";
 import { Geolocation } from "@capacitor/geolocation";
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener';
+import { Capacitor } from '@capacitor/core';
 import VisitPhotos from "../components/VisitPhotos";
 import {
   fetchWithCache,
@@ -20,6 +23,7 @@ import {
   getAllFromStore,   // ← ADICIONADO
 } from "../utils/indexedDB";
 import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
+
 
 
 
@@ -137,6 +141,7 @@ const CalendarPage: React.FC = () => {
     clientSearch: "",
     latitude: null as number | null,
     longitude: null as number | null,
+    status: "planned",
   });
 
   // ============================================================
@@ -431,11 +436,28 @@ const handleCreateOrUpdate = async () => {
   try {
     let result;
 
-    // 🔵 EDITAR
+    // 🔵 EDITAR — garante que nada seja apagado no backend
     if (form.id) {
       console.log("🟦 Atualizando visita existente:", form.id);
-      result = await updateVisitWithSync(API_BASE, Number(form.id), payload);
+
+      const safePayload = {
+        ...payload,
+        recommendation: form.recommendation || payload.recommendation,
+        status: form.status || "planned",
+        culture: form.culture || payload.culture,
+        variety: form.variety || payload.variety,
+        client_id: Number(form.client_id),
+        property_id: form.property_id ? Number(form.property_id) : null,
+        plot_id: form.plot_id ? Number(form.plot_id) : null,
+        consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+        latitude: form.latitude,
+        longitude: form.longitude,
+        preserve_date: true,
+      };
+
+      result = await updateVisitWithSync(API_BASE, Number(form.id), safePayload);
     }
+
 
     // 🟢 CRIAR
     else {
@@ -492,6 +514,7 @@ const handleCreateOrUpdate = async () => {
         clientSearch: "",
         latitude: null,
         longitude: null,
+        status: "planned",
       });
     }
   } catch (err) {
@@ -749,6 +772,84 @@ const handleSavePhotos = async () => {
       };
     }, []);
 
+    
+  // ============================================================
+  // 📄 Funções auxiliares PDF (APK + Web)
+  // ============================================================
+
+  const blobToBase64 = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.readAsDataURL(blob);
+    });
+
+  const sharePDF = async (blob: Blob, fileName: string) => {
+    const isApp = Capacitor.isNativePlatform();
+
+    if (!isApp) {
+      alert("Compartilhamento direto só funciona no APK.");
+      return;
+    }
+
+    try {
+      const base64Data = await blobToBase64(blob);
+
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64Data,
+        directory: Directory.Documents,
+      });
+
+
+      await (navigator as any).share({
+        title: fileName,
+        text: "Relatório técnico NutriCRM",
+        files: [
+          new File([blob], fileName, {
+            type: "application/pdf",
+          }),
+        ],
+      });
+    } catch (err) {
+      console.error("Erro ao compartilhar PDF:", err);
+      alert("❌ Não foi possível compartilhar o PDF.");
+    }
+  };
+  
+
+  const openPDF = async (blob: Blob, fileName: string) => {
+    const isApp = Capacitor.isNativePlatform();
+
+    // 🖥️ Web/PWA → download normal
+    if (!isApp) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 📱 APK → salva e abre no Adobe Reader
+    try {
+      const base64Data = await blobToBase64(blob);
+
+      const saved = await Filesystem.writeFile({
+        path: fileName,
+        data: base64Data,
+        directory: Directory.Documents,
+      });
+
+      await FileOpener.open(saved.uri, "application/pdf");
+    } catch (err) {
+      console.error("Erro ao abrir PDF no APK:", err);
+      alert("❌ Não foi possível abrir o PDF no dispositivo.");
+    }
+  };
+
 
 
   // ============================================================
@@ -961,6 +1062,7 @@ const handleSavePhotos = async () => {
               clientSearch: "",
               latitude: null,
               longitude: null,
+              status: "planned",
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -994,6 +1096,7 @@ const handleSavePhotos = async () => {
               clientSearch: clientName,
               latitude: v.latitude || null,
               longitude: v.longitude || null,
+              status: "planned",
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1094,6 +1197,7 @@ const handleSavePhotos = async () => {
               clientSearch: "",
               latitude: null,
               longitude: null,
+              status: "planned",
             });
             setOpen(true);
           }}
@@ -1436,36 +1540,18 @@ const handleSavePhotos = async () => {
                       onClick={async () => {
                         setLoading(true);
                         try {
-                          if (window.innerWidth > 768) {
-                            window.open(
-                              `${API_BASE}visits/${form.id}/pdf`,
-                              "_blank"
-                            );
-                          } else {
-                            const res = await fetch(
-                              `${API_BASE}visits/${form.id}/pdf`
-                            );
-                            if (!res.ok)
-                              throw new Error("Erro ao gerar PDF");
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            const clientName =
-                              clients.find(
-                                (c) => String(c.id) === form.client_id
-                              )?.name || "Visita";
-                            const safeName = clientName.replace(
-                              /[^a-z0-9]/gi,
-                              "_"
-                            );
-                            a.download = `Relatorio_${safeName}_${form.date.replace(
-                              /\//g,
-                              "-"
-                            )}.pdf`;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                          }
+                          const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                          if (!res.ok) throw new Error("Erro ao gerar PDF");
+
+                          const blob = await res.blob();
+
+                          const clientName =
+                            clients.find((c) => String(c.id) === form.client_id)?.name || "Visita";
+
+                          const safeName = clientName.replace(/[^a-z0-9]/gi, "_");
+                          const fileName = `Relatorio_${safeName}_${form.date.replace(/\//g, "-")}.pdf`;
+
+                          await openPDF(blob, fileName);
                         } catch (err) {
                           console.error("Erro ao gerar PDF:", err);
                           alert("❌ Falha ao gerar o relatório PDF");
@@ -1477,6 +1563,25 @@ const handleSavePhotos = async () => {
                     >
                       {loading ? "Gerando..." : "📄 PDF"}
                     </button>
+
+                    <button
+                      className="btn btn-success d-flex align-items-center"
+                      onClick={async () => {
+                        const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                        const blob = await res.blob();
+
+                        const clientName =
+                          clients.find((c) => String(c.id) === form.client_id)?.name || "Visita";
+
+                        const safeName = clientName.replace(/[^a-z0-9]/gi, "_");
+                        const fileName = `Relatorio_${safeName}_${form.date.replace(/\//g, "-")}.pdf`;
+
+                        await sharePDF(blob, fileName);
+                      }}
+                    >
+                      📤 WhatsApp
+                    </button>
+
 
                     <button className="btn btn-success" onClick={markDone}>
                       ✅ Concluir

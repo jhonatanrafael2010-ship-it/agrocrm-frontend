@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@awesome-cordova-plugins/file-opener": "^8.1.0",
     "@capacitor/android": "^7.4.4",
     "@capacitor/camera": "^7.0.2",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
+    "@capacitor/filesystem": "^7.1.4",
     "@capacitor/geolocation": "^7.1.5",
     "@fullcalendar/core": "^6.1.8",
     "@fullcalendar/daygrid": "^6.1.8",
@@ -21,8 +23,10 @@
     "@fullcalendar/react": "^6.1.8",
     "@fullcalendar/timegrid": "^6.1.8",
     "@hello-pangea/dnd": "^18.0.1",
+    "@ionic-native/file-opener": "^5.36.0",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
+    "cordova-plugin-file-opener2": "^4.0.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",
