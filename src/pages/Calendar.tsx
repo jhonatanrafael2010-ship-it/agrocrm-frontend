@@ -25,6 +25,29 @@ import {
 import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
 
 
+// ============================================================
+// 🔁 Função de retry para Fetch (ESSENCIAL NO APK)
+// ============================================================
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "omit",
+        cache: "no-store",
+      });
+
+      if (!res.ok) throw new Error("Erro HTTP");
+      return res;
+    } catch (e) {
+      if (i === retries - 1) throw e;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  // TS nunca chega aqui, mas deixamos pra agradar o compilador
+  throw new Error("Fetch falhou");
+}
 
 
 // ============================================================
@@ -1549,7 +1572,7 @@ const handleSavePhotos = async () => {
 
                         setLoading(true);
                         try {
-                          const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                          const res = await fetchWithRetry(`${API_BASE}visits/${form.id}/pdf`);
                           if (!res.ok) throw new Error("Erro ao gerar PDF");
 
                           const blob = await res.blob();
@@ -1581,7 +1604,7 @@ const handleSavePhotos = async () => {
                           return;
                         }
 
-                        const res = await fetch(`${API_BASE}visits/${form.id}/pdf`);
+                        const res = await fetchWithRetry(`${API_BASE}visits/${form.id}/pdf`);
                         if (!res.ok) {
                           alert("❌ Falha ao gerar PDF para compartilhamento.");
                           return;
