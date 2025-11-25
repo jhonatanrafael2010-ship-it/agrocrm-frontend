@@ -8,8 +8,8 @@ import DarkSelect from "../components/DarkSelect";
 import "../styles/Calendar.css";
 import { Geolocation } from "@capacitor/geolocation";
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { FileOpener } from '@awesome-cordova-plugins/file-opener';
-import { Capacitor } from '@capacitor/core';
+// import { FileOpener } from '@awesome-cordova-plugins/file-opener';
+// import { Capacitor } from '@capacitor/core';
 import VisitPhotos from "../components/VisitPhotos";
 import {
   fetchWithCache,
@@ -25,9 +25,8 @@ import {
 import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
 
 
-// ============================================================
-// 🔁 Função de retry para Fetch (ESSENCIAL NO APK)
-// ============================================================
+/*  
+// 🔁 Retry legacy (não usado no Calendar)
 async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
   for (let i = 0; i < retries; i++) {
     try {
@@ -44,10 +43,10 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
       await new Promise((r) => setTimeout(r, 500));
     }
   }
-
-  // TS nunca chega aqui, mas deixamos pra agradar o compilador
   throw new Error("Fetch falhou");
 }
+*/
+
 
 
 // ============================================================
@@ -803,7 +802,7 @@ const handleSavePhotos = async () => {
   // ============================================================
   // 📄 Funções auxiliares PDF (APK + Web)
   // ============================================================
-
+  /*  
   const blobToBase64 = (blob: Blob): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -811,7 +810,9 @@ const handleSavePhotos = async () => {
       reader.onload = () => resolve((reader.result as string).split(",")[1]);
       reader.readAsDataURL(blob);
     });
-
+   */
+   
+  /*  
   const sharePDF = async (blob: Blob, fileName: string) => {
     const isApp = Capacitor.isNativePlatform();
 
@@ -844,8 +845,9 @@ const handleSavePhotos = async () => {
       alert("❌ Não foi possível compartilhar o PDF.");
     }
   };
+  */
   
-
+  /*  
   const openPDF = async (blob: Blob, fileName: string) => {
     const isApp = Capacitor.isNativePlatform();
 
@@ -864,11 +866,12 @@ const handleSavePhotos = async () => {
     try {
       const base64Data = await blobToBase64(blob);
 
-      const saved = await Filesystem.writeFile({
+      await Filesystem.writeFile({
         path: fileName,
         data: base64Data,
         directory: Directory.Documents,
       });
+
 
       await FileOpener.open(saved.uri, "application/pdf");
     } catch (err) {
@@ -876,7 +879,7 @@ const handleSavePhotos = async () => {
       alert("❌ Não foi possível abrir o PDF no dispositivo.");
     }
   };
-
+  */
 
 
   // ============================================================
@@ -1562,39 +1565,12 @@ const handleSavePhotos = async () => {
 
                 {form.id && (
                   <>
-                    <button
+                    <a
+                      href={`/download.html?visit=${form.id}`}
                       className="btn btn-outline-primary d-flex align-items-center"
-                      onClick={async () => {
-                        if (!form.id) {
-                          alert("⚠️ Salve a visita antes de gerar o PDF.");
-                          return;
-                        }
-
-                        setLoading(true);
-                        try {
-                          const res = await fetchWithRetry(`${API_BASE}visits/${form.id}/pdf`);
-                          if (!res.ok) throw new Error("Erro ao gerar PDF");
-
-                          const blob = await res.blob();
-
-                          const clientName =
-                            clients.find((c) => String(c.id) === form.client_id)?.name || "Visita";
-
-                          const safeName = clientName.replace(/[^a-z0-9]/gi, "_");
-                          const fileName = `Relatorio_${safeName}_${form.date.replace(/\//g, "-")}.pdf`;
-
-                          await openPDF(blob, fileName);
-                        } catch (err) {
-                          console.error("Erro ao gerar PDF:", err);
-                          alert("❌ Falha ao gerar o relatório PDF");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      disabled={loading}
                     >
-                      {loading ? "Gerando..." : "📄 PDF"}
-                    </button>
+                      📄 PDF
+                    </a>
 
                     <button
                       className="btn btn-success d-flex align-items-center"
@@ -1604,25 +1580,41 @@ const handleSavePhotos = async () => {
                           return;
                         }
 
-                        const res = await fetchWithRetry(`${API_BASE}visits/${form.id}/pdf`);
-                        if (!res.ok) {
-                          alert("❌ Falha ao gerar PDF para compartilhamento.");
-                          return;
+                        try {
+                          const pdfUrl = `${API_BASE}visits/${form.id}/pdf`;
+
+                          // Baixar o PDF no storage interno
+                          const downloaded = await Filesystem.downloadFile({
+                            url: pdfUrl,
+                            directory: Directory.Documents,
+                            path: `relatorio_${form.id}.pdf`,
+                          });
+
+                          // Caminho real no Android
+                          const pdfUri = downloaded.path ?? null;
+
+                          if (!pdfUri) {
+                            alert("❌ Não foi possível salvar o PDF no dispositivo.");
+                            return;
+                          }
+
+                          // Compartilhar via share nativo
+                          await (navigator as any).share({
+                            title: "Relatório NutriCRM",
+                            text: "Segue o relatório agronômico.",
+                            url: pdfUri,  // Agora correto
+                          });
+
+                        } catch (err) {
+                          console.error("Erro ao compartilhar PDF:", err);
+                          alert("❌ Não foi possível compartilhar o PDF.");
                         }
-
-                        const blob = await res.blob();
-
-                        const clientName =
-                          clients.find((c) => String(c.id) === form.client_id)?.name || "Visita";
-
-                        const safeName = clientName.replace(/[^a-z0-9]/gi, "_");
-                        const fileName = `Relatorio_${safeName}_${form.date.replace(/\//g, "-")}.pdf`;
-
-                        await sharePDF(blob, fileName);
                       }}
                     >
                       📤 WhatsApp
                     </button>
+
+
 
 
                     <button className="btn btn-success" onClick={markDone}>
