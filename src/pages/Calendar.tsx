@@ -1566,7 +1566,9 @@ const handleSavePhotos = async () => {
                 {form.id && (
                   <>
                     <a
-                      href={`/download.html?visit=${form.id}`}
+                      href={`${API_BASE}visits/${form.id}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="btn btn-outline-primary d-flex align-items-center"
                     >
                       📄 PDF
@@ -1613,7 +1615,6 @@ const handleSavePhotos = async () => {
                     >
                       📤 WhatsApp
                     </button>
-
 
 
 
