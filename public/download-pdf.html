@@ -1,120 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <title>Baixando PDF...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>Baixando PDF...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .box {
-      margin: 0 auto;
-      padding: 20px;
-      max-width: 320px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    .loader {
-      margin: 20px auto;
-      width: 40px;
-      height: 40px;
-      border: 4px solid #ddd;
-      border-top: 4px solid #4caf50;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="box">
-    <h2>Preparando Download...</h2>
-    <p>Aguarde, estamos gerando seu relatório técnico.</p>
-    <div class="loader"></div>
-  </div>
-
-  <script>
-    // --- CONFIGURAÇÃO AUTOMÁTICA DO BACKEND ---
-    // Detecta automaticamente o domínio do frontend
-    const FRONT = window.location.origin;
-
-    // Ajuste conforme seu frontend:
-    // Produção Render
-    const API_BASE =
-      FRONT.includes("onrender.com")
-        ? "https://agrocrm-backend.onrender.com/api/"
-        : "/api/";
-
-    // --- OBTÉM ID DA VISITA ---
-    const params = new URLSearchParams(window.location.search);
-    const visitId = params.get("visit");
-
-    if (!visitId) {
-      document.body.innerHTML = `
-        <div class="box">
-          <h2>❌ Erro</h2>
-          <p>ID da visita não informado.</p>
-        </div>`;
-      throw new Error("Visit ID not found.");
-    }
-
-    // URL final para o PDF
-    const pdfUrl = `${API_BASE}visits/${visitId}/pdf`;
-
-    // --- MÉTODO PRINCIPAL ---
-    async function startDownload() {
-      try {
-        // Testa o PDF rapidamente
-        const check = await fetch(pdfUrl, { method: "HEAD" });
-
-        if (!check.ok) {
-          throw new Error("PDF não encontrado no servidor");
-        }
-
-        // 🔥 Redireciona diretamente
-        // WebView e Android permitem abrir PDF assim sem erros
-        window.location.href = pdfUrl;
-
-        // Caso WebView bloqueie URL http/https, mostra link manual
-        setTimeout(() => {
-          document.body.innerHTML = `
-            <div class="box">
-              <h2>📄 Seu PDF está pronto</h2>
-              <p>Se não baixou automaticamente, toque abaixo:</p>
-              <a href="${pdfUrl}"
-                 style="display:inline-block;margin-top:15px;padding:10px 20px;background:#4caf50;color:white;border-radius:6px;text-decoration:none;font-weight:bold">
-                 Baixar PDF
-              </a>
-            </div>
-          `;
-        }, 2500);
-
-      } catch (err) {
-        console.error("Erro ao baixar PDF:", err);
-        document.body.innerHTML = `
-          <div class="box">
-            <h2>❌ Erro ao gerar PDF</h2>
-            <p>Não foi possível baixar o relatório.</p>
-          </div>
-        `;
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
       }
-    }
 
-    startDownload();
-  </script>
-</body>
+      .box {
+        margin: 0 auto;
+        padding: 20px;
+        max-width: 320px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+
+      .loader {
+        margin: 20px auto;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #ddd;
+        border-top: 4px solid #4caf50;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="box">
+      <h2>Preparando download...</h2>
+      <p>Aguarde, estamos gerando seu relatório.</p>
+      <div class="loader"></div>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const visitId = params.get("visit");
+
+      if (!visitId) {
+        document.body.innerHTML = "<h2>Erro: visita inválida.</h2>";
+      } else {
+        window.location.href = `/api/visits/${visitId}/pdf`;
+      }
+    </script>
+  </body>
 </html>
