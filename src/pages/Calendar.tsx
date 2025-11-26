@@ -196,10 +196,18 @@ const CalendarPage: React.FC = () => {
   const loadVisits = async () => {
     try {
       // 1) Buscar visitas online
-      const onlineVisits: Visit[] = await fetchWithCache(
-        `${API_BASE}visits?scope=all`,
-        "visits"
-      );
+      // Detectar iOS
+      function isIOS() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      }
+
+      // Abordagem iOS: apenas visitas do mês → MUITO mais leve
+      const endpoint = isIOS()
+        ? `${API_BASE}visits?month=current`
+        : `${API_BASE}visits?scope=all`;
+
+      const onlineVisits: Visit[] = await fetchWithCache(endpoint, "visits");
+
 
       // 🔄 Carregar fotos offline ligadas a cada visita
       const pending = await getAllPendingPhotos();
@@ -302,8 +310,13 @@ const CalendarPage: React.FC = () => {
 
 
 
+  // Detectar iOS
+  function isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
   // ============================================================
-  // 🚀 Load inicial
+  // 🚀 Load inicial (OTIMIZADO PARA iOS)
   // ============================================================
   useEffect(() => {
     async function loadBaseData() {
@@ -332,24 +345,27 @@ const CalendarPage: React.FC = () => {
         setVarieties(vars);
         setConsultants(cons);
 
-        console.log("📦 Dados carregados (online ou cache).");
+        console.log("📦 Dados base carregados.");
       } catch (err) {
-        console.warn("⚠️ Falha geral ao carregar dados base:", err);
-        alert("⚠️ Sem conexão — dados limitados disponíveis.");
-        setClients([]);
-        setProperties([]);
-        setPlots([]);
-        setCultures([]);
-        setVarieties([]);
-        setConsultants([]);
+        console.warn("⚠️ Falha ao carregar dados base:", err);
+        alert("⚠️ Sem conexão — dados limitados.");
       } finally {
         await loadVisits();
         setLoading(false);
       }
     }
 
+    // 🍏 iOS → Apenas visitas do mês
+    if (isIOS()) {
+      console.log("🍏 iOS detectado → modo leve ativado");
+      loadVisits(); // já usa month=current no endpoint
+      return;
+    }
+
+    // Android / Web → modo completo
     loadBaseData();
   }, []);
+
 
   // Reagir a "visits-synced" (quando voltar internet)
   useEffect(() => {

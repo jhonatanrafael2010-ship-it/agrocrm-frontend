@@ -4,7 +4,7 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 6; // 🔼 aumente sempre que alterar schema
+const DB_VERSION = 7; // força limpar cache antiga do iOS
 
 // 🔹 Todas as stores válidas
 export type StoreName =
