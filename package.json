@@ -27,6 +27,7 @@
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "cordova-plugin-file-opener2": "^4.0.0",
+    "exif-js": "^2.3.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.546.0",
     "react": "^19.1.1",

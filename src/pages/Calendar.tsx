@@ -404,6 +404,17 @@ const CalendarPage: React.FC = () => {
   }
 
 
+// 🔥 RECEBE COORDENADAS EXIF AUTOMÁTICAS
+const handleAutoSetLocation = (lat: number, lon: number) => {
+  console.log("📍 Coordenadas EXIF recebidas:", lat, lon);
+  setForm(f => ({
+    ...f,
+    latitude: lat,
+    longitude: lon
+  }));
+};
+
+
 
 // ============================================================
 // 💾 Criar/atualizar visita (VERSÃO REVISADA)
@@ -1531,6 +1542,7 @@ const handleSavePhotos = async () => {
                           setSelectedFiles(files);
                           setSelectedCaptions(captions);
                         }}
+                        onAutoSetLocation={handleAutoSetLocation}
                       />
                     )}
                   {form.id && selectedFiles.length > 0 && (

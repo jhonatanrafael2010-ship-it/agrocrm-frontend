@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE } from "../config";
 import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
+import EXIF from "exif-js";
+
 
 type UnifiedPhoto = {
   id?: number;
@@ -18,7 +20,11 @@ interface Props {
   visitId: number | null;
   existingPhotos: UnifiedPhoto[];
   onFilesSelected?: (files: File[], captions: string[]) => void;
+
+  // 🔥 NOVO → envia coordenadas EXIF para o Calendar
+  onAutoSetLocation?: (lat: number, lon: number) => void;
 }
+
 
 /**
  * VisitPhotos — UI pura
@@ -31,6 +37,7 @@ const VisitPhotos: React.FC<Props> = ({
   visitId,
   existingPhotos,
   onFilesSelected,
+  onAutoSetLocation,   // 🔥 AGORA EXISTE
 }) => {
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -106,6 +113,42 @@ const VisitPhotos: React.FC<Props> = ({
 
       const fileName = `foto_${Date.now()}.jpg`;
 
+
+      // 🔥 Extração EXIF via DataURL — versão correta
+      if (onAutoSetLocation) {
+        try {
+          const imgElement = new Image();
+          imgElement.src = dataUrl;
+
+          imgElement.onload = () => {
+            EXIF.getData(imgElement, function (this: any) {
+              const lat = EXIF.getTag(this, "GPSLatitude");
+              const lon = EXIF.getTag(this, "GPSLongitude");
+              const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+              const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+
+              if (lat && lon) {
+                const toDecimal = (dms: number[]) =>
+                  dms[0] + dms[1] / 60 + dms[2] / 3600;
+
+                let latitude = toDecimal(lat);
+                let longitude = toDecimal(lon);
+
+                if (latRef === "S") latitude *= -1;
+                if (lonRef === "W") longitude *= -1;
+
+                console.log("📍 GPS EXIF (APK):", latitude, longitude);
+                onAutoSetLocation(latitude, longitude);
+              }
+            });
+          };
+        } catch (err) {
+          console.warn("⚠️ EXIF do APK não pôde ser extraído", err);
+        }
+      }
+
+
+
       await savePendingPhoto({
         visit_id: visitId,
         fileName,
@@ -154,6 +197,34 @@ const VisitPhotos: React.FC<Props> = ({
     if (!fl) return;
 
     const arr = Array.from(fl);
+
+    // 🔥 EXTRAIR GPS EXIF DA PRIMEIRA FOTO
+    const first = arr[0];
+    if (first && onAutoSetLocation) {
+      EXIF.getData(first, function (this: any) {
+        const lat = EXIF.getTag(this, "GPSLatitude");
+        const lon = EXIF.getTag(this, "GPSLongitude");
+        const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+        const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+
+        if (lat && lon) {
+          const toDecimal = (dms: number[]) =>
+            dms[0] + dms[1] / 60 + dms[2] / 3600;
+
+          let latitude = toDecimal(lat);
+          let longitude = toDecimal(lon);
+
+          // hemisférios
+          if (latRef === "S") latitude *= -1;
+          if (lonRef === "W") longitude *= -1;
+
+          console.log("📍 GPS EXIF encontrado:", latitude, longitude);
+
+          onAutoSetLocation(latitude, longitude);
+        }
+      });
+    }
+
 
     setFiles(arr);
     setPreviews(arr.map((f) => URL.createObjectURL(f)));
