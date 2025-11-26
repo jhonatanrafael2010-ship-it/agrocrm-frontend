@@ -233,7 +233,12 @@ export interface PendingPhoto {
   dataUrl: string;
   caption?: string;
   synced: boolean;
+
+  // GPS offline
+  latitude?: number | null;
+  longitude?: number | null;
 }
+
 
 export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   const db = await openDB();

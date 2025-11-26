@@ -111,6 +111,14 @@ export async function syncPendingPhotos(apiBase: string) {
     form.append("photos", dataURLtoBlob(p.dataUrl), p.fileName);
     form.append("captions", p.caption || "");
 
+    // 🔥 Se existirem coordenadas EXIF salvas offline → enviar para o backend
+    if (p.latitude != null) {
+      form.append("latitude", String(p.latitude));
+    }
+    if (p.longitude != null) {
+      form.append("longitude", String(p.longitude));
+    }
+
     try {
       const res = await fetch(`${base}/visits/${p.visit_id}/photos`, {
         method: "POST",
@@ -125,6 +133,7 @@ export async function syncPendingPhotos(apiBase: string) {
     }
   }
 }
+
 
 /**
  * Sincronizar visitas pendentes

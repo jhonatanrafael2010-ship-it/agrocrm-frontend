@@ -396,6 +396,8 @@ const CalendarPage: React.FC = () => {
         dataUrl: reader.result as string,
         caption: caption || "",
         synced: false,
+        latitude: form.latitude,
+        longitude: form.longitude,
       });
       console.log("🟠 Foto salva offline:", file.name);
     };
@@ -494,6 +496,16 @@ const handleCreateOrUpdate = async () => {
     // 🟢 CRIAR
     else {
       console.log("🟩 Criando visita nova...");
+
+      const isReallyOffline =
+        !navigator.onLine ||
+        ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+      if (isReallyOffline) {
+        payload.latitude = form.latitude;
+        payload.longitude = form.longitude;
+      }
+
       result = await createVisitWithSync(API_BASE, payload);
     }
 
@@ -628,6 +640,8 @@ const handleSavePhotos = async () => {
   selectedFiles.forEach((file, i) => {
     fd.append("photos", file, file.name);
     fd.append("captions", selectedCaptions[i] || "");
+    fd.append("latitude", String(form.latitude || ""));
+    fd.append("longitude", String(form.longitude || ""));
   });
 
   const url = `${API_BASE}visits/${visitId}/photos`;
@@ -742,7 +756,11 @@ const handleSavePhotos = async () => {
 
         if (isReallyOffline) {
 
-          await updateVisitWithSync(API_BASE, form.id as number, { status: "done" });
+          await updateVisitWithSync(API_BASE, form.id as number, { 
+            status: "done",
+            latitude: form.latitude,
+            longitude: form.longitude
+          });
           alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
           setOpen(false);
           return;

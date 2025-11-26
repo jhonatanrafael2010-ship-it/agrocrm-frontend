@@ -1,19 +1,24 @@
+// src/components/VisitPhotos.tsx
+
 import React, { useEffect, useState, useCallback } from "react";
-import { API_BASE } from "../config";
 import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import EXIF from "exif-js";
 
-
+// =========================================
+// Tipagens
+// =========================================
 type UnifiedPhoto = {
   id?: number;
   url?: string;
   caption?: string;
 
-  // offline
   pending?: boolean;
   dataUrl?: string;
   visit_id?: number;
+
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 interface Props {
@@ -21,37 +26,31 @@ interface Props {
   existingPhotos: UnifiedPhoto[];
   onFilesSelected?: (files: File[], captions: string[]) => void;
 
-  // 🔥 NOVO → envia coordenadas EXIF para o Calendar
+  // EXIF → atualiza coordenadas no Calendar.tsx
   onAutoSetLocation?: (lat: number, lon: number) => void;
 }
 
-
-/**
- * VisitPhotos — UI pura
- * - Web: input file normal
- * - APK: botão da câmera
- * - exibe fotos online + offline
- * - exibe previews SEM duplicar
- */
+// =========================================
+// Componente principal
+// =========================================
 const VisitPhotos: React.FC<Props> = ({
   visitId,
   existingPhotos,
   onFilesSelected,
-  onAutoSetLocation,   // 🔥 AGORA EXISTE
+  onAutoSetLocation,
 }) => {
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
 
-  // 🔍 DETECÇÃO SEGURA DO APK
   const isMobileApp =
     typeof window !== "undefined" &&
     (window as any).Capacitor?.isNativePlatform === true &&
     !window.location.href.startsWith("http");
 
   // ======================================================
-  // 🔄 Carregar fotos OFFLINE corretamente
+  // Carregar fotos Off-line com EXIF
   // ======================================================
   const loadOffline = useCallback(async () => {
     if (!visitId) return [];
@@ -66,12 +65,12 @@ const VisitPhotos: React.FC<Props> = ({
         dataUrl: p.dataUrl,
         caption: p.caption || "",
         visit_id: p.visit_id,
+
+        latitude: p.latitude ?? null,
+        longitude: p.longitude ?? null,
       }));
   }, [visitId]);
 
-  // ======================================================
-  // 🔄 Merge inicial: online + offline
-  // ======================================================
   useEffect(() => {
     let mounted = true;
 
@@ -81,18 +80,18 @@ const VisitPhotos: React.FC<Props> = ({
         setSavedPhotos([...(existingPhotos || []), ...off]);
       }
     }
-
     merge();
+
     return () => {
       mounted = false;
     };
   }, [existingPhotos, loadOffline]);
 
   // ======================================================
-  // 📸 APK — captura via câmera nativa
+  // Capturar pelo APK
   // ======================================================
   async function handleCameraCapture() {
-    if (!visitId || Number(visitId) < 1) {
+    if (!visitId || visitId < 1) {
       alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
       return;
     }
@@ -104,51 +103,45 @@ const VisitPhotos: React.FC<Props> = ({
         allowEditing: false,
       });
 
-      const dataUrl = img.dataUrl || "";
-
-      if (!dataUrl) {
-        alert("❌ Erro: a câmera não retornou imagem.");
-        return;
-      }
+      const dataUrl = img.dataUrl;
+      if (!dataUrl) return;
 
       const fileName = `foto_${Date.now()}.jpg`;
 
+      let latitude: number | null = null;
+      let longitude: number | null = null;
 
-      // 🔥 Extração EXIF via DataURL — versão correta
-      if (onAutoSetLocation) {
-        try {
-          const imgElement = new Image();
-          imgElement.src = dataUrl;
+      // EXTRAIR EXIF
+      try {
+        const el = new Image();
+        el.src = dataUrl;
 
-          imgElement.onload = () => {
-            EXIF.getData(imgElement, function (this: any) {
-              const lat = EXIF.getTag(this, "GPSLatitude");
-              const lon = EXIF.getTag(this, "GPSLongitude");
-              const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-              const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+        el.onload = () => {
+          EXIF.getData(el, function (this: any) {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lon = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
 
-              if (lat && lon) {
-                const toDecimal = (dms: number[]) =>
-                  dms[0] + dms[1] / 60 + dms[2] / 3600;
+            if (lat && lon) {
+              const toDecimal = (dms: number[]) =>
+                dms[0] + dms[1] / 60 + dms[2] / 3600;
 
-                let latitude = toDecimal(lat);
-                let longitude = toDecimal(lon);
+              latitude = toDecimal(lat);
+              longitude = toDecimal(lon);
 
-                if (latRef === "S") latitude *= -1;
-                if (lonRef === "W") longitude *= -1;
+              if (latRef === "S") latitude *= -1;
+              if (lonRef === "W") longitude *= -1;
 
-                console.log("📍 GPS EXIF (APK):", latitude, longitude);
-                onAutoSetLocation(latitude, longitude);
-              }
-            });
-          };
-        } catch (err) {
-          console.warn("⚠️ EXIF do APK não pôde ser extraído", err);
-        }
-      }
+              console.log("📍 EXIF APK:", latitude, longitude);
 
+              if (onAutoSetLocation) onAutoSetLocation(latitude, longitude);
+            }
+          });
+        };
+      } catch {}
 
-
+      // SALVAR OFFLINE
       await savePendingPhoto({
         visit_id: visitId,
         fileName,
@@ -156,40 +149,27 @@ const VisitPhotos: React.FC<Props> = ({
         dataUrl,
         caption: "",
         synced: false,
+        latitude,
+        longitude,
       });
 
       alert("📸 Foto salva offline!");
 
-      // Atualiza a lista imediatamente
       const off = await loadOffline();
       setSavedPhotos([...(existingPhotos || []), ...off]);
 
     } catch (err) {
-      console.error("Erro ao capturar foto:", err);
+      console.error("Erro:", err);
       alert("❌ Falha ao capturar foto.");
     }
   }
 
   // ======================================================
-  // 🖼 Resolver URL
-  // ======================================================
-  function resolvePhotoUrl(p: UnifiedPhoto) {
-    if (p.dataUrl) return p.dataUrl;
-    if (!p.url) return "";
-    if (p.url.startsWith("http")) return p.url;
-
-    const base = API_BASE.replace("/api", "");
-    return `${base}${p.url}`;
-  }
-
-  // ======================================================
-  // 📁 Web — selecionar arquivos
+  // Upload Web
   // ======================================================
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("🔥 handleSelectFiles DISPAROU");
-
-    if (!visitId || Number(visitId) < 1) {
-      alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
+    if (!visitId || visitId < 1) {
+      alert("⚠️ Salve a visita antes de adicionar fotos.");
       return;
     }
 
@@ -198,9 +178,10 @@ const VisitPhotos: React.FC<Props> = ({
 
     const arr = Array.from(fl);
 
-    // 🔥 EXTRAIR GPS EXIF DA PRIMEIRA FOTO
-    const first = arr[0];
-    if (first && onAutoSetLocation) {
+    // Extrair EXIF da primeira foto
+    if (arr.length > 0 && onAutoSetLocation) {
+      const first = arr[0];
+
       EXIF.getData(first, function (this: any) {
         const lat = EXIF.getTag(this, "GPSLatitude");
         const lon = EXIF.getTag(this, "GPSLongitude");
@@ -214,57 +195,46 @@ const VisitPhotos: React.FC<Props> = ({
           let latitude = toDecimal(lat);
           let longitude = toDecimal(lon);
 
-          // hemisférios
           if (latRef === "S") latitude *= -1;
           if (lonRef === "W") longitude *= -1;
 
-          console.log("📍 GPS EXIF encontrado:", latitude, longitude);
-
+          console.log("📍 EXIF WEB:", latitude, longitude);
           onAutoSetLocation(latitude, longitude);
         }
       });
     }
 
-
+    // Previews e controle normal
     setFiles(arr);
     setPreviews(arr.map((f) => URL.createObjectURL(f)));
-
-    // captions sempre com o mesmo número de itens
     setCaptions(arr.map(() => ""));
 
-    // notifica apenas 1 vez
     if (onFilesSelected) {
       onFilesSelected(arr, arr.map(() => ""));
     }
   };
 
   // ======================================================
-  // 📝 Atualiza legendas
+  // Sincronizar legendas
   // ======================================================
   useEffect(() => {
-    if (!onFilesSelected) return;
-    if (files.length === 0) return;
-
+    if (!onFilesSelected || files.length === 0) return;
     onFilesSelected(files, captions);
   }, [captions]);
 
-  // ======================================================
-  // 🛑 Garantia de sincronização (evita legenda travar)
-  // ======================================================
   if (previews.length !== captions.length) {
     setCaptions(previews.map(() => ""));
   }
 
+  // ======================================================
+  // Render
+  // ======================================================
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos</label>
 
       {isMobileApp ? (
-        <button
-          type="button"
-          className="btn btn-primary w-100"
-          onClick={handleCameraCapture}
-        >
+        <button className="btn btn-primary w-100" onClick={handleCameraCapture}>
           📸 Tirar Foto
         </button>
       ) : (
@@ -277,7 +247,7 @@ const VisitPhotos: React.FC<Props> = ({
         />
       )}
 
-      {/* PREVIEWS NOVOS */}
+      {/* Previews */}
       {previews.length > 0 && (
         <div className="d-flex flex-wrap gap-3 mt-3">
           {previews.map((src, idx) => (
@@ -308,7 +278,7 @@ const VisitPhotos: React.FC<Props> = ({
         </div>
       )}
 
-      {/* FOTOS SALVAS */}
+      {/* Fotos salvas */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos salvas</label>
@@ -317,7 +287,7 @@ const VisitPhotos: React.FC<Props> = ({
             {savedPhotos.map((p, idx) => (
               <div key={idx} style={{ width: 130 }}>
                 <img
-                  src={resolvePhotoUrl(p)}
+                  src={p.dataUrl || p.url || ""}
                   style={{
                     width: "130px",
                     height: "130px",
