@@ -7,7 +7,6 @@ import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import DarkSelect from "../components/DarkSelect";
 import "../styles/Calendar.css";
 import { Geolocation } from "@capacitor/geolocation";
-import { Filesystem, Directory } from '@capacitor/filesystem';
 // import { FileOpener } from '@awesome-cordova-plugins/file-opener';
 // import { Capacitor } from '@capacitor/core';
 import VisitPhotos from "../components/VisitPhotos";
@@ -1573,50 +1572,6 @@ const handleSavePhotos = async () => {
                     >
                       📄 PDF
                     </a>
-
-                    <button
-                      className="btn btn-success d-flex align-items-center"
-                      onClick={async () => {
-                        if (!form.id) {
-                          alert("⚠️ Salve a visita antes de compartilhar o PDF.");
-                          return;
-                        }
-
-                        try {
-                          const pdfUrl = `${API_BASE}visits/${form.id}/pdf`;
-
-                          // Baixar o PDF no storage interno
-                          const downloaded = await Filesystem.downloadFile({
-                            url: pdfUrl,
-                            directory: Directory.Documents,
-                            path: `relatorio_${form.id}.pdf`,
-                          });
-
-                          // Caminho real no Android
-                          const pdfUri = downloaded.path ?? null;
-
-                          if (!pdfUri) {
-                            alert("❌ Não foi possível salvar o PDF no dispositivo.");
-                            return;
-                          }
-
-                          // Compartilhar via share nativo
-                          await (navigator as any).share({
-                            title: "Relatório NutriCRM",
-                            text: "Segue o relatório agronômico.",
-                            url: pdfUri,  // Agora correto
-                          });
-
-                        } catch (err) {
-                          console.error("Erro ao compartilhar PDF:", err);
-                          alert("❌ Não foi possível compartilhar o PDF.");
-                        }
-                      }}
-                    >
-                      📤 WhatsApp
-                    </button>
-
-
 
                     <button className="btn btn-success" onClick={markDone}>
                       ✅ Concluir
