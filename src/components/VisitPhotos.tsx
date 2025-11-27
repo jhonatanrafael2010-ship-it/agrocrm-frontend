@@ -3,8 +3,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
-import EXIF from "exif-js";
 
+// =========================================
+// Tipagens
+// =========================================
 type UnifiedPhoto = {
   id?: number;
   url?: string;
@@ -23,9 +25,13 @@ interface Props {
   existingPhotos: UnifiedPhoto[];
   onFilesSelected?: (files: File[], captions: string[]) => void;
 
+  // Atualiza localização externa
   onAutoSetLocation?: (lat: number, lon: number) => void;
 }
 
+// =========================================
+// Componente principal
+// =========================================
 const VisitPhotos: React.FC<Props> = ({
   visitId,
   existingPhotos,
@@ -42,18 +48,9 @@ const VisitPhotos: React.FC<Props> = ({
     (window as any).Capacitor?.isNativePlatform === true &&
     !window.location.href.startsWith("http");
 
-  // ===============================================
-  // 🔧 Corrige o erro crítico de setState no render
-  // ===============================================
-  useEffect(() => {
-    if (previews.length !== captions.length) {
-      setCaptions(previews.map(() => ""));
-    }
-  }, [previews]);
-
-  // ===============================================
-  // Carregar fotos offline
-  // ===============================================
+  // ======================================================
+  // Carrega fotos offline
+  // ======================================================
   const loadOffline = useCallback(async () => {
     if (!visitId) return [];
 
@@ -77,7 +74,9 @@ const VisitPhotos: React.FC<Props> = ({
 
     async function merge() {
       const off = await loadOffline();
-      if (mounted) setSavedPhotos([...(existingPhotos || []), ...off]);
+      if (mounted) {
+        setSavedPhotos([...(existingPhotos || []), ...off]);
+      }
     }
     merge();
 
@@ -86,12 +85,12 @@ const VisitPhotos: React.FC<Props> = ({
     };
   }, [existingPhotos, loadOffline]);
 
-  // ===============================================
-  // Captura no APK
-  // ===============================================
+  // ======================================================
+  // CAPTURA PELO APK (Sem EXIF!)
+  // ======================================================
   async function handleCameraCapture() {
     if (!visitId || visitId < 1) {
-      alert("⚠️ Primeiro SALVE a visita.");
+      alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
       return;
     }
 
@@ -99,6 +98,8 @@ const VisitPhotos: React.FC<Props> = ({
       const img = await Camera.getPhoto({
         quality: 80,
         resultType: CameraResultType.DataUrl,
+        allowEditing: false,
+        saveToGallery: false,
       });
 
       const dataUrl = img.dataUrl;
@@ -106,36 +107,18 @@ const VisitPhotos: React.FC<Props> = ({
 
       const fileName = `foto_${Date.now()}.jpg`;
 
+      // GPS VIA Plugin (muito mais confiável)
       let latitude: number | null = null;
       let longitude: number | null = null;
 
-      try {
-        const el = new Image();
-        el.src = dataUrl;
+      if (img.exif && typeof img.exif === "object") {
+        latitude = (img.exif.GPSLatitude as number) ?? null;
+        longitude = (img.exif.GPSLongitude as number) ?? null;
+      }
 
-        el.onload = () => {
-          EXIF.getData(el, function (this: any) {
-            const lat = EXIF.getTag(this, "GPSLatitude");
-            const lon = EXIF.getTag(this, "GPSLongitude");
-            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
-
-            if (lat && lon) {
-              const toDecimal = (dms: number[]) =>
-                dms[0] + dms[1] / 60 + dms[2] / 3600;
-
-              latitude = toDecimal(lat);
-              longitude = toDecimal(lon);
-
-              if (latRef === "S") latitude *= -1;
-              if (lonRef === "W") longitude *= -1;
-
-              if (onAutoSetLocation)
-                onAutoSetLocation(latitude, longitude);
-            }
-          });
-        };
-      } catch {}
+      if (onAutoSetLocation && latitude && longitude) {
+        onAutoSetLocation(latitude, longitude);
+      }
 
       await savePendingPhoto({
         visit_id: visitId,
@@ -152,16 +135,15 @@ const VisitPhotos: React.FC<Props> = ({
 
       const off = await loadOffline();
       setSavedPhotos([...(existingPhotos || []), ...off]);
-
     } catch (err) {
-      console.error(err);
-      alert("❌ Erro ao capturar foto.");
+      console.error("Erro:", err);
+      alert("❌ Falha ao capturar foto.");
     }
   }
 
-  // ===============================================
-  // Selecionar arquivos no navegador
-  // ===============================================
+  // ======================================================
+  // Upload Web (SEM EXIF — 100% seguro)
+  // ======================================================
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!visitId || visitId < 1) {
       alert("⚠️ Salve a visita antes de adicionar fotos.");
@@ -173,45 +155,31 @@ const VisitPhotos: React.FC<Props> = ({
 
     const arr = Array.from(fl);
 
-    // EXIF da primeira foto
-    if (arr.length > 0 && onAutoSetLocation) {
-      EXIF.getData(arr[0], function (this: any) {
-        const lat = EXIF.getTag(this, "GPSLatitude");
-        const lon = EXIF.getTag(this, "GPSLongitude");
-        const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-        const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
-
-        if (lat && lon) {
-          const toDecimal = (dms: number[]) =>
-            dms[0] + dms[1] / 60 + dms[2] / 3600;
-
-          let latitude = toDecimal(lat);
-          let longitude = toDecimal(lon);
-
-          if (latRef === "S") latitude *= -1;
-          if (lonRef === "W") longitude *= -1;
-
-          onAutoSetLocation(latitude, longitude);
-        }
-      });
-    }
-
+    // Previews normais
     setFiles(arr);
     setPreviews(arr.map((f) => URL.createObjectURL(f)));
     setCaptions(arr.map(() => ""));
 
-    if (onFilesSelected) onFilesSelected(arr, arr.map(() => ""));
+    if (onFilesSelected) {
+      onFilesSelected(arr, arr.map(() => ""));
+    }
   };
 
-  // Atualizar legendas
+  // ======================================================
+  // Atualização de legendas
+  // ======================================================
   useEffect(() => {
-    if (onFilesSelected && files.length > 0)
-      onFilesSelected(files, captions);
+    if (!onFilesSelected || files.length === 0) return;
+    onFilesSelected(files, captions);
   }, [captions]);
 
-  // ===============================================
+  if (previews.length !== captions.length) {
+    setCaptions(previews.map(() => ""));
+  }
+
+  // ======================================================
   // Render
-  // ===============================================
+  // ======================================================
   return (
     <div className="col-12 mt-3">
       <label className="form-label fw-semibold">📸 Fotos</label>
@@ -244,10 +212,11 @@ const VisitPhotos: React.FC<Props> = ({
                   borderRadius: 10,
                 }}
               />
+
               <input
                 type="text"
-                className="form-control form-control-sm mt-1"
                 placeholder="Legenda..."
+                className="form-control form-control-sm mt-1"
                 value={captions[idx] || ""}
                 onChange={(e) => {
                   const arr = [...captions];
@@ -260,7 +229,7 @@ const VisitPhotos: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Fotos salvas (offline + backend) */}
+      {/* Fotos salvas */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
           <label className="form-label fw-semibold">📁 Fotos salvas</label>
@@ -277,6 +246,7 @@ const VisitPhotos: React.FC<Props> = ({
                     borderRadius: 10,
                   }}
                 />
+
                 <input
                   type="text"
                   className="form-control form-control-sm mt-1"
