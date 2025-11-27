@@ -48,6 +48,14 @@ const Visits: React.FC = () => {
   const theme = document.body.getAttribute("data-theme") || "light";
 
   // ============================================================
+  // 🔧 Normalizador de datas (corrige problemas de timezone)
+  // ============================================================
+  function normalizeDate(dateStr?: string) {
+    if (!dateStr) return null;
+    return new Date(dateStr.split("T")[0]); // remove horas
+  }
+
+  // ============================================================
   // 🔁 Carregar tudo
   // ============================================================
   async function loadData() {
@@ -56,7 +64,6 @@ const Visits: React.FC = () => {
     try {
       let vs = [];
 
-      // visitas completas
       try {
         const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
         vs = r1.ok ? await r1.json() : [];
@@ -109,7 +116,9 @@ const Visits: React.FC = () => {
     loadData();
   }, []);
 
-  // LOGA AS VISITAS SEMPRE QUE MUDAM
+  // ============================================================
+  // 🔄 Debug — verifica o que passa nos filtros
+  // ============================================================
   useEffect(() => {
     if (!visits.length) {
       console.log("DEBUG_VISITS_BRUTAS: VAZIO");
@@ -119,11 +128,13 @@ const Visits: React.FC = () => {
     console.log("DEBUG_VISITS_BRUTAS", visits);
 
     const debugFiltered = visits.map((v) => {
-      const d = v.date ? new Date(v.date) : null;
+      const d = normalizeDate(v.date);
+      const fs = normalizeDate(filterStart);
+      const fe = normalizeDate(filterEnd);
 
       const c1 = !(filterClient && String(v.client_id) !== filterClient);
-      const c2 = !(d && d < new Date(filterStart));
-      const c3 = !(d && d > new Date(filterEnd));
+      const c2 = !(d && fs && d < fs);
+      const c3 = !(d && fe && d > fe);
       const c4 = !(selectedConsultant && String(v.consultant_id) !== selectedConsultant);
       const c5 = !(selectedCulture && String(v.culture || "").trim() !== selectedCulture);
       const c6 = !(selectedVariety && String(v.variety || "").trim() !== selectedVariety);
@@ -134,9 +145,15 @@ const Visits: React.FC = () => {
     });
 
     console.log("DEBUG_VISITS_FILTRADAS", debugFiltered);
-  }, [visits, filterClient, filterStart, filterEnd, selectedConsultant, selectedCulture, selectedVariety]);
-
-
+  }, [
+    visits,
+    filterClient,
+    filterStart,
+    filterEnd,
+    selectedConsultant,
+    selectedCulture,
+    selectedVariety,
+  ]);
 
   // ============================================================
   // 🔧 Auxiliares
@@ -147,8 +164,8 @@ const Visits: React.FC = () => {
 
   function formatDateBR(d?: string) {
     if (!d) return "--";
-    if (!d.includes("-")) return d;
-    const [y, m, day] = d.split("-");
+    const clean = d.split("T")[0];
+    const [y, m, day] = clean.split("-");
     return `${day}/${m}/${y}`;
   }
 
@@ -177,14 +194,25 @@ const Visits: React.FC = () => {
       <div className="col-12 col-lg-10 mx-auto mb-3">
         <div className={`p-3 rounded shadow-sm ${theme === "dark" ? "bg-dark-subtle" : "bg-light"}`}>
           <div className="row g-3 align-items-end">
+
             <div className="col-md-2">
               <label>Início</label>
-              <input type="date" value={filterStart} onChange={(e) => setFilterStart(e.target.value)} className="form-control" />
+              <input
+                type="date"
+                value={filterStart}
+                onChange={(e) => setFilterStart(e.target.value)}
+                className="form-control"
+              />
             </div>
 
             <div className="col-md-2">
               <label>Fim</label>
-              <input type="date" value={filterEnd} onChange={(e) => setFilterEnd(e.target.value)} className="form-control" />
+              <input
+                type="date"
+                value={filterEnd}
+                onChange={(e) => setFilterEnd(e.target.value)}
+                className="form-control"
+              />
             </div>
 
             <div className="col-md-3 position-relative">
@@ -197,9 +225,14 @@ const Visits: React.FC = () => {
                 onChange={(e) => setClientSearch(e.target.value)}
               />
               {clientSearch && (
-                <ul className="list-group position-absolute w-100 mt-1" style={{ maxHeight: 150, overflowY: "auto", zIndex: 20 }}>
+                <ul
+                  className="list-group position-absolute w-100 mt-1"
+                  style={{ maxHeight: 150, overflowY: "auto", zIndex: 20 }}
+                >
                   {clients
-                    .filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()))
+                    .filter((c) =>
+                      c.name.toLowerCase().includes(clientSearch.toLowerCase())
+                    )
                     .map((c) => (
                       <li
                         key={c.id}
@@ -219,7 +252,11 @@ const Visits: React.FC = () => {
 
             <div className="col-md-2">
               <label>Consultor</label>
-              <select value={selectedConsultant} onChange={(e) => setSelectedConsultant(e.target.value)} className="form-select">
+              <select
+                value={selectedConsultant}
+                onChange={(e) => setSelectedConsultant(e.target.value)}
+                className="form-select"
+              >
                 <option value="">Todos</option>
                 {consultants.map((c) => (
                   <option key={c.id} value={String(c.id)}>
@@ -231,20 +268,35 @@ const Visits: React.FC = () => {
 
             <div className="col-md-1">
               <label>Cultura</label>
-              <select value={selectedCulture} onChange={(e) => { setSelectedCulture(e.target.value); setSelectedVariety(""); }} className="form-select">
+              <select
+                value={selectedCulture}
+                onChange={(e) => {
+                  setSelectedCulture(e.target.value);
+                  setSelectedVariety("");
+                }}
+                className="form-select"
+              >
                 <option value="">Todas</option>
                 {cultures.map((c) => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="col-md-2">
               <label>Variedade</label>
-              <select value={selectedVariety} onChange={(e) => setSelectedVariety(e.target.value)} className="form-select">
+              <select
+                value={selectedVariety}
+                onChange={(e) => setSelectedVariety(e.target.value)}
+                className="form-select"
+              >
                 <option value="">Todas</option>
                 {filteredVarieties.map((v) => (
-                  <option key={v.name} value={v.name}>{v.name}</option>
+                  <option key={v.name} value={v.name}>
+                    {v.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -261,7 +313,11 @@ const Visits: React.FC = () => {
               <div className="text-center text-secondary py-4">Carregando…</div>
             ) : (
               <div className="table-responsive">
-                <table className={`table table-sm align-middle ${theme === "dark" ? "table-dark" : "table-striped"}`}>
+                <table
+                  className={`table table-sm align-middle ${
+                    theme === "dark" ? "table-dark" : "table-striped"
+                  }`}
+                >
                   <thead>
                     <tr>
                       <th>Data</th>
@@ -281,21 +337,35 @@ const Visits: React.FC = () => {
                       .filter((v) => {
                         if (filterClient && String(v.client_id) !== filterClient) return false;
 
-                        const d = v.date ? new Date(v.date) : null;
-                        if (d) {
-                          if (d < new Date(filterStart)) return false;
-                          if (d > new Date(filterEnd)) return false;
-                        }
+                        const d = normalizeDate(v.date);
+                        const fs = normalizeDate(filterStart);
+                        const fe = normalizeDate(filterEnd);
 
-                        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
+                        if (d && fs && d < fs) return false;
+                        if (d && fe && d > fe) return false;
 
-                        if (selectedCulture && String(v.culture || "").trim() !== selectedCulture) return false;
+                        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant)
+                          return false;
 
-                        if (selectedVariety && String(v.variety || "").trim() !== selectedVariety) return false;
+                        if (
+                          selectedCulture &&
+                          String(v.culture || "").trim() !== selectedCulture
+                        )
+                          return false;
+
+                        if (
+                          selectedVariety &&
+                          String(v.variety || "").trim() !== selectedVariety
+                        )
+                          return false;
 
                         return true;
                       })
-                      .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
+                      .sort(
+                        (a, b) =>
+                          new Date(b.date!.split("T")[0]).getTime() -
+                          new Date(a.date!.split("T")[0]).getTime()
+                      )
                       .map((v) => (
                         <tr key={v.id}>
                           <td>{formatDateBR(v.date)}</td>
@@ -309,7 +379,9 @@ const Visits: React.FC = () => {
                           <td className="text-end">
                             <button
                               className="btn btn-outline-primary btn-sm me-1"
-                              onClick={() => window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")}
+                              onClick={() =>
+                                window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")
+                              }
                             >
                               PDF
                             </button>
@@ -332,7 +404,6 @@ const Visits: React.FC = () => {
                       </tr>
                     )}
                   </tbody>
-
                 </table>
               </div>
             )}
