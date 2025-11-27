@@ -59,20 +59,23 @@ const Visits: React.FC = () => {
   // 🔁 Função unificada de carregamento
   // ============================================================
   async function loadData() {
-    // 🔵 Sempre buscar visitas completas direto do backend
-    let vs = [];
+    setLoading(true);
+
     try {
-      const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
-      vs = r1.ok ? await r1.json() : [];
-    } catch (e) {
-      console.warn("⚠️ Falha ao carregar visitas completas do backend:", e);
-      vs = [];
-    }
+      // 🔵 Sempre buscar visitas completas direto do backend
+      let vs = [];
+      try {
+        const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
+        vs = r1.ok ? await r1.json() : [];
+      } catch (e) {
+        console.warn("⚠️ Falha ao carregar visitas completas do backend:", e);
+        vs = [];
+      }
 
-
+      // 🔍 Detecta problema de backend retornando só PLANTIO
       const onlyPlantio =
         vs.length > 0 &&
-        vs.every((v) =>
+        vs.every((v: any) =>
           String(v.recommendation || "").toLowerCase().includes("plantio")
         );
 
@@ -91,7 +94,7 @@ const Visits: React.FC = () => {
         }
       }
 
-      // 2️⃣ Carrega dados auxiliares
+      // 2️⃣ Carrega dados auxiliares (cache seguro)
       const [cs, ps, pls, cons, cul, vars] = await Promise.all([
         fetchWithCache(`${API_BASE}clients`, "clients"),
         fetchWithCache(`${API_BASE}properties`, "properties"),
@@ -108,13 +111,15 @@ const Visits: React.FC = () => {
       setConsultants(cons);
       setCultures(cul);
       setVarieties(vars);
+
     } catch (err) {
-      console.error(err);
+      console.error("Erro ao carregar acompanhamentos:", err);
       setError("Erro ao carregar acompanhamentos");
     } finally {
       setLoading(false);
     }
   }
+
 
   // ============================================================
   // 🚀 Load inicial
