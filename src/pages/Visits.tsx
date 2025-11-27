@@ -4,6 +4,7 @@ import { API_BASE } from "../config";
 /* @ts-nocheck */
 import { fetchWithCache } from "../utils/offlineSync";
 
+// Tipos
 type Visit = {
   id: number;
   date?: string;
@@ -35,52 +36,46 @@ const Visits: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filtros
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedCulture, setSelectedCulture] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
+
   const [clientSearch, setClientSearch] = useState("");
   const [filterClient, setFilterClient] = useState("");
 
-  const [viewOpen, setViewOpen] = useState(false);
-  const [activeVisit, setActiveVisit] = useState<Visit | null>(null);
-  if (false) console.log(viewOpen, activeVisit);
-
-  const today = new Date();
-  const todayISO = today.toISOString().slice(0, 10);
-  const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
-  const fiveYearsISO = fiveYearsAgo.toISOString().slice(0, 10);
-
-  const [filterStart, setFilterStart] = useState<string>(fiveYearsISO);
-  const [filterEnd, setFilterEnd] = useState<string>(todayISO);
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const [filterStart, setFilterStart] = useState("2020-01-01");
+  const [filterEnd, setFilterEnd] = useState(todayISO);
 
   const theme = document.body.getAttribute("data-theme") || "light";
 
   // ============================================================
-  // 🔁 Função unificada de carregamento
+  // 🔁 Carregamento seguro
   // ============================================================
   async function loadData() {
     setLoading(true);
 
     try {
-      // 🔵 Sempre buscar visitas completas direto do backend
+      // 🔵 Buscar full visits
       let vs = [];
       try {
         const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
         vs = r1.ok ? await r1.json() : [];
       } catch (e) {
-        console.warn("⚠️ Falha ao carregar visitas completas do backend:", e);
+        console.warn("⚠️ Falha ao carregar visitas", e);
         vs = [];
       }
 
-      // 🔍 Detecta problema de backend retornando só PLANTIO
+      // 🔍 Backend bug — retornando só PLANTIO?
       const onlyPlantio =
         vs.length > 0 &&
-        vs.every((v: any) =>
+        vs.every((v: Visit) =>
           String(v.recommendation || "").toLowerCase().includes("plantio")
         );
 
       if (onlyPlantio) {
-        console.log("⚠️ Backend devolveu apenas Plantio — aplicando fallback");
+        console.log("⚠️ Backend devolveu apenas Plantio — fallback");
         try {
           const r2 = await fetch(`${API_BASE}visits?scope=all`);
           if (r2.ok) {
@@ -89,12 +84,10 @@ const Visits: React.FC = () => {
               vs = data2;
             }
           }
-        } catch (err) {
-          console.warn("⚠️ Falha no fallback:", err);
-        }
+        } catch {}
       }
 
-      // 2️⃣ Carrega dados auxiliares (cache seguro)
+      // 🔵 Dados auxiliares
       const [cs, ps, pls, cons, cul, vars] = await Promise.all([
         fetchWithCache(`${API_BASE}clients`, "clients"),
         fetchWithCache(`${API_BASE}properties`, "properties"),
@@ -113,28 +106,22 @@ const Visits: React.FC = () => {
       setVarieties(vars);
 
     } catch (err) {
-      console.error("Erro ao carregar acompanhamentos:", err);
+      console.error("Erro:", err);
       setError("Erro ao carregar acompanhamentos");
     } finally {
       setLoading(false);
     }
   }
 
-
-  // ============================================================
-  // 🚀 Load inicial
-  // ============================================================
+  // Inicial
   useEffect(() => {
-    setLoading(true);
     loadData();
   }, []);
 
-  // ============================================================
-  // 🔄 Recarregar quando sincronizar no calendário
-  // ============================================================
+  // Recarregar após sync
   useEffect(() => {
     const update = () => {
-      console.log("🔄 Acompanhamentos sincronizados — recarregando...");
+      console.log("🔄 Recarregando após sync…");
       loadData();
     };
 
@@ -148,38 +135,17 @@ const Visits: React.FC = () => {
   }, []);
 
   // ============================================================
-  // Auxiliares
+  // Aux
   // ============================================================
   const filteredVarieties = selectedCulture
     ? varieties.filter((v) => v.culture === selectedCulture)
     : varieties;
 
-  function formatDateBR(dateStr?: string) {
-    if (!dateStr) return "--";
-    const parts = String(dateStr).split("-");
-    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    return String(dateStr);
-  }
-
-  function openView(v: Visit) {
-    setActiveVisit(v);
-    setViewOpen(true);
-  }
-
-  async function handleDelete(id?: number) {
-    if (!id) return;
-    if (!confirm("Deseja excluir esta visita?")) return;
-    try {
-      const res = await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || `status ${res.status}`);
-      }
-      setVisits((list) => list.filter((v) => v.id !== id));
-    } catch (err: any) {
-      console.error("Erro ao excluir visita", err);
-      alert(err?.message || "Erro ao excluir visita");
-    }
+  function formatDateBR(d?: string) {
+    if (!d) return "--";
+    if (!d.includes("-")) return d;
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
   }
 
   // ============================================================
@@ -198,18 +164,21 @@ const Visits: React.FC = () => {
         <div className={`p-3 rounded shadow-sm ${theme === "dark" ? "bg-dark-subtle" : "bg-light"}`}>
           <div className="row g-3 align-items-end">
 
+            {/* INÍCIO */}
             <div className="col-md-2">
-              <label className="form-label">Início</label>
+              <label>Início</label>
               <input type="date" value={filterStart} onChange={(e) => setFilterStart(e.target.value)} className="form-control" />
             </div>
 
+            {/* FIM */}
             <div className="col-md-2">
-              <label className="form-label">Fim</label>
+              <label>Fim</label>
               <input type="date" value={filterEnd} onChange={(e) => setFilterEnd(e.target.value)} className="form-control" />
             </div>
 
+            {/* CLIENTE */}
             <div className="col-md-3 position-relative">
-              <label className="form-label">Cliente</label>
+              <label>Cliente</label>
               <input
                 type="text"
                 className="form-control"
@@ -218,14 +187,9 @@ const Visits: React.FC = () => {
                 onChange={(e) => setClientSearch(e.target.value)}
               />
               {clientSearch && (
-                <ul
-                  className="list-group position-absolute w-100 mt-1"
-                  style={{ maxHeight: "150px", overflowY: "auto", zIndex: 20 }}
-                >
+                <ul className="list-group position-absolute w-100 mt-1" style={{ maxHeight: 150, overflowY: "auto", zIndex: 20 }}>
                   {clients
-                    .filter((c) =>
-                      c.name.toLowerCase().includes(clientSearch.toLowerCase())
-                    )
+                    .filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()))
                     .map((c) => (
                       <li
                         key={c.id}
@@ -243,8 +207,9 @@ const Visits: React.FC = () => {
               )}
             </div>
 
+            {/* CONSULTOR */}
             <div className="col-md-2">
-              <label className="form-label">Consultor</label>
+              <label>Consultor</label>
               <select value={selectedConsultant} onChange={(e) => setSelectedConsultant(e.target.value)} className="form-select">
                 <option value="">Todos</option>
                 {consultants.map((c) => (
@@ -255,8 +220,9 @@ const Visits: React.FC = () => {
               </select>
             </div>
 
+            {/* CULTURA */}
             <div className="col-md-1">
-              <label className="form-label">Cultura</label>
+              <label>Cultura</label>
               <select value={selectedCulture} onChange={(e) => { setSelectedCulture(e.target.value); setSelectedVariety(""); }} className="form-select">
                 <option value="">Todas</option>
                 {cultures.map((c) => (
@@ -265,8 +231,9 @@ const Visits: React.FC = () => {
               </select>
             </div>
 
+            {/* VARIEDADE */}
             <div className="col-md-2">
-              <label className="form-label">Variedade</label>
+              <label>Variedade</label>
               <select value={selectedVariety} onChange={(e) => setSelectedVariety(e.target.value)} className="form-select">
                 <option value="">Todas</option>
                 {filteredVarieties.map((v) => (
@@ -284,9 +251,7 @@ const Visits: React.FC = () => {
         <div className={`card border-0 shadow-sm ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
           <div className="card-body">
             {loading ? (
-              <div className="text-center text-secondary py-3">Carregando...</div>
-            ) : error ? (
-              <div className="alert alert-danger">{error}</div>
+              <div className="text-center text-secondary py-4">Carregando…</div>
             ) : (
               <div className="table-responsive">
                 <table className={`table table-sm align-middle ${theme === "dark" ? "table-dark" : "table-striped"}`}>
@@ -300,44 +265,68 @@ const Visits: React.FC = () => {
                       <th>Cultura</th>
                       <th>Variedade</th>
                       <th>Recomendação</th>
-                      <th className="text-end">Ações</th>
+                      <th></th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {visits
                       .filter((v) => {
+                        // FILTROS SEGUROS
                         if (filterClient && String(v.client_id) !== filterClient) return false;
-                        if (filterStart && v.date && v.date < filterStart) return false;
-                        if (filterEnd && v.date && v.date > filterEnd) return false;
+
+                        const d = v.date ? new Date(v.date) : null;
+                        if (d) {
+                          if (d < new Date(filterStart)) return false;
+                          if (d > new Date(filterEnd)) return false;
+                        }
+
                         if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
-                        if (selectedCulture && v.culture !== selectedCulture) return false;
-                        if (selectedVariety && v.variety !== selectedVariety) return false;
+
+                        if (selectedCulture && String(v.culture || "").trim() !== selectedCulture) return false;
+
+                        if (selectedVariety && String(v.variety || "").trim() !== selectedVariety) return false;
+
                         return true;
                       })
                       .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
                       .map((v) => (
                         <tr key={v.id}>
                           <td>{formatDateBR(v.date)}</td>
-                          <td>{clients.find((c) => c.id === v.client_id)?.name ?? v.client_id}</td>
-                          <td>{properties.find((p) => p.id === v.property_id)?.name ?? v.property_id}</td>
-                          <td>{plots.find((p) => p.id === v.plot_id)?.name ?? v.plot_id}</td>
-                          <td>{consultants.find((c) => c.id === v.consultant_id)?.name || "—"}</td>
+                          <td>{clients.find((c) => c.id === v.client_id)?.name ?? "—"}</td>
+                          <td>{properties.find((p) => p.id === v.property_id)?.name ?? "—"}</td>
+                          <td>{plots.find((p) => p.id === v.plot_id)?.name ?? "—"}</td>
+                          <td>{consultants.find((c) => c.id === v.consultant_id)?.name ?? "—"}</td>
                           <td>{v.culture || "—"}</td>
                           <td>{v.variety || "—"}</td>
-                          <td>{v.recommendation ?? "--"}</td>
+                          <td>{v.recommendation || "--"}</td>
                           <td className="text-end">
-                            <button className="btn btn-outline-primary btn-sm me-1" onClick={() => openView(v)}>Ver</button>
-                            <button className="btn btn-outline-success btn-sm me-1" onClick={() => window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")}>📄 PDF</button>
-                            <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(v.id)}>Excluir</button>
+                            <button
+                              className="btn btn-outline-primary btn-sm me-1"
+                              onClick={() => window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")}
+                            >
+                              PDF
+                            </button>
+
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleDelete(v.id)}
+                            >
+                              Excluir
+                            </button>
                           </td>
                         </tr>
                       ))}
-                    {!loading && visits.length === 0 && (
+
+                    {visits.length === 0 && (
                       <tr>
-                        <td colSpan={9} className="text-center text-secondary py-3">Nenhum acompanhamento encontrado</td>
+                        <td colSpan={9} className="text-center py-4 text-secondary">
+                          Nenhum acompanhamento encontrado
+                        </td>
                       </tr>
                     )}
                   </tbody>
+
                 </table>
               </div>
             )}
