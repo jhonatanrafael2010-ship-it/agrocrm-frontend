@@ -333,80 +333,89 @@ const Visits: React.FC = () => {
                   </thead>
 
                   <tbody>
-                    {visits
-                      .filter((v) => {
-                        if (filterClient && String(v.client_id) !== filterClient) return false;
+                  {visits
+                    ?.filter((v) => {
+                      if (!v) return false;
 
-                        const d = normalizeDate(v.date);
-                        const fs = normalizeDate(filterStart);
-                        const fe = normalizeDate(filterEnd);
+                      // Cliente
+                      if (filterClient && String(v.client_id) !== filterClient) return false;
 
-                        if (d && fs && d < fs) return false;
-                        if (d && fe && d > fe) return false;
+                      // Datas
+                      const d = v.date ? new Date(v.date.split("T")[0]) : null;
+                      const fs = new Date(filterStart);
+                      const fe = new Date(filterEnd);
 
-                        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
-                        if (selectedCulture && String(v.culture || "").trim() !== selectedCulture) return false;
-                        if (selectedVariety && String(v.variety || "").trim() !== selectedVariety) return false;
+                      if (d && d < fs) return false;
+                      if (d && d > fe) return false;
 
-                        return true;
-                      })
-                      .sort(
-                        (a, b) =>
-                          new Date(b?.date?.split("T")[0] || "1900-01-01").getTime() -
-                          new Date(a?.date?.split("T")[0] || "1900-01-01").getTime()
-                      )
-                      .map((v) => {
-                        const clientName =
-                          clients.find((c) => c.id === v.client_id)?.name || "—";
+                      // Consultor
+                      if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
 
-                        const propertyName =
-                          properties.find((p) => p.id === v.property_id)?.name || "—";
+                      // Cultura
+                      if (selectedCulture && String(v.culture || "").trim() !== selectedCulture) return false;
 
-                        const plotName =
-                          plots.find((p) => p.id === v.plot_id)?.name || "—";
+                      // Variedade
+                      if (selectedVariety && String(v.variety || "").trim() !== selectedVariety) return false;
 
-                        const consultantName =
-                          consultants.find((c) => c.id === v.consultant_id)?.name || "—";
+                      return true;
+                    })
+                    ?.sort((a, b) => {
+                      const da = new Date(a?.date?.split("T")[0] || "1900-01-01").getTime();
+                      const db = new Date(b?.date?.split("T")[0] || "1900-01-01").getTime();
+                      return db - da;
+                    })
+                    ?.map((v) => {
+                      const clientName =
+                        clients?.find((c) => c.id === v.client_id)?.name || "—";
 
-                        return (
-                          <tr key={v.id}>
-                            <td>{formatDateBR(v.date)}</td>
-                            <td>{clientName}</td>
-                            <td>{propertyName}</td>
-                            <td>{plotName}</td>
-                            <td>{consultantName}</td>
-                            <td>{v.culture || "—"}</td>
-                            <td>{v.variety || "—"}</td>
-                            <td>{v.recommendation || "--"}</td>
-                            <td className="text-end">
-                              <button
-                                className="btn btn-outline-primary btn-sm me-1"
-                                onClick={() =>
-                                  window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")
-                                }
-                              >
-                                PDF
-                              </button>
+                      const propertyName =
+                        properties?.find((p) => p.id === v.property_id)?.name || "—";
 
-                              <button
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={() => handleDelete(v.id)}
-                              >
-                                Excluir
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      const plotName =
+                        plots?.find((p) => p.id === v.plot_id)?.name || "—";
 
-                    {visits.length === 0 && (
-                      <tr>
-                        <td colSpan={9} className="text-center py-4 text-secondary">
-                          Nenhum acompanhamento encontrado
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
+                      const consultantName =
+                        consultants?.find((c) => c.id === v.consultant_id)?.name || "—";
+
+                      return (
+                        <tr key={v?.id || Math.random()}>
+                          <td>{formatDateBR(v?.date)}</td>
+                          <td>{clientName}</td>
+                          <td>{propertyName}</td>
+                          <td>{plotName}</td>
+                          <td>{consultantName}</td>
+                          <td>{v?.culture || "—"}</td>
+                          <td>{v?.variety || "—"}</td>
+                          <td>{v?.recommendation || "--"}</td>
+                          <td className="text-end">
+                            <button
+                              className="btn btn-outline-primary btn-sm me-1"
+                              onClick={() =>
+                                window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")
+                              }
+                            >
+                              PDF
+                            </button>
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleDelete(v.id)}
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                  {visits?.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="text-center text-secondary py-3">
+                        Nenhum acompanhamento encontrado
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
 
                 </table>
               </div>
