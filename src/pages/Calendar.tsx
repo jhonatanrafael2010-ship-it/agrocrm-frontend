@@ -683,6 +683,56 @@ const handleSavePhotos = async () => {
 };
 
 
+const handleEditSavedPhoto = async (
+  photo: any, 
+  newCaption: string
+) => {
+
+  const visitId = Number(form.id);
+
+  // 1️⃣ OFFLINE → atualizar IndexedDB
+  if (photo.pending) {
+    await savePendingPhoto({
+      ...photo,
+      caption: newCaption,
+      visit_id: visitId,
+    });
+
+    // Atualiza estado local
+    setForm(f => ({
+      ...f,
+      savedPhotos: f.savedPhotos.map(p =>
+        p.id === photo.id ? { ...p, caption: newCaption } : p
+      )
+    }));
+
+    return;
+  }
+
+  // 2️⃣ ONLINE → enviar pro backend
+  try {
+    const resp = await fetch(`${API_BASE}photos/${photo.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ caption: newCaption }),
+    });
+
+    if (resp.ok) {
+      setForm(f => ({
+        ...f,
+        savedPhotos: f.savedPhotos.map(p =>
+          p.id === photo.id ? { ...p, caption: newCaption } : p
+        )
+      }));
+    } else {
+      alert("Erro ao atualizar legenda no servidor.");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Falha ao atualizar legenda.");
+  }
+};
+
 
   // ============================================================
   // 🗑️ Excluir (AGORA CORRIGIDO)
@@ -1577,6 +1627,9 @@ const handleSavePhotos = async () => {
                           setSelectedCaptions(captions);
                         }}
                         onAutoSetLocation={handleAutoSetLocation}
+
+                        // 🔥 NOVO: atualiza legenda de foto salva (offline ou online)
+                        onEditSavedPhoto={handleEditSavedPhoto}
                       />
                     )}
                   {form.id && selectedFiles.length > 0 && (

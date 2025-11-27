@@ -26,9 +26,12 @@ interface Props {
   existingPhotos: UnifiedPhoto[];
   onFilesSelected?: (files: File[], captions: string[]) => void;
 
-  // EXIF → atualiza coordenadas no Calendar.tsx
   onAutoSetLocation?: (lat: number, lon: number) => void;
+
+  //  ✅ NOVO → permite editar legenda de fotos já salvas
+  onEditSavedPhoto?: (photo: UnifiedPhoto, newCaption: string) => void;
 }
+
 
 // =========================================
 // Componente principal
@@ -38,6 +41,7 @@ const VisitPhotos: React.FC<Props> = ({
   existingPhotos,
   onFilesSelected,
   onAutoSetLocation,
+  onEditSavedPhoto,
 }) => {
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -299,8 +303,8 @@ const VisitPhotos: React.FC<Props> = ({
                 <input
                   type="text"
                   className="form-control form-control-sm mt-1"
-                  disabled
                   value={p.caption || ""}
+                  onChange={(e) => onEditSavedPhoto?.(p, e.target.value)}
                 />
               </div>
             ))}
