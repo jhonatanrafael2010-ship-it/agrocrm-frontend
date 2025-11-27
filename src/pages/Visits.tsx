@@ -34,13 +34,10 @@ const Visits: React.FC = () => {
   const [cultures, setCultures] = useState<Culture[]>([]);
   const [varieties, setVarieties] = useState<Variety[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Filtros
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedCulture, setSelectedCulture] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
-
   const [clientSearch, setClientSearch] = useState("");
   const [filterClient, setFilterClient] = useState("");
 
@@ -51,23 +48,23 @@ const Visits: React.FC = () => {
   const theme = document.body.getAttribute("data-theme") || "light";
 
   // ============================================================
-  // 🔁 Carregamento seguro
+  // 🔁 Carregar tudo
   // ============================================================
   async function loadData() {
     setLoading(true);
 
     try {
-      // 🔵 Buscar full visits
       let vs = [];
+
+      // visitas completas
       try {
         const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
         vs = r1.ok ? await r1.json() : [];
-      } catch (e) {
-        console.warn("⚠️ Falha ao carregar visitas", e);
+      } catch {
         vs = [];
       }
 
-      // 🔍 Backend bug — retornando só PLANTIO?
+      // detectar bug de plantio
       const onlyPlantio =
         vs.length > 0 &&
         vs.every((v: Visit) =>
@@ -75,7 +72,6 @@ const Visits: React.FC = () => {
         );
 
       if (onlyPlantio) {
-        console.log("⚠️ Backend devolveu apenas Plantio — fallback");
         try {
           const r2 = await fetch(`${API_BASE}visits?scope=all`);
           if (r2.ok) {
@@ -87,7 +83,6 @@ const Visits: React.FC = () => {
         } catch {}
       }
 
-      // 🔵 Dados auxiliares
       const [cs, ps, pls, cons, cul, vars] = await Promise.all([
         fetchWithCache(`${API_BASE}clients`, "clients"),
         fetchWithCache(`${API_BASE}properties`, "properties"),
@@ -105,25 +100,17 @@ const Visits: React.FC = () => {
       setCultures(cul);
       setVarieties(vars);
 
-    } catch (err) {
-      console.error("Erro:", err);
-      setError("Erro ao carregar acompanhamentos");
     } finally {
       setLoading(false);
     }
   }
 
-  // Inicial
   useEffect(() => {
     loadData();
   }, []);
 
-  // Recarregar após sync
   useEffect(() => {
-    const update = () => {
-      console.log("🔄 Recarregando após sync…");
-      loadData();
-    };
+    const update = () => loadData();
 
     window.addEventListener("visits-synced", update);
     window.addEventListener("visits-updated", update);
@@ -135,7 +122,7 @@ const Visits: React.FC = () => {
   }, []);
 
   // ============================================================
-  // Aux
+  // 🔧 Auxiliares
   // ============================================================
   const filteredVarieties = selectedCulture
     ? varieties.filter((v) => v.culture === selectedCulture)
@@ -146,6 +133,16 @@ const Visits: React.FC = () => {
     if (!d.includes("-")) return d;
     const [y, m, day] = d.split("-");
     return `${day}/${m}/${y}`;
+  }
+
+  async function handleDelete(id?: number) {
+    if (!id) return;
+    if (!confirm("Deseja excluir esta visita?")) return;
+
+    const res = await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setVisits((list) => list.filter((v) => v.id !== id));
+    }
   }
 
   // ============================================================
@@ -163,20 +160,16 @@ const Visits: React.FC = () => {
       <div className="col-12 col-lg-10 mx-auto mb-3">
         <div className={`p-3 rounded shadow-sm ${theme === "dark" ? "bg-dark-subtle" : "bg-light"}`}>
           <div className="row g-3 align-items-end">
-
-            {/* INÍCIO */}
             <div className="col-md-2">
               <label>Início</label>
               <input type="date" value={filterStart} onChange={(e) => setFilterStart(e.target.value)} className="form-control" />
             </div>
 
-            {/* FIM */}
             <div className="col-md-2">
               <label>Fim</label>
               <input type="date" value={filterEnd} onChange={(e) => setFilterEnd(e.target.value)} className="form-control" />
             </div>
 
-            {/* CLIENTE */}
             <div className="col-md-3 position-relative">
               <label>Cliente</label>
               <input
@@ -207,7 +200,6 @@ const Visits: React.FC = () => {
               )}
             </div>
 
-            {/* CONSULTOR */}
             <div className="col-md-2">
               <label>Consultor</label>
               <select value={selectedConsultant} onChange={(e) => setSelectedConsultant(e.target.value)} className="form-select">
@@ -220,7 +212,6 @@ const Visits: React.FC = () => {
               </select>
             </div>
 
-            {/* CULTURA */}
             <div className="col-md-1">
               <label>Cultura</label>
               <select value={selectedCulture} onChange={(e) => { setSelectedCulture(e.target.value); setSelectedVariety(""); }} className="form-select">
@@ -231,7 +222,6 @@ const Visits: React.FC = () => {
               </select>
             </div>
 
-            {/* VARIEDADE */}
             <div className="col-md-2">
               <label>Variedade</label>
               <select value={selectedVariety} onChange={(e) => setSelectedVariety(e.target.value)} className="form-select">
@@ -272,7 +262,6 @@ const Visits: React.FC = () => {
                   <tbody>
                     {visits
                       .filter((v) => {
-                        // FILTROS SEGUROS
                         if (filterClient && String(v.client_id) !== filterClient) return false;
 
                         const d = v.date ? new Date(v.date) : null;
