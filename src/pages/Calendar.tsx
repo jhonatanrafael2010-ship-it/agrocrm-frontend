@@ -621,21 +621,26 @@ const handleSavePhotos = async () => {
     // Atualiza o modal imediatamente
     const off = await getAllPendingPhotos();
 
-    setForm((f) => ({
-      ...f,
-      savedPhotos: [
-        ...(f.savedPhotos || []),
-        ...off
-          .filter((p) => p.visit_id === visitId)
-          .map((p) => ({
-            id: p.id,
-            dataUrl: p.dataUrl,
-            caption: p.caption,
-            pending: true,
-          })),
-      ],
-    }));
+    setForm(f => {
+      const merged = [...(f.savedPhotos || [])];
 
+      off
+        .filter(p => p.visit_id === visitId)
+        .forEach(offPhoto => {
+          const idx = merged.findIndex(p => p.id === offPhoto.id);
+
+          if (idx >= 0) {
+            merged[idx] = offPhoto; // substitui versão antiga
+          } else {
+            merged.push(offPhoto); // adiciona nova offline
+          }
+        });
+
+      return {
+        ...f,
+        savedPhotos: merged,
+      };
+    });
     alert(
       "🟠 Fotos salvas OFFLINE! Serão sincronizadas automaticamente quando a internet voltar."
     );
@@ -718,12 +723,33 @@ const handleEditSavedPhoto = async (
     });
 
     if (resp.ok) {
+      // Atualiza lugar imediato (modal)
       setForm(f => ({
         ...f,
         savedPhotos: f.savedPhotos.map(p =>
           p.id === photo.id ? { ...p, caption: newCaption } : p
         )
       }));
+
+      // 🔥🔥🔥 TRECHO QUE FALTAVA: recarregar fotos do backend
+      try {
+        const up = await fetch(`${API_BASE}visits/${visitId}`);
+        if (up.ok) {
+          const data = await up.json();
+
+          setForm(f => ({
+            ...f,
+            savedPhotos: [
+              ...(data.photos || []),  
+              // mantém pendentes
+              ...(f.savedPhotos.filter(p => p.pending) || [])
+            ]
+          }));
+        }
+      } catch (e) {
+        console.warn("⚠️ Não foi possível atualizar fotos após edição.");
+      }
+
     } else {
       alert("Erro ao atualizar legenda no servidor.");
     }
@@ -732,6 +758,7 @@ const handleEditSavedPhoto = async (
     alert("Falha ao atualizar legenda.");
   }
 };
+
 
 
   // ============================================================

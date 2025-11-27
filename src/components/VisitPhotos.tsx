@@ -25,13 +25,11 @@ interface Props {
   visitId: number | null;
   existingPhotos: UnifiedPhoto[];
   onFilesSelected?: (files: File[], captions: string[]) => void;
-
   onAutoSetLocation?: (lat: number, lon: number) => void;
 
-  //  ✅ NOVO → permite editar legenda de fotos já salvas
+  //  ✅ Permite editar legenda de fotos já salvas
   onEditSavedPhoto?: (photo: UnifiedPhoto, newCaption: string) => void;
 }
-
 
 // =========================================
 // Componente principal
@@ -43,7 +41,10 @@ const VisitPhotos: React.FC<Props> = ({
   onAutoSetLocation,
   onEditSavedPhoto,
 }) => {
+
+  // Estado local REAL usado no render
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
+
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [captions, setCaptions] = useState<string[]>([]);
@@ -54,7 +55,7 @@ const VisitPhotos: React.FC<Props> = ({
     !window.location.href.startsWith("http");
 
   // ======================================================
-  // Carregar fotos Off-line com EXIF
+  // Carregar fotos Offline
   // ======================================================
   const loadOffline = useCallback(async () => {
     if (!visitId) return [];
@@ -69,23 +70,37 @@ const VisitPhotos: React.FC<Props> = ({
         dataUrl: p.dataUrl,
         caption: p.caption || "",
         visit_id: p.visit_id,
-
         latitude: p.latitude ?? null,
         longitude: p.longitude ?? null,
       }));
   }, [visitId]);
 
+  // ======================================================
+  // Merge online + offline sem duplicadas
+  // ======================================================
   useEffect(() => {
     let mounted = true;
 
     async function merge() {
       const off = await loadOffline();
-      if (mounted) {
-        setSavedPhotos([...(existingPhotos || []), ...off]);
-      }
-    }
-    merge();
 
+      // Começa com as fotos online
+      const merged = [...(existingPhotos || [])];
+
+      // Vai substituir ou adicionar offline
+      off.forEach((offPhoto) => {
+        const idx = merged.findIndex((p) => p.id === offPhoto.id);
+        if (idx >= 0) {
+          merged[idx] = offPhoto; // substitui online
+        } else {
+          merged.push(offPhoto); // adiciona pendente
+        }
+      });
+
+      if (mounted) setSavedPhotos(merged);
+    }
+
+    merge();
     return () => {
       mounted = false;
     };
@@ -107,15 +122,15 @@ const VisitPhotos: React.FC<Props> = ({
         allowEditing: false,
       });
 
-      const dataUrl = img.dataUrl;
-      if (!dataUrl) return;
+      if (!img.dataUrl) return;
 
+      const dataUrl = img.dataUrl;
       const fileName = `foto_${Date.now()}.jpg`;
 
       let latitude: number | null = null;
       let longitude: number | null = null;
 
-      // EXTRAIR EXIF
+      // Extrair EXIF
       try {
         const el = new Image();
         el.src = dataUrl;
@@ -137,15 +152,13 @@ const VisitPhotos: React.FC<Props> = ({
               if (latRef === "S") latitude *= -1;
               if (lonRef === "W") longitude *= -1;
 
-              console.log("📍 EXIF APK:", latitude, longitude);
-
               if (onAutoSetLocation) onAutoSetLocation(latitude, longitude);
             }
           });
         };
       } catch {}
 
-      // SALVAR OFFLINE
+      // Salva offline
       await savePendingPhoto({
         visit_id: visitId,
         fileName,
@@ -159,11 +172,19 @@ const VisitPhotos: React.FC<Props> = ({
 
       alert("📸 Foto salva offline!");
 
+      // Atualizar lista local imediatamente
       const off = await loadOffline();
-      setSavedPhotos([...(existingPhotos || []), ...off]);
+      const merged = [...(existingPhotos || [])];
 
+      off.forEach((p) => {
+        const idx = merged.findIndex((x) => x.id === p.id);
+        if (idx >= 0) merged[idx] = p;
+        else merged.push(p);
+      });
+
+      setSavedPhotos(merged);
     } catch (err) {
-      console.error("Erro:", err);
+      console.error("Erro Camera:", err);
       alert("❌ Falha ao capturar foto.");
     }
   }
@@ -182,7 +203,7 @@ const VisitPhotos: React.FC<Props> = ({
 
     const arr = Array.from(fl);
 
-    // Extrair EXIF da primeira foto
+    // EXIF da primeira foto
     if (arr.length > 0 && onAutoSetLocation) {
       const first = arr[0];
 
@@ -202,33 +223,25 @@ const VisitPhotos: React.FC<Props> = ({
           if (latRef === "S") latitude *= -1;
           if (lonRef === "W") longitude *= -1;
 
-          console.log("📍 EXIF WEB:", latitude, longitude);
           onAutoSetLocation(latitude, longitude);
         }
       });
     }
 
-    // Previews e controle normal
     setFiles(arr);
     setPreviews(arr.map((f) => URL.createObjectURL(f)));
     setCaptions(arr.map(() => ""));
 
-    if (onFilesSelected) {
-      onFilesSelected(arr, arr.map(() => ""));
-    }
+    if (onFilesSelected) onFilesSelected(arr, arr.map(() => ""));
   };
 
   // ======================================================
-  // Sincronizar legendas
+  // Sincronizar legendas dos previews
   // ======================================================
   useEffect(() => {
     if (!onFilesSelected || files.length === 0) return;
     onFilesSelected(files, captions);
   }, [captions]);
-
-  if (previews.length !== captions.length) {
-    setCaptions(previews.map(() => ""));
-  }
 
   // ======================================================
   // Render
@@ -288,8 +301,8 @@ const VisitPhotos: React.FC<Props> = ({
           <label className="form-label fw-semibold">📁 Fotos salvas</label>
 
           <div className="d-flex flex-wrap gap-3">
-            {savedPhotos.map((p, idx) => (
-              <div key={idx} style={{ width: 130 }}>
+            {savedPhotos.map((p) => (
+              <div key={p.id} style={{ width: 130 }}>
                 <img
                   src={p.dataUrl || p.url || ""}
                   style={{
@@ -304,7 +317,17 @@ const VisitPhotos: React.FC<Props> = ({
                   type="text"
                   className="form-control form-control-sm mt-1"
                   value={p.caption || ""}
-                  onChange={(e) => onEditSavedPhoto?.(p, e.target.value)}
+                  onChange={(e) => {
+                    // Atualiza imediatamente no componente
+                    setSavedPhotos((prev) =>
+                      prev.map((x) =>
+                        x.id === p.id ? { ...x, caption: e.target.value } : x
+                      )
+                    );
+
+                    // E dispara para o Calendar salvar no backend/IndexedDB
+                    onEditSavedPhoto?.(p, e.target.value);
+                  }}
                 />
               </div>
             ))}
