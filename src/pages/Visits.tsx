@@ -59,11 +59,16 @@ const Visits: React.FC = () => {
   // 🔁 Função unificada de carregamento
   // ============================================================
   async function loadData() {
+    // 🔵 Sempre buscar visitas completas direto do backend
+    let vs = [];
     try {
-      // 1️⃣ Consulta BACKEND ou IndexedDB
-      const data1 = await fetchWithCache(`${API_BASE}visits?scope=all`, "visits");
+      const r1 = await fetch(`${API_BASE}visits?scope=all`, { cache: "no-store" });
+      vs = r1.ok ? await r1.json() : [];
+    } catch (e) {
+      console.warn("⚠️ Falha ao carregar visitas completas do backend:", e);
+      vs = [];
+    }
 
-      let vs = Array.isArray(data1) ? data1 : [];
 
       const onlyPlantio =
         vs.length > 0 &&
