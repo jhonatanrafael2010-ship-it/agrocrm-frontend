@@ -344,57 +344,60 @@ const Visits: React.FC = () => {
                         if (d && fs && d < fs) return false;
                         if (d && fe && d > fe) return false;
 
-                        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant)
-                          return false;
-
-                        if (
-                          selectedCulture &&
-                          String(v.culture || "").trim() !== selectedCulture
-                        )
-                          return false;
-
-                        if (
-                          selectedVariety &&
-                          String(v.variety || "").trim() !== selectedVariety
-                        )
-                          return false;
+                        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant) return false;
+                        if (selectedCulture && String(v.culture || "").trim() !== selectedCulture) return false;
+                        if (selectedVariety && String(v.variety || "").trim() !== selectedVariety) return false;
 
                         return true;
                       })
                       .sort(
                         (a, b) =>
-                          new Date(b.date!.split("T")[0]).getTime() -
-                          new Date(a.date!.split("T")[0]).getTime()
+                          new Date(b?.date?.split("T")[0] || "1900-01-01").getTime() -
+                          new Date(a?.date?.split("T")[0] || "1900-01-01").getTime()
                       )
-                      .map((v) => (
-                        <tr key={v.id}>
-                          <td>{formatDateBR(v.date)}</td>
-                          <td>{clients.find((c) => c.id === v.client_id)?.name ?? "—"}</td>
-                          <td>{properties.find((p) => p.id === v.property_id)?.name ?? "—"}</td>
-                          <td>{plots.find((p) => p.id === v.plot_id)?.name ?? "—"}</td>
-                          <td>{consultants.find((c) => c.id === v.consultant_id)?.name ?? "—"}</td>
-                          <td>{v.culture || "—"}</td>
-                          <td>{v.variety || "—"}</td>
-                          <td>{v.recommendation || "--"}</td>
-                          <td className="text-end">
-                            <button
-                              className="btn btn-outline-primary btn-sm me-1"
-                              onClick={() =>
-                                window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")
-                              }
-                            >
-                              PDF
-                            </button>
+                      .map((v) => {
+                        const clientName =
+                          clients.find((c) => c.id === v.client_id)?.name || "—";
 
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => handleDelete(v.id)}
-                            >
-                              Excluir
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                        const propertyName =
+                          properties.find((p) => p.id === v.property_id)?.name || "—";
+
+                        const plotName =
+                          plots.find((p) => p.id === v.plot_id)?.name || "—";
+
+                        const consultantName =
+                          consultants.find((c) => c.id === v.consultant_id)?.name || "—";
+
+                        return (
+                          <tr key={v.id}>
+                            <td>{formatDateBR(v.date)}</td>
+                            <td>{clientName}</td>
+                            <td>{propertyName}</td>
+                            <td>{plotName}</td>
+                            <td>{consultantName}</td>
+                            <td>{v.culture || "—"}</td>
+                            <td>{v.variety || "—"}</td>
+                            <td>{v.recommendation || "--"}</td>
+                            <td className="text-end">
+                              <button
+                                className="btn btn-outline-primary btn-sm me-1"
+                                onClick={() =>
+                                  window.open(`${API_BASE}visits/${v.id}/pdf`, "_blank")
+                                }
+                              >
+                                PDF
+                              </button>
+
+                              <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => handleDelete(v.id)}
+                              >
+                                Excluir
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
 
                     {visits.length === 0 && (
                       <tr>
@@ -404,6 +407,7 @@ const Visits: React.FC = () => {
                       </tr>
                     )}
                   </tbody>
+
                 </table>
               </div>
             )}
