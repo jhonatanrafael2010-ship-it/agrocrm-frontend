@@ -115,6 +115,23 @@ const Visits: React.FC = () => {
     window.addEventListener("visits-synced", update);
     window.addEventListener("visits-updated", update);
 
+    const debugFiltered = visits.filter((v) => {
+    const c1 = !(filterClient && String(v.client_id) !== filterClient);
+    const d = v.date ? new Date(v.date) : null;
+    const c2 = !(d && d < new Date(filterStart));
+    const c3 = !(d && d > new Date(filterEnd));
+    const c4 = !(selectedConsultant && String(v.consultant_id) !== selectedConsultant);
+    const c5 = !(selectedCulture && String(v.culture || "").trim() !== selectedCulture);
+    const c6 = !(selectedVariety && String(v.variety || "").trim() !== selectedVariety);
+
+    console.log("VISITA", v.id, { c1, c2, c3, c4, c5, c6 });
+
+    return c1 && c2 && c3 && c4 && c5 && c6;
+  });
+
+  console.log("DEBUG_VISITS_FILTRADAS", debugFiltered);
+
+
     return () => {
       window.removeEventListener("visits-synced", update);
       window.removeEventListener("visits-updated", update);
