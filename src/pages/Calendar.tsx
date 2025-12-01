@@ -1654,9 +1654,9 @@ const handleEditSavedPhoto = async (
                           setSelectedCaptions(captions);
                         }}
                         onAutoSetLocation={handleAutoSetLocation}
-
-                        // 🔥 NOVO: atualiza legenda de foto salva (offline ou online)
-                        onEditSavedPhoto={handleEditSavedPhoto}
+                        onEditSavedPhoto={handleEditSavedPhoto}      // já existe
+                        onDeleteSavedPhoto={handleDeleteSavedPhoto}  // você cria no Calendar
+                        onReplaceSavedPhoto={handleReplaceSavedPhoto} // você cria no Calendar
                       />
                     )}
                   {form.id && selectedFiles.length > 0 && (
