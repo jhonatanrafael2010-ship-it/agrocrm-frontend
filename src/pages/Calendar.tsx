@@ -1723,46 +1723,67 @@ const handleEditSavedPhoto = async (
                     </select>
                   </div>
 
-                  {/* Checkbox fenológico */}
-                  <div className="col-12 form-check mt-3">
-                    <div className="col-12 mt-2">
-                      <label
-                        htmlFor="genPheno"
-                        className="form-check-label fw-semibold"
-                        style={{ display: "flex", gap: 10, alignItems: "center" }}
-                      >
-                        <input
-                          id="genPheno"
-                          type="checkbox"
-                          checked={form.genPheno}
-                          onChange={(e) =>
-                            setForm((f) => ({
-                              ...f,
-                              genPheno: e.target.checked,
-                            }))
-                          }
-                          className="form-check-input"
-                          style={{
-                            width: 22,
-                            height: 22,
-                            cursor: "pointer",
-                            accentColor: form.genPheno ? "#28a745" : "#777",
-                            transform: "scale(1.2)",
-                            transition: "all 0.15s",
-                          }}
-                        />
+                  {/* Toggle Fenológico (melhorado) */}
+                  <div className="col-12 mt-3">
+                    <label className="fw-semibold mb-1">Cronograma Fenológico</label>
 
-                        <span
+                    <div
+                      onClick={() =>
+                        setForm((f) => ({ ...f, genPheno: !f.genPheno }))
+                      }
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        cursor: "pointer",
+                        padding: "10px 14px",
+                        borderRadius: "12px",
+                        background: "var(--input-bg)",
+                        border: `1px solid ${form.genPheno ? "#28a745" : "var(--border)"}`,
+                        transition: "all 0.25s ease",
+                        userSelect: "none",
+                      }}
+                    >
+                      {/* Toggle switch */}
+                      <div
+                        style={{
+                          width: 42,
+                          height: 22,
+                          borderRadius: 50,
+                          background: form.genPheno ? "#28a745" : "#777",
+                          position: "relative",
+                          transition: "all 0.2s ease-in-out",
+                        }}
+                      >
+                        <div
                           style={{
-                            color: form.genPheno ? "#28a745" : "var(--text-muted)",
-                            transition: "color 0.15s",
+                            width: 18,
+                            height: 18,
+                            background: "#fff",
+                            borderRadius: "50%",
+                            position: "absolute",
+                            top: 2,
+                            left: form.genPheno ? 22 : 2,
+                            transition: "all 0.2s ease-in-out",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                           }}
-                        >
-                          Gerar cronograma fenológico (milho/soja/algodão)
-                        </span>
-                      </label>
+                        ></div>
+                      </div>
+
+                      {/* Label */}
+                      <span
+                        style={{
+                          fontSize: "0.95rem",
+                          fontWeight: 500,
+                          color: form.genPheno ? "#28a745" : "var(--text-muted)",
+                          transition: "color 0.25s ease",
+                        }}
+                      >
+                        Gerar cronograma fenológico (milho/soja/algodão)
+                      </span>
                     </div>
                   </div>
+
 
                   {/* Botão localização */}
                   <div className="col-12 mt-3">

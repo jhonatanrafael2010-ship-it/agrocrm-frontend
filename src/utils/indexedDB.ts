@@ -206,7 +206,7 @@ export async function getAllPendingVisits(): Promise<PendingVisit[]> {
       .transaction("pending_visits", "readonly")
       .objectStore("pending_visits")
       .getAll();
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
   });
 }
