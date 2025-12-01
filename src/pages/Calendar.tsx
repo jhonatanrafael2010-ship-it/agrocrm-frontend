@@ -151,6 +151,8 @@ const CalendarPage: React.FC = () => {
   const [form, setForm] = useState({
     id: null as number | null,
     date: "",
+    originalDate: "",    // ← ADICIONADO
+    dateBackup: "",      // ← ADICIONADO
     client_id: "",
     property_id: "",
     plot_id: "",
@@ -165,6 +167,7 @@ const CalendarPage: React.FC = () => {
     longitude: null as number | null,
     status: "planned",
   });
+
 
   // ============================================================
   // 🎨 Cor dos eventos
@@ -958,50 +961,85 @@ const handleEditSavedPhoto = async (
     }
   };
 
-  // ============================================================
-  // ✅ Concluir (com suporte offline real)
-  // ============================================================
+    // ============================================================
+    // ✅ Concluir visita (com atualização inteligente de data)
+    // ============================================================
     const markDone = async () => {
       if (!form.id) return;
 
       try {
-        // 🟠 OFFLINE → apenas salvar status no IndexedDB
+        const visitId = Number(form.id);
+
+        // -----------------------------------------
+        // 1️⃣ DEFINIR DATA CONCLUÍDA
+        // -----------------------------------------
+
+        const today = new Date();
+        const todayStr = String(today.getDate()).padStart(2, "0") + "/" +
+                        String(today.getMonth() + 1).padStart(2, "0") + "/" +
+                        today.getFullYear();
+
+        // Data original da visita (antes do usuário editar)
+        const originalDate = form.originalDate || form.dateBackup || form.date;
+
+        // Data final:
+        // → Se o usuário alterou a data manualmente: usar form.date
+        // → Se NÃO alterou: usar HOJE
+        const finalDateStr =
+          form.date !== originalDate ? form.date : todayStr;
+
+        // Converte para ISO (yyyy-mm-dd) para salvar corretamente
+        const [d, m, y] = finalDateStr.split("/");
+        const finalDateISO = `${y}-${m}-${d}`;
+
+
+        // -----------------------------------------
+        // 2️⃣ SE ESTIVER OFFLINE → salvar apenas no IndexedDB
+        // -----------------------------------------
         const isReallyOffline =
           !navigator.onLine ||
           ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
 
         if (isReallyOffline) {
-
-          await updateVisitWithSync(API_BASE, form.id as number, { 
+          await updateVisitWithSync(API_BASE, visitId, { 
             status: "done",
+            date: finalDateISO,
             latitude: form.latitude,
             longitude: form.longitude
           });
-          alert("🟠 Visita concluída offline! Será sincronizada quando voltar internet.");
+
+          alert("🟠 Visita concluída offline! Será sincronizada quando voltar a internet.");
           setOpen(false);
           return;
         }
 
-        // 🟢 ONLINE → envia PUT normal
-        const result = await updateVisitWithSync(API_BASE, form.id as number, {
+
+        // -----------------------------------------
+        // 3️⃣ SE ONLINE → atualizar no backend
+        // -----------------------------------------
+        const result = await updateVisitWithSync(API_BASE, visitId, {
           status: "done",
-          preserve_date: true,   // 🔥 sinalizador
+          date: finalDateISO,
+          preserve_date: false,
+          latitude: form.latitude,
+          longitude: form.longitude
         });
 
-
         if (result.synced) {
-          alert("✅ Visita concluída com sucesso!");
+          alert("✅ Visita concluída!");
         } else {
           alert("🟠 Visita concluída offline (pendente de sync).");
         }
 
         await loadVisits();
         setOpen(false);
+
       } catch (err) {
         console.error("Erro ao concluir:", err);
         alert("❌ Erro ao concluir visita.");
       }
     };
+
     
 
     // ============================================================
@@ -1324,6 +1362,8 @@ const handleEditSavedPhoto = async (
             setForm({
               id: null,
               date: `${d}/${m}/${y}`,
+              originalDate: "",
+              dateBackup: "",
               client_id: "",
               property_id: "",
               plot_id: "",
@@ -1355,6 +1395,8 @@ const handleEditSavedPhoto = async (
             setForm({
               id: v.id,
               date: d ? d.toLocaleDateString("pt-BR") : "",
+              originalDate: d ? d.toLocaleDateString("pt-BR") : "",
+              dateBackup: d ? d.toLocaleDateString("pt-BR") : "",
               client_id: String(v.client_id || ""),
               property_id: String(v.property_id || ""),
               plot_id: String(v.plot_id || ""),
@@ -1459,6 +1501,8 @@ const handleEditSavedPhoto = async (
             setForm({
               id: null,
               date: new Date().toLocaleDateString("pt-BR"),
+              originalDate: "",
+              dateBackup: "",
               client_id: "",
               property_id: "",
               plot_id: "",
@@ -1522,7 +1566,38 @@ const handleEditSavedPhoto = async (
 
                   {/* Data */}
                   <div className="col-md-4">
-                    <label className="form-label fw-semibold">Data</label>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <label className="form-label fw-semibold">Data</label>
+
+                      {/* 🔘 Botão "Usar hoje" */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const now = new Date();
+                          const tStr =
+                            String(now.getDate()).padStart(2, "0") +
+                            "/" +
+                            String(now.getMonth() + 1).padStart(2, "0") +
+                            "/" +
+                            now.getFullYear();
+
+                          setForm(f => ({ ...f, date: tStr }));
+                        }}
+                        style={{
+                          background: "#28a745",
+                          border: "none",
+                          color: "white",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                          transition: "0.2s",
+                        }}
+                      >
+                        Hoje
+                      </button>
+                    </div>
+
                     <input
                       name="date"
                       value={form.date}
@@ -1536,6 +1611,7 @@ const handleEditSavedPhoto = async (
                       }}
                     />
                   </div>
+
 
                   {/* Cliente com busca */}
                   <div className="col-12 position-relative">
