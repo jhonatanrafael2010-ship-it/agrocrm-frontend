@@ -19,7 +19,8 @@ import { API_BASE } from "../config";
 import {
   savePendingPhoto,
   getAllPendingPhotos,
-  getAllFromStore,   // ← ADICIONADO
+  getAllFromStore,
+  deletePendingPhoto,   // ← ADICIONADO
 } from "../utils/indexedDB";
 import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
 
@@ -685,6 +686,128 @@ const handleSavePhotos = async () => {
 
   // Recarrega visitas
   await loadVisits();
+};
+
+
+
+const handleDeleteSavedPhoto = async (photo: any) => {
+  const visitId = Number(form.id);
+  if (!visitId || !photo) return;
+
+  const isOffline =
+    !navigator.onLine ||
+    ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+  // 🟠 OFFLINE → deletar só no IndexedDB
+  if (isOffline || photo.pending) {
+
+    await deletePendingPhoto(photo.id);   // ← FUNÇÃO AGORA RECONHECIDA
+
+    setForm((f) => ({
+      ...f,
+      savedPhotos: f.savedPhotos.filter((p) => p.id !== photo.id),
+    }));
+
+    return;
+  }
+
+  // 🟢 ONLINE → API DELETE
+  try {
+    const resp = await fetch(`${API_BASE}photos/${photo.id}`, {
+      method: "DELETE",
+    });
+
+    if (!resp.ok) {
+      alert("Falha ao excluir foto no servidor.");
+      return;
+    }
+
+    setForm((f) => ({
+      ...f,
+      savedPhotos: f.savedPhotos.filter((p) => p.id !== photo.id),
+    }));
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao excluir foto.");
+  }
+};
+
+
+
+
+const handleReplaceSavedPhoto = async (
+  photo: any,
+  newFile: File,
+  newCaption: string
+) => {
+  const visitId = Number(form.id);
+  if (!visitId) return;
+
+  const isOffline =
+    !navigator.onLine ||
+    ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+
+  // 🟧 1) Primeiro apagar a foto antiga
+  await handleDeleteSavedPhoto(photo);
+
+  // 🟠 2) Se estiver OFFLINE → salva nova foto no IndexedDB
+  if (isOffline) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      await savePendingPhoto({
+        visit_id: visitId,
+        fileName: newFile.name,
+        mime: newFile.type,
+        dataUrl: reader.result as string,
+        caption: newCaption || "",
+        synced: false,
+        latitude: form.latitude,
+        longitude: form.longitude,
+      });
+
+      // Atualizar modal
+      const off = await getAllPendingPhotos();
+
+      setForm((f) => ({
+        ...f,
+        savedPhotos: [
+          ...f.savedPhotos.filter((p) => !p.pending),
+          ...off.filter((p) => p.visit_id === visitId),
+        ],
+      }));
+    };
+
+    reader.readAsDataURL(newFile);
+    return;
+  }
+
+  // 🟢 3) ONLINE → enviar nova foto ao backend
+  const fd = new FormData();
+  fd.append("photos", newFile);
+  fd.append("captions", newCaption);
+
+  const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+    method: "POST",
+    body: fd,
+  });
+
+  if (!resp.ok) {
+    alert("Falha ao enviar nova foto.");
+    return;
+  }
+
+  // 🔄 Recarrega visita
+  const updated = await fetch(`${API_BASE}visits/${visitId}`);
+  if (updated.ok) {
+    const data = await updated.json();
+    setForm((f) => ({
+      ...f,
+      savedPhotos: data.photos || [],
+    }));
+  }
+
+  alert("Foto substituída com sucesso!");
 };
 
 
@@ -1602,18 +1725,43 @@ const handleEditSavedPhoto = async (
 
                   {/* Checkbox fenológico */}
                   <div className="col-12 form-check mt-3">
-                    <input
-                      id="genPheno"
-                      type="checkbox"
-                      className="form-check-input"
-                      checked={form.genPheno}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, genPheno: e.target.checked }))
-                      }
-                    />
-                    <label htmlFor="genPheno" className="form-check-label ms-2">
-                      Gerar cronograma fenológico (milho/soja/algodão)
-                    </label>
+                    <div className="col-12 mt-2">
+                      <label
+                        htmlFor="genPheno"
+                        className="form-check-label fw-semibold"
+                        style={{ display: "flex", gap: 10, alignItems: "center" }}
+                      >
+                        <input
+                          id="genPheno"
+                          type="checkbox"
+                          checked={form.genPheno}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              genPheno: e.target.checked,
+                            }))
+                          }
+                          className="form-check-input"
+                          style={{
+                            width: 22,
+                            height: 22,
+                            cursor: "pointer",
+                            accentColor: form.genPheno ? "#28a745" : "#777",
+                            transform: "scale(1.2)",
+                            transition: "all 0.15s",
+                          }}
+                        />
+
+                        <span
+                          style={{
+                            color: form.genPheno ? "#28a745" : "var(--text-muted)",
+                            transition: "color 0.15s",
+                          }}
+                        >
+                          Gerar cronograma fenológico (milho/soja/algodão)
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Botão localização */}
