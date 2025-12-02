@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
+import PhotoCarousel from "../components/PhotoCarousel";
 
 // Tipos
 type Visit = {
@@ -65,6 +66,12 @@ const Visits: React.FC = () => {
 
   // Abrir/fechar groups
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  // Carrossel de fotos (stories)
+  const [carousel, setCarousel] = useState<{ open: boolean; photos: any[] }>({
+    open: false,
+    photos: [],
+  });
 
   // ============================================================
   // 🔁 Carregar dados
@@ -144,9 +151,7 @@ const Visits: React.FC = () => {
       });
       if (res.ok) {
         setVisits((list) =>
-          list.map((x) =>
-            x.id === v.id ? { ...x, status: "done" } : x
-          )
+          list.map((x) => (x.id === v.id ? { ...x, status: "done" } : x))
         );
       } else {
         alert("Não foi possível marcar como concluída.");
@@ -185,10 +190,7 @@ const Visits: React.FC = () => {
         }
 
         // Consultor
-        if (
-          selectedConsultant &&
-          String(v.consultant_id) !== selectedConsultant
-        )
+        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant)
           return false;
 
         // Cultura / Variedade
@@ -496,8 +498,16 @@ const Visits: React.FC = () => {
                           </div>
 
                           {/* Linha 2: Consultor */}
-                          <div style={{ fontSize: "0.78rem", opacity: 0.8, marginTop: 2 }}>
-                            {consultants.find((c) => c.id === first.consultant_id)?.name || "—"}
+                          <div
+                            style={{
+                              fontSize: "0.78rem",
+                              opacity: 0.8,
+                              marginTop: 2,
+                            }}
+                          >
+                            {consultants.find(
+                              (c) => c.id === first.consultant_id
+                            )?.name || "—"}
                           </div>
 
                           {/* Linha 3: Cultura + Variedade */}
@@ -563,14 +573,16 @@ const Visits: React.FC = () => {
                             }}
                           >
                             {group.map((v, index) => {
-                              const done = (v.status || "").toLowerCase() === "done";
+                              const done =
+                                (v.status || "").toLowerCase() === "done";
                               return (
                                 <div
                                   key={v.id}
                                   style={{
                                     minWidth: 120,
                                     textAlign: "center",
-                                    marginRight: index < group.length - 1 ? 24 : 0,
+                                    marginRight:
+                                      index < group.length - 1 ? 24 : 0,
                                     position: "relative",
                                   }}
                                 >
@@ -583,7 +595,9 @@ const Visits: React.FC = () => {
                                         left: "60%",
                                         width: 40,
                                         height: 2,
-                                        backgroundColor: done ? "#28a745" : "#ccc",
+                                        backgroundColor: done
+                                          ? "#28a745"
+                                          : "#ccc",
                                       }}
                                     />
                                   )}
@@ -595,7 +609,9 @@ const Visits: React.FC = () => {
                                       height: 18,
                                       borderRadius: "50%",
                                       margin: "0 auto",
-                                      backgroundColor: done ? "#28a745" : "#ccc",
+                                      backgroundColor: done
+                                        ? "#28a745"
+                                        : "#ccc",
                                       border: done
                                         ? "2px solid #155724"
                                         : "2px solid #999",
@@ -609,7 +625,8 @@ const Visits: React.FC = () => {
                                       fontWeight: done ? 600 : 400,
                                     }}
                                   >
-                                    {v.recommendation || `Visita ${index + 1}`}
+                                    {v.recommendation ||
+                                      `Visita ${index + 1}`}
                                   </div>
                                   <div
                                     style={{
@@ -627,7 +644,8 @@ const Visits: React.FC = () => {
                           {/* Lista detalhada */}
                           {group.map((v) => {
                             const hasPhotos = (v.photos?.length ?? 0) > 0;
-                            const done = (v.status || "").toLowerCase() === "done";
+                            const done =
+                              (v.status || "").toLowerCase() === "done";
 
                             return (
                               <div
@@ -775,8 +793,30 @@ const Visits: React.FC = () => {
                   >
                     <strong>{formatDateBR(v.date)}</strong>
                     <div>{v.recommendation}</div>
+
                     {(v.photos?.length ?? 0) > 0 && (
-                      <div>📸 {(v.photos?.length ?? 0)} fotos</div>
+                      <>
+                        <div style={{ fontSize: "0.85rem", marginTop: 4 }}>
+                          📸 {(v.photos?.length ?? 0)} fotos
+                        </div>
+
+                        <button
+                          className="btn btn-sm btn-outline-primary mt-2"
+                          onClick={() =>
+                            setCarousel({
+                              open: true,
+                              photos: (v.photos || []).map((p: any) => ({
+                                id: p.id,
+                                url: p.url,
+                                dataUrl: p.dataUrl,
+                                caption: p.caption,
+                              })),
+                            })
+                          }
+                        >
+                          Ver fotos
+                        </button>
+                      </>
                     )}
                   </div>
                 ))}
@@ -793,6 +833,14 @@ const Visits: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* CARROSSEL DE FOTOS (STORIES) */}
+      {carousel.open && (
+        <PhotoCarousel
+          photos={carousel.photos}
+          onClose={() => setCarousel({ open: false, photos: [] })}
+        />
       )}
     </div>
   );
