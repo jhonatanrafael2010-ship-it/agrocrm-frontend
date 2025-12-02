@@ -488,11 +488,20 @@ const Visits: React.FC = () => {
                         onClick={() => toggleGroup(gid)}
                       >
                         <div>
-                          <strong>{clientName}</strong>
-                          <div style={{ fontSize: "0.85rem" }}>
+                          {/* Linha 1: Cliente ---- Fazenda — Talhão */}
+                          <div style={{ fontWeight: 600 }}>
+                            {clientName}{" "}
+                            <span style={{ opacity: 0.6 }}> ---- </span>
                             {propertyName} — {plotName}
                           </div>
-                          <div style={{ fontSize: "0.85rem" }}>
+
+                          {/* Linha 2: Consultor */}
+                          <div style={{ fontSize: "0.78rem", opacity: 0.8, marginTop: 2 }}>
+                            {consultants.find((c) => c.id === first.consultant_id)?.name || "—"}
+                          </div>
+
+                          {/* Linha 3: Cultura + Variedade */}
+                          <div style={{ fontSize: "0.85rem", marginTop: 4 }}>
                             {first.culture || ""} {first.variety || ""}
                           </div>
                         </div>
