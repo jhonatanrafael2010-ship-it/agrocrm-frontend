@@ -791,32 +791,34 @@ const Visits: React.FC = () => {
                           : "4px solid #ccc",
                     }}
                   >
-                    <strong>{formatDateBR(v.date)}</strong>
-                    <div>{v.recommendation}</div>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <strong>{formatDateBR(v.date)}</strong>
 
-                    {(v.photos?.length ?? 0) > 0 && (
-                      <>
-                        <div style={{ fontSize: "0.85rem", marginTop: 4 }}>
-                          📸 {(v.photos?.length ?? 0)} fotos
-                        </div>
-
+                      {(v.photos?.length ?? 0) > 0 && (
                         <button
-                          className="btn btn-sm btn-outline-primary mt-2"
-                          onClick={() =>
-                            setCarousel({
-                              open: true,
-                              photos: (v.photos || []).map((p: any) => ({
-                                id: p.id,
-                                url: p.url,
-                                dataUrl: p.dataUrl,
-                                caption: p.caption,
-                              })),
-                            })
-                          }
+                          className="btn btn-outline-success btn-sm"
+                          style={{ padding: "2px 8px", fontSize: "0.75rem" }}
+                          onClick={() => {
+                            setSummary(null); // fecha o modal
+                            setTimeout(() => {
+                              setCarousel({
+                                open: true,
+                                photos: v.photos || [],
+                              });
+                            }, 150);
+                          }}
                         >
                           Ver fotos
                         </button>
-                      </>
+                      )}
+                    </div>
+
+                    <div>{v.recommendation}</div>
+
+                    {(v.photos?.length ?? 0) > 0 && (
+                      <div className="mt-1" style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+                        📸 {(v.photos?.length ?? 0)} fotos
+                      </div>
                     )}
                   </div>
                 ))}
