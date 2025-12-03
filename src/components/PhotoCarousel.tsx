@@ -227,16 +227,27 @@ const PhotoCarousel: React.FC<Props> = ({ photos, onClose }) => {
             alt=""
             draggable={false}
             style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
-              objectFit: "contain",
-              transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-              transition: isDragging.current ? "none" : "transform 0.2s ease-out",
-              borderRadius: 8,
-              userSelect: "none",
-              pointerEvents: "none",
+                width: "auto",
+                height: "auto",
+
+                maxWidth: "95vw",
+                maxHeight: "75vh",
+
+                // 🔥 Regras especiais para LANDSCAPE
+                // evita estourar horizontalmente
+                ...(window.innerWidth > window.innerHeight && {
+                maxHeight: "70vh",
+                maxWidth: "90vw",
+                }),
+
+                objectFit: "contain",
+
+                transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+                transition: isDragging.current ? "none" : "transform 0.2s ease-out",
+                borderRadius: 8,
+                userSelect: "none",
             }}
-          />
+            />
         </div>
 
         {/* LEGENDA */}
@@ -255,6 +266,53 @@ const PhotoCarousel: React.FC<Props> = ({ photos, onClose }) => {
             {current.caption}
           </div>
         )}
+
+
+        {/* MINIATURAS (THUMBNAILS) */}
+        <div
+        style={{
+            width: "100%",
+            overflowX: "auto",
+            whiteSpace: "nowrap",
+            padding: "10px 0",
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+        }}
+        >
+        {photos.map((p, i) => {
+            const thumbSrc = p.url || p.dataUrl;
+
+            return (
+            <div
+                key={p.id}
+                onClick={() => {
+                setScale(1);
+                setTranslate({ x: 0, y: 0 });
+                setIndex(i);
+                }}
+                style={{
+                display: "inline-block",
+                border: i === index ? "3px solid #28a745" : "2px solid #666",
+                borderRadius: 6,
+                cursor: "pointer",
+                overflow: "hidden",
+                }}
+            >
+                <img
+                src={thumbSrc}
+                style={{
+                    width: 60,
+                    height: 60,
+                    objectFit: "cover",
+                    display: "block",
+                }}
+                />
+            </div>
+            );
+        })}
+        </div>
+
 
         {/* CONTROLES */}
         <div className="d-flex gap-4 mt-4">
