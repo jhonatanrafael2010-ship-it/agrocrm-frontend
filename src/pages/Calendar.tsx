@@ -1013,10 +1013,12 @@ const handleEditSavedPhoto = async (
         const result = await updateVisitWithSync(API_BASE, visitId, {
           status: "done",
           date: finalDateISO,
-          preserve_date: false,
+          recommendation: form.recommendation || "",
+          preserve_date: true,
           latitude: form.latitude,
-          longitude: form.longitude
+          longitude: form.longitude,
         });
+
 
         if (result.synced) {
           alert("✅ Visita concluída!");
@@ -1379,14 +1381,19 @@ const handleEditSavedPhoto = async (
           eventClick={(info) => {
             const v = info.event.extendedProps?.raw as Visit | undefined;
             if (!v) return;
-            const d = v.date ? new Date(v.date) : null;
+            // ⛔ Nunca usar new Date(v.date) — causa bug de timezone
+            let d = null;
+            if (v.date) {
+              const [yyyy, mm, dd] = v.date.split("-");
+              d = `${dd}/${mm}/${yyyy}`;
+            }
 
 
             setForm({
               id: v.id,
-              date: d ? d.toLocaleDateString("pt-BR") : "",
-              originalDate: d ? d.toLocaleDateString("pt-BR") : "",
-              dateBackup: d ? d.toLocaleDateString("pt-BR") : "",
+              date: d || "",
+              originalDate: d || "",
+              dateBackup: d || "",
               client_id: String(v.client_id || ""),
               property_id: String(v.property_id || ""),
               plot_id: String(v.plot_id || ""),
