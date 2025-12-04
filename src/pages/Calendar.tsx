@@ -975,19 +975,11 @@ const handleEditSavedPhoto = async (
         // 1️⃣ DEFINIR DATA CONCLUÍDA
         // -----------------------------------------
 
-        const today = new Date();
-        const todayStr = String(today.getDate()).padStart(2, "0") + "/" +
-                        String(today.getMonth() + 1).padStart(2, "0") + "/" +
-                        today.getFullYear();
-
-        // Data original da visita (antes do usuário editar)
-        const originalDate = form.originalDate || form.dateBackup || form.date;
-
         // Data final:
         // → Se o usuário alterou a data manualmente: usar form.date
-        // → Se NÃO alterou: usar HOJE
-        const finalDateStr =
-          form.date !== originalDate ? form.date : todayStr;
+        // ❗ Se não alterou a data → mantém a original
+        const finalDateStr = form.date;
+
 
         // Converte para ISO (yyyy-mm-dd) para salvar corretamente
         const [d, m, y] = finalDateStr.split("/");
@@ -1389,10 +1381,6 @@ const handleEditSavedPhoto = async (
             if (!v) return;
             const d = v.date ? new Date(v.date) : null;
 
-            const clientName =
-              v.client_name ||
-              clients.find((c) => c.id === v.client_id)?.name ||
-              "";
 
             setForm({
               id: v.id,
@@ -1405,17 +1393,17 @@ const handleEditSavedPhoto = async (
               consultant_id: String(v.consultant_id || ""),
               culture: v.culture || "",
               variety: v.variety || "",
-              recommendation: v.recommendation || "",
+              event_name: v.recommendation || "",   // evento fenológico (fixo)
               genPheno: false,
               savedPhotos: [
                 ...(v.photos || []),
                 ...((v as any).offlinePhotos || []),
               ],
-              clientSearch: clientName,
+              clientSearch: "",
               latitude: v.latitude || null,
               longitude: v.longitude || null,
               status: "planned",
-              event_name: v.recommendation || "",
+              recommendation: v.recommendation || "",  // recomendação técnica real
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
