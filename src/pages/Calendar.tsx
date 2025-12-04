@@ -517,7 +517,7 @@ const handleCreateOrUpdate = async () => {
           form.recommendation && form.recommendation.trim() !== ""
             ? form.recommendation.trim()
             : undefined,
-
+        fenologia_real: form.fenologia_real || null,
         status: form.status || "planned",
         preserve_date: form.date === form.originalDate,
 
