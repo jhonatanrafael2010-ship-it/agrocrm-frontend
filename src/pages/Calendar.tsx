@@ -96,6 +96,7 @@ type Visit = {
   offline?: boolean;
   event_name?: string;
   display_text?: string;
+  fenologia_real?: string;
 };
 
 
@@ -168,7 +169,7 @@ const CalendarPage: React.FC = () => {
     latitude: null as number | null,
     longitude: null as number | null,
     status: "planned",
-    event_name: "",
+    fenologia_real: "",
   });
 
 
@@ -472,7 +473,10 @@ const handleCreateOrUpdate = async () => {
     normalizedCulture.startsWith("soja") ||
     normalizedCulture.startsWith("algodao");
 
-  const payload: any = {
+  // =======================
+  // 📦 MONTA PAYLOAD BASE
+  // =======================
+  const basePayload: any = {
     client_id: Number(form.client_id),
     property_id: form.property_id ? Number(form.property_id) : null,
     plot_id: form.plot_id ? Number(form.plot_id) : null,
@@ -481,42 +485,55 @@ const handleCreateOrUpdate = async () => {
     status: "planned",
     culture: cultureName || "",
     variety: form.variety || "",
-    recommendation: "",
+    fenologia_real: form.fenologia_real || null,
     latitude: form.latitude,
     longitude: form.longitude,
     generate_schedule: isPhenoCulture,
     genPheno: isPhenoCulture,
   };
 
-  console.log("📦 Payload enviado:", payload);
+  // ⚠️ Recommendation só é enviada se o usuário escreveu algo
+  if (form.recommendation && form.recommendation.trim() !== "") {
+    basePayload.recommendation = form.recommendation.trim();
+  }
 
+  console.log("📦 Payload enviado:", basePayload);
+
+
+  // =======================
+  // 🟦 EDITAR VISITA
+  // =======================
   try {
     let result;
 
-    // 🔵 EDITAR — garante que nada seja apagado no backend
     if (form.id) {
       console.log("🟦 Atualizando visita existente:", form.id);
 
       const safePayload = {
-        ...payload,
-        recommendation: form.recommendation || payload.recommendation,
+        ...basePayload,
+
+        // 🛡️ Não deixar recommendation ser apagada
+        recommendation:
+          form.recommendation && form.recommendation.trim() !== ""
+            ? form.recommendation.trim()
+            : undefined,
+
         status: form.status || "planned",
-        culture: form.culture || payload.culture,
-        variety: form.variety || payload.variety,
-        client_id: Number(form.client_id),
-        property_id: form.property_id ? Number(form.property_id) : null,
-        plot_id: form.plot_id ? Number(form.plot_id) : null,
-        consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+        preserve_date: form.date === form.originalDate,
+
         latitude: form.latitude,
         longitude: form.longitude,
-        preserve_date: form.date === form.originalDate,
       };
+
+      console.log("🛡️ Payload final (MANUTENÇÃO):", safePayload);
 
       result = await updateVisitWithSync(API_BASE, Number(form.id), safePayload);
     }
 
 
-    // 🟢 CRIAR
+    // =======================
+    // 🟢 CRIAR NOVA VISITA
+    // =======================
     else {
       console.log("🟩 Criando visita nova...");
 
@@ -525,12 +542,15 @@ const handleCreateOrUpdate = async () => {
         ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
 
       if (isReallyOffline) {
-        payload.latitude = form.latitude;
-        payload.longitude = form.longitude;
+        basePayload.latitude = form.latitude;
+        basePayload.longitude = form.longitude;
       }
 
-      result = await createVisitWithSync(API_BASE, payload);
+      console.log("📤 Payload final (NOVO):", basePayload);
+
+      result = await createVisitWithSync(API_BASE, basePayload);
     }
+
 
     // 🔥 Garantir ID da visita tanto em criação quanto em edição
     let visitId: number;
@@ -1369,13 +1389,13 @@ const handleEditSavedPhoto = async (
               culture: "",
               variety: "",
               recommendation: "",
+              fenologia_real: "",
               genPheno: true,
               savedPhotos: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
               status: "planned",
-              event_name: "",
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1403,7 +1423,7 @@ const handleEditSavedPhoto = async (
               consultant_id: String(v.consultant_id || ""),
               culture: v.culture || "",
               variety: v.variety || "",
-              event_name: v.event_name || v.display_text?.split("<br>")[2]?.replace("📍", "").trim() || "",
+              fenologia_real: v.fenologia_real || "",
               genPheno: false,
               savedPhotos: [
                 ...(v.photos || []),
@@ -1511,13 +1531,13 @@ const handleEditSavedPhoto = async (
               culture: "",
               variety: "",
               recommendation: "",
+              fenologia_real: "",
               genPheno: true,
               savedPhotos: [],
               clientSearch: "",
               latitude: null,
               longitude: null,
               status: "planned",
-              event_name: "",
             });
             setOpen(true);
           }}
@@ -1875,23 +1895,24 @@ const handleEditSavedPhoto = async (
                   </div>
 
                   {/* Evento Fenológico (somente leitura, vindo do cronograma) */}
-                  {form.event_name && (
-                    <div className="col-12">
-                      <label className="form-label fw-semibold">Evento Fenológico</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        disabled
-                        value={form.event_name}
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text-muted)",
-                          borderColor: "var(--border)",
-                          opacity: 0.8,
-                        }}
-                      />
-                    </div>
-                  )}
+                  <div className="col-12">
+                    <label className="form-label fw-semibold">Fenologia Observada</label>
+                    <input
+                      type="text"
+                      name="fenologia_real"
+                      value={form.fenologia_real}
+                      onChange={handleChange}
+                      placeholder="Ex: V6, R1, 6 folhas, pendoando..."
+                      className="form-control"
+                      style={{
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                        borderColor: "var(--border)",
+                      }}
+                    />
+                  </div>
+
+
 
                   {/* Recomendação Técnica (editável e salva no backend e PDF) */}
                   <div className="col-12">
