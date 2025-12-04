@@ -1019,6 +1019,8 @@ const handleEditSavedPhoto = async (
           await updateVisitWithSync(API_BASE, visitId, { 
             status: "done",
             date: finalDateISO,
+            fenologia_real: form.fenologia_real || null,   // 👈 ADICIONADO
+            recommendation: form.recommendation || "",     // 👈 garantir consistência
             latitude: form.latitude,
             longitude: form.longitude
           });
@@ -1027,6 +1029,7 @@ const handleEditSavedPhoto = async (
           setOpen(false);
           return;
         }
+
 
 
         // -----------------------------------------
