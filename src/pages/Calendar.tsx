@@ -94,6 +94,8 @@ type Visit = {
   client_name?: string;
   consultant_name?: string;
   offline?: boolean;
+  event_name?: string;
+  display_text?: string;
 };
 
 
@@ -479,7 +481,7 @@ const handleCreateOrUpdate = async () => {
     status: "planned",
     culture: cultureName || "",
     variety: form.variety || "",
-    recommendation: "Plantio",
+    recommendation: "",
     latitude: form.latitude,
     longitude: form.longitude,
     generate_schedule: isPhenoCulture,
@@ -507,7 +509,7 @@ const handleCreateOrUpdate = async () => {
         consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
         latitude: form.latitude,
         longitude: form.longitude,
-        preserve_date: true,
+        preserve_date: form.date === form.originalDate,
       };
 
       result = await updateVisitWithSync(API_BASE, Number(form.id), safePayload);
@@ -1012,12 +1014,13 @@ const handleEditSavedPhoto = async (
         // -----------------------------------------
         const result = await updateVisitWithSync(API_BASE, visitId, {
           status: "done",
-          date: finalDateISO,
+          date: finalDateISO,            // ← agora o backend vai aceitar
           recommendation: form.recommendation || "",
-          preserve_date: true,
+          preserve_date: false,          // ← NÃO PRESERVAR a antiga ao concluir
           latitude: form.latitude,
           longitude: form.longitude,
         });
+
 
 
         if (result.synced) {
@@ -1400,7 +1403,7 @@ const handleEditSavedPhoto = async (
               consultant_id: String(v.consultant_id || ""),
               culture: v.culture || "",
               variety: v.variety || "",
-              event_name: v.recommendation || "",   // evento fenológico (fixo)
+              event_name: v.event_name || v.display_text?.split("<br>")[2]?.replace("📍", "").trim() || "",
               genPheno: false,
               savedPhotos: [
                 ...(v.photos || []),
@@ -1410,7 +1413,7 @@ const handleEditSavedPhoto = async (
               latitude: v.latitude || null,
               longitude: v.longitude || null,
               status: "planned",
-              recommendation: v.recommendation || "",  // recomendação técnica real
+              recommendation: v.recommendation || "",   // só o texto técnico
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
