@@ -166,6 +166,7 @@ const CalendarPage: React.FC = () => {
     latitude: null as number | null,
     longitude: null as number | null,
     status: "planned",
+    event_name: "",
   });
 
 
@@ -1377,6 +1378,7 @@ const handleEditSavedPhoto = async (
               latitude: null,
               longitude: null,
               status: "planned",
+              event_name: "",
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1413,6 +1415,7 @@ const handleEditSavedPhoto = async (
               latitude: v.latitude || null,
               longitude: v.longitude || null,
               status: "planned",
+              event_name: v.recommendation || "",
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1516,6 +1519,7 @@ const handleEditSavedPhoto = async (
               latitude: null,
               longitude: null,
               status: "planned",
+              event_name: "",
             });
             setOpen(true);
           }}
@@ -1625,9 +1629,9 @@ const handleEditSavedPhoto = async (
                         borderColor: "var(--border)",
                       }}
                       value={
-                        clients.find((c) => String(c.id) === form.client_id)?.name ||
-                        form.clientSearch ||
-                        ""
+                        form.clientSearch !== ""
+                          ? form.clientSearch
+                          : clients.find((c) => String(c.id) === form.client_id)?.name || ""
                       }
                       onChange={(e) => {
                         const value = e.target.value;
@@ -1636,7 +1640,7 @@ const handleEditSavedPhoto = async (
                       placeholder="Digite o nome do cliente..."
                     />
 
-                    {form.clientSearch && (
+                    {form.clientSearch.length > 0 && (
                       <ul
                         className="list-group position-absolute w-100 mt-1"
                         style={{
@@ -1661,7 +1665,7 @@ const handleEditSavedPhoto = async (
                                 setForm((f) => ({
                                   ...f,
                                   client_id: String(c.id),
-                                  clientSearch: c.name,
+                                  clientSearch: "",   // 👈 limpa o search ao selecionar
                                 }))
                               }
                               style={{ cursor: "pointer" }}
@@ -1872,14 +1876,35 @@ const handleEditSavedPhoto = async (
                     </button>
                   </div>
 
-                  {/* Recomendação */}
+                  {/* Evento Fenológico (somente leitura, vindo do cronograma) */}
+                  {form.event_name && (
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">Evento Fenológico</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        disabled
+                        value={form.event_name}
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text-muted)",
+                          borderColor: "var(--border)",
+                          opacity: 0.8,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Recomendação Técnica (editável e salva no backend e PDF) */}
                   <div className="col-12">
-                    <label className="form-label fw-semibold">Recomendação</label>
+                    <label className="form-label fw-semibold">Recomendação Técnica</label>
                     <textarea
                       name="recommendation"
                       value={form.recommendation}
-                      onChange={handleChange}
-                      placeholder="Observações..."
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, recommendation: e.target.value }))
+                      }
+                      placeholder="Descreva observações técnicas, exemplo: 'Plantas com 6 folhas, lagartas pequenas, aplicar produto X'"
                       className="form-control"
                       style={{
                         background: "var(--input-bg)",
