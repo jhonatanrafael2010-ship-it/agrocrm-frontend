@@ -1035,8 +1035,8 @@ const handleEditSavedPhoto = async (
         const result = await updateVisitWithSync(API_BASE, visitId, {
           status: "done",
           date: finalDateISO,            // ← agora o backend vai aceitar
-          recommendation: form.recommendation || "",
-          fenologia_real: form.fenologia_real || "",
+          recommendation: form.recommendation ?? "",
+          fenologia_real: form.fenologia_real ?? null,
           preserve_date: false,          // ← NÃO PRESERVAR a antiga ao concluir
           latitude: form.latitude,
           longitude: form.longitude,
