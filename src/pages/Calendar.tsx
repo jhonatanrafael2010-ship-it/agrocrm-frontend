@@ -1036,6 +1036,7 @@ const handleEditSavedPhoto = async (
           status: "done",
           date: finalDateISO,            // ← agora o backend vai aceitar
           recommendation: form.recommendation || "",
+          fenologia_real: form.fenologia_real || "",
           preserve_date: false,          // ← NÃO PRESERVAR a antiga ao concluir
           latitude: form.latitude,
           longitude: form.longitude,
@@ -1448,8 +1449,10 @@ const handleEditSavedPhoto = async (
               : colorFor(v?.date || arg.event.startStr, v?.status);
 
             const stage =
-              ((v?.recommendation?.split("—").pop() || v?.recommendation || "") +
-                "").trim() || "-";
+              (v.fenologia_real && v.fenologia_real.trim() !== "")
+                ? v.fenologia_real.trim()
+                : (v.recommendation || "-");
+
 
             const clientName =
               v.client_name ||
