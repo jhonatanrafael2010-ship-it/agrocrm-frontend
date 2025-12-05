@@ -1706,16 +1706,28 @@ const handleEditSavedPhoto = async (
           role="dialog"
           style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
         >
-          <div className="modal-dialog modal-dialog-centered modal-xl" role="document">
+          <div
+            className="modal-dialog modal-dialog-centered"
+            role="document"
+            style={{
+              maxWidth: "1100px",   // ← largura maior
+              width: "95%",         // ← responsivo
+            }}
+          >
+
             <div
               className="modal-content border-0 shadow-lg"
               style={{
                 background: "var(--panel)",
                 color: "var(--text)",
                 transition: "background 0.3s ease, color 0.3s ease",
-                maxWidth: "1100px",
+                maxHeight: "90vh",     // ← faz o modal caber na tela
+                overflowY: "auto",     // ← scroll interno
+                borderRadius: "14px",
+                paddingBottom: "10px",
               }}
             >
+
               {/* 🔷 Cabeçalho */}
               <div className="modal-header border-0">
                 <h5 className="modal-title">
@@ -2215,6 +2227,7 @@ const handleEditSavedPhoto = async (
                       onEdit={handleEditSavedPhoto}
                       onAutoLocation={handleAutoSetLocation}
                     />
+
                   </div>
                 )}
               </div>
