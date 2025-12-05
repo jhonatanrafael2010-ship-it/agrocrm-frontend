@@ -1234,17 +1234,17 @@ const handleEditSavedPhoto = async (
     const units = ["L/ha", "mL/ha", "kg/ha", "g/ha", "%", "p.c", "Outro"];
 
     return (
-      <div className="product-advanced">
+      <div className="product-advanced" style={{ width: "100%" }}>
         <h4 className="mb-3">Produtos Aplicados</h4>
 
-        <table className="table table-bordered table-dark">
+        <table className="table table-bordered w-100 align-middle">
           <thead>
             <tr>
-              <th>Produto</th>
-              <th>Dose</th>
-              <th>Unidade</th>
-              <th>Data Aplicação</th>
-              <th>Ação</th>
+              <th style={{ width: "30%" }}>Produto</th>
+              <th style={{ width: "15%" }}>Dose</th>
+              <th style={{ width: "20%" }}>Unidade</th>
+              <th style={{ width: "25%" }}>Data Aplicação</th>
+              <th style={{ width: "10%" }}>Ação</th>
             </tr>
           </thead>
 
@@ -1268,7 +1268,7 @@ const handleEditSavedPhoto = async (
                   <input
                     className="form-control"
                     value={p.dose}
-                    placeholder="Ex: 1.5"
+                    placeholder="1.5"
                     onChange={(e) => {
                       const updated = [...form.products];
                       updated[i].dose = e.target.value;
@@ -1312,12 +1312,12 @@ const handleEditSavedPhoto = async (
                 <td>
                   <button
                     className="btn btn-danger"
-                    onClick={() => {
+                    onClick={() =>
                       setForm({
                         ...form,
                         products: form.products.filter((_, idx) => idx !== i),
-                      });
-                    }}
+                      })
+                    }
                   >
                     ❌
                   </button>
@@ -1348,7 +1348,8 @@ const handleEditSavedPhoto = async (
         </button>
       </div>
     );
-  };
+  };  
+
 
 
   // ============================================================
