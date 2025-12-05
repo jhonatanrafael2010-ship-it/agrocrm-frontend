@@ -1237,7 +1237,10 @@ const handleEditSavedPhoto = async (
       <div className="product-advanced" style={{ width: "100%" }}>
         <h4 className="mb-3">Produtos Aplicados</h4>
 
-        <table className="table table-bordered w-100 align-middle">
+        <table
+          className="table table-bordered align-middle"
+          style={{ width: "100%", minWidth: "700px" }}
+        >
           <thead>
             <tr>
               <th style={{ width: "30%" }}>Produto</th>
@@ -1711,8 +1714,8 @@ const handleEditSavedPhoto = async (
             className="modal-dialog modal-dialog-centered"
             role="document"
             style={{
-              maxWidth: "1100px",   // ← largura maior
-              width: "95%",         // ← responsivo
+              maxWidth: "1200px",   // ← largura maior
+              width: "98%",         // ← responsivo
             }}
           >
 
@@ -2157,7 +2160,9 @@ const handleEditSavedPhoto = async (
 
                 {/* 🔹 ABA — PRODUTOS */}
                 {tab === "produtos" && (
-                  <div className="p-2">{renderProdutosSection()}</div>
+                  <div className="p-2" style={{ overflowX: "auto" }}>
+                    {renderProdutosSection()}
+                  </div>
                 )}
 
                 {/* 🔹 ABA — FOTOS */}
