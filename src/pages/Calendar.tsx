@@ -97,6 +97,14 @@ type Visit = {
   event_name?: string;
   display_text?: string;
   fenologia_real?: string;
+  products?: Product[];
+};
+
+type Product = {
+  product_name: string;
+  dose: string;
+  unit: string;
+  application_date: string | null;
 };
 
 
@@ -170,7 +178,11 @@ const CalendarPage: React.FC = () => {
     longitude: null as number | null,
     status: "planned",
     fenologia_real: "",
+    products: [] as Product[],
   });
+  // 🔵 Controle de abas do modal
+  const [tab, setTab] = useState<"dados" | "produtos" | "fotos">("dados");
+
 
 
   // ============================================================
@@ -486,6 +498,7 @@ const handleCreateOrUpdate = async () => {
     culture: cultureName || "",
     variety: form.variety || "",
     fenologia_real: form.fenologia_real || null,
+    products: form.products || [],
     latitude: form.latitude,
     longitude: form.longitude,
     generate_schedule: isPhenoCulture,
@@ -906,7 +919,7 @@ const handleEditSavedPhoto = async (
     console.error(e);
     alert("Falha ao atualizar legenda.");
   }
-};
+  };
 
 
 
@@ -1215,6 +1228,129 @@ const handleEditSavedPhoto = async (
     setLightboxUrl(lightboxPhotos[nextIndex]);
   };
 
+
+
+  const renderProdutosSection = () => {
+    const units = ["L/ha", "mL/ha", "kg/ha", "g/ha", "%", "p.c", "Outro"];
+
+    return (
+      <div className="product-advanced">
+        <h4 className="mb-3">Produtos Aplicados</h4>
+
+        <table className="table table-bordered table-dark">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Dose</th>
+              <th>Unidade</th>
+              <th>Data Aplicação</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {form.products.map((p, i) => (
+              <tr key={i}>
+                <td>
+                  <input
+                    className="form-control"
+                    value={p.product_name}
+                    placeholder="Nome do produto"
+                    onChange={(e) => {
+                      const updated = [...form.products];
+                      updated[i].product_name = e.target.value;
+                      setForm({ ...form, products: updated });
+                    }}
+                  />
+                </td>
+
+                <td>
+                  <input
+                    className="form-control"
+                    value={p.dose}
+                    placeholder="Ex: 1.5"
+                    onChange={(e) => {
+                      const updated = [...form.products];
+                      updated[i].dose = e.target.value;
+                      setForm({ ...form, products: updated });
+                    }}
+                  />
+                </td>
+
+                <td>
+                  <select
+                    className="form-select"
+                    value={p.unit}
+                    onChange={(e) => {
+                      const updated = [...form.products];
+                      updated[i].unit = e.target.value;
+                      setForm({ ...form, products: updated });
+                    }}
+                  >
+                    <option value="">Unidade</option>
+                    {units.map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+
+                <td>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={p.application_date || ""}
+                    onChange={(e) => {
+                      const updated = [...form.products];
+                      updated[i].application_date = e.target.value;
+                      setForm({ ...form, products: updated });
+                    }}
+                  />
+                </td>
+
+                <td>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      setForm({
+                        ...form,
+                        products: form.products.filter((_, idx) => idx !== i),
+                      });
+                    }}
+                  >
+                    ❌
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <button
+          className="btn btn-primary mt-3"
+          onClick={() =>
+            setForm({
+              ...form,
+              products: [
+                ...form.products,
+                {
+                  product_name: "",
+                  dose: "",
+                  unit: "",
+                  application_date: null,
+                } as Product,
+              ],
+            })
+          }
+        >
+          ➕ Adicionar Produto
+        </button>
+      </div>
+    );
+  };
+
+
   // ============================================================
   // Render
   // ============================================================
@@ -1400,6 +1536,7 @@ const handleEditSavedPhoto = async (
               latitude: null,
               longitude: null,
               status: "planned",
+              products: [],
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1438,6 +1575,7 @@ const handleEditSavedPhoto = async (
               longitude: v.longitude || null,
               status: "planned",
               recommendation: v.recommendation || "",   // só o texto técnico
+              products: v?.products || [],
             });
             setSelectedFiles([]);
             setSelectedCaptions([]);
@@ -1544,7 +1682,10 @@ const handleEditSavedPhoto = async (
               latitude: null,
               longitude: null,
               status: "planned",
+              products: [],
             });
+            setSelectedFiles([]);
+            setSelectedCaptions([]);
             setOpen(true);
           }}
           aria-label="Nova visita"
@@ -1555,7 +1696,9 @@ const handleEditSavedPhoto = async (
         </button>
       )}
 
-      {/* MODAL */}
+      {/* ============================== */}
+      {/* 🔵 MODAL DE CRIAÇÃO / EDIÇÃO  */}
+      {/* ============================== */}
       {open && (
         <div
           className="modal fade show d-block"
@@ -1563,10 +1706,7 @@ const handleEditSavedPhoto = async (
           role="dialog"
           style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
         >
-          <div
-            className="modal-dialog modal-dialog-centered modal-xl"
-            role="document"
-          >
+          <div className="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div
               className="modal-content border-0 shadow-lg"
               style={{
@@ -1576,7 +1716,7 @@ const handleEditSavedPhoto = async (
                 maxWidth: "1100px",
               }}
             >
-              {/* Cabeçalho */}
+              {/* 🔷 Cabeçalho */}
               <div className="modal-header border-0">
                 <h5 className="modal-title">
                   {form.id ? "Editar Visita" : "Nova Visita"}
@@ -1589,380 +1729,494 @@ const handleEditSavedPhoto = async (
                 ></button>
               </div>
 
+              {/* 🔷 Abas do modal */}
+              <div
+                className="modal-tabs"
+                style={{
+                  display: "flex",
+                  borderBottom: "1px solid var(--border)",
+                  marginBottom: "15px",
+                }}
+              >
+                <button
+                  onClick={() => setTab("dados")}
+                  className={tab === "dados" ? "tab-active" : "tab"}
+                >
+                  📝 Dados da Visita
+                </button>
+
+                <button
+                  onClick={() => setTab("produtos")}
+                  className={tab === "produtos" ? "tab-active" : "tab"}
+                >
+                  🧪 Produtos Aplicados
+                </button>
+
+                {form.id && (
+                  <button
+                    onClick={() => setTab("fotos")}
+                    className={tab === "fotos" ? "tab-active" : "tab"}
+                  >
+                    📸 Fotos
+                  </button>
+                )}
+              </div>
+
+              {/* ========================== */}
+              {/* 🔵 CONTEÚDO DO MODAL       */}
+              {/* ========================== */}
               <div className="modal-body">
-                <div className="row g-3">
-
-                  {/* Data */}
-                  <div className="col-md-4">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <label className="form-label fw-semibold">Data</label>
-
-                      {/* 🔘 Botão "Usar hoje" */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const now = new Date();
-                          const tStr =
-                            String(now.getDate()).padStart(2, "0") +
-                            "/" +
-                            String(now.getMonth() + 1).padStart(2, "0") +
-                            "/" +
-                            now.getFullYear();
-
-                          setForm(f => ({ ...f, date: tStr }));
-                        }}
-                        style={{
-                          background: "#28a745",
-                          border: "none",
-                          color: "white",
-                          padding: "3px 8px",
-                          borderRadius: "6px",
-                          fontSize: "0.75rem",
-                          cursor: "pointer",
-                          transition: "0.2s",
-                        }}
-                      >
-                        Hoje
-                      </button>
-                    </div>
-
-                    <input
-                      name="date"
-                      value={form.date}
-                      onChange={handleChange}
-                      placeholder="dd/mm/aaaa"
-                      className="form-control"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    />
-                  </div>
-
-
-                  {/* Cliente com busca */}
-                  <div className="col-12 position-relative">
-                    <label className="form-label fw-semibold">Cliente</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                      value={
-                        form.clientSearch !== ""
-                          ? form.clientSearch
-                          : clients.find((c) => String(c.id) === form.client_id)?.name || ""
-                      }
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setForm((f) => ({ ...f, clientSearch: value, client_id: "" }));
-                      }}
-                      placeholder="Digite o nome do cliente..."
-                    />
-
-                    {form.clientSearch.length > 0 && (
-                      <ul
-                        className="list-group position-absolute w-100 mt-1"
-                        style={{
-                          maxHeight: "150px",
-                          overflowY: "auto",
-                          zIndex: 20,
-                        }}
-                      >
-                        {clients
-                          .filter((c) =>
-                            c.name.toLowerCase().startsWith(form.clientSearch.toLowerCase())
-                          )
-                          .map((c) => (
-                            <li
-                              key={c.id}
-                              className={`list-group-item list-group-item-action ${
-                                form.client_id === String(c.id)
-                                  ? "active bg-success text-white"
-                                  : "bg-dark text-light"
-                              }`}
-                              onClick={() =>
-                                setForm((f) => ({
-                                  ...f,
-                                  client_id: String(c.id),
-                                  clientSearch: "",   // 👈 limpa o search ao selecionar
-                                }))
-                              }
-                              style={{ cursor: "pointer" }}
-                            >
-                              {c.name}
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Propriedade */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Propriedade</label>
-                    <DarkSelect
-                      name="property_id"
-                      value={form.property_id}
-                      placeholder="Selecione propriedade"
-                      options={[
-                        { value: "", label: "Selecione propriedade" },
-                        ...properties.map((p) => ({
-                          value: String(p.id),
-                          label: p.name,
-                        })),
-                      ]}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          property_id: e.target.value,
-                          plot_id: "",
-                        }))
-                      }
-                    />
-                  </div>
-
-                  {/* Talhão */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Talhão</label>
-                    <DarkSelect
-                      name="plot_id"
-                      value={form.plot_id}
-                      placeholder="Selecione talhão"
-                      options={[
-                        { value: "", label: "Selecione talhão" },
-                        ...plots.map((pl) => ({
-                          value: String(pl.id),
-                          label: pl.name,
-                        })),
-                      ]}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  {/* Cultura */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Cultura</label>
-                    <select
-                      name="culture"
-                      value={form.culture}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          culture: e.target.value,
-                          variety: "",
-                        }))
-                      }
-                      className="form-select"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    >
-                      <option value="">Selecione</option>
-                      {cultures.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Variedade */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Variedade</label>
-                    <select
-                      name="variety"
-                      value={form.variety}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, variety: e.target.value }))
-                      }
-                      disabled={!form.culture}
-                      className="form-select"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    >
-                      <option value="">Selecione</option>
-                      {varieties
-                        .filter(
-                          (v) => v.culture.toLowerCase() === form.culture.toLowerCase()
-                        )
-                        .map((v) => (
-                          <option key={v.id} value={v.name}>
-                            {v.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  {/* Consultor */}
-                  <div className="col-md-6">
-                    <label className="form-label fw-semibold">Consultor</label>
-                    <select
-                      name="consultant_id"
-                      value={form.consultant_id}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, consultant_id: e.target.value }))
-                      }
-                      className="form-select"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    >
-                      <option value="">Selecione</option>
-                      {consultants.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Toggle Fenológico (melhorado) */}
-                  <div className="col-12 mt-3">
-                    <label className="fw-semibold mb-1">Cronograma Fenológico</label>
-
-                    <div
-                      onClick={() =>
-                        setForm((f) => ({ ...f, genPheno: !f.genPheno }))
-                      }
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        cursor: "pointer",
-                        padding: "10px 14px",
-                        borderRadius: "12px",
-                        background: "var(--input-bg)",
-                        border: `1px solid ${form.genPheno ? "#28a745" : "var(--border)"}`,
-                        transition: "all 0.25s ease",
-                        userSelect: "none",
-                      }}
-                    >
-                      {/* Toggle switch */}
+                {/* 🔹 ABA — DADOS */}
+                {tab === "dados" && (
+                  <div className="row g-3">
+                    {/* Data */}
+                    <div className="col-md-4">
                       <div
                         style={{
-                          width: 42,
-                          height: 22,
-                          borderRadius: 50,
-                          background: form.genPheno ? "#28a745" : "#777",
-                          position: "relative",
-                          transition: "all 0.2s ease-in-out",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <label className="form-label fw-semibold">Data</label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const now = new Date();
+                            const tStr =
+                              String(now.getDate()).padStart(2, "0") +
+                              "/" +
+                              String(now.getMonth() + 1).padStart(2, "0") +
+                              "/" +
+                              now.getFullYear();
+
+                            setForm((f) => ({ ...f, date: tStr }));
+                          }}
+                          style={{
+                            background: "#28a745",
+                            border: "none",
+                            color: "white",
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            fontSize: "0.75rem",
+                            cursor: "pointer",
+                            transition: "0.2s",
+                          }}
+                        >
+                          Hoje
+                        </button>
+                      </div>
+
+                      <input
+                        name="date"
+                        value={form.date}
+                        onChange={handleChange}
+                        placeholder="dd/mm/aaaa"
+                        className="form-control"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      />
+                    </div>
+
+                    {/* Cliente */}
+                    <div className="col-12 position-relative">
+                      <label className="form-label fw-semibold">Cliente</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                        value={
+                          form.clientSearch !== ""
+                            ? form.clientSearch
+                            : clients.find((c) => String(c.id) === form.client_id)?.name ||
+                              ""
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setForm((f) => ({
+                            ...f,
+                            clientSearch: value,
+                            client_id: "",
+                          }));
+                        }}
+                        placeholder="Digite o nome do cliente..."
+                      />
+
+                      {form.clientSearch.length > 0 && (
+                        <ul
+                          className="list-group position-absolute w-100 mt-1"
+                          style={{
+                            maxHeight: "150px",
+                            overflowY: "auto",
+                            zIndex: 20,
+                          }}
+                        >
+                          {clients
+                            .filter((c) =>
+                              c.name
+                                .toLowerCase()
+                                .startsWith(form.clientSearch.toLowerCase())
+                            )
+                            .map((c) => (
+                              <li
+                                key={c.id}
+                                className={`list-group-item list-group-item-action ${
+                                  form.client_id === String(c.id)
+                                    ? "active bg-success text-white"
+                                    : "bg-dark text-light"
+                                }`}
+                                onClick={() =>
+                                  setForm((f) => ({
+                                    ...f,
+                                    client_id: String(c.id),
+                                    clientSearch: "",
+                                  }))
+                                }
+                                style={{ cursor: "pointer" }}
+                              >
+                                {c.name}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    {/* Propriedade */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Propriedade</label>
+                      <DarkSelect
+                        name="property_id"
+                        value={form.property_id}
+                        placeholder="Selecione propriedade"
+                        options={[
+                          { value: "", label: "Selecione propriedade" },
+                          ...properties.map((p) => ({
+                            value: String(p.id),
+                            label: p.name,
+                          })),
+                        ]}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            property_id: e.target.value,
+                            plot_id: "",
+                          }))
+                        }
+                      />
+                    </div>
+
+                    {/* Talhão */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Talhão</label>
+                      <DarkSelect
+                        name="plot_id"
+                        value={form.plot_id}
+                        placeholder="Selecione talhão"
+                        options={[
+                          { value: "", label: "Selecione talhão" },
+                          ...plots.map((pl) => ({
+                            value: String(pl.id),
+                            label: pl.name,
+                          })),
+                        ]}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    {/* Cultura */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Cultura</label>
+                      <select
+                        name="culture"
+                        value={form.culture}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            culture: e.target.value,
+                            variety: "",
+                          }))
+                        }
+                        className="form-select"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      >
+                        <option value="">Selecione</option>
+                        {cultures.map((c) => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Variedade */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Variedade</label>
+                      <select
+                        name="variety"
+                        value={form.variety}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, variety: e.target.value }))
+                        }
+                        disabled={!form.culture}
+                        className="form-select"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      >
+                        <option value="">Selecione</option>
+                        {varieties
+                          .filter(
+                            (v) =>
+                              v.culture.toLowerCase() ===
+                              form.culture.toLowerCase()
+                          )
+                          .map((v) => (
+                            <option key={v.id} value={v.name}>
+                              {v.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Consultor */}
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Consultor</label>
+                      <select
+                        name="consultant_id"
+                        value={form.consultant_id}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            consultant_id: e.target.value,
+                          }))
+                        }
+                        className="form-select"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      >
+                        <option value="">Selecione</option>
+                        {consultants.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Toggle Fenológico */}
+                    <div className="col-12 mt-3">
+                      <label className="fw-semibold mb-1">
+                        Cronograma Fenológico
+                      </label>
+
+                      <div
+                        onClick={() =>
+                          setForm((f) => ({ ...f, genPheno: !f.genPheno }))
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          cursor: "pointer",
+                          padding: "10px 14px",
+                          borderRadius: "12px",
+                          background: "var(--input-bg)",
+                          border: `1px solid ${
+                            form.genPheno ? "#28a745" : "var(--border)"
+                          }`,
+                          transition: "all 0.25s ease",
+                          userSelect: "none",
                         }}
                       >
                         <div
                           style={{
-                            width: 18,
-                            height: 18,
-                            background: "#fff",
-                            borderRadius: "50%",
-                            position: "absolute",
-                            top: 2,
-                            left: form.genPheno ? 22 : 2,
+                            width: 42,
+                            height: 22,
+                            borderRadius: 50,
+                            background: form.genPheno ? "#28a745" : "#777",
+                            position: "relative",
                             transition: "all 0.2s ease-in-out",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                           }}
-                        ></div>
-                      </div>
+                        >
+                          <div
+                            style={{
+                              width: 18,
+                              height: 18,
+                              background: "#fff",
+                              borderRadius: "50%",
+                              position: "absolute",
+                              top: 2,
+                              left: form.genPheno ? 22 : 2,
+                              transition: "all 0.2s ease-in-out",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                            }}
+                          ></div>
+                        </div>
 
-                      {/* Label */}
-                      <span
-                        style={{
-                          fontSize: "0.95rem",
-                          fontWeight: 500,
-                          color: form.genPheno ? "#28a745" : "var(--text-muted)",
-                          transition: "color 0.25s ease",
-                        }}
+                        <span
+                          style={{
+                            fontSize: "0.95rem",
+                            fontWeight: 500,
+                            color: form.genPheno
+                              ? "#28a745"
+                              : "var(--text-muted)",
+                            transition: "color 0.25s ease",
+                          }}
+                        >
+                          Gerar cronograma fenológico (milho/soja/algodão)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Localização */}
+                    <div className="col-12 mt-3">
+                      <button
+                        type="button"
+                        className="btn btn-outline-info"
+                        onClick={handleGetLocation}
                       >
-                        Gerar cronograma fenológico (milho/soja/algodão)
-                      </span>
+                        📍 Capturar Localização
+                      </button>
+                    </div>
+
+                    {/* Fenologia real */}
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">
+                        Fenologia Observada
+                      </label>
+                      <input
+                        type="text"
+                        name="fenologia_real"
+                        value={form.fenologia_real}
+                        onChange={handleChange}
+                        placeholder="Ex: V6, R1, 6 folhas..."
+                        className="form-control"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      />
+                    </div>
+
+                    {/* Recomendação técnica */}
+                    <div className="col-12">
+                      <label className="form-label fw-semibold">
+                        Recomendação Técnica
+                      </label>
+                      <textarea
+                        name="recommendation"
+                        value={form.recommendation}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            recommendation: e.target.value,
+                          }))
+                        }
+                        placeholder="Descreva observações técnicas..."
+                        className="form-control"
+                        style={{
+                          background: "var(--input-bg)",
+                          color: "var(--text)",
+                          borderColor: "var(--border)",
+                        }}
+                      />
                     </div>
                   </div>
+                )}
 
+                {/* 🔹 ABA — PRODUTOS */}
+                {tab === "produtos" && (
+                  <div className="p-2">{renderProdutosSection()}</div>
+                )}
 
-                  {/* Botão localização */}
-                  <div className="col-12 mt-3">
-                    <button
-                      type="button"
-                      className="btn btn-outline-info"
-                      onClick={handleGetLocation}
-                    >
-                      📍 Capturar Localização
-                    </button>
-                  </div>
-
-                  {/* Evento Fenológico (somente leitura, vindo do cronograma) */}
-                  <div className="col-12">
-                    <label className="form-label fw-semibold">Fenologia Observada</label>
-                    <input
-                      type="text"
-                      name="fenologia_real"
-                      value={form.fenologia_real}
-                      onChange={handleChange}
-                      placeholder="Ex: V6, R1, 6 folhas, pendoando..."
-                      className="form-control"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    />
-                  </div>
-
-
-
-                  {/* Recomendação Técnica (editável e salva no backend e PDF) */}
-                  <div className="col-12">
-                    <label className="form-label fw-semibold">Recomendação Técnica</label>
-                    <textarea
-                      name="recommendation"
-                      value={form.recommendation}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, recommendation: e.target.value }))
-                      }
-                      placeholder="Descreva observações técnicas, exemplo: 'Plantas com 6 folhas, lagartas pequenas, aplicar produto X'"
-                      className="form-control"
-                      style={{
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                    />
-                  </div>
-
-                  {/* Fotos só aparecem depois que a visita existe */}
-                    {form.id && (
-                      <VisitPhotos
-                        visitId={Number(form.id)}
-                        existingPhotos={form.savedPhotos}
-                        onFilesSelected={(files, captions) => {
-                          setSelectedFiles(files);
-                          setSelectedCaptions(captions);
+                {/* 🔹 ABA — FOTOS */}
+                {tab === "fotos" && form.id && (
+                  <div className="p-2">
+                    {/* Upload de novas fotos */}
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold">
+                        Novas fotos
+                      </label>
+                      <input
+                        type="file"
+                        multiple
+                        className="form-control"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setSelectedFiles(files as File[]);
+                          setSelectedCaptions(
+                            files.map(() => "")
+                          );
                         }}
-                        onAutoSetLocation={handleAutoSetLocation}
-                        onEditSavedPhoto={handleEditSavedPhoto}      // já existe
-                        onDeleteSavedPhoto={handleDeleteSavedPhoto}  // você cria no Calendar
-                        onReplaceSavedPhoto={handleReplaceSavedPhoto} // você cria no Calendar
                       />
+                    </div>
+
+                    {/* Legendas para novas fotos */}
+                    {selectedFiles.length > 0 && (
+                      <div className="mb-3">
+                        <label className="form-label fw-semibold">
+                          Legendas das novas fotos
+                        </label>
+                        {selectedFiles.map((file, idx) => (
+                          <div key={idx} className="mb-2">
+                            <small className="d-block text-muted">
+                              {file.name}
+                            </small>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Legenda"
+                              value={selectedCaptions[idx] || ""}
+                              onChange={(e) => {
+                                const copy = [...selectedCaptions];
+                                copy[idx] = e.target.value;
+                                setSelectedCaptions(copy);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  {form.id && selectedFiles.length > 0 && (
-                    <button
-                      className="btn btn-success mt-3"
-                      onClick={handleSavePhotos}
-                    >
-                      💾 Salvar Fotos
-                    </button>
-                  )}
-                </div>
+
+                    {selectedFiles.length > 0 && (
+                      <button
+                        className="btn btn-success mb-3"
+                        onClick={handleSavePhotos}
+                      >
+                        💾 Salvar Fotos
+                      </button>
+                    )}
+
+                    {/* Fotos já salvas */}
+                    <VisitPhotos
+                      visitId={form.id}
+                      photos={form.savedPhotos}
+                      onDelete={handleDeleteSavedPhoto}
+                      onReplace={handleReplaceSavedPhoto}
+                      onEdit={handleEditSavedPhoto}
+                      onAutoLocation={handleAutoSetLocation}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Rodapé */}
@@ -1994,7 +2248,7 @@ const handleEditSavedPhoto = async (
                       📄 PDF
                     </a>
 
-                    <button className="btn btn-success" onClick={markDone}>
+                      <button className="btn btn-success" onClick={markDone}>
                       ✅ Concluir
                     </button>
 
@@ -2025,7 +2279,9 @@ const handleEditSavedPhoto = async (
             >
               ⟵
             </button>
+
             <img src={lightboxUrl || ""} alt="Visualização ampliada" />
+
             <button
               className="lightbox-nav right"
               onClick={(e) => {
@@ -2035,14 +2291,16 @@ const handleEditSavedPhoto = async (
             >
               ⟶
             </button>
+
             <button className="lightbox-close" onClick={handleCloseLightbox}>
               ✕
             </button>
           </div>
         </div>
-      )}
+       )}
     </div>
   );
 };
 
 export default CalendarPage;
+

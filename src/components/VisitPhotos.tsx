@@ -23,40 +23,56 @@ export type UnifiedPhoto = {
 
 interface Props {
   visitId: number | null;
-  existingPhotos: UnifiedPhoto[];
 
-  // Fotos novas (upload normal do modal de visita)
+  // fotos existentes (online)
+  photos: UnifiedPhoto[];
+
+  // upload de novas fotos
   onFilesSelected?: (files: File[], captions: string[]) => void;
 
-  // Coordenadas vindas de EXIF
-  onAutoSetLocation?: (lat: number, lon: number) => void;
+  // EXIF → atualizar localização automaticamente
+  onAutoLocation?: (lat: number, lon: number) => void;
 
-  // Editar legenda de foto já salva (online + offline)
+  // nomes antigos (mantidos para compatibilidade)
   onEditSavedPhoto?: (photo: UnifiedPhoto, newCaption: string) => void;
-
-  // Excluir foto salva
   onDeleteSavedPhoto?: (photo: UnifiedPhoto) => void;
-
-  // Substituir foto (apagar/criar nova)
   onReplaceSavedPhoto?: (
+    photo: UnifiedPhoto,
+    newFile: File,
+    newCaption: string
+  ) => void;
+
+  // nomes usados pelo Calendar (aliases)
+  onEdit?: (photo: UnifiedPhoto, newCaption: string) => void;
+  onDelete?: (photo: UnifiedPhoto) => void;
+  onReplace?: (
     photo: UnifiedPhoto,
     newFile: File,
     newCaption: string
   ) => void;
 }
 
+
+
+
 // =========================================
 // Componente principal
 // =========================================
 const VisitPhotos: React.FC<Props> = ({
   visitId,
-  existingPhotos,
+  photos,
   onFilesSelected,
-  onAutoSetLocation,
+  onAutoLocation,
   onEditSavedPhoto,
   onDeleteSavedPhoto,
   onReplaceSavedPhoto,
+
+  // aliases recebidos do Calendar
+  onEdit,
+  onDelete,
+  onReplace
 }) => {
+
   // Estado local REAL usado no render
   const [savedPhotos, setSavedPhotos] = useState<UnifiedPhoto[]>([]);
 
@@ -75,6 +91,11 @@ const VisitPhotos: React.FC<Props> = ({
     typeof window !== "undefined" &&
     (window as any).Capacitor?.isNativePlatform === true &&
     !window.location.href.startsWith("http");
+
+  const effectiveOnEdit = onEditSavedPhoto ?? onEdit;
+  const effectiveOnDelete = onDeleteSavedPhoto ?? onDelete;
+  const effectiveOnReplace = onReplaceSavedPhoto ?? onReplace;
+
 
   // ======================================================
   // Carregar fotos Offline
@@ -107,7 +128,7 @@ const VisitPhotos: React.FC<Props> = ({
       const off = await loadOffline();
 
       // Começa com as fotos online
-      const merged: UnifiedPhoto[] = [...(existingPhotos || [])];
+      const merged: UnifiedPhoto[] = [...(photos || [])];
 
       // Vai substituir ou adicionar offline
       off.forEach((offPhoto) => {
@@ -126,7 +147,7 @@ const VisitPhotos: React.FC<Props> = ({
     return () => {
       mounted = false;
     };
-  }, [existingPhotos, loadOffline]);
+  }, [photos, loadOffline]);
 
   // ======================================================
   // Capturar pelo APK
@@ -174,7 +195,7 @@ const VisitPhotos: React.FC<Props> = ({
               if (latRef === "S") latitude *= -1;
               if (lonRef === "W") longitude *= -1;
 
-              if (onAutoSetLocation) onAutoSetLocation(latitude, longitude);
+              if (onAutoLocation) onAutoLocation(latitude, longitude);
             }
           });
         };
@@ -196,7 +217,7 @@ const VisitPhotos: React.FC<Props> = ({
 
       // Atualizar lista local imediatamente
       const off = await loadOffline();
-      const merged: UnifiedPhoto[] = [...(existingPhotos || [])];
+      const merged: UnifiedPhoto[] = [...(photos || [])];
 
       off.forEach((p) => {
         const idx = merged.findIndex((x) => x.id === p.id);
@@ -226,7 +247,7 @@ const VisitPhotos: React.FC<Props> = ({
     const arr = Array.from(fl);
 
     // EXIF da primeira foto
-    if (arr.length > 0 && onAutoSetLocation) {
+    if (arr.length > 0 && onAutoLocation) {
       const first = arr[0];
 
       EXIF.getData(first, function (this: any) {
@@ -245,7 +266,7 @@ const VisitPhotos: React.FC<Props> = ({
           if (latRef === "S") latitude *= -1;
           if (lonRef === "W") longitude *= -1;
 
-          onAutoSetLocation(latitude, longitude);
+          onAutoLocation(latitude, longitude);
         }
       });
     }
@@ -295,7 +316,7 @@ const VisitPhotos: React.FC<Props> = ({
     );
 
     // Dispara para o pai (Calendar) salvar de fato
-    onEditSavedPhoto?.(editingPhoto, editCaption);
+    effectiveOnEdit?.(editingPhoto, editCaption);
   };
 
   const handleDeletePhoto = () => {
@@ -306,7 +327,7 @@ const VisitPhotos: React.FC<Props> = ({
     setSavedPhotos((prev) => prev.filter((p) => p.id !== editingPhoto.id));
 
     // Dispara para o pai
-    onDeleteSavedPhoto?.(editingPhoto);
+    effectiveOnDelete?.(editingPhoto);
 
     // Fecha painel
     setEditingPhoto(null);
@@ -319,7 +340,7 @@ const VisitPhotos: React.FC<Props> = ({
     }
 
     // Dispara para o pai (apagar/criar nova + salvar legenda)
-    onReplaceSavedPhoto?.(editingPhoto, editFile, editCaption);
+    effectiveOnReplace?.(editingPhoto, editFile, editCaption);
 
     // Atualiza render localmente (preview novo + legenda)
     const previewUrl = URL.createObjectURL(editFile);

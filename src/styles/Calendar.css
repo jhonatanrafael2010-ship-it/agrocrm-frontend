@@ -517,3 +517,26 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   padding-bottom: 4px;
   transition: background 0.3s ease;
 }
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  background: var(--panel);
+  color: var(--text);
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab-active {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  background: var(--panel);
+  color: var(--text);
+  border: none;
+  border-bottom: 3px solid #3b82f6;
+  cursor: pointer;
+  font-weight: 700;
+}
