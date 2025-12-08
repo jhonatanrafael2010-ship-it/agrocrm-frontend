@@ -1035,7 +1035,8 @@ const handleEditSavedPhoto = async (
             fenologia_real: form.fenologia_real || null,   // 👈 ADICIONADO
             recommendation: form.recommendation || "",     // 👈 garantir consistência
             latitude: form.latitude,
-            longitude: form.longitude
+            longitude: form.longitude,
+            products: form.products || [],
           });
 
           alert("🟠 Visita concluída offline! Será sincronizada quando voltar a internet.");
@@ -1056,6 +1057,7 @@ const handleEditSavedPhoto = async (
           preserve_date: false,          // ← NÃO PRESERVAR a antiga ao concluir
           latitude: form.latitude,
           longitude: form.longitude,
+          products: form.products || [],
         });
 
 
