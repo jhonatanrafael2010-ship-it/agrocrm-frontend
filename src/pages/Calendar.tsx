@@ -1044,6 +1044,19 @@ const handleEditSavedPhoto = async (
           return;
         }
 
+        
+        console.log("📦 Enviando payload ao concluir:", {
+          status: "done",
+          date: finalDateISO,
+          recommendation: form.recommendation ?? "",
+          fenologia_real: form.fenologia_real ?? null,
+          preserve_date: false,
+          latitude: form.latitude,
+          longitude: form.longitude,
+          products: form.products || [],
+        });
+
+
 
 
         // -----------------------------------------
