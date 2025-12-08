@@ -1237,10 +1237,7 @@ const handleEditSavedPhoto = async (
       <div className="product-advanced" style={{ width: "100%" }}>
         <h4 className="mb-3">Produtos Aplicados</h4>
 
-        <table
-          className="table table-bordered align-middle"
-          style={{ width: "100%", minWidth: "700px" }}
-        >
+        <table className="product-table">
           <thead>
             <tr>
               <th style={{ width: "30%" }}>Produto</th>
@@ -1351,7 +1348,9 @@ const handleEditSavedPhoto = async (
         </button>
       </div>
     );
-  };  
+  };
+
+
 
 
 

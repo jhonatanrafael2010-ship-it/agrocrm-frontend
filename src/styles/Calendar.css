@@ -540,3 +540,75 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   cursor: pointer;
   font-weight: 700;
 }
+
+/* =============================== */
+/*  PRODUTOS – TABELA PROFISSIONAL */
+/* =============================== */
+
+.product-advanced {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+/* Tabela com visual profissional */
+.product-table {
+  width: 100%;
+  min-width: 750px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Cabeçalho fixo dentro da área */
+.product-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
+  padding: 10px;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Linhas listradas */
+.product-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.product-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Hover moderno */
+.product-table tbody tr:hover {
+  background: rgba(56, 142, 60, 0.2); /* verde suave */
+  transition: 0.2s ease-in-out;
+}
+
+/* Células */
+.product-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+/* Inputs */
+.product-table input,
+.product-table select {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.product-table input:focus,
+.product-table select:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
