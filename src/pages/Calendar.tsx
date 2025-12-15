@@ -1368,6 +1368,58 @@ const handleEditSavedPhoto = async (
 
 
 
+  // ============================================================
+  // 🟦 TOOLTIP COM FOTO — HANDLERS
+  // ============================================================
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+
+  const handleMouseEnter = (info: any) => {
+    const visit = info.event.extendedProps?.raw;
+    if (!visit) return;
+
+    // Escolhe a primeira foto (online ou offline)
+    const photo =
+      visit.photos?.[0]?.url ||
+      visit.offlinePhotos?.[0]?.dataUrl ||
+      null;
+
+    // Criar tooltip
+    const tooltip = document.createElement("div");
+    tooltip.className = "visit-tooltip";
+
+    tooltip.innerHTML = `
+      <div style="font-weight:600; margin-bottom:6px;">
+        ${visit.client_name || "Cliente"}
+      </div>
+      <div>🌱 ${visit.variety || "-"}</div>
+      <div>📌 ${visit.fenologia_real || visit.recommendation || "-"}</div>
+      <div>👨‍🌾 ${visit.consultant_name || "-"}</div>
+      ${
+        photo
+          ? `<img src="${photo}" style="width:120px;height:80px;object-fit:cover;margin-top:8px;border-radius:6px;" />`
+          : ""
+      }
+    `;
+
+    document.body.appendChild(tooltip);
+    tooltipRef.current = tooltip;
+
+    const rect = info.el.getBoundingClientRect();
+
+    tooltip.style.left = rect.left + "px";
+    tooltip.style.top = rect.top - 100 + "px"; // posição acima do evento
+  };
+
+  const handleMouseLeave = () => {
+    if (tooltipRef.current) {
+      tooltipRef.current.remove();
+      tooltipRef.current = null;
+    }
+  };
+
+
+
+
 
   // ============================================================
   // Render
@@ -1500,6 +1552,8 @@ const handleEditSavedPhoto = async (
           locales={[ptBrLocale]}
           locale="pt-br"
           initialView="dayGridMonth"
+          eventMouseEnter={handleMouseEnter}
+          eventMouseLeave={handleMouseLeave}
           height={window.innerWidth < 768 ? "auto" : 650}
           expandRows={true}
           headerToolbar={{
