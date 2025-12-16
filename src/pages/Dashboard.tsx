@@ -29,7 +29,6 @@ const Dashboard: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [opps, setOpps] = useState<Opportunity[]>([]);
 
-  // 🔹 Datas desativadas por padrão
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
@@ -98,7 +97,7 @@ const Dashboard: React.FC = () => {
   const totalSales = closedOpps.reduce((s, o) => s + (o.estimated_value || 0), 0);
 
   // ============================================================
-  // 📈 Gráfico — só renderiza SE datas forem escolhidas
+  // 📈 Gráfico
   // ============================================================
   let days: string[] = [];
   let dailySums: number[] = [];
@@ -126,6 +125,7 @@ const Dashboard: React.FC = () => {
   }
 
   const maxSum = Math.max(...dailySums, 1);
+
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
   function fmtCurrency(v: number) {
@@ -150,24 +150,23 @@ const Dashboard: React.FC = () => {
         <div className="text-secondary text-center py-4">Carregando...</div>
       ) : (
         <>
-          {/* CARDS */}
+          {/* CARDS DE RESUMO */}
           <div className="row g-3 mb-4 justify-content-center">
-            {[
-              { icon: "👤", label: "Clientes", value: clients.length },
+            {[{ icon: "👤", label: "Clientes", value: clients.length },
               { icon: "🏠", label: "Propriedades", value: properties.length },
               { icon: "🌱", label: "Talhões", value: plots.length },
               { icon: "🌾", label: "Plantios", value: plantings.length },
               { icon: "📝", label: "Acompanhamentos", value: visits.length },
-              { icon: "💼", label: "Oportunidades", value: opps.length },
-            ].map((c, i) => (
-              <div key={i} className="col-6 col-md-4 col-lg-2">
-                <div className="card border-0 shadow-sm text-center p-3" style={{ background: "var(--panel)", color: "var(--text)" }}>
-                  <div className="fs-3">{c.icon}</div>
-                  <div className="fw-semibold" style={{ color: "var(--text-secondary)" }}>{c.label}</div>
-                  <div className="fs-5 fw-bold">{c.value}</div>
+              { icon: "💼", label: "Oportunidades", value: opps.length }]
+              .map((card, i) => (
+                <div key={i} className="col-6 col-md-4 col-lg-2">
+                  <div className="card border-0 shadow-sm text-center p-3" style={{ background: "var(--panel)", color: "var(--text)" }}>
+                    <div className="fs-3">{card.icon}</div>
+                    <div className="fw-semibold" style={{ color: "var(--text-secondary)" }}>{card.label}</div>
+                    <div className="fs-5 fw-bold">{card.value}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {/* FILTROS */}
@@ -207,7 +206,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* GRÁFICO — só aparece se houver intervalo */}
+          {/* GRÁFICO */}
           {startDate && endDate && days.length > 0 && (
             <div className="row mb-5 justify-content-center">
               <div className="col-12 col-lg-10">
@@ -279,8 +278,9 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
-          {/* ÚLTIMAS VISITAS */}
+          {/* Últimas visitas e Oportunidades */}
           <div className="row mb-5 justify-content-center">
+            {/* TABELA DE VISITAS */}
             <div className="col-12 col-lg-10">
               <div className="card border-0 shadow-sm text-center p-3" style={{ background: "var(--panel)", color: "var(--text)" }}>
                 <h5 style={{ color: "var(--text)" }}>🧭 Últimas Visitas</h5>
@@ -293,7 +293,6 @@ const Dashboard: React.FC = () => {
                         <th>Propriedade</th>
                       </tr>
                     </thead>
-
                     <tbody>
                       {visits.map((v) => (
                         <tr key={v.id}>
@@ -309,7 +308,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* ÚLTIMAS OPORTUNIDADES */}
+          {/* TABELA DE OPORTUNIDADES */}
           <div className="row justify-content-center">
             <div className="col-12 col-lg-10">
               <div className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3" style={{ background: "var(--panel)", color: "var(--text)" }}>
@@ -327,7 +326,6 @@ const Dashboard: React.FC = () => {
                       }}
                     >
                       <span>{o.title ?? "Sem título"}</span>
-
                       <span>
                         {o.stage && (
                           <span className={`badge ${
@@ -338,7 +336,6 @@ const Dashboard: React.FC = () => {
                             {o.stage}
                           </span>
                         )}
-
                         <span className="text-secondary">
                           {fmtCurrency(o.estimated_value || 0)}
                         </span>
@@ -346,11 +343,9 @@ const Dashboard: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-
               </div>
             </div>
           </div>
-
         </>
       )}
     </div>

@@ -114,6 +114,14 @@ const CalendarPage: React.FC = () => {
 
   const photosRef = useRef<HTMLDivElement | null>(null);
 
+  // ============================================================
+  // 📱 Detecta comportamento mobile (APK + web responsivo)
+  // ============================================================
+  const isMobileLike = () =>
+    window.innerWidth < 768 ||
+    document.body.dataset.platform === "mobile";
+
+
 
   // 🛰️ Status de conexão
   const [offline, setOffline] = useState(!navigator.onLine);
@@ -1307,12 +1315,22 @@ useEffect(() => {
       img.src = p.src;
     });
 
-    setHoverPreview({
-      x: info.jsEvent.clientX,
-      y: info.jsEvent.clientY,
-      visit: v,
-      photos,
-    });
+    if (isMobileLike()) {
+      setHoverPreview({
+        x: 0,
+        y: 0,
+        visit: v,
+        photos,
+      });
+    } else {
+      setHoverPreview({
+        x: info.jsEvent.clientX,
+        y: info.jsEvent.clientY,
+        visit: v,
+        photos,
+      });
+    }
+
   };
 
   const handleEventMouseLeave = () => {
@@ -1466,8 +1484,6 @@ useEffect(() => {
         className="calendar-hover-preview"
         style={{
           position: "fixed",
-          top: hoverPreview.y + 12,
-          left: hoverPreview.x + 12,
           zIndex: 9999,
           maxWidth: "320px",
           background: "var(--panel)",
@@ -1477,6 +1493,19 @@ useEffect(() => {
           boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
           padding: "10px 12px",
           fontSize: "0.8rem",
+
+          ...(isMobileLike()
+            ? {
+                top: "10%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                maxHeight: "80vh",
+                overflowY: "auto",
+              }
+            : {
+                top: hoverPreview.y + 12,
+                left: hoverPreview.x + 12,
+              }),
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 4 }}>
@@ -1727,6 +1756,7 @@ useEffect(() => {
               window.innerWidth <= 768 ||
               document.body.dataset.platform === "mobile";
             if (isMobile) return;
+
 
             const dateStr = info.dateStr;
             const [y, m, d] = dateStr.split("-");
