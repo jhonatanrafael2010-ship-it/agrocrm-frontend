@@ -1234,6 +1234,30 @@ const handleEditSavedPhoto = async (
   } | null>(null);
 
 
+useEffect(() => {
+  if (!hoverPreview) return;
+
+  const handleKey = (e: KeyboardEvent) => {
+    const el = photosRef.current;
+    if (!el) return;
+
+    const step = 120; // quanto anda por tecla
+
+    if (e.key === "ArrowRight") {
+      el.scrollLeft += step;
+    }
+
+    if (e.key === "ArrowLeft") {
+      el.scrollLeft -= step;
+    }
+  };
+
+  window.addEventListener("keydown", handleKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleKey);
+  };
+}, [hoverPreview]);
 
 
 
@@ -1478,17 +1502,23 @@ const handleEditSavedPhoto = async (
             <div style={{ fontWeight: 600, marginBottom: 4 }}>Fotos</div>
 
             <div
-              ref={photosRef}
-              onWheel={(e) => {
-                if (e.deltaY === 0) return;
-                e.preventDefault();
-                (e.currentTarget as HTMLDivElement).scrollLeft += e.deltaY;
+              style={{
+                fontSize: "0.7rem",
+                opacity: 0.6,
+                marginBottom: 4,
               }}
+            >
+              ⬅️ ➡️ Use as setas do teclado
+            </div>
+
+            <div
+              ref={photosRef}
               style={{
                 display: "flex",
                 gap: 8,
                 overflowX: "auto",
                 paddingBottom: 4,
+                scrollBehavior: "smooth",
                 cursor: "grab",
                 scrollbarWidth: "thin",           // Firefox
                 WebkitOverflowScrolling: "touch", // iOS
