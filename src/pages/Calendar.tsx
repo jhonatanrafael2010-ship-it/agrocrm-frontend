@@ -1233,26 +1233,7 @@ const handleEditSavedPhoto = async (
     photos: { src: string; caption?: string }[];
   } | null>(null);
 
-  // ============================================================
-  // 🖱️ Scroll vertical do mouse → scroll horizontal nas fotos
-  // ============================================================
-  useEffect(() => {
-    const el = photosRef.current;
-    if (!el) return;
 
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0) return;
-
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-    };
-  }, [hoverPreview]);
 
 
 
@@ -1498,15 +1479,22 @@ const handleEditSavedPhoto = async (
 
             <div
               ref={photosRef}
+              onWheel={(e) => {
+                if (e.deltaY === 0) return;
+                e.preventDefault();
+                (e.currentTarget as HTMLDivElement).scrollLeft += e.deltaY;
+              }}
               style={{
                 display: "flex",
                 gap: 8,
                 overflowX: "auto",
                 paddingBottom: 4,
+                cursor: "grab",
                 scrollbarWidth: "thin",           // Firefox
                 WebkitOverflowScrolling: "touch", // iOS
               }}
             >
+            
               {hoverPreview.photos.map((p, idx) => (
                 <div key={idx} style={{ width: "90px", flex: "0 0 auto" }}>
                   <img
