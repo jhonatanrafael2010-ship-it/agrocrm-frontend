@@ -112,6 +112,9 @@ type Product = {
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
 
+  const photosRef = useRef<HTMLDivElement | null>(null);
+
+
   // 🛰️ Status de conexão
   const [offline, setOffline] = useState(!navigator.onLine);
 
@@ -1230,6 +1233,28 @@ const handleEditSavedPhoto = async (
     photos: { src: string; caption?: string }[];
   } | null>(null);
 
+  // ============================================================
+  // 🖱️ Scroll vertical do mouse → scroll horizontal nas fotos
+  // ============================================================
+  useEffect(() => {
+    const el = photosRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0) return;
+
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [hoverPreview]);
+
+
 
   const handleCloseLightbox = () => {
     setLightboxOpen(false);
@@ -1472,11 +1497,14 @@ const handleEditSavedPhoto = async (
             <div style={{ fontWeight: 600, marginBottom: 4 }}>Fotos</div>
 
             <div
+              ref={photosRef}
               style={{
                 display: "flex",
                 gap: 8,
                 overflowX: "auto",
                 paddingBottom: 4,
+                scrollbarWidth: "thin",           // Firefox
+                WebkitOverflowScrolling: "touch", // iOS
               }}
             >
               {hoverPreview.photos.map((p, idx) => (
@@ -1822,6 +1850,8 @@ const handleEditSavedPhoto = async (
         />
         {renderHoverPreview()}
        </div>
+
+
 
             
       {/* ➕ FAB no mobile */}
