@@ -1227,8 +1227,9 @@ const handleEditSavedPhoto = async (
     x: number;
     y: number;
     visit: any;
-    photos: { src: string }[];
+    photos: { src: string; caption?: string }[];
   } | null>(null);
+
 
   const handleCloseLightbox = () => {
     setLightboxOpen(false);
@@ -1252,27 +1253,35 @@ const handleEditSavedPhoto = async (
   };
 
   // ============================================================
-  // 👀 Hover do evento: mostra mini-card com 3 fotos + recomendação
+  // 👀 Hover do evento: mini-card com TODAS as fotos + preload
   // ============================================================
   const handleEventMouseEnter = (info: any) => {
     const v = info.event.extendedProps?.raw as any;
     if (!v) return;
 
-    // Monta até 3 fotos (online + offline)
-    const onlinePhotos = (v.photos || []).map((p: any) => ({
-      src: p.url,
-    }));
-    const offlinePhotos = (v.offlinePhotos || []).map((p: any) => ({
-      src: p.dataUrl, // base64 salvo offline
-    }));
+    // 🔹 Fotos online + offline (SEM limite)
+    const photos = [
+      ...(v.photos || []).map((p: any) => ({
+        src: p.url,
+        caption: p.caption || "",
+      })),
+      ...(v.offlinePhotos || []).map((p: any) => ({
+        src: p.dataUrl, // base64 offline
+        caption: p.caption || "",
+      })),
+    ];
 
-    const allPhotos = [...onlinePhotos, ...offlinePhotos].slice(0, 3);
+    // 🔥 PRELOAD — evita delay no hover
+    photos.forEach((p) => {
+      const img = new Image();
+      img.src = p.src;
+    });
 
     setHoverPreview({
       x: info.jsEvent.clientX,
       y: info.jsEvent.clientY,
       visit: v,
-      photos: allPhotos,
+      photos,
     });
   };
 
@@ -1402,6 +1411,110 @@ const handleEditSavedPhoto = async (
     );
   };
 
+
+  const renderHoverPreview = () => {
+    if (!hoverPreview || open) return null;
+
+    const v = hoverPreview.visit;
+
+    const clientName =
+      v.client_name ||
+      clients.find((c: any) => c.id === v.client_id)?.name ||
+      "Cliente";
+
+    let dateStr = "-";
+    if (v.date) {
+      const [yy, mm, dd] = v.date.split("-");
+      dateStr = `${dd}/${mm}/${yy}`;
+    }
+
+    const stage = v.fenologia_real?.trim() || "—";
+    const rec = (v.recommendation || "").trim();
+
+    return (
+      <div
+        className="calendar-hover-preview"
+        style={{
+          position: "fixed",
+          top: hoverPreview.y + 12,
+          left: hoverPreview.x + 12,
+          zIndex: 9999,
+          maxWidth: "320px",
+          background: "var(--panel)",
+          color: "var(--text)",
+          border: "1px solid var(--border)",
+          borderRadius: "10px",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+          padding: "10px 12px",
+          fontSize: "0.8rem",
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+          VISITA #{v.id} — {clientName}
+        </div>
+
+        <div>🌱 {stage}</div>
+        <div>📅 {dateStr}</div>
+
+        {rec && (
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontWeight: 600, color: "#A5D6A7" }}>
+              Recomendações Técnicas
+            </div>
+            <div style={{ maxHeight: "70px", overflow: "hidden" }}>
+              {rec.length > 200 ? rec.slice(0, 200) + "…" : rec}
+            </div>
+          </div>
+        )}
+
+        {hoverPreview.photos?.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Fotos</div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                overflowX: "auto",
+                paddingBottom: 4,
+              }}
+            >
+              {hoverPreview.photos.map((p, idx) => (
+                <div key={idx} style={{ width: "90px", flex: "0 0 auto" }}>
+                  <img
+                    src={p.src}
+                    loading="lazy"
+                    style={{
+                      width: "100%",
+                      height: "70px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  />
+
+                  {p.caption && (
+                    <div
+                      style={{
+                        fontSize: "0.65rem",
+                        marginTop: 2,
+                        lineHeight: "1.1",
+                        opacity: 0.85,
+                      }}
+                    >
+                      {p.caption.length > 40
+                        ? p.caption.slice(0, 40) + "…"
+                        : p.caption}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
 
 
@@ -1707,92 +1820,10 @@ const handleEditSavedPhoto = async (
           eventMouseEnter={handleEventMouseEnter}
           eventMouseLeave={handleEventMouseLeave}
         />
-        {hoverPreview && !open && (
-  <div
-    className="calendar-hover-preview"
-    style={{
-      position: "fixed",
-      top: hoverPreview.y + 12,
-      left: hoverPreview.x + 12,
-      zIndex: 9999,
-      maxWidth: "320px",
-      background: "var(--panel)",
-      color: "var(--text)",
-      border: "1px solid var(--border)",
-      borderRadius: "10px",
-      boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
-      padding: "10px 12px",
-      fontSize: "0.8rem",
-    }}
-  >
-    {(() => {
-      const v = hoverPreview.visit;
-      const clientName =
-        v.client_name ||
-        clients.find((c: any) => c.id === v.client_id)?.name ||
-        "Cliente";
+        {renderHoverPreview()}
+       </div>
 
-      let dateStr = "-";
-      if (v.date) {
-        const [yy, mm, dd] = v.date.split("-");
-        dateStr = `${dd}/${mm}/${yy}`;
-      }
-
-      const stage =
-        v.fenologia_real?.trim() ||
-        "—";
-
-      const rec = (v.recommendation || "").trim();
-
-      return (
-        <div>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>
-            VISITA #{v.id} — {clientName}
-          </div>
-
-          <div>🌱 {stage}</div>
-          <div>📅 {dateStr}</div>
-
-          {rec && (
-            <div style={{ marginTop: 6 }}>
-              <div style={{ fontWeight: 600, color: "#A5D6A7" }}>
-                Recomendações Técnicas
-              </div>
-              <div style={{ maxHeight: "70px", overflow: "hidden" }}>
-                {rec.length > 200 ? rec.slice(0, 200) + "…" : rec}
-              </div>
-            </div>
-          )}
-
-          {hoverPreview.photos.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                Fotos (até 3)
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {hoverPreview.photos.map((p, idx) => (
-                  <img
-                    key={idx}
-                    src={p.src}
-                    style={{
-                      width: "90px",
-                      height: "70px",
-                      objectFit: "cover",
-                      borderRadius: "6px",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    })()}
-  </div>
-)}
-      </div>
-
+            
       {/* ➕ FAB no mobile */}
       {document.body.dataset.platform === "mobile" && (
         <button
