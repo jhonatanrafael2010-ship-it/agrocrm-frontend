@@ -1222,6 +1222,14 @@ const handleEditSavedPhoto = async (
   const [lightboxPhotos] = useState<string[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
 
+  // 👀 Preview de visita no hover (até 3 fotos + recomendação)
+  const [hoverPreview, setHoverPreview] = useState<{
+    x: number;
+    y: number;
+    visit: any;
+    photos: { src: string }[];
+  } | null>(null);
+
   const handleCloseLightbox = () => {
     setLightboxOpen(false);
     setLightboxUrl(null);
@@ -1241,6 +1249,35 @@ const handleEditSavedPhoto = async (
     const nextIndex = (currentPhotoIndex + 1) % lightboxPhotos.length;
     setCurrentPhotoIndex(nextIndex);
     setLightboxUrl(lightboxPhotos[nextIndex]);
+  };
+
+  // ============================================================
+  // 👀 Hover do evento: mostra mini-card com 3 fotos + recomendação
+  // ============================================================
+  const handleEventMouseEnter = (info: any) => {
+    const v = info.event.extendedProps?.raw as any;
+    if (!v) return;
+
+    // Monta até 3 fotos (online + offline)
+    const onlinePhotos = (v.photos || []).map((p: any) => ({
+      src: p.url,
+    }));
+    const offlinePhotos = (v.offlinePhotos || []).map((p: any) => ({
+      src: p.dataUrl, // base64 salvo offline
+    }));
+
+    const allPhotos = [...onlinePhotos, ...offlinePhotos].slice(0, 3);
+
+    setHoverPreview({
+      x: info.jsEvent.clientX,
+      y: info.jsEvent.clientY,
+      visit: v,
+      photos: allPhotos,
+    });
+  };
+
+  const handleEventMouseLeave = () => {
+    setHoverPreview(null);
   };
 
 
@@ -1364,59 +1401,6 @@ const handleEditSavedPhoto = async (
       </div>
     );
   };
-
-
-
-
-  // ============================================================
-  // 🟦 TOOLTIP COM FOTO — HANDLERS
-  // ============================================================
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
-
-  const handleMouseEnter = (info: any) => {
-    const visit = info.event.extendedProps?.raw;
-    if (!visit) return;
-
-    // Escolhe a primeira foto (online ou offline)
-    const photo =
-      visit.photos?.[0]?.url ||
-      visit.offlinePhotos?.[0]?.dataUrl ||
-      null;
-
-    // Criar tooltip
-    const tooltip = document.createElement("div");
-    tooltip.className = "visit-tooltip";
-
-    tooltip.innerHTML = `
-      <div style="font-weight:600; margin-bottom:6px;">
-        ${visit.client_name || "Cliente"}
-      </div>
-      <div>🌱 ${visit.variety || "-"}</div>
-      <div>📌 ${visit.fenologia_real || visit.recommendation || "-"}</div>
-      <div>👨‍🌾 ${visit.consultant_name || "-"}</div>
-      ${
-        photo
-          ? `<img src="${photo}" style="width:120px;height:80px;object-fit:cover;margin-top:8px;border-radius:6px;" />`
-          : ""
-      }
-    `;
-
-    document.body.appendChild(tooltip);
-    tooltipRef.current = tooltip;
-
-    const rect = info.el.getBoundingClientRect();
-
-    tooltip.style.left = rect.left + "px";
-    tooltip.style.top = rect.top - 100 + "px"; // posição acima do evento
-  };
-
-  const handleMouseLeave = () => {
-    if (tooltipRef.current) {
-      tooltipRef.current.remove();
-      tooltipRef.current = null;
-    }
-  };
-
 
 
 
@@ -1552,8 +1536,6 @@ const handleEditSavedPhoto = async (
           locales={[ptBrLocale]}
           locale="pt-br"
           initialView="dayGridMonth"
-          eventMouseEnter={handleMouseEnter}
-          eventMouseLeave={handleMouseLeave}
           height={window.innerWidth < 768 ? "auto" : 650}
           expandRows={true}
           headerToolbar={{
@@ -1722,7 +1704,93 @@ const handleEditSavedPhoto = async (
                 "⚠️ Visita salva offline — será sincronizada quando a internet voltar.";
             }
           }}
+          eventMouseEnter={handleEventMouseEnter}
+          eventMouseLeave={handleEventMouseLeave}
         />
+        {hoverPreview && !open && (
+  <div
+    className="calendar-hover-preview"
+    style={{
+      position: "fixed",
+      top: hoverPreview.y + 12,
+      left: hoverPreview.x + 12,
+      zIndex: 9999,
+      maxWidth: "320px",
+      background: "var(--panel)",
+      color: "var(--text)",
+      border: "1px solid var(--border)",
+      borderRadius: "10px",
+      boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
+      padding: "10px 12px",
+      fontSize: "0.8rem",
+    }}
+  >
+    {(() => {
+      const v = hoverPreview.visit;
+      const clientName =
+        v.client_name ||
+        clients.find((c: any) => c.id === v.client_id)?.name ||
+        "Cliente";
+
+      let dateStr = "-";
+      if (v.date) {
+        const [yy, mm, dd] = v.date.split("-");
+        dateStr = `${dd}/${mm}/${yy}`;
+      }
+
+      const stage =
+        v.fenologia_real?.trim() ||
+        "—";
+
+      const rec = (v.recommendation || "").trim();
+
+      return (
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            VISITA #{v.id} — {clientName}
+          </div>
+
+          <div>🌱 {stage}</div>
+          <div>📅 {dateStr}</div>
+
+          {rec && (
+            <div style={{ marginTop: 6 }}>
+              <div style={{ fontWeight: 600, color: "#A5D6A7" }}>
+                Recomendações Técnicas
+              </div>
+              <div style={{ maxHeight: "70px", overflow: "hidden" }}>
+                {rec.length > 200 ? rec.slice(0, 200) + "…" : rec}
+              </div>
+            </div>
+          )}
+
+          {hoverPreview.photos.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                Fotos (até 3)
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {hoverPreview.photos.map((p, idx) => (
+                  <img
+                    key={idx}
+                    src={p.src}
+                    style={{
+                      width: "90px",
+                      height: "70px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })()}
+  </div>
+)}
       </div>
 
       {/* ➕ FAB no mobile */}
