@@ -2375,10 +2375,10 @@ useEffect(() => {
                       />
                     </div>
 
-                    {/* Recomendação técnica */}
+                    {/* Observações */}
                     <div className="col-12">
                       <label className="form-label fw-semibold">
-                        Recomendação Técnica
+                        Observações
                       </label>
                       <textarea
                         name="recommendation"
@@ -2389,7 +2389,7 @@ useEffect(() => {
                             recommendation: e.target.value,
                           }))
                         }
-                        placeholder="Descreva observações técnicas..."
+                        placeholder="Descreva observações..."
                         className="form-control"
                         style={{
                           background: "var(--input-bg)",
