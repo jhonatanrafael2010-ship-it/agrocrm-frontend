@@ -226,12 +226,7 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
-      // 1) Buscar visitas online
-      // Detectar iOS
-      function isIOS() {
-        return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      }
-
+    
       // Abordagem iOS: apenas visitas do mês → MUITO mais leve
       const endpoint = isIOS()
         ? `${API_BASE}visits?month=current`
@@ -346,7 +341,7 @@ const CalendarPage: React.FC = () => {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
 
- // ============================================================
+  // ============================================================
   // 🚀 Load inicial (iOS continua leve nas VISITAS)
   // ============================================================
   useEffect(() => {
