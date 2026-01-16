@@ -346,12 +346,15 @@ const CalendarPage: React.FC = () => {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
 
-  // ============================================================
-  // 🚀 Load inicial (OTIMIZADO PARA iOS)
+ // ============================================================
+  // 🚀 Load inicial (iOS continua leve nas VISITAS)
   // ============================================================
   useEffect(() => {
-    async function loadBaseData() {
+    let mounted = true;
+
+    async function loadBaseDataAndVisits() {
       setLoading(true);
+
       try {
         const [
           cs = [],
@@ -369,6 +372,8 @@ const CalendarPage: React.FC = () => {
           fetchWithCache(`${API_BASE}consultants`, "consultants"),
         ]);
 
+        if (!mounted) return;
+
         setClients(cs);
         setProperties(ps);
         setPlots(pls);
@@ -376,26 +381,24 @@ const CalendarPage: React.FC = () => {
         setVarieties(vars);
         setConsultants(cons);
 
-        console.log("📦 Dados base carregados.");
+        console.log("📦 Dados base carregados (inclui iOS).");
       } catch (err) {
         console.warn("⚠️ Falha ao carregar dados base:", err);
-        alert("⚠️ Sem conexão — dados limitados.");
+        // não trava a tela — ainda tenta carregar visitas
       } finally {
+        // ✅ SEMPRE carrega visitas (seu loadVisits já é leve no iOS via month=current)
         await loadVisits();
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
 
-    // 🍏 iOS → Apenas visitas do mês
-    if (isIOS()) {
-      console.log("🍏 iOS detectado → modo leve ativado");
-      loadVisits(); // já usa month=current no endpoint
-      return;
-    }
+    loadBaseDataAndVisits();
 
-    // Android / Web → modo completo
-    loadBaseData();
+    return () => {
+      mounted = false;
+    };
   }, []);
+
 
 
   // Reagir a "visits-synced" (quando voltar internet)
