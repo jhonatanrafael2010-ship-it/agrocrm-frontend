@@ -241,9 +241,9 @@ const VisitPhotos: React.FC<Props> = ({
       });
 
       setSavedPhotos(merged);
-    } catch (err) {
-      console.error("Erro Camera:", err);
-      alert("❌ Falha ao capturar foto.");
+    } catch (err: any) {
+      console.error("Erro Camera/Salvar:", err);
+      alert(`❌ Falha ao capturar/salvar foto.\n\n${err?.name || ""} ${err?.message || ""}`);
     }
   }
 

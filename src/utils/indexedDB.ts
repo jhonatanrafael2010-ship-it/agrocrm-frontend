@@ -243,27 +243,69 @@ export interface PendingPhoto {
 export async function savePendingPhoto(photo: PendingPhoto): Promise<void> {
   const db = await openDB();
 
-  // 🔥 gera nome único mesmo offline
-  const uniqueName = `${crypto.randomUUID()}_${photo.fileName}`;
+  // ✅ iOS fallback se randomUUID não existir
+  const uuid =
+    (globalThis.crypto as any)?.randomUUID?.() ??
+    `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  const uniqueName = `${uuid}_${photo.fileName}`;
 
   return new Promise((resolve, reject) => {
+    let tx: IDBTransaction | null = null;
+
     try {
-      const tx = db.transaction("pending_photos", "readwrite");
+      tx = db.transaction("pending_photos", "readwrite");
       const store = tx.objectStore("pending_photos");
 
       store.put({
         ...photo,
-        fileName: uniqueName,   // ← AQUI FAZ O NOME ÚNICO
+        fileName: uniqueName,
       });
 
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
+      tx.oncomplete = () => {
+        try { db.close(); } catch {}
+        resolve();
+      };
+
+      tx.onerror = () => {
+        // ✅ LOG COMPLETO
+        const err = tx?.error || new Error("IndexedDB tx.onerror sem tx.error");
+        console.error("❌ IndexedDB pending_photos tx.onerror:", err);
+
+        // ✅ Detecta quota cheia
+        const name = (err as any)?.name || "";
+        const msg = (err as any)?.message || "";
+        if (name === "QuotaExceededError" || msg.toLowerCase().includes("quota")) {
+          console.warn("⚠️ QuotaExceededError: armazenamento do iOS/Browser cheio.");
+        }
+
+        try { db.close(); } catch {}
+        reject(err);
+      };
+
+      tx.onabort = () => {
+        // ✅ LOG COMPLETO
+        const err = tx?.error || new Error("IndexedDB tx.onabort sem tx.error");
+        console.error("❌ IndexedDB pending_photos tx.onabort:", err);
+
+        const name = (err as any)?.name || "";
+        const msg = (err as any)?.message || "";
+        if (name === "QuotaExceededError" || msg.toLowerCase().includes("quota")) {
+          console.warn("⚠️ QuotaExceededError: armazenamento do iOS/Browser cheio.");
+        }
+
+        try { db.close(); } catch {}
+        reject(err);
+      };
     } catch (err) {
-      console.warn("Erro ao salvar foto offline:", err, photo);
+      console.error("❌ Erro ao iniciar transação IndexedDB (savePendingPhoto):", err);
+      try { db.close(); } catch {}
       reject(err);
     }
   });
 }
+
+
 
 
 export async function getAllPendingPhotos(): Promise<PendingPhoto[]> {
