@@ -149,6 +149,46 @@ const VisitPhotos: React.FC<Props> = ({
     };
   }, [photos, loadOffline]);
 
+
+  function extractGpsFromDataUrl(
+    dataUrl: string
+  ): Promise<{ latitude: number | null; longitude: number | null }> {
+    return new Promise((resolve) => {
+      try {
+        const img = new Image();
+        img.src = dataUrl;
+
+        img.onload = () => {
+          EXIF.getData(img as any, function (this: any) {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lon = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
+
+            if (!lat || !lon) return resolve({ latitude: null, longitude: null });
+
+            const toDecimal = (dms: number[]) =>
+              dms[0] + dms[1] / 60 + dms[2] / 3600;
+
+            let latitude = toDecimal(lat);
+            let longitude = toDecimal(lon);
+
+            if (latRef === "S") latitude *= -1;
+            if (lonRef === "W") longitude *= -1;
+
+            resolve({ latitude, longitude });
+          });
+        };
+
+        img.onerror = () => resolve({ latitude: null, longitude: null });
+      } catch {
+        resolve({ latitude: null, longitude: null });
+      }
+    });
+  }
+
+
+
   // ======================================================
   // Capturar pelo APK
   // ======================================================
@@ -170,38 +210,13 @@ const VisitPhotos: React.FC<Props> = ({
       const dataUrl = img.dataUrl;
       const fileName = `foto_${Date.now()}.jpg`;
 
-      let latitude: number | null = null;
-      let longitude: number | null = null;
+      // ✅ AGORA SIM: espera extrair EXIF antes de salvar
+      const { latitude, longitude } = await extractGpsFromDataUrl(dataUrl);
 
-      // Extrair EXIF
-      try {
-        const el = new Image();
-        el.src = dataUrl;
+      if (latitude != null && longitude != null) {
+        onAutoLocation?.(latitude, longitude);
+      }
 
-        el.onload = () => {
-          EXIF.getData(el, function (this: any) {
-            const lat = EXIF.getTag(this, "GPSLatitude");
-            const lon = EXIF.getTag(this, "GPSLongitude");
-            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-            const lonRef = EXIF.getTag(this, "GPSLongitudeRef");
-
-            if (lat && lon) {
-              const toDecimal = (dms: number[]) =>
-                dms[0] + dms[1] / 60 + dms[2] / 3600;
-
-              latitude = toDecimal(lat);
-              longitude = toDecimal(lon);
-
-              if (latRef === "S") latitude *= -1;
-              if (lonRef === "W") longitude *= -1;
-
-              if (onAutoLocation) onAutoLocation(latitude, longitude);
-            }
-          });
-        };
-      } catch {}
-
-      // Salva offline
       await savePendingPhoto({
         visit_id: visitId,
         fileName,
@@ -231,6 +246,7 @@ const VisitPhotos: React.FC<Props> = ({
       alert("❌ Falha ao capturar foto.");
     }
   }
+
 
   // ======================================================
   // Upload Web (novas fotos)
@@ -377,39 +393,47 @@ const VisitPhotos: React.FC<Props> = ({
 
       {/* Previews de novas fotos (ainda não salvas) */}
       {previews.length > 0 && (
-        <div className="d-flex flex-wrap gap-3 mt-3">
-          {previews.map((src, idx) => (
-            <div key={idx} style={{ width: 130 }}>
-              <img
-                src={src}
-                style={{
-                  width: "130px",
-                  height: "130px",
-                  objectFit: "cover",
-                  borderRadius: 10,
-                }}
-              />
+        <div className="mt-3">
+          <label className="form-label fw-semibold">
+            {savedPhotos.length > 0 ? "🆕 Novas fotos" : "📸 Fotos"}
+          </label>
 
-              <input
-                type="text"
-                placeholder="Legenda..."
-                className="form-control form-control-sm mt-1"
-                value={captions[idx] || ""}
-                onChange={(e) => {
-                  const arr = [...captions];
-                  arr[idx] = e.target.value;
-                  setCaptions(arr);
-                }}
-              />
-            </div>
-          ))}
+          <div className="d-flex flex-wrap gap-3">
+            {previews.map((src, idx) => (
+              <div key={idx} style={{ width: 130 }}>
+                <img
+                  src={src}
+                  style={{
+                    width: "130px",
+                    height: "130px",
+                    objectFit: "cover",
+                    borderRadius: 10,
+                  }}
+                />
+
+                <input
+                  type="text"
+                  placeholder="Legenda..."
+                  className="form-control form-control-sm mt-1"
+                  value={captions[idx] || ""}
+                  onChange={(e) => {
+                    const arr = [...captions];
+                    arr[idx] = e.target.value;
+                    setCaptions(arr);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Fotos salvas (online + offline) */}
       {savedPhotos.length > 0 && (
         <div className="mt-4">
-          <label className="form-label fw-semibold">📁 Fotos salvas</label>
+          <label className="form-label fw-semibold">
+            {previews.length > 0 ? "📁 Fotos" : "📸 Fotos"}
+          </label>
 
           <div className="d-flex flex-wrap gap-3">
             {savedPhotos.map((p) => (
@@ -423,10 +447,7 @@ const VisitPhotos: React.FC<Props> = ({
                     borderRadius: 10,
                   }}
                 />
-                <div
-                  className="small mt-1 text-truncate"
-                  title={p.caption || ""}
-                >
+                <div className="small mt-1 text-truncate" title={p.caption || ""}>
                   {p.caption || <span className="text-muted">Sem legenda</span>}
                 </div>
                 <button
@@ -440,6 +461,7 @@ const VisitPhotos: React.FC<Props> = ({
           </div>
         </div>
       )}
+
 
       {/* Painel de edição de foto salva */}
       {editingPhoto && (
