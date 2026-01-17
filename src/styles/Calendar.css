@@ -636,3 +636,20 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   background: rgba(255,255,255,0.25);
   border-radius: 4px;
 }
+/* Container da página do calendário */
+.calendar-page {
+  height: 100vh;
+  overflow: hidden; /* ✅ impede a página de disputar o scroll */
+}
+
+/* FullCalendar ocupa tudo */
+.fc {
+  height: 100%;
+}
+
+/* O scroller interno do FullCalendar vira o dono do scroll */
+.fc .fc-scroller {
+  overflow-y: auto !important;
+  overscroll-behavior: contain; /* ✅ evita “efeito mola” */
+}
+

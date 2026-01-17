@@ -1722,8 +1722,18 @@ useEffect(() => {
           locales={[ptBrLocale]}
           locale="pt-br"
           initialView="dayGridMonth"
+
+          // ✅ desktop com altura fixa (evita recalcular e “voltar”)
+          // ✅ mobile pode continuar auto
           height={window.innerWidth < 768 ? "auto" : 650}
+
+          // ✅ ajuda a manter layout consistente
           expandRows={true}
+          stickyHeaderDates={true}
+
+          // ✅ importante para timeGrid (sem isso, pode rolar “pulo” em week/day)
+          scrollTime="06:00:00"
+
           headerToolbar={{
             left: "prev,next today",
             center: "title",
@@ -1731,6 +1741,7 @@ useEffect(() => {
           }}
           dayMaxEventRows={3}
           eventDisplay="block"
+
           events={events.filter((e) => {
             const cid = e.extendedProps?.raw?.consultant_id;
             const variety =
