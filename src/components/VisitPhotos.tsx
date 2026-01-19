@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import EXIF from "exif-js";
+import { API_BASE } from "../config";
+
 
 // =========================================
 // Tipagens
@@ -439,7 +441,11 @@ const VisitPhotos: React.FC<Props> = ({
             {savedPhotos.map((p) => (
               <div key={p.id} style={{ width: 130 }}>
                 <img
-                  src={p.dataUrl || p.url || ""}
+                  src={
+                    p.dataUrl
+                      ? p.dataUrl
+                      : (p.url?.startsWith("http") ? p.url : `${API_BASE}${p.url || ""}`)
+                  }
                   style={{
                     width: "130px",
                     height: "130px",
@@ -524,7 +530,7 @@ const VisitPhotos: React.FC<Props> = ({
                   type="button"
                   className="btn btn-warning btn-sm"
                   onClick={handleReplacePhoto}
-                  disabled={!onReplaceSavedPhoto}
+                  disabled={!effectiveOnReplace}
                 >
                   🔁 Substituir foto
                 </button>
@@ -533,7 +539,7 @@ const VisitPhotos: React.FC<Props> = ({
                   type="button"
                   className="btn btn-danger btn-sm"
                   onClick={handleDeletePhoto}
-                  disabled={!onDeleteSavedPhoto}
+                  disabled={!effectiveOnDelete}
                 >
                   🗑 Excluir foto
                 </button>
