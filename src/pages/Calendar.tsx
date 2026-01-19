@@ -757,6 +757,24 @@ const handleSavePhotos = async () => {
   console.log("📸 Fotos enviadas com sucesso!");
   alert("📸 Fotos enviadas!");
 
+// 🔄 Atualiza as fotos no modal imediatamente (sem depender do calendário)
+try {
+  const updated = await fetch(`${API_BASE}visits/${visitId}`);
+  if (updated.ok) {
+    const data = await updated.json();
+    setForm((f) => ({
+      ...f,
+      savedPhotos: [
+        ...(data.photos || []),
+        ...(f.savedPhotos?.filter((p: any) => p.pending) || []) // mantém offline pendentes
+      ],
+    }));
+  }
+} catch (e) {
+  console.warn("⚠️ Não foi possível atualizar preview de fotos no modal.");
+}
+
+
   // Limpa seleção
   setSelectedFiles([]);
   setSelectedCaptions([]);
