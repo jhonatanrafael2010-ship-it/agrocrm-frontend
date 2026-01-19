@@ -23,6 +23,8 @@ import {
   deletePendingPhoto,   // ← ADICIONADO
 } from "../utils/indexedDB";
 import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
+import { compressImage } from "../utils/imageCompress";
+
 
 
 /*  
@@ -426,29 +428,41 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   // 📸 Salvar foto offline (IndexedDB)
   // ============================================================
-  function savePhotoOffline(visitId: number, file: File, caption: string) {
-    if (!visitId || isNaN(visitId)) {
-      console.error("❌ ERRO: visitId inválido ao salvar foto offline:", visitId);
-      return;
-    }
+  async function savePhotoOffline(
+    visitId: number,
+    file: File,
+    caption: string
+  ) {
+    const compressed = await compressImage(file);
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      await savePendingPhoto({
-        visit_id: visitId,
-        fileName: file.name,
-        mime: file.type,
-        dataUrl: reader.result as string,
-        caption: caption || "",
-        synced: false,
-        latitude: form.latitude,
-        longitude: form.longitude,
-      });
-      console.log("🟠 Foto salva offline:", file.name);
-    };
+    return new Promise<void>((resolve, reject) => {
+      const reader = new FileReader();
 
-    reader.readAsDataURL(file);
+      reader.onerror = () => reject(new Error("Erro ao ler arquivo"));
+
+      reader.onload = async () => {
+        try {
+          await savePendingPhoto({
+            visit_id: visitId,
+            fileName: compressed.name,
+            mime: compressed.type,
+            dataUrl: reader.result as string,
+            caption: caption || "",
+            synced: false,
+            latitude: form.latitude,
+            longitude: form.longitude,
+          });
+
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
+
+      reader.readAsDataURL(compressed);
+    });
   }
+
 
 
 // 🔥 RECEBE COORDENADAS EXIF AUTOMÁTICAS
@@ -707,12 +721,19 @@ const handleSavePhotos = async () => {
   console.log("📸 Enviando fotos ONLINE...");
 
   const fd = new FormData();
-  selectedFiles.forEach((file, i) => {
-    fd.append("photos", file, file.name);
+
+  for (let i = 0; i < selectedFiles.length; i++) {
+    // 🔥 COMPRESSÃO AQUI
+    const compressed = await compressImage(selectedFiles[i]);
+
+    fd.append("photos", compressed, compressed.name);
     fd.append("captions", selectedCaptions[i] || "");
-    fd.append("latitude", String(form.latitude || ""));
-    fd.append("longitude", String(form.longitude || ""));
-  });
+  }
+
+  // ✅ latitude / longitude UMA ÚNICA VEZ
+  fd.append("latitude", String(form.latitude || ""));
+  fd.append("longitude", String(form.longitude || ""));
+
 
   const url = `${API_BASE}visits/${visitId}/photos`;
   const resp = await fetch(url, {
@@ -721,9 +742,17 @@ const handleSavePhotos = async () => {
   });
 
   if (!resp.ok) {
-    alert("⚠️ Falha ao enviar fotos.");
+    const text = await resp.text().catch(() => "");
+    console.error("Upload falhou:", resp.status, text);
+
+    if (resp.status === 500 && text.includes("No space")) {
+      alert("Servidor sem espaço para salvar fotos. Avise o suporte/adm do sistema.");
+    } else {
+      alert("⚠️ Falha ao enviar fotos.");
+    }
     return;
   }
+
 
   console.log("📸 Fotos enviadas com sucesso!");
   alert("📸 Fotos enviadas!");
