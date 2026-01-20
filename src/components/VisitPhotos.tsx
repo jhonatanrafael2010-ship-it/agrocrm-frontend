@@ -98,6 +98,25 @@ const VisitPhotos: React.FC<Props> = ({
   const effectiveOnDelete = onDeleteSavedPhoto ?? onDelete;
   const effectiveOnReplace = onReplaceSavedPhoto ?? onReplace;
 
+  const resolveSrc = (p: UnifiedPhoto) => {
+    const u = p?.dataUrl || p?.url || "";
+    if (!u) return "";
+
+    // offline base64
+    if (u.startsWith("data:")) return u;
+
+    // R2/public URL
+    if (u.startsWith("http")) return u;
+
+    // legado "/uploads/..."
+    // ATENÇÃO: API_BASE normalmente termina com "/api/"
+    // então precisamos da origem do backend sem "/api"
+    const backendOrigin = API_BASE.replace(/\/api\/?$/, "");
+
+    return u.startsWith("/") ? `${backendOrigin}${u}` : `${backendOrigin}/${u}`;
+  };
+
+
 
   // ======================================================
   // Carregar fotos Offline
@@ -150,6 +169,19 @@ const VisitPhotos: React.FC<Props> = ({
       mounted = false;
     };
   }, [photos, loadOffline]);
+
+
+
+  useEffect(() => {
+    // 🔄 Quando as fotos salvas mudarem (ex: após upload online),
+    // limpamos seleção e previews locais
+    setFiles([]);
+    setCaptions([]);
+    previews.forEach((u) => URL.revokeObjectURL(u));
+    setPreviews([]);
+  }, [photos]);
+
+
 
 
   function extractGpsFromDataUrl(
@@ -264,7 +296,10 @@ const VisitPhotos: React.FC<Props> = ({
 
     const arr = Array.from(fl);
 
-    // EXIF da primeira foto
+    // 🔥 LIMPA previews antigos (evita bug e vazamento de memória)
+    previews.forEach((u) => URL.revokeObjectURL(u));
+
+    // 📍 EXIF da primeira foto (auto localização)
     if (arr.length > 0 && onAutoLocation) {
       const first = arr[0];
 
@@ -289,12 +324,23 @@ const VisitPhotos: React.FC<Props> = ({
       });
     }
 
+    // 📸 gera previews novos
+    const nextPreviews = arr.map((f) => URL.createObjectURL(f));
+
     setFiles(arr);
-    setPreviews(arr.map((f) => URL.createObjectURL(f)));
+    setPreviews(nextPreviews);
     setCaptions(arr.map(() => ""));
 
-    if (onFilesSelected) onFilesSelected(arr, arr.map(() => ""));
+    onFilesSelected?.(arr, arr.map(() => ""));
   };
+
+
+  useEffect(() => {
+    return () => {
+      previews.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [previews]);
+
 
   // ======================================================
   // Sincronizar legendas dos previews
@@ -413,6 +459,7 @@ const VisitPhotos: React.FC<Props> = ({
                   }}
                 />
 
+
                 <input
                   type="text"
                   placeholder="Legenda..."
@@ -441,11 +488,7 @@ const VisitPhotos: React.FC<Props> = ({
             {savedPhotos.map((p) => (
               <div key={p.id} style={{ width: 130 }}>
                 <img
-                  src={
-                    p.dataUrl
-                      ? p.dataUrl
-                      : (p.url?.startsWith("http") ? p.url : `${API_BASE}${p.url || ""}`)
-                  }
+                  src={resolveSrc(p)}
                   style={{
                     width: "130px",
                     height: "130px",
@@ -453,6 +496,7 @@ const VisitPhotos: React.FC<Props> = ({
                     borderRadius: 10,
                   }}
                 />
+
                 <div className="small mt-1 text-truncate" title={p.caption || ""}>
                   {p.caption || <span className="text-muted">Sem legenda</span>}
                 </div>

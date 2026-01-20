@@ -978,6 +978,18 @@ const handleEditSavedPhoto = async (
   };
 
 
+  const resolvePhotoSrc = (photo: any) => {
+    const u = photo?.dataUrl || photo?.url || "";
+    if (!u) return "";
+    if (u.startsWith("data:")) return u;   // offline base64
+    if (u.startsWith("http")) return u;    // R2 público
+    // caso venha "/uploads/..." (legado)
+    const base = API_BASE.replace(/\/$/, "");
+    return u.startsWith("/") ? `${base}${u}` : `${base}/${u}`;
+  };
+
+
+
 
   // ============================================================
   // 🗑️ Excluir (AGORA CORRIGIDO)
@@ -1345,7 +1357,7 @@ useEffect(() => {
     // 🔹 Fotos online + offline (SEM limite)
     const photos = [
       ...(v.photos || []).map((p: any) => ({
-        src: p.url,
+        src: resolvePhotoSrc(p),
         caption: p.caption || "",
       })),
       ...(v.offlinePhotos || []).map((p: any) => ({
@@ -2469,72 +2481,37 @@ useEffect(() => {
                 {/* 🔹 ABA — FOTOS */}
                 {tab === "fotos" && form.id && (
                   <div className="p-2">
-                    {/* Upload de novas fotos */}
-                    <div className="mb-3">
-                      <label className="form-label fw-semibold">
-                        Novas fotos
-                      </label>
-                      <input
-                        type="file"
-                        multiple
-                        className="form-control"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          setSelectedFiles(files as File[]);
-                          setSelectedCaptions(
-                            files.map(() => "")
-                          );
-                        }}
-                      />
-                    </div>
 
-                    {/* Legendas para novas fotos */}
-                    {selectedFiles.length > 0 && (
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold">
-                          Legendas das novas fotos
-                        </label>
-                        {selectedFiles.map((file, idx) => (
-                          <div key={idx} className="mb-2">
-                            <small className="d-block text-muted">
-                              {file.name}
-                            </small>
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Legenda"
-                              value={selectedCaptions[idx] || ""}
-                              onChange={(e) => {
-                                const copy = [...selectedCaptions];
-                                copy[idx] = e.target.value;
-                                setSelectedCaptions(copy);
-                              }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {selectedFiles.length > 0 && (
-                      <button
-                        className="btn btn-success mb-3"
-                        onClick={handleSavePhotos}
-                      >
-                        💾 Salvar Fotos
-                      </button>
-                    )}
-
-                    {/* Fotos já salvas */}
+                    {/* Componente responsável por:
+                        - selecionar fotos
+                        - mostrar preview
+                        - editar legenda
+                    */}
                     <VisitPhotos
                       visitId={form.id}
                       photos={form.savedPhotos}
+
+                      // 🔥 AQUI ESTÁ A LIGAÇÃO QUE FALTAVA
+                      onFilesSelected={(files, captions) => {
+                        setSelectedFiles(files);
+                        setSelectedCaptions(captions);
+                      }}
+
                       onDelete={handleDeleteSavedPhoto}
                       onReplace={handleReplaceSavedPhoto}
                       onEdit={handleEditSavedPhoto}
                       onAutoLocation={handleAutoSetLocation}
                     />
 
+                    {/* Botão salvar — usa o estado do Calendar */}
+                    {selectedFiles.length > 0 && (
+                      <button
+                        className="btn btn-success mt-3 w-100"
+                        onClick={handleSavePhotos}
+                      >
+                        💾 Salvar Fotos
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
