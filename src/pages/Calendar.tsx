@@ -22,7 +22,7 @@ import {
   getAllFromStore,
   deletePendingPhoto,   // ← ADICIONADO
 } from "../utils/indexedDB";
-import { deleteLocalVisit } from "../utils/indexedDB";  // ← ADICIONE ESSE IMPORT
+import { deleteLocalVisitCascade } from "../utils/indexedDB";
 import { compressImage } from "../utils/imageCompress";
 
 
@@ -1037,6 +1037,8 @@ const handleEditSavedPhoto = async (
 
       // 2️⃣ SEMPRE remove localmente — online ou offline
       await deleteLocalVisitCascade(id);
+
+
 
 
       // 3️⃣ Atualiza agenda
