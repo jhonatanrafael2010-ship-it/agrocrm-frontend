@@ -669,5 +669,43 @@ html, body {
   height: 100%;
   overflow: hidden;
 }
+.calendar-page{
+  height: 100dvh;          /* melhor no mobile */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
+/* ✅ deixa o calendário realmente “encolher” e não cortar */
+.calendar-shell{
+  flex: 1;
+  min-height: 0;
+}
+
+/* ✅ FullCalendar ocupa a área e o scroller interno funciona */
+.calendar-shell .fc{
+  height: 100% !important;
+}
+
+/* iOS: scrolling suave */
+.fc .fc-scroller{
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 📱 Correção específica para landscape mobile */
+@media (orientation: landscape) and (max-height: 500px) {
+  .calendar-page {
+    height: 100dvh;
+  }
+
+  .calendar-shell {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .calendar-shell .fc {
+    height: 100% !important;
+  }
+}
 

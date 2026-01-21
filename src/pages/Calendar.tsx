@@ -116,6 +116,27 @@ const CalendarPage: React.FC = () => {
 
   const photosRef = useRef<HTMLDivElement | null>(null);
 
+    // ============================================================
+    // 🔄 Recalcular FullCalendar ao girar tela (Android + iOS)
+    // ============================================================
+    useEffect(() => {
+      const handleResize = () => {
+        if (calendarRef.current) {
+          const api = calendarRef.current.getApi();
+          api.updateSize(); // 🔥 força recalcular altura real
+        }
+      };
+
+      window.addEventListener("resize", handleResize);
+      window.addEventListener("orientationchange", handleResize);
+
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        window.removeEventListener("orientationchange", handleResize);
+      };
+    }, []);
+
+
   // ============================================================
   // 📱 Detecta comportamento mobile (APK + web responsivo)
   // ============================================================
@@ -131,11 +152,14 @@ const CalendarPage: React.FC = () => {
   useEffect(() => {
     const checkConnection = () => {
       const status = !navigator.onLine;
-      setOffline(status);
-      console.log(status ? "📴 Offline detectado" : "🌐 Online detectado");
+
+      // ✅ só atualiza se realmente mudou
+      setOffline(prev => (prev === status ? prev : status));
     };
 
     checkConnection();
+
+    // ✅ pode manter, mas agora não re-renderiza sem mudança
     const interval = setInterval(checkConnection, 3000);
 
     window.addEventListener("online", checkConnection);
@@ -147,6 +171,7 @@ const CalendarPage: React.FC = () => {
       window.removeEventListener("offline", checkConnection);
     };
   }, []);
+
 
   // dados base
   const [events, setEvents] = useState<any[]>([]);
@@ -1803,7 +1828,7 @@ useEffect(() => {
           // ✅ importante para timeGrid (sem isso, pode rolar “pulo” em week/day)
           scrollTime="06:00:00"
           handleWindowResize={true}
-          windowResizeDelay={100}
+          windowResizeDelay={150}
 
 
           headerToolbar={{
