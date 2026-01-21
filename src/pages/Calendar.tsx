@@ -1036,7 +1036,8 @@ const handleEditSavedPhoto = async (
       }
 
       // 2️⃣ SEMPRE remove localmente — online ou offline
-      await deleteLocalVisit(id);
+      await deleteLocalVisitCascade(id);
+
 
       // 3️⃣ Atualiza agenda
       await loadVisits();

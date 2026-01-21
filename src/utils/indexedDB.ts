@@ -4,7 +4,7 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 7; // força limpar cache antiga do iOS
+const DB_VERSION = 8; // força limpar cache antiga do iOS
 
 // 🔹 Todas as stores válidas
 export type StoreName =
@@ -41,22 +41,54 @@ function openDB(): Promise<IDBDatabase> {
       ];
 
       stores.forEach((name) => {
+        // ✅ cria store se não existir
         if (!db.objectStoreNames.contains(name)) {
           if (name === "pending_visits" || name === "pending_photos") {
-            db.createObjectStore(name, {
-              keyPath: "id",
-              autoIncrement: true,
-            });
+            db.createObjectStore(name, { keyPath: "id", autoIncrement: true });
           } else {
-            db.createObjectStore(name, { keyPath: "id" });
+            const store = db.createObjectStore(name, { keyPath: "id" });
+
+            // ✅ índices da store visits (para cascade)
+            if (name === "visits") {
+              store.createIndex("parent_id", "parent_id", { unique: false });
+
+              // (opcional, mas recomendado) se você usa plantio no offline:
+              store.createIndex("planting_id", "planting_id", { unique: false });
+            }
           }
         }
       });
 
+      // ✅ se a store "visits" já existia (upgrade), cria os índices nela também
+      if (db.objectStoreNames.contains("visits")) {
+        const tx = (event.target as IDBOpenDBRequest).transaction;
+        if (tx) {
+          const store = tx.objectStore("visits");
+
+          if (!store.indexNames.contains("parent_id")) {
+            store.createIndex("parent_id", "parent_id", { unique: false });
+          }
+
+          // opcional:
+          if (!store.indexNames.contains("planting_id")) {
+            store.createIndex("planting_id", "planting_id", { unique: false });
+          }
+        }
+      }
+
       console.log("🔧 Banco atualizado para versão:", DB_VERSION);
     };
 
-    request.onsuccess = () => resolve(request.result);
+
+    request.onsuccess = () => {
+      const db = request.result;
+      // fecha automaticamente quando a aba/app descarregar
+      db.onversionchange = () => {
+        try { db.close(); } catch {}
+      };
+      resolve(db);
+    };
+
     request.onerror = () => reject(request.error);
   });
 }
@@ -158,6 +190,43 @@ export async function deleteLocalVisit(visitId: number) {
     tx.onerror = () => reject(tx.error);
   });
 }
+
+
+export async function deleteLocalVisitCascade(parentId: number) {
+  const db = await openDB();
+
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(["visits"], "readwrite");
+    const store = tx.objectStore("visits");
+
+    store.delete(parentId);
+
+    const deleteByCursor = (req: IDBRequest<IDBCursorWithValue | null>) => {
+      req.onsuccess = (e: any) => {
+        const cursor = e.target.result;
+        if (!cursor) return;
+        store.delete(cursor.primaryKey);
+        cursor.continue();
+      };
+    };
+
+    try {
+      const idx = store.index("parent_id");
+      deleteByCursor(idx.openCursor(IDBKeyRange.only(parentId)));
+    } catch {
+      // fallback: varre tudo se não tiver índice
+      deleteByCursor(store.openCursor());
+    }
+
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+
+  try { db.close(); } catch {}
+}
+
+
 
 
 // ============================================================
