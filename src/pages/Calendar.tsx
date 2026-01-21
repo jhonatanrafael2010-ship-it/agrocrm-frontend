@@ -1287,8 +1287,10 @@ const handleEditSavedPhoto = async (
   // ============================================================
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [lightboxPhotos] = useState<string[]>([]);
+  const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+
+
 
   // 👀 Preview de visita no hover (até 3 fotos + recomendação)
   const [hoverPreview, setHoverPreview] = useState<{
@@ -1616,6 +1618,13 @@ useEffect(() => {
                   <img
                     src={p.src}
                     loading="lazy"
+                    onClick={() => {
+                      // 🔥 AQUI entra exatamente o código que você perguntou
+                      setLightboxPhotos(hoverPreview.photos.map(ph => ph.src));
+                      setCurrentPhotoIndex(idx);
+                      setLightboxUrl(hoverPreview.photos[idx].src);
+                      setLightboxOpen(true);
+                    }}
                     style={{
                       width: "100%",
                       height: "70px",
@@ -1774,7 +1783,7 @@ useEffect(() => {
 
       {loading && <div className="text-muted mb-2">Carregando...</div>}
 
-      <div className="calendar-shell">
+      <div className="calendar-shell" style={{ flex: 1, minHeight: 0 }}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -1784,7 +1793,8 @@ useEffect(() => {
 
           // ✅ desktop com altura fixa (evita recalcular e “voltar”)
           // ✅ mobile pode continuar auto
-          height={window.innerWidth < 768 ? "auto" : 650}
+          height="100%"
+
 
           // ✅ ajuda a manter layout consistente
           expandRows={true}
@@ -1792,6 +1802,9 @@ useEffect(() => {
 
           // ✅ importante para timeGrid (sem isso, pode rolar “pulo” em week/day)
           scrollTime="06:00:00"
+          handleWindowResize={true}
+          windowResizeDelay={100}
+
 
           headerToolbar={{
             left: "prev,next today",

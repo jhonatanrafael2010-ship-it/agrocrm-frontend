@@ -290,6 +290,13 @@
   border: 1px solid rgba(0, 0, 0, 0.25);
 }
 
+.calendar-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* cabeçalho do calendário */
 .fc .fc-toolbar {
   gap: 6px;
@@ -638,18 +645,29 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 }
 /* Container da página do calendário */
 .calendar-page {
-  height: 100vh;
-  overflow: hidden; /* ✅ impede a página de disputar o scroll */
+  min-height: 100dvh; /* viewport real (mobile-safe) */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+
 
 /* FullCalendar ocupa tudo */
 .fc {
-  height: 100%;
+  flex: 1;
+  min-height: 0; /* ESSENCIAL p/ scroll funcionar */
 }
 
 /* O scroller interno do FullCalendar vira o dono do scroll */
 .fc .fc-scroller {
   overflow-y: auto !important;
-  overscroll-behavior: contain; /* ✅ evita “efeito mola” */
+  -webkit-overflow-scrolling: touch; /* 🔥 iOS */
+  overscroll-behavior: contain;
 }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 
