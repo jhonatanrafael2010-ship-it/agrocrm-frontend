@@ -1688,7 +1688,7 @@ useEffect(() => {
   // Render
   // ============================================================
   return (
-    <div className="calendar-page">
+    <div className="calendar-page d-flex flex-column">
       {/* 🔹 Cabeçalho fixo da agenda */}
       <div className="calendar-header-sticky">
         {/* 🛰️ Banner de modo offline */}
@@ -1808,7 +1808,7 @@ useEffect(() => {
 
       {loading && <div className="text-muted mb-2">Carregando...</div>}
 
-      <div className="calendar-shell" style={{ flex: 1, minHeight: 0 }}>
+      <div className="calendar-shell" style={{ flex: "1 1 auto" }}>
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -1818,11 +1818,11 @@ useEffect(() => {
 
           // ✅ desktop com altura fixa (evita recalcular e “voltar”)
           // ✅ mobile pode continuar auto
-          height="100%"
+          height="auto"
 
 
           // ✅ ajuda a manter layout consistente
-          expandRows={true}
+          expandRows={false}
           stickyHeaderDates={true}
 
           // ✅ importante para timeGrid (sem isso, pode rolar “pulo” em week/day)

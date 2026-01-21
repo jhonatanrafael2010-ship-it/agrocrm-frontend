@@ -252,13 +252,6 @@
    📅 FULLCALENDAR — Repaginado estilo Bootstrap 5
 ===================================================== */
 
-/* container geral */
-.calendar-page {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: transparent; /* evita fundo branco no modo claro */
-}
 
 /* barra do topo */
 .calendar-toolbar {
@@ -284,10 +277,8 @@
 
 /* área do calendário */
 .calendar-shell .fc {
-  background: var(--panel);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  height: auto !important;
+  overflow: visible;
 }
 
 .calendar-shell {
@@ -521,9 +512,8 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   top: 0;
   z-index: 50;
   background: var(--panel);
-  padding-bottom: 4px;
-  transition: background 0.3s ease;
 }
+
 .tab {
   flex: 1;
   padding: 10px;
@@ -643,13 +633,7 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   background: rgba(255,255,255,0.25);
   border-radius: 4px;
 }
-/* Container da página do calendário */
-.calendar-page {
-  min-height: 100dvh; /* viewport real (mobile-safe) */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+
 
 
 /* FullCalendar ocupa tudo */
@@ -658,17 +642,14 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   min-height: 0; /* ESSENCIAL p/ scroll funcionar */
 }
 
-/* O scroller interno do FullCalendar vira o dono do scroll */
-.fc .fc-scroller {
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch; /* 🔥 iOS */
-  overscroll-behavior: contain;
-}
 
 html, body {
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
+
 .calendar-page{
   height: 100dvh;          /* melhor no mobile */
   display: flex;
@@ -690,22 +671,25 @@ html, body {
 /* iOS: scrolling suave */
 .fc .fc-scroller{
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
 }
 
-/* 📱 Correção específica para landscape mobile */
-@media (orientation: landscape) and (max-height: 500px) {
+
+
   .calendar-page {
-    height: 100dvh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;   /* ✅ precisa rolar a página */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
+
 
   .calendar-shell {
     flex: 1;
     min-height: 0;
   }
 
-  .calendar-shell .fc {
-    height: 100% !important;
-  }
-}
+
 
