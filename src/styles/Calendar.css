@@ -650,12 +650,6 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-.calendar-page{
-  height: 100dvh;          /* melhor no mobile */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
 
 /* ✅ deixa o calendário realmente “encolher” e não cortar */
 .calendar-shell{
@@ -680,10 +674,11 @@ html, body {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;   /* ✅ precisa rolar a página */
+    overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
   }
+
 
 
   .calendar-shell {
@@ -691,5 +686,15 @@ html, body {
     min-height: 0;
   }
 
+/* 📱 No mobile, NÃO deixar o header do FullCalendar (dias) ficar sticky */
+@media (max-width: 768px) {
+  .fc .fc-scrollgrid-section-header th,
+  .fc .fc-col-header,
+  .fc .fc-col-header-cell {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+}
 
 

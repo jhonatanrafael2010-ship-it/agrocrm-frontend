@@ -1823,7 +1823,8 @@ useEffect(() => {
 
           // ✅ ajuda a manter layout consistente
           expandRows={false}
-          stickyHeaderDates={true}
+          stickyHeaderDates={!isMobileLike()}
+
 
           // ✅ importante para timeGrid (sem isso, pode rolar “pulo” em week/day)
           scrollTime="06:00:00"
