@@ -694,6 +694,7 @@ const handleCreateOrUpdate = async () => {
 
 
 const handleSavePhotos = async () => {
+  console.log("🚀 handleSavePhotos selectedFiles:", selectedFiles?.length);
   if (!form.id) {
     alert("ID da visita não encontrado.");
     return;
@@ -2554,11 +2555,12 @@ useEffect(() => {
                         - editar legenda
                     */}
                     <VisitPhotos
-                      visitId={form.id}
+                      visitId={form.id ? Number(form.id) : null}
                       photos={form.savedPhotos}
 
                       // 🔥 AQUI ESTÁ A LIGAÇÃO QUE FALTAVA
                       onFilesSelected={(files, captions) => {
+                        console.log("📩 Calendar recebeu files:", files.length);
                         setSelectedFiles(files);
                         setSelectedCaptions(captions);
                       }}

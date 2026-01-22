@@ -173,13 +173,14 @@ const VisitPhotos: React.FC<Props> = ({
 
 
   useEffect(() => {
-    // 🔄 Quando as fotos salvas mudarem (ex: após upload online),
-    // limpamos seleção e previews locais
+    // só limpa quando mudar a visita (abrir outro modal / trocar id)
     setFiles([]);
     setCaptions([]);
     previews.forEach((u) => URL.revokeObjectURL(u));
     setPreviews([]);
-  }, [photos]);
+  }, [visitId]);
+
+
 
 
 
@@ -331,7 +332,11 @@ const VisitPhotos: React.FC<Props> = ({
     setPreviews(nextPreviews);
     setCaptions(arr.map(() => ""));
 
+    console.log("📥 VisitPhotos handleSelectFiles files:", arr.length);
+
+   
     onFilesSelected?.(arr, arr.map(() => ""));
+    e.target.value = "";
   };
 
 
