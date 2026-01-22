@@ -765,12 +765,20 @@ const handleSavePhotos = async () => {
   const fd = new FormData();
 
   for (let i = 0; i < selectedFiles.length; i++) {
-    // 🔥 COMPRESSÃO AQUI
-    const compressed = await compressImage(selectedFiles[i]);
+    const file = selectedFiles[i];
 
-    fd.append("photos", compressed, compressed.name);
+    // 🔥 MOBILE NÃO COMPRIME (evita InvalidStateError)
+    const isMobile =
+      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    const finalFile = isMobile
+      ? file
+      : await compressImage(file);
+
+    fd.append("photos", finalFile, finalFile.name);
     fd.append("captions", selectedCaptions[i] || "");
   }
+
 
   // ✅ latitude / longitude UMA ÚNICA VEZ
   fd.append("latitude", String(form.latitude || ""));
