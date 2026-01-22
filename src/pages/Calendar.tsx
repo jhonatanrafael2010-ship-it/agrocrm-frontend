@@ -49,6 +49,22 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
 }
 */
 
+const computeIsOffline = async () => {
+  const isNative = !!(window as any).Capacitor?.isNativePlatform;
+
+  // Web: navigator.onLine costuma funcionar bem
+  if (!isNative) return !navigator.onLine;
+
+  // Native: confia no ping (mais confiável que navigator.onLine)
+  try {
+    const ok = await hasInternet();
+    return !ok;
+  } catch {
+    return true;
+  }
+};
+
+
 
 
 // ============================================================
@@ -812,11 +828,16 @@ try {
 
 const handleDeleteSavedPhoto = async (photo: any) => {
   const visitId = Number(form.id);
-  if (!visitId || !photo) return;
 
-  const isOffline =
-    !navigator.onLine ||
-    ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+  if (!visitId) {
+    alert("⚠️ Salve a visita primeiro para gerar o ID antes de enviar fotos.");
+    console.warn("Salvar fotos abortado: visitId inválido", form.id);
+    return;
+  }
+
+
+  const isOffline = await computeIsOffline();
+
 
   // 🟠 OFFLINE → deletar só no IndexedDB
   if (isOffline || photo.pending) {
@@ -862,11 +883,16 @@ const handleReplaceSavedPhoto = async (
   newCaption: string
 ) => {
   const visitId = Number(form.id);
-  if (!visitId) return;
 
-  const isOffline =
-    !navigator.onLine ||
-    ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+  if (!visitId) {
+    alert("⚠️ Salve a visita primeiro para gerar o ID antes de enviar fotos.");
+    console.warn("Salvar fotos abortado: visitId inválido", form.id);
+    return;
+  }
+
+
+  const isOffline = await computeIsOffline();
+
 
   // 🟧 1) Primeiro apagar a foto antiga
   await handleDeleteSavedPhoto(photo);
@@ -2548,8 +2574,13 @@ useEffect(() => {
                     {/* Botão salvar — usa o estado do Calendar */}
                     {selectedFiles.length > 0 && (
                       <button
+                        type="button"
                         className="btn btn-success mt-3 w-100"
-                        onClick={handleSavePhotos}
+                        disabled={!form.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleSavePhotos();
+                        }}
                       >
                         💾 Salvar Fotos
                       </button>
