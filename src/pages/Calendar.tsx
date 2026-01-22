@@ -930,8 +930,6 @@ const handleReplaceSavedPhoto = async (
 
   // 🟢 3) ONLINE → enviar nova foto ao backend
   const fd = new FormData();
-  fd.append("photos", newFile);
-  fd.append("captions", newCaption);
 
   const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
     method: "POST",
@@ -2576,9 +2574,9 @@ useEffect(() => {
                       <button
                         type="button"
                         className="btn btn-success mt-3 w-100"
-                        disabled={!form.id}
                         onClick={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           handleSavePhotos();
                         }}
                       >
