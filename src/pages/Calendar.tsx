@@ -757,32 +757,31 @@ const handleSavePhotos = async () => {
     return;
   }
 
-  // ============================================================
-  // 🟢 SALVAR ONLINE
-  // ============================================================
-  console.log("📸 Enviando fotos ONLINE...");
+    // ============================================================
+    // 🟢 SALVAR ONLINE
+    // ============================================================
+    console.log("📸 Enviando fotos ONLINE...");
 
-  const fd = new FormData();
+    const fd = new FormData();
 
-  for (let i = 0; i < selectedFiles.length; i++) {
-    const file = selectedFiles[i];
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    // 🔥 MOBILE NÃO COMPRIME (evita InvalidStateError)
-    const isMobile =
-      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const original = selectedFiles[i];
 
-    const finalFile = isMobile
-      ? file
-      : await compressImage(file);
+      const fileToSend = isIOS
+        ? original // ✅ não passa no canvas no iOS (evita foto virada)
+        : await compressImage(original);
 
-    fd.append("photos", finalFile, finalFile.name);
-    fd.append("captions", selectedCaptions[i] || "");
-  }
+      fd.append("photos", fileToSend, fileToSend.name);
+      fd.append("captions", selectedCaptions[i] || "");
+    }
+
+    // ✅ latitude / longitude UMA ÚNICA VEZ
+    fd.append("latitude", String(form.latitude || ""));
+    fd.append("longitude", String(form.longitude || ""));
 
 
-  // ✅ latitude / longitude UMA ÚNICA VEZ
-  fd.append("latitude", String(form.latitude || ""));
-  fd.append("longitude", String(form.longitude || ""));
 
 
   const url = `${API_BASE}visits/${visitId}/photos`;
