@@ -445,77 +445,102 @@ const VisitPhotos: React.FC<Props> = ({
       )}
 
       {/* Previews de novas fotos (ainda não salvas) */}
-      {previews.length > 0 && (
-        <div className="mt-3">
-          <label className="form-label fw-semibold">
-            {savedPhotos.length > 0 ? "🆕 Novas fotos" : "📸 Fotos"}
-          </label>
+{previews.length > 0 && (
+  <div className="mt-3">
+    <label className="form-label fw-semibold">
+      {savedPhotos.length > 0 ? "🆕 Novas fotos" : "📸 Fotos"}
+    </label>
 
-          <div className="d-flex flex-wrap gap-3">
-            {previews.map((src, idx) => (
-              <div key={idx} style={{ width: 130 }}>
-                <img
-                  src={src}
-                  style={{
-                    width: "130px",
-                    height: "130px",
-                    objectFit: "cover",
-                    borderRadius: 10,
-                  }}
-                />
+    <div className="d-flex flex-wrap gap-3">
+      {previews.map((src, idx) => (
+        <div key={idx} style={{ width: 130 }}>
+          <img
+            src={src}
+            style={{
+              width: "130px",
+              height: "130px",
+              objectFit: "cover",
+              borderRadius: 10,
+            }}
+          />
 
+          <input
+            type="text"
+            placeholder="Legenda..."
+            className="form-control form-control-sm mt-1"
+            value={captions[idx] || ""}
+            onChange={(e) => {
+              const arr = [...captions];
+              arr[idx] = e.target.value;
+              setCaptions(arr);
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
-                <input
-                  type="text"
-                  placeholder="Legenda..."
-                  className="form-control form-control-sm mt-1"
-                  value={captions[idx] || ""}
-                  onChange={(e) => {
-                    const arr = [...captions];
-                    arr[idx] = e.target.value;
-                    setCaptions(arr);
-                  }}
-                />
-              </div>
-            ))}
+{/* Fotos salvas (online + offline) */}
+{savedPhotos.length > 0 && (
+  <div className="mt-4">
+    <label className="form-label fw-semibold">
+      {previews.length > 0 ? "📁 Fotos" : "📸 Fotos"}
+    </label>
+
+    <div className="d-flex flex-wrap gap-3">
+      {savedPhotos.map((p) => (
+        <div key={p.id ?? p.url ?? p.dataUrl ?? Math.random()} style={{ width: 130 }}>
+          <img
+            src={resolveSrc(p)}
+            style={{
+              width: "130px",
+              height: "130px",
+              objectFit: "cover",
+              borderRadius: 10,
+            }}
+          />
+
+          <div className="small mt-1 text-truncate" title={p.caption || ""}>
+            {p.caption || <span className="text-muted">Sem legenda</span>}
+          </div>
+
+          <div className="d-flex gap-1 mt-1">
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-light flex-grow-1"
+              onClick={() => openEditPanel(p)}
+            >
+              ✏️ Editar
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              title="Excluir"
+              onClick={() => {
+                if (!window.confirm("🗑 Deseja realmente excluir esta foto?")) return;
+
+                // some do modal na hora
+                setSavedPhotos((prev) => prev.filter((x) => x.id !== p.id));
+
+                // chama o handler do Calendar (backend/offline)
+                effectiveOnDelete?.(p);
+
+                // se por acaso estava editando essa mesma foto, fecha painel
+                if (editingPhoto?.id === p.id) setEditingPhoto(null);
+              }}
+              disabled={!effectiveOnDelete}
+            >
+              🗑
+            </button>
           </div>
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
 
-      {/* Fotos salvas (online + offline) */}
-      {savedPhotos.length > 0 && (
-        <div className="mt-4">
-          <label className="form-label fw-semibold">
-            {previews.length > 0 ? "📁 Fotos" : "📸 Fotos"}
-          </label>
-
-          <div className="d-flex flex-wrap gap-3">
-            {savedPhotos.map((p) => (
-              <div key={p.id} style={{ width: 130 }}>
-                <img
-                  src={resolveSrc(p)}
-                  style={{
-                    width: "130px",
-                    height: "130px",
-                    objectFit: "cover",
-                    borderRadius: 10,
-                  }}
-                />
-
-                <div className="small mt-1 text-truncate" title={p.caption || ""}>
-                  {p.caption || <span className="text-muted">Sem legenda</span>}
-                </div>
-                <button
-                  className="btn btn-sm btn-outline-light w-100 mt-1"
-                  onClick={() => openEditPanel(p)}
-                >
-                  ✏️ Editar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
 
       {/* Painel de edição de foto salva */}
