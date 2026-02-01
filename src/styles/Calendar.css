@@ -383,24 +383,37 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   transform: scale(1.1);
 }
 
-/* 📱 mobile */
 @media (max-width: 768px) {
-  .calendar-toolbar {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px;
-  }
-
-  .fc-header-toolbar {
+  .fc .fc-header-toolbar{
+    display: flex;
     flex-wrap: wrap !important;
+    gap: 8px !important;
     justify-content: center !important;
-    gap: 4px;
+    align-items: center;
   }
 
-  .calendar-toolbar select {
-    width: 100% !important;
+  .fc .fc-toolbar-chunk{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .fc .fc-toolbar-title{
+    width: 100%;
+    text-align: center;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    margin: 2px 0;
+  }
+
+  .fc .fc-button{
+    padding: 0.35rem 0.55rem;
+    font-size: 0.85rem;
   }
 }
+
 /* 🖼️ Lightbox sempre acima do modal */
 .lightbox-overlay {
   position: fixed;
@@ -408,7 +421,7 @@ body[data-theme='light'] .fc .fc-daygrid-day {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000 !important; /* 👈 garante sobreposição acima do modal */
+  z-index: 25000 !important; /* 👈 garante sobreposição acima do modal */
 }
 
 .lightbox-content {
@@ -657,10 +670,6 @@ html, body {
   min-height: 0;
 }
 
-/* ✅ FullCalendar ocupa a área e o scroller interno funciona */
-.calendar-shell .fc{
-  height: 100% !important;
-}
 
 /* iOS: scrolling suave */
 .fc .fc-scroller{
@@ -697,4 +706,27 @@ html, body {
   }
 }
 
+/* =========================================
+   ✅ FIX MOBILE: header sticky não pode cobrir a toolbar do FullCalendar
+   (o TSX vai setar --calHeaderH com a altura real do header)
+========================================= */
+
+:root{
+  --calHeaderH: 0px;
+}
+
+/* Seu header precisa ficar acima, ok */
+.calendar-header-sticky{
+  position: sticky;
+  top: 0;
+  z-index: 3000;        /* ↑ sobe o z-index (50 às vezes não basta) */
+  background: var(--panel);
+}
+
+/* No mobile, empurra o calendário para baixo com a altura real do header */
+@media (max-width: 768px){
+  .calendar-shell{
+    padding-top: var(--calHeaderH);
+  }
+}
 
