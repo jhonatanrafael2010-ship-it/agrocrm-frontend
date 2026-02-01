@@ -130,6 +130,9 @@ type Product = {
 const CalendarPage: React.FC = () => {
   const calendarRef = useRef<any>(null);
 
+  const headerRef = useRef<HTMLDivElement | null>(null);
+
+
   const photosRef = useRef<HTMLDivElement | null>(null);
 
     // ============================================================
@@ -151,6 +154,34 @@ const CalendarPage: React.FC = () => {
         window.removeEventListener("orientationchange", handleResize);
       };
     }, []);
+
+    useEffect(() => {
+      const el = headerRef.current;
+      if (!el) return;
+
+      const apply = () => {
+        const h = el.getBoundingClientRect().height || 0;
+        document.documentElement.style.setProperty("--calHeaderH", `${Math.ceil(h)}px`);
+      };
+
+      // mede agora
+      apply();
+
+      // mede sempre que o header mudar de tamanho (banners / quebra de linha / etc.)
+      const ro = new ResizeObserver(() => apply());
+      ro.observe(el);
+
+      // mede também em rotação/resize
+      window.addEventListener("resize", apply);
+      window.addEventListener("orientationchange", apply);
+
+      return () => {
+        ro.disconnect();
+        window.removeEventListener("resize", apply);
+        window.removeEventListener("orientationchange", apply);
+      };
+    }, []);
+
 
 
   // ============================================================
@@ -1725,7 +1756,7 @@ useEffect(() => {
   return (
     <div className="calendar-page d-flex flex-column">
       {/* 🔹 Cabeçalho fixo da agenda */}
-      <div className="calendar-header-sticky">
+      <div className="calendar-header-sticky" ref={headerRef}>
         {/* 🛰️ Banner de modo offline */}
         {offline && (
           <div

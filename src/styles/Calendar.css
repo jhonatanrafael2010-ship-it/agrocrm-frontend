@@ -729,4 +729,22 @@ html, body {
     padding-top: var(--calHeaderH);
   }
 }
+/* =========================================================
+   ✅ FIX DEFINITIVO: calendário não pode ficar embaixo do header
+   (altura real vem do ResizeObserver no TSX: --calHeaderH)
+========================================================= */
+
+:root { --calHeaderH: 0px; }
+
+@media (max-width: 768px){
+  .calendar-shell{
+    padding-top: var(--calHeaderH) !important;
+  }
+}
+
+/* Se algum CSS estiver tornando esse header "fixed", garantimos stack */
+.calendar-header-sticky{
+  z-index: 3000 !important;
+  background: var(--panel);
+}
 
