@@ -236,6 +236,7 @@ const CalendarPage: React.FC = () => {
   // filtros
   const [selectedConsultant, setSelectedConsultant] = useState<string>("");
   const [selectedVariety, setSelectedVariety] = useState<string>("");
+  const [selectedClient, setSelectedClient] = useState<string>("");
 
   // Estado de sincronização
   const [syncing, setSyncing] = useState(false);
@@ -1860,6 +1861,19 @@ useEffect(() => {
 
         <div className="filters-row">
           <select
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+            className="form-select form-select-sm calendar-filter"
+          >
+            <option value="">Todos os clientes</option>
+            {clients.map((c) => (
+              <option key={c.id} value={String(c.id)}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          
+          <select
             value={selectedConsultant}
             onChange={(e) => setSelectedConsultant(e.target.value)}
             className="form-select form-select-sm calendar-filter"
@@ -1884,6 +1898,20 @@ useEffect(() => {
               </option>
             ))}
           </select>
+
+           {/* ✅ COLE O BOTÃO AQUI (no fim da filters-row) */}
+            <button
+              type="button"
+              className="btn btn-outline-light btn-sm"
+              style={{ flex: "0 0 auto" }}
+              onClick={() => {
+                setSelectedClient("");
+                setSelectedConsultant("");
+                setSelectedVariety("");
+              }}
+            >
+              Limpar
+            </button>
         </div>
       </div>
 
@@ -1923,23 +1951,27 @@ useEffect(() => {
           eventDisplay="block"
 
           events={events.filter((e) => {
-            const cid = e.extendedProps?.raw?.consultant_id;
+            const consultantId = e.extendedProps?.raw?.consultant_id;
+            const clientId = e.extendedProps?.raw?.client_id;
+
             const variety =
               e.extendedProps?.raw?.variety ||
               e.extendedProps?.raw?.variedade ||
               "";
 
+            const matchesClient =
+              !selectedClient || String(clientId || "") === selectedClient;
+
             const matchesConsultant =
-              !selectedConsultant || String(cid || "") === selectedConsultant;
+              !selectedConsultant || String(consultantId || "") === selectedConsultant;
 
             const matchesVariety =
               !selectedVariety ||
-              String(variety)
-                .toLowerCase()
-                .includes(selectedVariety.toLowerCase());
+              String(variety).toLowerCase().includes(selectedVariety.toLowerCase());
 
-            return matchesConsultant && matchesVariety;
+            return matchesClient && matchesConsultant && matchesVariety;
           })}
+
           dateClick={(info) => {
             const isMobile =
               window.innerWidth <= 768 ||
