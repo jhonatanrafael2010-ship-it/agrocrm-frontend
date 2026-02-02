@@ -222,6 +222,8 @@ const CalendarPage: React.FC = () => {
 
   // dados base
   const [events, setEvents] = useState<any[]>([]);
+  // ✅ range visível do calendário (pra iOS buscar mês correto)
+  const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [cultures, setCultures] = useState<Culture[]>([]);
   const [varieties, setVarieties] = useState<Variety[]>([]);
@@ -300,11 +302,16 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   const loadVisits = async () => {
     try {
+
+      if (isIOS() && !visibleRange) return; // espera o FullCalendar dizer o range
+
     
       // Abordagem iOS: apenas visitas do mês → MUITO mais leve
       const endpoint = isIOS()
-        ? `${API_BASE}visits?month=current`
+        ? `${API_BASE}visits?start=${visibleRange?.start}&end=${visibleRange?.end}`
         : `${API_BASE}visits?scope=all`;
+
+
 
       const onlineVisits: Visit[] = await fetchWithCache(endpoint, "visits");
 
@@ -488,6 +495,12 @@ const CalendarPage: React.FC = () => {
     window.addEventListener("visits-synced", handleSync);
     return () => window.removeEventListener("visits-synced", handleSync);
   }, []);
+
+  useEffect(() => {
+    if (!visibleRange) return;
+    loadVisits();
+  }, [visibleRange]);
+
 
   // ============================================================
   // 📝 Form handlers
@@ -1902,6 +1915,20 @@ useEffect(() => {
             left: "prev,next today",
             center: "title",
             right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+
+          datesSet={(arg) => {
+            const toISO = (d: Date) => {
+              const y = d.getFullYear();
+              const m = String(d.getMonth() + 1).padStart(2, "0");
+              const day = String(d.getDate()).padStart(2, "0");
+              return `${y}-${m}-${day}`;
+            };
+
+            setVisibleRange({
+              start: toISO(arg.start),
+              end: toISO(arg.end),
+            });
           }}
           dayMaxEventRows={3}
           eventDisplay="block"
