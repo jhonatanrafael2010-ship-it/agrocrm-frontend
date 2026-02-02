@@ -1954,25 +1954,23 @@ useEffect(() => {
                     Nenhum cliente encontrado
                   </div>
                 )}
-               {/* ✅ BOTÃO LIMPAR (aqui, no final da filters-row) */}
-                <button
-                  type="button"
-                  className="btn btn-outline-light btn-sm"
-                  style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
-                  onClick={() => {
-                    setSelectedConsultant("");
-                    setSelectedVariety("");
-                    setSelectedClient("");
-
-                    // limpa o input do autocomplete e fecha lista
-                    setClientFilterText("");
-                    setClientFilterOpen(false);
-                  }}
-                >
-                  Limpar
-                </button>
               </div>
             )}
+            {/* ✅ AGORA SIM: botão sempre visível */}
+            <button
+              type="button"
+              className="btn btn-outline-light btn-sm"
+              style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
+              onClick={() => {
+                setSelectedConsultant("");
+                setSelectedVariety("");
+                setSelectedClient("");
+                setClientFilterText("");
+                setClientFilterOpen(false);
+              }}
+            >
+              Limpar
+            </button>
           </div>
         </div>
       </div>
