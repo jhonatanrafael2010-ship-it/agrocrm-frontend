@@ -158,6 +158,18 @@ const CalendarPage: React.FC = () => {
       };
     }, []);
 
+
+    useEffect(() => {
+      const close = (e: MouseEvent) => {
+        const el = e.target as HTMLElement;
+        if (!el.closest(".filters-row")) setClientFilterOpen(false);
+      };
+      document.addEventListener("mousedown", close);
+      return () => document.removeEventListener("mousedown", close);
+    }, []);
+
+
+
     useEffect(() => {
       const el = headerRef.current;
       if (!el) return;
@@ -237,6 +249,10 @@ const CalendarPage: React.FC = () => {
   const [selectedConsultant, setSelectedConsultant] = useState<string>("");
   const [selectedVariety, setSelectedVariety] = useState<string>("");
   const [selectedClient, setSelectedClient] = useState<string>("");
+
+  const [clientFilterText, setClientFilterText] = useState<string>("");
+  const [clientFilterOpen, setClientFilterOpen] = useState<boolean>(false);
+
 
   // Estado de sincronização
   const [syncing, setSyncing] = useState(false);
@@ -1859,20 +1875,7 @@ useEffect(() => {
           <h2 className="mb-0">Agenda de Visitas</h2>
         </div>
 
-        <div className="filters-row">
-          <select
-            value={selectedClient}
-            onChange={(e) => setSelectedClient(e.target.value)}
-            className="form-select form-select-sm calendar-filter"
-          >
-            <option value="">Todos os clientes</option>
-            {clients.map((c) => (
-              <option key={c.id} value={String(c.id)}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          
+        <div className="filters-row"> 
           <select
             value={selectedConsultant}
             onChange={(e) => setSelectedConsultant(e.target.value)}
@@ -1899,19 +1902,66 @@ useEffect(() => {
             ))}
           </select>
 
-           {/* ✅ COLE O BOTÃO AQUI (no fim da filters-row) */}
-            <button
-              type="button"
-              className="btn btn-outline-light btn-sm"
-              style={{ flex: "0 0 auto" }}
-              onClick={() => {
-                setSelectedClient("");
-                setSelectedConsultant("");
-                setSelectedVariety("");
+           <div className="position-relative" style={{ minWidth: 220, flex: "1 1 220px" }}>
+            <input
+              type="text"
+              className="form-control form-control-sm calendar-filter"
+              placeholder="Filtrar cliente..."
+              value={clientFilterText}
+              onChange={(e) => {
+                setClientFilterText(e.target.value);
+                setClientFilterOpen(true);
+
+                // se apagou o texto, limpa o filtro
+                if (e.target.value.trim() === "") {
+                  setSelectedClient("");
+                }
               }}
-            >
-              Limpar
-            </button>
+              onFocus={() => setClientFilterOpen(true)}
+            />
+
+            {clientFilterOpen && clientFilterText.trim().length > 0 && (
+              <div
+                className="list-group position-absolute w-100 mt-1"
+                style={{
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  zIndex: 9999,
+                }}
+              >
+                {clients
+                  .filter((c) =>
+                    c.name.toLowerCase().includes(clientFilterText.toLowerCase())
+                  )
+                  .slice(0, 10)
+                  .map((c) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      className={`list-group-item list-group-item-action ${
+                        String(c.id) === selectedClient ? "active" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedClient(String(c.id));
+                        setClientFilterText(c.name); // mostra o nome selecionado
+                        setClientFilterOpen(false);
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+
+                {clients.filter((c) =>
+                  c.name.toLowerCase().includes(clientFilterText.toLowerCase())
+                ).length === 0 && (
+                  <div className="list-group-item text-muted">
+                    Nenhum cliente encontrado
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
