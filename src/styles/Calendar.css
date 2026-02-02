@@ -275,18 +275,21 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* área do calendário */
-.calendar-shell .fc {
-  height: auto !important;
-  overflow: visible;
-}
-
-.calendar-shell {
-  flex: 1;
-  min-height: 0;
+/* área do calendário (FIX mobile/landscape) */
+.calendar-shell{
+  flex: 1 1 auto;
+  min-height: 0;          /* essencial em flex */
+  overflow: auto;         /* cria scroll interno e evita “sumir” toolbar */
   display: flex;
   flex-direction: column;
 }
+
+/* FullCalendar ocupa o container */
+.calendar-shell .fc{
+  height: 100% !important; /* NUNCA auto aqui */
+  min-height: 0;
+}
+
 
 /* cabeçalho do calendário */
 .fc .fc-toolbar {
@@ -298,6 +301,18 @@
   font-size: 1.05rem;
   font-weight: 600;
 }
+
+/* toolbar do FullCalendar sempre visível no scroll interno */
+.calendar-shell .fc .fc-header-toolbar{
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel);
+  padding-top: 6px;
+  margin-bottom: 6px;
+}
+
+
 
 /* botões estilo Bootstrap */
 .fc .fc-button {
@@ -391,6 +406,17 @@ body[data-theme='light'] .fc .fc-daygrid-day {
     justify-content: center !important;
     align-items: center;
   }
+
+@media (max-width: 992px) and (orientation: landscape){
+  .fc .fc-toolbar-title{
+    font-size: 1rem;
+  }
+  .fc .fc-button{
+    padding: 0.25rem 0.45rem;
+    font-size: 0.75rem;
+  }
+}
+
 
   .fc .fc-toolbar-chunk{
     display: flex;
@@ -656,11 +682,9 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 }
 
 
-html, body {
+html, body{
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;   /* evita duplo scroll no mobile */
 }
 
 
@@ -679,14 +703,12 @@ html, body {
 
 
 
-  .calendar-page {
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
+.calendar-page{
+  height: 100dvh;           /* melhor que min-height aqui */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;         /* quem rola é o .calendar-shell */
+}
 
 
 
@@ -710,11 +732,6 @@ html, body {
    ✅ FIX MOBILE: header sticky não pode cobrir a toolbar do FullCalendar
    (o TSX vai setar --calHeaderH com a altura real do header)
 ========================================= */
-
-:root{
-  --calHeaderH: 0px;
-}
-
 /* Seu header precisa ficar acima, ok */
 .calendar-header-sticky{
   position: sticky;
@@ -723,12 +740,6 @@ html, body {
   background: var(--panel);
 }
 
-/* No mobile, empurra o calendário para baixo com a altura real do header */
-@media (max-width: 768px){
-  .calendar-shell{
-    padding-top: var(--calHeaderH);
-  }
-}
 /* =========================================================
    ✅ FIX DEFINITIVO: calendário não pode ficar embaixo do header
    (altura real vem do ResizeObserver no TSX: --calHeaderH)
