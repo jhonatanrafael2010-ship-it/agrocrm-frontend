@@ -409,10 +409,6 @@ const CalendarPage: React.FC = () => {
 
 
 
-  // Detectar iOS
-  function isIOS() {
-    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  }
 
   // ============================================================
   // 🚀 Load inicial (iOS continua leve nas VISITAS)
