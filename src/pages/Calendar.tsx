@@ -301,7 +301,8 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   // 🔁 Carregar visitas -> monta eventos
   // ============================================================
-  const loadVisits = async (csArg?: any[], consArg?: any[]) => {
+  const loadVisits = async () => {
+
     // ✅ trava concorrência (impede várias chamadas simultâneas)
     if (loadingVisitsRef.current) return;
 
@@ -355,8 +356,8 @@ const CalendarPage: React.FC = () => {
       // 4) Unir final
       const allVisits = [...cleanOnline, ...offlineVisits];
 
-      const cs = csArg ?? clients ?? [];
-      const cons = consArg ?? consultants ?? [];
+      const cs = clients || [];
+      const cons = consultants || [];
 
 
       const evs = allVisits
@@ -468,7 +469,7 @@ const CalendarPage: React.FC = () => {
         // não trava a tela — ainda tenta carregar visitas
       } finally {
         // ✅ SEMPRE carrega visitas (seu loadVisits já é leve no iOS via month=current)
-        await loadVisits(cs, cons);
+        await loadVisits();
         if (mounted) setLoading(false);
       }
     }
