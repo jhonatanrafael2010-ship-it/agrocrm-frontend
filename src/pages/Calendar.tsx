@@ -1921,14 +1921,8 @@ useEffect(() => {
             />
 
             {clientFilterOpen && clientFilterText.trim().length > 0 && (
-              <div
-                className="list-group position-absolute w-100 mt-1"
-                style={{
-                  maxHeight: 220,
-                  overflowY: "auto",
-                  zIndex: 9999,
-                }}
-              >
+              <div className="list-group position-absolute w-100 mt-1 client-filter-dropdown">
+
                 {clients
                   .filter((c) =>
                     c.name.toLowerCase().includes(clientFilterText.toLowerCase())
@@ -1938,9 +1932,10 @@ useEffect(() => {
                     <button
                       type="button"
                       key={c.id}
-                      className={`list-group-item list-group-item-action ${
+                      className={`list-group-item list-group-item-action client-filter-item ${
                         String(c.id) === selectedClient ? "active" : ""
                       }`}
+
                       onClick={() => {
                         setSelectedClient(String(c.id));
                         setClientFilterText(c.name); // mostra o nome selecionado

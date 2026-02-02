@@ -749,3 +749,30 @@ html, body {
 }
 
 .filters-row { display:flex; gap:8px; flex-wrap:wrap; }
+/* Dropdown do filtro de cliente (não fica transparente) */
+.client-filter-dropdown {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  overflow: hidden;
+  z-index: 99999; /* garante acima do FullCalendar */
+}
+
+/* Itens da lista */
+.client-filter-item {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border: none !important;
+}
+
+/* Hover */
+.client-filter-item:hover {
+  filter: brightness(1.08);
+}
+
+/* Selecionado (active) – fica bonito e não “estoura” */
+.client-filter-item.active {
+  background: #16a34a !important; /* verde consistente */
+  color: #fff !important;
+}
