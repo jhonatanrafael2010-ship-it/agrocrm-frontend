@@ -128,6 +128,9 @@ type Product = {
 
 
 const CalendarPage: React.FC = () => {
+  const loadingVisitsRef = useRef(false);
+  const lastLoadRef = useRef(0);
+
   const calendarRef = useRef<any>(null);
 
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -298,7 +301,17 @@ const CalendarPage: React.FC = () => {
   // ============================================================
   // 🔁 Carregar visitas -> monta eventos
   // ============================================================
-  const loadVisits = async () => {
+  const loadVisits = async (csArg?: any[], consArg?: any[]) => {
+    // ✅ trava concorrência (impede várias chamadas simultâneas)
+    if (loadingVisitsRef.current) return;
+
+    // ✅ throttle: evita martelar o backend (1 chamada a cada 8s)
+    const now = Date.now();
+    if (now - lastLoadRef.current < 8000) return;
+    lastLoadRef.current = now;
+
+    loadingVisitsRef.current = true;
+
     try {
 
       // Abordagem iOS: apenas visitas do mês → MUITO mais leve
@@ -342,8 +355,9 @@ const CalendarPage: React.FC = () => {
       // 4) Unir final
       const allVisits = [...cleanOnline, ...offlineVisits];
 
-      const cs = clients || [];
-      const cons = consultants || [];
+      const cs = csArg ?? clients ?? [];
+      const cons = consArg ?? consultants ?? [];
+
 
       const evs = allVisits
         .filter((v) => v.date)
@@ -379,7 +393,7 @@ const CalendarPage: React.FC = () => {
           return {
             id: `visit-${v.id}`,
             title: clientName,
-            start: v.date,
+            start: `${v.date}T12:00:00`,
 
             // amarelo = offline
             backgroundColor: isOffline ? "#ffcc00" : colorFor(v.date, v.status),
@@ -402,10 +416,13 @@ const CalendarPage: React.FC = () => {
       setEvents(evs);
 
       console.log(`✅ ${evs.length} visitas carregadas no calendário.`);
-    } catch (err) {
-      console.error("❌ Erro ao carregar visitas:", err);
-    }
-  };
+      } catch (err) {
+        console.error("❌ Erro ao carregar visitas:", err);
+      } finally {
+        loadingVisitsRef.current = false;
+      }
+    };
+
 
 
 
@@ -451,7 +468,7 @@ const CalendarPage: React.FC = () => {
         // não trava a tela — ainda tenta carregar visitas
       } finally {
         // ✅ SEMPRE carrega visitas (seu loadVisits já é leve no iOS via month=current)
-        await loadVisits();
+        await loadVisits(cs, cons);
         if (mounted) setLoading(false);
       }
     }
