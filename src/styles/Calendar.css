@@ -277,18 +277,12 @@
 
 /* área do calendário (FIX mobile/landscape) */
 .calendar-shell{
-  flex: 1 1 auto;
-  min-height: 0;          /* essencial em flex */
-  overflow: auto;         /* cria scroll interno e evita “sumir” toolbar */
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-/* FullCalendar ocupa o container */
-.calendar-shell .fc{
-  height: 100% !important; /* NUNCA auto aqui */
-  min-height: 0;
-}
 
 
 /* cabeçalho do calendário */
@@ -303,14 +297,19 @@
 }
 
 /* toolbar do FullCalendar sempre visível no scroll interno */
-.calendar-shell .fc .fc-header-toolbar{
-  position: sticky;
-  top: 0;
-  z-index: 20;
+.calendar-header-sticky{
+  position: static;
   background: var(--panel);
-  padding-top: 6px;
-  margin-bottom: 6px;
 }
+
+@media (max-width: 768px) and (orientation: portrait){
+  .calendar-header-sticky{
+    position: sticky;
+    top: 0;
+    z-index: 3000 !important;
+  }
+}
+
 
 
 
@@ -407,17 +406,6 @@ body[data-theme='light'] .fc .fc-daygrid-day {
     align-items: center;
   }
 
-@media (max-width: 992px) and (orientation: landscape){
-  .fc .fc-toolbar-title{
-    font-size: 1rem;
-  }
-  .fc .fc-button{
-    padding: 0.25rem 0.45rem;
-    font-size: 0.75rem;
-  }
-}
-
-
   .fc .fc-toolbar-chunk{
     display: flex;
     flex-wrap: wrap;
@@ -438,7 +426,19 @@ body[data-theme='light'] .fc .fc-daygrid-day {
     padding: 0.35rem 0.55rem;
     font-size: 0.85rem;
   }
+} /* ✅ FECHA O MEDIA */
+
+/* ✅ Landscape separado */
+@media (max-width: 992px) and (orientation: landscape){
+  .fc .fc-toolbar-title{
+    font-size: 1rem;
+  }
+  .fc .fc-button{
+    padding: 0.25rem 0.45rem;
+    font-size: 0.75rem;
+  }
 }
+
 
 /* 🖼️ Lightbox sempre acima do modal */
 .lightbox-overlay {
@@ -684,8 +684,11 @@ body[data-theme='light'] .fc .fc-daygrid-day {
 
 html, body{
   height: 100%;
-  overflow: hidden;   /* evita duplo scroll no mobile */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
 
 
 /* ✅ deixa o calendário realmente “encolher” e não cortar */
@@ -704,11 +707,14 @@ html, body{
 
 
 .calendar-page{
-  height: 100dvh;           /* melhor que min-height aqui */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;         /* quem rola é o .calendar-shell */
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
 
 
 
@@ -786,4 +792,14 @@ html, body{
 .client-filter-item.active {
   background: #16a34a !important; /* verde consistente */
   color: #fff !important;
+}
+/* ✅ quem deve rolar é o scroller interno do FullCalendar */
+.fc .fc-scroller{
+  -webkit-overflow-scrolling: touch;
+  overflow: auto !important;
+}
+
+/* ✅ evita layout bug no flex em mobile */
+.fc{
+  min-height: 0;
 }
