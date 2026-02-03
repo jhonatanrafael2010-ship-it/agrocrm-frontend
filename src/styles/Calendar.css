@@ -803,3 +803,68 @@ html, body{
 .fc{
   min-height: 0;
 }
+/* ================================
+   ✅ MOBILE LANDSCAPE: não sumir botões do FullCalendar
+   (compacta toolbar e reduz altura dos filtros)
+================================ */
+@media (max-width: 992px) and (orientation: landscape) {
+
+  /* 1) Header não pode tomar altura demais no landscape */
+  .calendar-header-sticky{
+    position: static !important;   /* evita “comer” a tela */
+  }
+
+  /* 2) Filtros em 1 linha com scroll horizontal */
+  .filters-row{
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px !important;
+    padding-bottom: 6px; /* dá espaço pro scroll bar */
+  }
+  .filters-row > *{
+    flex: 0 0 auto !important;
+  }
+  .calendar-filter{
+    min-width: 140px !important; /* diminui pra caber mais */
+  }
+
+  /* 3) Toolbar do FullCalendar SEM sumir botões */
+  .fc .fc-header-toolbar{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+  }
+
+  .fc .fc-toolbar-chunk{
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  /* esquerda (prev/next/today) e direita (views) não podem “encolher” */
+  .fc .fc-toolbar-chunk:first-child,
+  .fc .fc-toolbar-chunk:last-child{
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* título pode quebrar linha e ficar menor */
+  .fc .fc-toolbar-title{
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* botões menores */
+  .fc .fc-button{
+    padding: 0.22rem 0.40rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* (opcional) se ainda faltar espaço, esconda o título no landscape */
+  /* .fc .fc-toolbar-title{ display:none !important; } */
+}
