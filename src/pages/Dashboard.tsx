@@ -5,7 +5,35 @@ type Client = { id: number; name: string };
 type Property = { id: number; name: string; client_id?: number };
 type Plot = { id: number; name: string };
 type Planting = { id: number; culture?: string };
-type Visit = { id: number; date?: string; client_id?: number; property_id?: number };
+type Visit = {
+  id: number;
+  date?: string;
+
+  client_id?: number;
+  property_id?: number;
+  plot_id?: number;
+
+  client_name?: string;
+  consultant_id?: number;
+  consultant_name?: string;
+
+  status?: string;
+  culture?: string;
+  variety?: string;
+
+  recommendation?: string;
+  fenologia_real?: string;
+
+  products?: Array<{
+    id?: number;
+    product_name?: string;
+    dose?: string;
+    unit?: string;
+    application_date?: string | null;
+  }>;
+};
+
+
 type Opportunity = {
   id: number;
   title?: string;
@@ -14,6 +42,46 @@ type Opportunity = {
   created_at?: string;
   client_id?: number;
 };
+
+function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(value: any) {
+  const s = String(value ?? "");
+  const needsQuotes = /[;"\n\r,]/.test(s);
+  const escaped = s.replace(/"/g, '""');
+  return needsQuotes ? `"${escaped}"` : escaped;
+}
+
+function toCsv(rows: Record<string, any>[], headers: string[]) {
+  const sep = ";";
+  const headerLine = headers.map(csvEscape).join(sep);
+  const lines = rows.map((r) => headers.map((h) => csvEscape(r[h])).join(sep));
+  return "\uFEFF" + [headerLine, ...lines].join("\n"); // BOM p/ Excel
+}
+
+function monthRange(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  const start = new Date(y, m - 1, 1);
+  const end = new Date(y, m, 1);
+  return { start, end };
+}
+
+function parseISODate(dateStr?: string) {
+  const d = (dateStr ?? "").slice(0, 10); // YYYY-MM-DD
+  const [y, m, day] = d.split("-").map(Number);
+  if (!y || !m || !day) return null;
+  return new Date(y, m - 1, day);
+}
+
 
 function formatDate(d: Date) {
   if (!d || isNaN(d.getTime())) return "";
@@ -31,6 +99,13 @@ const Dashboard: React.FC = () => {
 
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [reportMonth, setReportMonth] = useState<string>(() => {
+    const now = new Date();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    return `${now.getFullYear()}-${m}`; // YYYY-MM
+  });
+
+
 
   const [clientsMap, setClientsMap] = useState<Record<number, string>>({});
   const [propsMap, setPropsMap] = useState<Record<number, string>>({});
@@ -44,7 +119,7 @@ const Dashboard: React.FC = () => {
       fetch(`${API_BASE}properties`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}plots`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}plantings`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}visits`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${API_BASE}visits?scope=all`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}opportunities`).then((r) => (r.ok ? r.json() : [])),
     ])
       .then(([cs, ps, pls, pts, vs, os]) => {
@@ -54,7 +129,7 @@ const Dashboard: React.FC = () => {
         setProperties(ps || []);
         setPlots(pls || []);
         setPlantings(pts || []);
-        setVisits((vs || []).slice(0, 12));
+        setVisits(vs || []);
         setOpps(os || []);
 
         const cMap: Record<number, string> = {};
@@ -132,6 +207,50 @@ const Dashboard: React.FC = () => {
     return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
+function exportMonthlyVisitsCSV() {
+  const { start, end } = monthRange(reportMonth);
+
+  const monthVisits = visits.filter((v) => {
+    const d = parseISODate(v.date);
+    return d && d >= start && d < end;
+  });
+
+  const rows = monthVisits
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+    .map((v) => ({
+      Data: (v.date ?? "").slice(0, 10),
+      Cliente: v.client_name ?? clientsMap[v.client_id ?? 0] ?? "",
+      Consultor: v.consultant_name ?? "—",
+      Propriedade: propsMap[v.property_id ?? 0] ?? "",
+      Cultura: v.culture ?? "—",
+      Variedade: v.variety ?? "—",
+      Fenologia: v.fenologia_real ?? "",
+      Status: v.status ?? "",
+      Observacao: v.recommendation ?? "",
+      Produtos: (v.products ?? [])
+        .map((p) => `${p.product_name ?? ""} ${p.dose ?? ""}${p.unit ? " " + p.unit : ""}`.trim())
+        .filter(Boolean)
+        .join(" | "),
+    }));
+
+  const headers = [
+    "Data",
+    "Cliente",
+    "Consultor",
+    "Propriedade",
+    "Cultura",
+    "Variedade",
+    "Fenologia",
+    "Status",
+    "Observacao",
+    "Produtos",
+  ];
+
+  const csv = toCsv(rows, headers);
+  downloadBlob(`relatorio_visitas_${reportMonth}.csv`, new Blob([csv], { type: "text/csv;charset=utf-8" }));
+}
+
+
   // ============================================================
   // Render
   // ============================================================
@@ -194,6 +313,22 @@ const Dashboard: React.FC = () => {
                       onChange={(e) => setEndDate(e.target.value)}
                     />
                   </label>
+
+                 <label className="d-flex flex-column">
+                    <small className="text-secondary">Mês (Relatório)</small>
+                    <input
+                      type="month"
+                      className="form-control form-control-sm"
+                      style={{ background: "var(--panel)", color: "var(--text)", borderColor: "var(--border)" }}
+                      value={reportMonth}
+                      onChange={(e) => setReportMonth(e.target.value)}
+                    />
+                  </label>
+
+                  <button className="btn btn-outline-success btn-sm" onClick={exportMonthlyVisitsCSV}>
+                    ⬇️ Exportar Visitas (CSV/Excel)
+                  </button>
+
                 </div>
                 <div className="ms-auto fw-semibold text-success">
                   {startDate && endDate ? (
