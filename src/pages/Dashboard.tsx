@@ -207,6 +207,38 @@ const Dashboard: React.FC = () => {
     return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
+
+async function downloadExcel() {
+  try {
+    if (!startDate || !endDate) {
+      alert("Selecione um intervalo (De / Até) para gerar o relatório.");
+      return;
+    }
+
+    const url = `${API_BASE}reports/monthly.xlsx?start=${startDate}&end=${endDate}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(t || "Falha ao gerar relatório");
+    }
+
+    const blob = await res.blob();
+    const fileName = `relatorio_visitas_${startDate}_a_${endDate}.xlsx`;
+
+    const a = document.createElement("a");
+    a.href = window.URL.createObjectURL(blob);
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (err: any) {
+    console.error(err);
+    alert("Não foi possível gerar o Excel. Veja o console/log do backend.");
+  }
+}
+
+
 function exportMonthlyVisitsCSV() {
   const { start, end } = monthRange(reportMonth);
 
@@ -330,12 +362,23 @@ function exportMonthlyVisitsCSV() {
                   </button>
 
                 </div>
-                <div className="ms-auto fw-semibold text-success">
-                  {startDate && endDate ? (
-                    <>Vendas (fechadas): {fmtCurrency(totalSales)}</>
-                  ) : (
-                    <span className="text-secondary">Selecione um intervalo</span>
-                  )}
+                <div className="ms-auto d-flex align-items-center gap-2 flex-wrap">
+                  <div className="fw-semibold text-success">
+                    {startDate && endDate ? (
+                      <>Vendas (fechadas): {fmtCurrency(totalSales)}</>
+                    ) : (
+                      <span className="text-secondary">Selecione um intervalo</span>
+                    )}
+                  </div>
+
+                  <button
+                    className="btn btn-sm btn-outline-success"
+                    onClick={downloadExcel}
+                    disabled={!startDate || !endDate}
+                    title="Baixar Excel formatado"
+                  >
+                    ⬇️ Baixar Excel
+                  </button>
                 </div>
               </div>
             </div>
