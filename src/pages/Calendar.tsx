@@ -261,6 +261,14 @@ const CalendarPage: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedCaptions, setSelectedCaptions] = useState<string[]>([]);
 
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(hover: none), (pointer: coarse)").matches;
+
+  const disableHoverPreview = isMobileLike() || isTouchDevice;
+
+
 
   // modal
   const [open, setOpen] = useState(false);
@@ -1476,46 +1484,39 @@ useEffect(() => {
   // 👀 Hover do evento: mini-card com TODAS as fotos + preload
   // ============================================================
   const handleEventMouseEnter = (info: any) => {
+    if (disableHoverPreview) return; // ✅ mobile: não cria preview
+
     const v = info.event.extendedProps?.raw as any;
     if (!v) return;
 
-    // 🔹 Fotos online + offline (SEM limite)
     const photos = [
       ...(v.photos || []).map((p: any) => ({
         src: resolvePhotoSrc(p),
         caption: p.caption || "",
       })),
       ...(v.offlinePhotos || []).map((p: any) => ({
-        src: p.dataUrl, // base64 offline
+        src: p.dataUrl,
         caption: p.caption || "",
       })),
     ];
 
-    // 🔥 PRELOAD — evita delay no hover
-    photos.forEach((p) => {
+    // ✅ PRELOAD (desktop) — mas com “limite” pra não travar
+    photos.slice(0, 8).forEach((p) => {
       const img = new Image();
       img.src = p.src;
     });
 
-    if (isMobileLike()) {
-      setHoverPreview({
-        x: 0,
-        y: 0,
-        visit: v,
-        photos,
-      });
-    } else {
-      setHoverPreview({
-        x: info.jsEvent.clientX,
-        y: info.jsEvent.clientY,
-        visit: v,
-        photos,
-      });
-    }
-
+    setHoverPreview({
+      x: info.jsEvent?.clientX ?? 0,
+      y: info.jsEvent?.clientY ?? 0,
+      visit: v,
+      photos,
+    });
   };
 
+
   const handleEventMouseLeave = () => {
+    if (disableHoverPreview) return;
     setHoverPreview(null);
   };
 
@@ -1643,6 +1644,7 @@ useEffect(() => {
 
 
   const renderHoverPreview = () => {
+    if (disableHoverPreview) return null;
     if (!hoverPreview || open) return null;
 
     const v = hoverPreview.visit;
@@ -2067,6 +2069,8 @@ useEffect(() => {
             setOpen(true);
           }}
           eventClick={(info) => {
+            info.jsEvent?.preventDefault();
+            info.jsEvent?.stopPropagation();
             const v = info.event.extendedProps?.raw as Visit | undefined;
             if (!v) return;
             // ⛔ Nunca usar new Date(v.date) — causa bug de timezone
@@ -2174,10 +2178,11 @@ useEffect(() => {
                 "⚠️ Visita salva offline — será sincronizada quando a internet voltar.";
             }
           }}
-          eventMouseEnter={handleEventMouseEnter}
-          eventMouseLeave={handleEventMouseLeave}
+          eventMouseEnter={disableHoverPreview ? undefined : handleEventMouseEnter}
+          eventMouseLeave={disableHoverPreview ? undefined : handleEventMouseLeave}
+
         />
-        {renderHoverPreview()}
+        {disableHoverPreview ? null : renderHoverPreview()}
        </div>
 
 
