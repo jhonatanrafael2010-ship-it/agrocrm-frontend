@@ -300,3 +300,17 @@ body[data-platform="mobile"] .app-title {
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+/* =========================================================
+   ✅ FIX: Offcanvas (menu mobile) acima do calendário/filtros
+   ========================================================= */
+
+.offcanvas,
+.offcanvas-backdrop {
+  /* garante que ganha do calendário */
+  z-index: 16000 !important;
+}
+
+/* backdrop um pouco abaixo da gaveta */
+.offcanvas-backdrop {
+  z-index: 15999 !important;
+}

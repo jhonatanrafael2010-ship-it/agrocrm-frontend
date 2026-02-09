@@ -761,7 +761,7 @@ html, body{
 
 /* Se algum CSS estiver tornando esse header "fixed", garantimos stack */
 .calendar-header-sticky{
-  z-index: 3000 !important;
+  z-index: 1100 !important;
   background: var(--panel);
 }
 
@@ -773,7 +773,7 @@ html, body{
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.35);
   overflow: hidden;
-  z-index: 99999; /* garante acima do FullCalendar */
+   z-index: 1200 !important; /* suficiente pro calendário, sem matar o menu */
 }
 
 /* Itens da lista */

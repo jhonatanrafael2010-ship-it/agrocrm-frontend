@@ -5,16 +5,21 @@
 .offcanvas {
   background-color: var(--panel-mobile) !important;
   color: var(--text-mobile) !important;
-  z-index: 2000 !important;
+
+  /* ✅ acima do calendário e dropdowns */
+  z-index: 16000 !important;
+
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.45);
   font-family: "Inter", sans-serif;
   transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-[data-theme='light'] .offcanvas {
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
+/* ✅ Backdrop também precisa ficar alto, senão o calendário “fura” por trás */
+.offcanvas-backdrop{
+  z-index: 15999 !important;
 }
+
 
 
 /* =========================================================

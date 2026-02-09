@@ -128,3 +128,24 @@ aside .fw-bold.fs-5.text-success {
   padding: 6px 12px;
   transition: all 0.3s ease;
 }
+/* ==========================================
+   ✅ FIX: Sidebar acima de qualquer coisa
+   (calendário tem z-index alto)
+========================================== */
+
+/* Sidebar (seu menu) */
+aside {
+  position: relative; /* desktop ok */
+  z-index: 200000 !important; /* ganha do calendário e dropdown */
+}
+
+/* No mobile, normalmente a sidebar vira sobreposição */
+@media (max-width: 992px) {
+  aside {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    z-index: 200000 !important;
+  }
+}

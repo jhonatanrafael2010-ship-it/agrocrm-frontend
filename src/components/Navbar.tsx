@@ -30,7 +30,7 @@ const Navbar: React.FC<Props> = ({
 
   return (
     <aside
-      className="d-flex flex-column border-end h-100 p-3 sidebar-panel"
+      className="sidebar d-flex flex-column border-end h-100 p-3 sidebar-panel"
       style={{ width: 240 }}
     >
       {/* 🔹 Logo NutriCRM */}
