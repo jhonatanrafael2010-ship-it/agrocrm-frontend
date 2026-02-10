@@ -314,3 +314,9 @@ body[data-platform="mobile"] .app-title {
 .offcanvas-backdrop {
   z-index: 15999 !important;
 }
+/* ✅ Durante "Atualizando o sistema..." o menu NÃO pode aparecer */
+body.app-updating .navbar,
+body.app-updating .offcanvas,
+body.app-updating .offcanvas-backdrop {
+  display: none !important;
+}

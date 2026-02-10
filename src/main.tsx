@@ -43,12 +43,14 @@ createRoot(document.getElementById('root')!).render(<App />)
   const splash = document.createElement('div')
   try {
     splash.style.cssText = `
-      position: fixed; inset:0;
+      position: fixed; inset: 0;
       background:#0b1620; color:#2dd36f; font-family:Inter, sans-serif;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:30000;
+      z-index: 2147483647;
       pointer-events: all;
-    `
+      isolation: isolate;
+    `;
+
     splash.innerHTML = `
       <div style="font-size:1.6rem;margin-bottom:10px;">🔄 Atualizando o sistema...</div>
       <div style="font-size:0.9rem;color:#9fb3b6;">Por favor, aguarde alguns segundos</div>
@@ -56,7 +58,23 @@ createRoot(document.getElementById('root')!).render(<App />)
 
     document.body.style.overflow = "hidden";
 
-    document.body.appendChild(splash)
+    // 🔒 trava UI durante atualização
+    document.body.classList.add("app-updating");
+
+    // fecha offcanvas se estiver aberto (garantia)
+    document.querySelectorAll(".offcanvas.show").forEach((el) => {
+      el.classList.remove("show");
+    });
+    document.querySelectorAll(".offcanvas-backdrop").forEach((el) => el.remove());
+
+    // trava scroll e cliques atrás
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.pointerEvents = "none";
+
+
+    document.documentElement.appendChild(splash)
+
 
     const currentVersion = localStorage.getItem('app_version')
     const files = Array.from(document.getElementsByTagName('script'))
@@ -89,8 +107,12 @@ createRoot(document.getElementById('root')!).render(<App />)
       localStorage.setItem('app_version', newVersion)
     }
 
-    splash.remove()
-    document.body.style.overflow = ""
+    splash.remove();
+    document.body.classList.remove("app-updating");
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.pointerEvents = "";
+
     } catch (err) {
       console.warn('⚠️ Falha ao verificar cache:', err)
       try { splash.remove() } catch {}
