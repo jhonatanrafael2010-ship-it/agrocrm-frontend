@@ -40,18 +40,22 @@ createRoot(document.getElementById('root')!).render(<App />)
 // 🔄 Atualização automática de cache (UX aprimorada)
 // ============================================================
 ;(async () => {
+  const splash = document.createElement('div')
   try {
-    const splash = document.createElement('div')
     splash.style.cssText = `
-      position: fixed; top:0; left:0; width:100%; height:100%;
+      position: fixed; inset:0;
       background:#0b1620; color:#2dd36f; font-family:Inter, sans-serif;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:9999;
+      z-index:30000;
+      pointer-events: all;
     `
     splash.innerHTML = `
       <div style="font-size:1.6rem;margin-bottom:10px;">🔄 Atualizando o sistema...</div>
       <div style="font-size:0.9rem;color:#9fb3b6;">Por favor, aguarde alguns segundos</div>
     `
+
+    document.body.style.overflow = "hidden";
+
     document.body.appendChild(splash)
 
     const currentVersion = localStorage.getItem('app_version')
@@ -86,7 +90,11 @@ createRoot(document.getElementById('root')!).render(<App />)
     }
 
     splash.remove()
-  } catch (err) {
-    console.warn('⚠️ Falha ao verificar cache:', err)
-  }
+    document.body.style.overflow = ""
+    } catch (err) {
+      console.warn('⚠️ Falha ao verificar cache:', err)
+      try { splash.remove() } catch {}
+      document.body.style.overflow = ""
+    }
+
 })()
