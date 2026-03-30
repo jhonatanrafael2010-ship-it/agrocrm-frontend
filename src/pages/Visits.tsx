@@ -11,6 +11,7 @@ type Visit = {
   property_id?: number;
   plot_id?: number;
   consultant_id?: number;
+  consultant_name?: string;
   culture?: string;
   variety?: string;
   recommendation?: string;
@@ -128,6 +129,29 @@ const Visits: React.FC = () => {
     const clean = d.split("T")[0];
     const [y, m, day] = clean.split("-");
     return `${day}/${m}/${y}`;
+  }
+
+
+  function getConsultantNameFromGroup(group: Visit[]) {
+    if (!group || group.length === 0) return "—";
+
+    const visitWithConsultantName = group.find(
+      (v) => v?.consultant_name && String(v.consultant_name).trim() !== ""
+    );
+    if (visitWithConsultantName?.consultant_name) {
+      return visitWithConsultantName.consultant_name;
+    }
+
+    const visitWithConsultantId = group.find(
+      (v) => v?.consultant_id !== null && v?.consultant_id !== undefined && String(v.consultant_id).trim() !== ""
+    );
+    if (!visitWithConsultantId) return "—";
+
+    const found = consultants.find(
+      (c) => String(c.id) === String(visitWithConsultantId.consultant_id)
+    );
+
+    return found?.name || "—";
   }
 
   async function handleDelete(id?: number) {
@@ -505,9 +529,7 @@ const Visits: React.FC = () => {
                               marginTop: 2,
                             }}
                           >
-                            {consultants.find(
-                              (c) => c.id === first.consultant_id
-                            )?.name || "—"}
+                            {getConsultantNameFromGroup(group)}
                           </div>
 
                           {/* Linha 3: Cultura + Variedade */}
