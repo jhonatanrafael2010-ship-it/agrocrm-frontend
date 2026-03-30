@@ -214,8 +214,19 @@ const Visits: React.FC = () => {
         }
 
         // Consultor
-        if (selectedConsultant && String(v.consultant_id) !== selectedConsultant)
-          return false;
+        if (selectedConsultant) {
+          const consultantById = String(v.consultant_id || "") === selectedConsultant;
+
+          const selectedConsultantName =
+            consultants.find((c) => String(c.id) === selectedConsultant)?.name || "";
+
+          const consultantByName =
+            selectedConsultantName &&
+            String(v.consultant_name || "").trim().toLowerCase() ===
+              selectedConsultantName.trim().toLowerCase();
+
+          if (!consultantById && !consultantByName) return false;
+        }
 
         // Cultura / Variedade
         if (selectedCulture && (v.culture || "").trim() !== selectedCulture)
@@ -360,6 +371,25 @@ const Visits: React.FC = () => {
                 className="form-control"
               />
             </div>
+
+          <div className="mt-3 d-flex justify-content-start">
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              onClick={() => {
+                setSelectedConsultant("");
+                setSelectedCulture("");
+                setSelectedVariety("");
+                setClientSearch("");
+                setFilterClient("");
+                setFilterStart("");
+                setFilterEnd("");
+              }}
+            >
+              Limpar filtros
+            </button>
+          </div>
+
+
 
             <div className="col-md-2">
               <label>Fim</label>
