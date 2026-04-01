@@ -10,8 +10,10 @@ type Property = {
   id: number;
   client_id: number;
   name: string;
-  city_state?: string;
-  area_ha?: number;
+  city_state?: string | null;
+  area_ha?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 type Plot = {
   id: number;
@@ -50,6 +52,8 @@ const Properties: React.FC = () => {
     city_state: "",
     area_ha: "",
   });
+  const [clientSearch, setClientSearch] = React.useState("");
+  const [showClientSuggestions, setShowClientSuggestions] = React.useState(false);
   const [plotForm, setPlotForm] = React.useState({
     property_id: "",
     name: "",
@@ -112,6 +116,20 @@ const Properties: React.FC = () => {
     setPlantForm((f) => ({ ...f, [name]: value }));
   }
 
+  const filteredClients = React.useMemo(() => {
+    const q = clientSearch.trim().toLowerCase();
+
+    const sorted = clients
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!q) return sorted.slice(0, 12);
+
+    return sorted
+      .filter((c) => c.name.toLowerCase().includes(q))
+      .slice(0, 12);
+  }, [clients, clientSearch]);
+
   // salvar propriedade
   async function saveProperty() {
     if (!propForm.client_id || !propForm.name) {
@@ -155,7 +173,9 @@ const Properties: React.FC = () => {
       // fecha modal e limpa
       setOpenProp(false);
       setEditingProp(null);
-      setPropForm({ client_id: "", name: "", city_state: "", area_ha: "" });
+      setClientSearch("");
+      setShowClientSuggestions(false);
+      setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
     } catch (err: any) {
       alert(err?.message || "Erro ao salvar propriedade");
     } finally {
@@ -249,7 +269,21 @@ const Properties: React.FC = () => {
         <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
           <h2 className="fw-bold">🏠 Propriedades & Talhões</h2>
           <div className="d-flex gap-2">
-            <button className="btn btn-success btn-sm" onClick={() => setOpenProp(true)}>
+            <button
+              className="btn btn-success btn-sm"
+              onClick={() => {
+                setEditingProp(null);
+                setPropForm({
+                  client_id: "",
+                  name: "",
+                  city_state: "MT",
+                  area_ha: "",
+                });
+                setClientSearch("");
+                setShowClientSuggestions(false);
+                setOpenProp(true);
+              }}
+            >
               + Nova Propriedade
             </button>
             <button className="btn btn-success btn-sm" onClick={() => setOpenPlot(true)}>
@@ -305,12 +339,17 @@ const Properties: React.FC = () => {
                               onClick={() => {
                                 setOpenProp(true);
                                 setEditingProp(p);
+                                const clientName =
+                                  clients.find((c) => c.id === p.client_id)?.name || "";
+
                                 setPropForm({
                                   client_id: String(p.client_id),
                                   name: p.name || "",
                                   city_state: p.city_state || "",
                                   area_ha: p.area_ha ? String(p.area_ha) : "",
                                 });
+                                setClientSearch(clientName);
+                                setShowClientSuggestions(false);
                               }}
                             >
                               <img src={pencilIcon} alt="Editar" width={18} />
@@ -469,19 +508,61 @@ const Properties: React.FC = () => {
               </div>
               <div className="modal-body">
                 <label className="form-label">Cliente</label>
-                <DarkSelect
-                  name="client_id"
-                  value={propForm.client_id}
-                  placeholder="Selecione um cliente"
-                  options={[
-                    { value: "", label: "Selecione um cliente" },
-                    ...clients
-                      .slice()
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((c) => ({ value: String(c.id), label: c.name })),
-                  ]}
-                  onChange={handlePropChange as any}
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Digite o nome do cliente"
+                  value={clientSearch}
+                  onChange={(e) => {
+                    setClientSearch(e.target.value);
+                    setShowClientSuggestions(true);
+                    setPropForm((f) => ({ ...f, client_id: "" }));
+                  }}
+                  onFocus={() => setShowClientSuggestions(true)}
                 />
+
+                {showClientSuggestions && (
+                  <div
+                    className={`mt-2 border rounded ${
+                      theme === "dark" ? "bg-black border-secondary" : "bg-white"
+                    }`}
+                    style={{ maxHeight: 220, overflowY: "auto" }}
+                  >
+                    {filteredClients.length > 0 ? (
+                      filteredClients.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className={`w-100 text-start px-3 py-2 border-0 ${
+                            theme === "dark" ? "bg-black text-light" : "bg-white text-dark"
+                          }`}
+                          onClick={() => {
+                            setPropForm((f) => ({ ...f, client_id: String(c.id) }));
+                            setClientSearch(c.name);
+                            setShowClientSuggestions(false);
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {c.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-secondary">Nenhum cliente encontrado</div>
+                    )}
+                  </div>
+                )}
+
+                {!propForm.client_id && (
+                  <div className="form-text text-danger">
+                    Selecione um cliente da lista filtrada.
+                  </div>
+                )}
+                
+                {propForm.client_id && (
+                  <div className="form-text text-success">
+                    Cliente selecionado: {clientSearch}
+                  </div>
+                )}
 
                 <label className="form-label mt-3">Nome</label>
                 <input
