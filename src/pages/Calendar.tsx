@@ -83,7 +83,15 @@ async function hasInternet(): Promise<boolean> {
 
 
 type Client = { id: number; name: string };
-type Property = { id: number; client_id: number; name: string };
+type Property = {
+  id: number;
+  client_id: number;
+  name: string;
+  city_state?: string | null;
+  area_ha?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 type Plot = { id: number; property_id: number; name: string };
 type Culture = { id: number; name: string };
 type Variety = { id: number; name: string; culture: string };
