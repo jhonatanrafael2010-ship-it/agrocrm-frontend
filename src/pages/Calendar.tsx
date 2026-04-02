@@ -666,7 +666,8 @@ const handleCreateOrUpdate = async () => {
     updatePayload.recommendation = form.recommendation.trim();
   }
 
-  console.log("📦 Payload enviado:", basePayload);
+  console.log("📦 Payload criação:", createPayload);
+  console.log("📦 Payload edição:", updatePayload);
 
 
   // =======================
