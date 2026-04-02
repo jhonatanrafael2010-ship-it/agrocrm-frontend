@@ -631,7 +631,7 @@ const handleCreateOrUpdate = async () => {
   // =======================
   // 📦 MONTA PAYLOAD BASE
   // =======================
-  const basePayload: any = {
+  const createPayload: any = {
     client_id: Number(form.client_id),
     property_id: form.property_id ? Number(form.property_id) : null,
     plot_id: form.plot_id ? Number(form.plot_id) : null,
@@ -648,9 +648,22 @@ const handleCreateOrUpdate = async () => {
     genPheno: isPhenoCulture,
   };
 
-  // ⚠️ Recommendation só é enviada se o usuário escreveu algo
   if (form.recommendation && form.recommendation.trim() !== "") {
-    basePayload.recommendation = form.recommendation.trim();
+    createPayload.recommendation = form.recommendation.trim();
+  }
+
+  const updatePayload: any = {
+    date: iso,
+    fenologia_real: form.fenologia_real || null,
+    products: form.products || [],
+    latitude: form.latitude,
+    longitude: form.longitude,
+    status: form.status || "planned",
+    preserve_date: form.date === form.originalDate,
+  };
+
+  if (form.recommendation && form.recommendation.trim() !== "") {
+    updatePayload.recommendation = form.recommendation.trim();
   }
 
   console.log("📦 Payload enviado:", basePayload);
@@ -665,25 +678,9 @@ const handleCreateOrUpdate = async () => {
     if (form.id) {
       console.log("🟦 Atualizando visita existente:", form.id);
 
-      const safePayload = {
-        ...basePayload,
+      console.log("🛡️ Payload final (MANUTENÇÃO):", updatePayload);
 
-        // 🛡️ Não deixar recommendation ser apagada
-        recommendation:
-          form.recommendation && form.recommendation.trim() !== ""
-            ? form.recommendation.trim()
-            : undefined,
-        fenologia_real: form.fenologia_real || null,
-        status: form.status || "planned",
-        preserve_date: form.date === form.originalDate,
-
-        latitude: form.latitude,
-        longitude: form.longitude,
-      };
-
-      console.log("🛡️ Payload final (MANUTENÇÃO):", safePayload);
-
-      result = await updateVisitWithSync(API_BASE, Number(form.id), safePayload);
+      result = await updateVisitWithSync(API_BASE, Number(form.id), updatePayload);
     }
 
 
@@ -698,13 +695,13 @@ const handleCreateOrUpdate = async () => {
         ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
 
       if (isReallyOffline) {
-        basePayload.latitude = form.latitude;
-        basePayload.longitude = form.longitude;
+        createPayload.latitude = form.latitude;
+        createPayload.longitude = form.longitude;
       }
 
-      console.log("📤 Payload final (NOVO):", basePayload);
+      console.log("📤 Payload final (NOVO):", createPayload);
 
-      result = await createVisitWithSync(API_BASE, basePayload);
+      result = await createVisitWithSync(API_BASE, createPayload);
     }
 
 

@@ -503,6 +503,9 @@ const Properties: React.FC = () => {
                   onClick={() => {
                     setOpenProp(false);
                     setEditingProp(null);
+                    setClientSearch("");
+                    setShowClientSuggestions(false);
+                    setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
                   }}
                 ></button>
               </div>
@@ -594,6 +597,9 @@ const Properties: React.FC = () => {
                   onClick={() => {
                     setOpenProp(false);
                     setEditingProp(null);
+                    setClientSearch("");
+                    setShowClientSuggestions(false);
+                    setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
                   }}
                 >
                   Cancelar
