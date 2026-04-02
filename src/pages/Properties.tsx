@@ -49,9 +49,12 @@ const Properties: React.FC = () => {
   const [propForm, setPropForm] = React.useState({
     client_id: "",
     name: "",
-    city_state: "",
+    city_state: "MT",
     area_ha: "",
+    latitude: "",
+    longitude: "",
   });
+
   const [clientSearch, setClientSearch] = React.useState("");
   const [showClientSuggestions, setShowClientSuggestions] = React.useState(false);
   const [plotForm, setPlotForm] = React.useState({
@@ -116,6 +119,36 @@ const Properties: React.FC = () => {
     setPlantForm((f) => ({ ...f, [name]: value }));
   }
 
+  async function fillCurrentLocation() {
+    if (!navigator.geolocation) {
+      alert("Geolocalização não suportada neste dispositivo.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        setPropForm((f) => ({
+          ...f,
+          latitude: String(lat),
+          longitude: String(lon),
+        }));
+      },
+      (err) => {
+        console.error(err);
+        alert("Não consegui obter a localização atual.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  }
+
+
   const filteredClients = React.useMemo(() => {
     const q = clientSearch.trim().toLowerCase();
 
@@ -132,56 +165,63 @@ const Properties: React.FC = () => {
 
   // salvar propriedade
   async function saveProperty() {
-    if (!propForm.client_id || !propForm.name) {
-      alert("Cliente e nome são obrigatórios");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      let res, body;
-      if (editingProp) {
-        res = await fetch(`${API_BASE}properties/${editingProp.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            client_id: Number(propForm.client_id),
-            name: propForm.name,
-            city_state: propForm.city_state || undefined,
-            area_ha: propForm.area_ha ? Number(propForm.area_ha) : undefined,
-          }),
-        });
-        body = await res.json();
-        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-        const updated = body.property || body;
-        setProperties((p) => p.map((pr) => (pr.id === updated.id ? updated : pr)));
-      } else {
-        res = await fetch(`${API_BASE}properties`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            client_id: Number(propForm.client_id),
-            name: propForm.name,
-            city_state: propForm.city_state || undefined,
-            area_ha: propForm.area_ha ? Number(propForm.area_ha) : undefined,
-          }),
-        });
-        body = await res.json();
-        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-        const created = body.property || body;
-        setProperties((p) => [created, ...p]);
-      }
-      // fecha modal e limpa
-      setOpenProp(false);
-      setEditingProp(null);
-      setClientSearch("");
-      setShowClientSuggestions(false);
-      setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
-    } catch (err: any) {
-      alert(err?.message || "Erro ao salvar propriedade");
-    } finally {
-      setSubmitting(false);
-    }
+  if (!propForm.client_id || !propForm.name) {
+    alert("Cliente e nome são obrigatórios");
+    return;
   }
+  setSubmitting(true);
+  try {
+    let res, body;
+
+    const payload = {
+      client_id: Number(propForm.client_id),
+      name: propForm.name.trim(),
+      city_state: propForm.city_state.trim() || "MT",
+      area_ha: propForm.area_ha ? Number(propForm.area_ha) : null,
+      latitude: propForm.latitude ? Number(propForm.latitude) : null,
+      longitude: propForm.longitude ? Number(propForm.longitude) : null,
+    };
+
+    if (editingProp) {
+      res = await fetch(`${API_BASE}properties/${editingProp.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      body = await res.json();
+      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+      const updated = body.property || body;
+      setProperties((p) => p.map((pr) => (pr.id === updated.id ? updated : pr)));
+    } else {
+      res = await fetch(`${API_BASE}properties`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      body = await res.json();
+      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+      const created = body.property || body;
+      setProperties((p) => [created, ...p]);
+    }
+
+    setOpenProp(false);
+    setEditingProp(null);
+    setClientSearch("");
+    setShowClientSuggestions(false);
+    setPropForm({
+      client_id: "",
+      name: "",
+      city_state: "MT",
+      area_ha: "",
+      latitude: "",
+      longitude: "",
+    });
+  } catch (err: any) {
+    alert(err?.message || "Erro ao salvar propriedade");
+  } finally {
+    setSubmitting(false);
+  }
+}
 
   // criar talhão
   async function createPlot() {
@@ -278,6 +318,8 @@ const Properties: React.FC = () => {
                   name: "",
                   city_state: "MT",
                   area_ha: "",
+                  latitude: "",
+                  longitude: "",
                 });
                 setClientSearch("");
                 setShowClientSuggestions(false);
@@ -345,8 +387,10 @@ const Properties: React.FC = () => {
                                 setPropForm({
                                   client_id: String(p.client_id),
                                   name: p.name || "",
-                                  city_state: p.city_state || "",
+                                  city_state: p.city_state || "MT",
                                   area_ha: p.area_ha ? String(p.area_ha) : "",
+                                  latitude: p.latitude != null ? String(p.latitude) : "",
+                                  longitude: p.longitude != null ? String(p.longitude) : "",
                                 });
                                 setClientSearch(clientName);
                                 setShowClientSuggestions(false);
@@ -505,7 +549,14 @@ const Properties: React.FC = () => {
                     setEditingProp(null);
                     setClientSearch("");
                     setShowClientSuggestions(false);
-                    setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
+                    setPropForm({
+                      client_id: "",
+                      name: "",
+                      city_state: "MT",
+                      area_ha: "",
+                      latitude: "",
+                      longitude: "",
+                    });
                   }}
                 ></button>
               </div>
@@ -583,6 +634,38 @@ const Properties: React.FC = () => {
                   className="form-control"
                 />
 
+                <label className="form-label mt-3">Latitude</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="latitude"
+                  value={propForm.latitude}
+                  onChange={(e) =>
+                    setPropForm((f) => ({ ...f, latitude: e.target.value }))
+                  }
+                  placeholder="-13.0581"
+                />
+
+                <label className="form-label mt-3">Longitude</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="longitude"
+                  value={propForm.longitude}
+                  onChange={(e) =>
+                    setPropForm((f) => ({ ...f, longitude: e.target.value }))
+                  }
+                  placeholder="-55.9172"
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-outline-primary btn-sm mt-3"
+                  onClick={fillCurrentLocation}
+                >
+                  Usar localização atual
+                </button>
+
                 <label className="form-label mt-3">Área (ha)</label>
                 <input
                   name="area_ha"
@@ -599,7 +682,14 @@ const Properties: React.FC = () => {
                     setEditingProp(null);
                     setClientSearch("");
                     setShowClientSuggestions(false);
-                    setPropForm({ client_id: "", name: "", city_state: "MT", area_ha: "" });
+                    setPropForm({
+                      client_id: "",
+                      name: "",
+                      city_state: "MT",
+                      area_ha: "",
+                      latitude: "",
+                      longitude: "",
+                    });
                   }}
                 >
                   Cancelar
