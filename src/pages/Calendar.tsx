@@ -2057,6 +2057,24 @@ useEffect(() => {
           eventDisplay="block"
 
           events={events.filter((e) => {
+            const resolveConsultantFilterValue = (raw: any) => {
+              if (raw?.consultant_id != null && raw?.consultant_id !== "") {
+                return String(raw.consultant_id);
+              }
+
+              const consultantName = String(raw?.consultant_name || "")
+                .trim()
+                .toLowerCase();
+
+              if (!consultantName) return "";
+
+              const found = consultants.find(
+                (c) => c.name.trim().toLowerCase() === consultantName
+              );
+
+              return found ? String(found.id) : "";
+            };
+
             const raw = e.extendedProps?.raw || {};
             const clientId = raw?.client_id;
 
@@ -2076,24 +2094,6 @@ useEffect(() => {
             const matchesVariety =
               !selectedVariety ||
               String(variety).toLowerCase().includes(selectedVariety.toLowerCase());
-
-            const resolveConsultantFilterValue = (raw: any) => {
-              if (raw?.consultant_id != null && raw?.consultant_id !== "") {
-                return String(raw.consultant_id);
-              }
-
-              const consultantName = String(raw?.consultant_name || "")
-                .trim()
-                .toLowerCase();
-
-              if (!consultantName) return "";
-
-              const found = consultants.find(
-                (c) => c.name.trim().toLowerCase() === consultantName
-              );
-
-              return found ? String(found.id) : "";
-            };
 
             return matchesClient && matchesConsultant && matchesVariety;
           })}
