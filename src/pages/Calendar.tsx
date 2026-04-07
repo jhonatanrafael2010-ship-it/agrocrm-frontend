@@ -50,17 +50,16 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
 */
 
 const computeIsOffline = async () => {
-  const isNative = !!(window as any).Capacitor?.isNativePlatform;
+  // sem conexão declarada pelo navegador = offline real
+  if (!navigator.onLine) return true;
 
-  // Web: navigator.onLine costuma funcionar bem
-  if (!isNative) return !navigator.onLine;
-
-  // Native: confia no ping (mais confiável que navigator.onLine)
+  // com conexão declarada, testa o backend com retry
   try {
-    const ok = await hasInternet();
+    const ok = await hasInternet(2);
     return !ok;
   } catch {
-    return true;
+    // erro momentâneo não deve marcar offline definitivo
+    return false;
   }
 };
 
@@ -70,14 +69,31 @@ const computeIsOffline = async () => {
 // ============================================================
 // 🌐 Função definitiva para detectar internet real no APK
 // ============================================================
-async function hasInternet(): Promise<boolean> {
-  try {
-    // Testa diretamente sua API (método recomendado para Capacitor)
-    const resp = await fetch(`${API_BASE}ping`, { method: "GET", cache: "no-cache" });
-    return resp.ok;
-  } catch {
-    return false;
+async function hasInternet(retries = 2): Promise<boolean> {
+  for (let i = 0; i <= retries; i++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    try {
+      const resp = await fetch(`${API_BASE}ping`, {
+        method: "GET",
+        cache: "no-cache",
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (resp.ok) return true;
+    } catch {
+      clearTimeout(timeout);
+    }
+
+    if (i < retries) {
+      await new Promise((r) => setTimeout(r, 700));
+    }
   }
+
+  return false;
 }
 
 
@@ -220,22 +236,24 @@ const CalendarPage: React.FC = () => {
   const [offline, setOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const checkConnection = () => {
-      const status = !navigator.onLine;
+    let mounted = true;
 
-      // ✅ só atualiza se realmente mudou
-      setOffline(prev => (prev === status ? prev : status));
+    const checkConnection = async () => {
+      const status = await computeIsOffline();
+      if (mounted) {
+        setOffline((prev) => (prev === status ? prev : status));
+      }
     };
 
     checkConnection();
 
-    // ✅ pode manter, mas agora não re-renderiza sem mudança
-    const interval = setInterval(checkConnection, 3000);
+    const interval = setInterval(checkConnection, 5000);
 
     window.addEventListener("online", checkConnection);
     window.addEventListener("offline", checkConnection);
 
     return () => {
+      mounted = false;
       clearInterval(interval);
       window.removeEventListener("online", checkConnection);
       window.removeEventListener("offline", checkConnection);
@@ -381,10 +399,32 @@ const CalendarPage: React.FC = () => {
       const localVisits = await getAllFromStore<Visit>("visits");
 
       // 3) Offline = só as que não existem no servidor
-      const offlineVisits = localVisits.filter(
-        (v: any) =>
-          v.offline === true && !cleanOnline.some((o) => o.id === v.id)
+      const buildVisitFingerprint = (v: any) =>
+        [
+          String(v.client_id || ""),
+          String(v.property_id || ""),
+          String(v.plot_id || ""),
+          String(v.consultant_id || v.consultant_name || ""),
+          String(v.date || ""),
+          String((v.culture || "").trim().toLowerCase()),
+          String((v.variety || "").trim().toLowerCase()),
+          String((v.fenologia_real || "").trim().toLowerCase()),
+          String((v.recommendation || "").trim().toLowerCase()),
+        ].join("|");
+
+      const onlineIds = new Set(cleanOnline.map((v: any) => String(v.id)));
+      const onlineFingerprints = new Set(
+        cleanOnline.map((v: any) => buildVisitFingerprint(v))
       );
+
+      const offlineVisits = localVisits.filter((v: any) => {
+        if (v.offline !== true) return false;
+
+        const sameId = onlineIds.has(String(v.id));
+        const sameFingerprint = onlineFingerprints.has(buildVisitFingerprint(v));
+
+        return !sameId && !sameFingerprint;
+      });
 
       // 4) Unir final
       const allVisits = [...cleanOnline, ...offlineVisits];
@@ -691,9 +731,7 @@ const handleCreateOrUpdate = async () => {
     else {
       console.log("🟩 Criando visita nova...");
 
-      const isReallyOffline =
-        !navigator.onLine ||
-        ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
+      const isReallyOffline = await computeIsOffline();
 
       if (isReallyOffline) {
         createPayload.latitude = form.latitude;
@@ -2019,23 +2057,43 @@ useEffect(() => {
           eventDisplay="block"
 
           events={events.filter((e) => {
-            const consultantId = e.extendedProps?.raw?.consultant_id;
-            const clientId = e.extendedProps?.raw?.client_id;
+            const raw = e.extendedProps?.raw || {};
+            const clientId = raw?.client_id;
+
+            const consultantFilterValue = resolveConsultantFilterValue(raw);
 
             const variety =
-              e.extendedProps?.raw?.variety ||
-              e.extendedProps?.raw?.variedade ||
+              raw?.variety ||
+              raw?.variedade ||
               "";
 
             const matchesClient =
               !selectedClient || String(clientId || "") === selectedClient;
 
             const matchesConsultant =
-              !selectedConsultant || String(consultantId || "") === selectedConsultant;
+              !selectedConsultant || consultantFilterValue === selectedConsultant;
 
             const matchesVariety =
               !selectedVariety ||
               String(variety).toLowerCase().includes(selectedVariety.toLowerCase());
+
+            const resolveConsultantFilterValue = (raw: any) => {
+              if (raw?.consultant_id != null && raw?.consultant_id !== "") {
+                return String(raw.consultant_id);
+              }
+
+              const consultantName = String(raw?.consultant_name || "")
+                .trim()
+                .toLowerCase();
+
+              if (!consultantName) return "";
+
+              const found = consultants.find(
+                (c) => c.name.trim().toLowerCase() === consultantName
+              );
+
+              return found ? String(found.id) : "";
+            };
 
             return matchesClient && matchesConsultant && matchesVariety;
           })}
