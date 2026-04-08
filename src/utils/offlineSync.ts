@@ -26,6 +26,12 @@ function normalizeBaseUrl(base: string): string {
   return base.replace(/\/+$/, "");
 }
 
+function isTemporaryOfflineId(value: any): boolean {
+  const n = Number(value);
+  if (!n || Number.isNaN(n)) return false;
+  return n > 1000000000000;
+}
+
 /**
  * Fetch com cache e fallback offline
  */
@@ -101,17 +107,24 @@ export async function createVisitWithSync(apiBase: string, payload: any) {
 /**
  * Sincronizar fotos offline
  */
-export async function syncPendingPhotos(apiBase: string) {
+export async function syncPendingPhotos(
+  apiBase: string
+): Promise<{ synced: number; failed: number }> {
   const base = normalizeBaseUrl(apiBase);
   const photos = await getAllPendingPhotos();
-  if (!photos.length) return;
+
+  if (!photos.length) {
+    return { synced: 0, failed: 0 };
+  }
+
+  let syncedCount = 0;
+  let failedCount = 0;
 
   for (const p of photos) {
     const form = new FormData();
     form.append("photos", dataURLtoBlob(p.dataUrl), p.fileName);
     form.append("captions", p.caption || "");
 
-    // 🔥 Se existirem coordenadas EXIF salvas offline → enviar para o backend
     if (p.latitude != null) {
       form.append("latitude", String(p.latitude));
     }
@@ -127,26 +140,35 @@ export async function syncPendingPhotos(apiBase: string) {
 
       if (res.ok && p.id != null) {
         await deletePendingPhoto(p.id);
+        syncedCount++;
+      } else {
+        failedCount++;
       }
     } catch (err) {
       console.warn("⚠ Erro ao sincronizar foto:", err);
+      failedCount++;
     }
   }
+
+  return { synced: syncedCount, failed: failedCount };
 }
 
 
 /**
  * Sincronizar visitas pendentes
  */
-export async function syncPendingVisits(apiBase: string): Promise<void> {
+export async function syncPendingVisits(
+  apiBase: string
+): Promise<{ synced: number; failed: number }> {
   const base = normalizeBaseUrl(apiBase);
 
-  if (!navigator.onLine) return;
+  if (!navigator.onLine) return { synced: 0, failed: 0 };
 
   const pendings = await getAllPendingVisits();
-  if (!pendings.length) return;
+  if (!pendings.length) return { synced: 0, failed: 0 };
 
   let syncedCount = 0;
+  let failedCount = 0;
 
   for (const p of pendings) {
     try {
@@ -179,7 +201,10 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
           body: JSON.stringify(bodyToSend),
         });
 
-        if (!res.ok) continue;
+        if (!res.ok) {
+          failedCount++;
+          continue;
+        }
 
         if (p.id != null) await deletePendingVisit(p.id);
         syncedCount++;
@@ -222,6 +247,7 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
       syncedCount++;
     } catch (err) {
       console.warn("⚠ Sync erro:", err);
+      failedCount++;
     }
   }
 
@@ -230,6 +256,8 @@ export async function syncPendingVisits(apiBase: string): Promise<void> {
     await fetchWithCache(`${base}/visits`, "visits");
     window.dispatchEvent(new Event("visits-synced"));
   }
+
+  return { synced: syncedCount, failed: failedCount };
 }
 
 /**
@@ -263,6 +291,36 @@ export async function updateVisitWithSync(
 ) {
   const base = normalizeBaseUrl(apiBase);
 
+  // ✅ CASO 1: visita ainda é local/offline (ID temporário)
+  // Não pode fazer PUT no backend.
+  if (isTemporaryOfflineId(visitId)) {
+    const localVisits = await getAllFromStore<any>("visits");
+    const existing = localVisits.find((v) => Number(v.id) === Number(visitId));
+
+    if (!existing) {
+      throw new Error(`Visita offline ${visitId} não encontrada no IndexedDB.`);
+    }
+
+    const updatedLocalVisit = {
+      ...existing,
+      ...payload,
+      id: existing.id,
+      offline: true,
+      synced: false,
+    };
+
+    await appendToStore("visits", updatedLocalVisit);
+    window.dispatchEvent(new Event("visits-updated"));
+
+    return {
+      ...updatedLocalVisit,
+      synced: false,
+      offline: true,
+      message: "Visita offline atualizada localmente",
+    };
+  }
+
+  // ✅ CASO 2: visita real do backend
   try {
     const res = await fetch(`${base}/visits/${visitId}`, {
       method: "PUT",
@@ -273,7 +331,18 @@ export async function updateVisitWithSync(
     if (!res.ok) throw new Error("Erro HTTP " + res.status);
 
     const json = await res.json();
-    return { ...json, synced: true, offline: false };
+    const updated = json.visit || json;
+
+    await appendToStore("visits", {
+      ...updated,
+      id: Number(updated.id || visitId),
+      offline: false,
+      synced: true,
+    });
+
+    window.dispatchEvent(new Event("visits-updated"));
+
+    return { ...updated, synced: true, offline: false };
   } catch (err) {
     console.warn("📴 Salvando atualização OFFLINE:", err);
 

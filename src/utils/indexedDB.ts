@@ -444,3 +444,16 @@ export async function updatePendingPhotosVisitId(
     tx.onerror = () => reject(tx.error);
   });
 }
+
+export async function updateVisitInStoreById(
+  visitId: number,
+  updater: (current: any) => any
+): Promise<void> {
+  const visits = await getAllFromStore<any>("visits");
+  const current = visits.find((v) => Number(v.id) === Number(visitId));
+
+  if (!current) return;
+
+  const updated = updater(current);
+  await appendToStore("visits", updated);
+}

@@ -14,6 +14,8 @@ import {
   fetchWithCache,
   createVisitWithSync,
   updateVisitWithSync,
+  syncPendingVisits,
+  syncPendingPhotos,
 } from "../utils/offlineSync";
 import { API_BASE } from "../config";
 import {
@@ -291,6 +293,7 @@ const CalendarPage: React.FC = () => {
   // Estado de sincronização
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedCaptions, setSelectedCaptions] = useState<string[]>([]);
@@ -1357,6 +1360,51 @@ const handleEditSavedPhoto = async (
       }
     };
 
+
+    const handleManualSync = async () => {
+      const isReallyOffline = await computeIsOffline();
+
+      if (isReallyOffline) {
+        alert("Você está offline. Conecte-se antes de sincronizar.");
+        return;
+      }
+
+      setSyncing(true);
+      setSyncError(null);
+
+      try {
+        const visitsResult = await syncPendingVisits(API_BASE);
+        const photosResult = await syncPendingPhotos(API_BASE);
+
+        await loadVisits();
+
+        setLastSync(
+          new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
+
+        const failedVisits = visitsResult?.failed || 0;
+        const failedPhotos = photosResult?.failed || 0;
+
+        if (failedVisits > 0 || failedPhotos > 0) {
+          setSyncError(
+            `Alguns itens ainda não sincronizaram. Visitas com falha: ${failedVisits}. Fotos com falha: ${failedPhotos}.`
+          );
+        } else {
+          setSyncError(null);
+          alert("✅ Sincronização concluída com sucesso.");
+        }
+      } catch (err: any) {
+        console.error("❌ Erro na sincronização manual:", err);
+        setSyncError(err?.message || "Falha ao sincronizar dados pendentes.");
+        alert("⚠️ Falha ao sincronizar. Veja o aviso no topo da agenda.");
+      } finally {
+        setSyncing(false);
+      }
+    };
+
     
 
     // ============================================================
@@ -1364,15 +1412,13 @@ const handleEditSavedPhoto = async (
     // ============================================================
     useEffect(() => {
       async function finalizeSync() {
-        const isReallyOffline =
-          !navigator.onLine ||
-          ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
-
-        if (isReallyOffline) {
-          return;
-        }
+        const isReallyOffline = await computeIsOffline();
+        if (isReallyOffline) return;
 
         try {
+          setSyncing(true);
+          setSyncError(null);
+
           await loadVisits();
 
           setLastSync(
@@ -1383,8 +1429,11 @@ const handleEditSavedPhoto = async (
           );
 
           console.log("✅ Sync finalizada e calendário atualizado.");
-        } catch (err) {
+        } catch (err: any) {
           console.warn("⚠️ Erro ao finalizar sync:", err);
+          setSyncError(err?.message || "Falha ao atualizar a agenda após sincronização.");
+        } finally {
+          setSyncing(false);
         }
       }
 
@@ -1897,6 +1946,24 @@ useEffect(() => {
             {events.filter((e) => e.extendedProps?.raw?.offline).length})
           </div>
         )}
+        
+        {syncError && (
+          <div
+            style={{
+              backgroundColor: "#dc3545",
+              color: "#fff",
+              padding: "6px 12px",
+              textAlign: "center",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              borderRadius: "6px",
+              marginBottom: "6px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            }}
+          >
+            ⚠️ {syncError}
+          </div>
+        )}
 
         {/* 🔁 Indicador de sincronização */}
         {syncing && (
@@ -2026,6 +2093,15 @@ useEffect(() => {
                 )}
               </div>
             )}
+            <button
+              type="button"
+              className="btn btn-outline-success btn-sm"
+              onClick={handleManualSync}
+              disabled={syncing || offline}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              🔄 Sincronizar agora
+            </button>
             {/* ✅ AGORA SIM: botão sempre visível */}
             <button
               type="button"
