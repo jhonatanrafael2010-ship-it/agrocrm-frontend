@@ -150,6 +150,14 @@ type Product = {
 };
 
 
+function isTemporaryOfflineId(value: any): boolean {
+  const n = Number(value);
+  if (!n || Number.isNaN(n)) return false;
+
+  // IDs temporários offline costumam vir como timestamp grande
+  return n > 1000000000000;
+}
+
 
 const CalendarPage: React.FC = () => {
   const loadingVisitsRef = useRef(false);
@@ -719,6 +727,14 @@ const handleCreateOrUpdate = async () => {
     if (form.id) {
       console.log("🟦 Atualizando visita existente:", form.id);
 
+      if (isTemporaryOfflineId(form.id)) {
+        alert(
+          "Esta visita ainda está pendente de sincronização e ainda não recebeu um ID real do servidor. " +
+          "Sincronize primeiro antes de editar online."
+        );
+        return;
+      }
+
       console.log("🛡️ Payload final (MANUTENÇÃO):", updatePayload);
 
       result = await updateVisitWithSync(API_BASE, Number(form.id), updatePayload);
@@ -1248,6 +1264,14 @@ const handleEditSavedPhoto = async (
 
       try {
         const visitId = Number(form.id);
+
+        if (isTemporaryOfflineId(visitId)) {
+          alert(
+            "Esta visita ainda está pendente de sincronização e ainda não recebeu um ID real do servidor. " +
+            "Sincronize primeiro antes de concluir/editar online."
+          );
+          return;
+        }
 
         // -----------------------------------------
         // 1️⃣ DEFINIR DATA CONCLUÍDA
@@ -2824,16 +2848,39 @@ useEffect(() => {
 
                 {form.id && (
                   <>
-                    <a
-                      href={`${API_BASE}visits/${form.id}/pdf`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-outline-primary d-flex align-items-center"
-                    >
-                      📄 PDF
-                    </a>
+                    {isTemporaryOfflineId(form.id) && (
+                      <div
+                        style={{
+                          width: "100%",
+                          background: "#ffcc00",
+                          color: "#000",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          fontWeight: 600,
+                          textAlign: "center",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        ⚠️ Esta visita ainda está pendente de sincronização e ainda não recebeu ID real do servidor.
+                      </div>
+                    )}
 
-                      <button className="btn btn-success" onClick={markDone}>
+                    {!isTemporaryOfflineId(form.id) && (
+                      <a
+                        href={`${API_BASE}visits/${form.id}/pdf`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-outline-primary d-flex align-items-center"
+                      >
+                        📄 PDF
+                      </a>
+                    )}
+
+                    <button
+                      className="btn btn-success"
+                      onClick={markDone}
+                      disabled={isTemporaryOfflineId(form.id)}
+                    >
                       ✅ Concluir
                     </button>
 
