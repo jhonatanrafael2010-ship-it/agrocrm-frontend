@@ -1383,6 +1383,7 @@ const handleEditSavedPhoto = async (
     };
 
 
+    
     const handleManualSync = async () => {
       const isReallyOffline = await computeIsOffline();
 
