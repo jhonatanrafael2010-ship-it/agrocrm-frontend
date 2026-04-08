@@ -34,27 +34,16 @@
     />
 
     <!-- =============================== -->
-    <!-- 🔰 PWA -->
+    <!-- 🔰 PWA (mantido só visualmente por enquanto) -->
     <!-- =============================== -->
-
-    <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
-
-    <!-- Tema da barra superior -->
     <meta name="theme-color" content="#1B5E20" />
-
-    <!-- Suporte total iOS (PWA) -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="AgroCRM" />
-
-    <!-- Ícones Apple -->
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
-
-    <!-- Previne delay de clique no iOS -->
     <meta name="format-detection" content="telephone=no" />
-
   </head>
 
   <body>
@@ -69,17 +58,5 @@
 
     <!-- React/Vite -->
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- 🧠 Registro do Service Worker -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/service-worker.js")
-            .then((reg) => console.log("✅ Service Worker registrado:", reg.scope))
-            .catch((err) => console.log("⚠️ Falha ao registrar SW:", err));
-        });
-      }
-    </script>
   </body>
 </html>
