@@ -818,8 +818,19 @@ const handleCreateOrUpdate = async () => {
       }
     }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("❌ Erro ao salvar visita:", err);
+
+      const msg = String(err?.message || "");
+
+      if (msg.includes("HTTP 404")) {
+        alert(
+          "Erro no backend: a rota de criação/edição de visitas não foi encontrada (404). " +
+          "A sincronização não vai funcionar até corrigir o servidor."
+        );
+        return;
+      }
+
       alert("Erro ao salvar visita. Tente novamente.");
     }
     };
@@ -1354,8 +1365,19 @@ const handleEditSavedPhoto = async (
         await loadVisits();
         setOpen(false);
 
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao concluir:", err);
+
+        const msg = String(err?.message || "");
+
+        if (msg.includes("HTTP 404")) {
+          alert(
+            "Erro no backend: a rota de atualização da visita não foi encontrada (404). " +
+            "Corrija o backend antes de sincronizar."
+          );
+          return;
+        }
+
         alert("❌ Erro ao concluir visita.");
       }
     };

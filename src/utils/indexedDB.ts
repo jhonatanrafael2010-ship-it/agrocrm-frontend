@@ -457,3 +457,19 @@ export async function updateVisitInStoreById(
   const updated = updater(current);
   await appendToStore("visits", updated);
 }
+
+export async function replacePendingVisit(
+  pendingId: number,
+  entry: { data: any; createdAt: number }
+): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("pending_visits", "readwrite");
+    tx.objectStore("pending_visits").put({
+      id: pendingId,
+      ...entry,
+    });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
