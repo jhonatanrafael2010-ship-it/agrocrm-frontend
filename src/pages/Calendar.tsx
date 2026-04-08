@@ -341,6 +341,14 @@ const CalendarPage: React.FC = () => {
     (pl) => String(pl.property_id) === String(form.property_id)
   );
 
+  const resolvedClientName =
+    form.clientSearch !== ""
+      ? form.clientSearch
+      : clients.find((c) => String(c.id) === String(form.client_id))?.name || "";
+
+  const resolvedClient =
+    clients.find((c) => String(c.id) === String(form.client_id)) || null;
+
   // 🔵 Controle de abas do modal
   const [tab, setTab] = useState<"dados" | "produtos" | "fotos">("dados");
 
@@ -663,8 +671,13 @@ const handleAutoSetLocation = (lat: number, lon: number) => {
 // 💾 Criar/atualizar visita (VERSÃO REVISADA)
 // ============================================================
 const handleCreateOrUpdate = async () => {
-  if (!form.date || !form.client_id) {
-    alert("Data e cliente são obrigatórios");
+  if (!form.date) {
+    alert("Data é obrigatória.");
+    return;
+  }
+
+  if (!form.client_id || Number.isNaN(Number(form.client_id)) || Number(form.client_id) <= 0) {
+    alert("Selecione um cliente válido na lista antes de salvar.");
     return;
   }
 
@@ -709,6 +722,12 @@ const handleCreateOrUpdate = async () => {
     generate_schedule: isPhenoCulture,
     genPheno: isPhenoCulture,
   };
+
+  if (!createPayload.client_id || Number.isNaN(Number(createPayload.client_id))) {
+    console.error("❌ client_id inválido no payload de criação:", createPayload);
+    alert("Cliente inválido. Selecione novamente o cliente na lista.");
+    return;
+  }
 
   if (form.recommendation && form.recommendation.trim() !== "") {
     createPayload.recommendation = form.recommendation.trim();
@@ -842,9 +861,16 @@ const handleCreateOrUpdate = async () => {
         return;
       }
 
+      if (msg.includes("HTTP 400")) {
+        alert(
+          "O backend recusou os dados da visita. " +
+          "Confira principalmente se o cliente foi realmente selecionado da lista."
+        );
+        return;
+      }
+
       alert("Erro ao salvar visita. Tente novamente.");
     }
-    };
 
 
 
@@ -2570,6 +2596,7 @@ useEffect(() => {
                     {/* Cliente */}
                     <div className="col-12 position-relative">
                       <label className="form-label fw-semibold">Cliente</label>
+
                       <input
                         type="text"
                         className="form-control"
@@ -2578,14 +2605,10 @@ useEffect(() => {
                           color: "var(--text)",
                           borderColor: "var(--border)",
                         }}
-                        value={
-                          form.clientSearch !== ""
-                            ? form.clientSearch
-                            : clients.find((c) => String(c.id) === form.client_id)?.name ||
-                              ""
-                        }
+                        value={resolvedClientName}
                         onChange={(e) => {
                           const value = e.target.value;
+
                           setForm((f) => ({
                             ...f,
                             clientSearch: value,
@@ -2597,7 +2620,7 @@ useEffect(() => {
                         placeholder="Digite o nome do cliente..."
                       />
 
-                      {form.clientSearch.length > 0 && (
+                      {form.clientSearch.trim().length > 0 && (
                         <ul
                           className="list-group position-absolute w-100 mt-1"
                           style={{
@@ -2608,10 +2631,9 @@ useEffect(() => {
                         >
                           {clients
                             .filter((c) =>
-                              c.name
-                                .toLowerCase()
-                                .startsWith(form.clientSearch.toLowerCase())
+                              c.name.toLowerCase().includes(form.clientSearch.toLowerCase())
                             )
+                            .slice(0, 12)
                             .map((c) => (
                               <li
                                 key={c.id}
@@ -2624,7 +2646,7 @@ useEffect(() => {
                                   setForm((f) => ({
                                     ...f,
                                     client_id: String(c.id),
-                                    clientSearch: "",
+                                    clientSearch: c.name,
                                     property_id: "",
                                     plot_id: "",
                                   }))
@@ -2634,7 +2656,28 @@ useEffect(() => {
                                 {c.name}
                               </li>
                             ))}
+
+                          {clients.filter((c) =>
+                            c.name.toLowerCase().includes(form.clientSearch.toLowerCase())
+                          ).length === 0 && (
+                            <li className="list-group-item bg-dark text-light">
+                              Nenhum cliente encontrado
+                            </li>
+                          )}
                         </ul>
+                      )}
+
+                      {form.clientSearch.trim() !== "" && !resolvedClient && (
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            fontSize: "0.85rem",
+                            color: "#ffcc00",
+                            fontWeight: 600,
+                          }}
+                        >
+                          ⚠️ Selecione um cliente da lista para gravar o ID corretamente.
+                        </div>
                       )}
                     </div>
 
