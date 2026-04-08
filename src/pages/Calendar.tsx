@@ -871,6 +871,7 @@ const handleCreateOrUpdate = async () => {
 
       alert("Erro ao salvar visita. Tente novamente.");
     }
+};
 
 
 
