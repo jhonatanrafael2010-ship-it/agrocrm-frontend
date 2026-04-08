@@ -307,6 +307,15 @@ const CalendarPage: React.FC = () => {
 
 
 
+  const filteredProperties = properties.filter(
+    (p) => String(p.client_id) === String(form.client_id)
+  );
+
+  const filteredPlots = plots.filter(
+    (pl) => String(pl.property_id) === String(form.property_id)
+  );
+
+
   // modal
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -1383,7 +1392,7 @@ const handleEditSavedPhoto = async (
     };
 
 
-    
+
     const handleManualSync = async () => {
       const isReallyOffline = await computeIsOffline();
 
@@ -2579,6 +2588,8 @@ useEffect(() => {
                             ...f,
                             clientSearch: value,
                             client_id: "",
+                            property_id: "",
+                            plot_id: "",
                           }));
                         }}
                         placeholder="Digite o nome do cliente..."
@@ -2612,6 +2623,8 @@ useEffect(() => {
                                     ...f,
                                     client_id: String(c.id),
                                     clientSearch: "",
+                                    property_id: "",
+                                    plot_id: "",
                                   }))
                                 }
                                 style={{ cursor: "pointer" }}
@@ -2632,7 +2645,7 @@ useEffect(() => {
                         placeholder="Selecione propriedade"
                         options={[
                           { value: "", label: "Selecione propriedade" },
-                          ...properties.map((p) => ({
+                          ...filteredProperties.map((p) => ({
                             value: String(p.id),
                             label: p.name,
                           })),
@@ -2656,7 +2669,7 @@ useEffect(() => {
                         placeholder="Selecione talhão"
                         options={[
                           { value: "", label: "Selecione talhão" },
-                          ...plots.map((pl) => ({
+                          ...filteredPlots.map((pl) => ({
                             value: String(pl.id),
                             label: pl.name,
                           })),
