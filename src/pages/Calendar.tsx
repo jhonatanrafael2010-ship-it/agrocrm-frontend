@@ -307,14 +307,7 @@ const CalendarPage: React.FC = () => {
 
 
 
-  const filteredProperties = properties.filter(
-    (p) => String(p.client_id) === String(form.client_id)
-  );
-
-  const filteredPlots = plots.filter(
-    (pl) => String(pl.property_id) === String(form.property_id)
-  );
-
+  
 
   // modal
   const [open, setOpen] = useState(false);
@@ -339,6 +332,15 @@ const CalendarPage: React.FC = () => {
     fenologia_real: "",
     products: [] as Product[],
   });
+
+  const filteredProperties = properties.filter(
+    (p) => String(p.client_id) === String(form.client_id)
+  );
+
+  const filteredPlots = plots.filter(
+    (pl) => String(pl.property_id) === String(form.property_id)
+  );
+
   // 🔵 Controle de abas do modal
   const [tab, setTab] = useState<"dados" | "produtos" | "fotos">("dados");
 
