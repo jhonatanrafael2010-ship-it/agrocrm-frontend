@@ -588,9 +588,7 @@ const CalendarPage: React.FC = () => {
   useEffect(() => {
     if (!events.length) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const editVisitId = params.get("edit_visit_id");
-
+    const editVisitId = sessionStorage.getItem("edit_visit_id");
     if (!editVisitId) return;
 
     const target = events.find((e) => {
@@ -602,11 +600,7 @@ const CalendarPage: React.FC = () => {
 
     openVisitEditor(target.extendedProps.raw as Visit);
 
-    params.delete("edit_visit_id");
-    const newUrl =
-      window.location.pathname +
-      (params.toString() ? `?${params.toString()}` : "");
-    window.history.replaceState({}, "", newUrl);
+    sessionStorage.removeItem("edit_visit_id");
   }, [events]);
 
   // Reagir a "visits-synced" (quando voltar internet)

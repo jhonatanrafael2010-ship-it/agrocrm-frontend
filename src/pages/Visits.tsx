@@ -161,7 +161,11 @@ const Visits: React.FC = () => {
 
   function goToEditVisit(v: Visit) {
     if (!v?.id) return;
-    window.location.href = `/calendar?edit_visit_id=${v.id}`;
+
+    sessionStorage.setItem("edit_visit_id", String(v.id));
+    sessionStorage.setItem("open_section", "calendar");
+
+    window.location.href = "/";
   }
   
 
