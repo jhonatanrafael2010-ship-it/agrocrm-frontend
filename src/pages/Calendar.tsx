@@ -27,9 +27,6 @@ import {
 import { deleteLocalVisitCascade } from "../utils/indexedDB";
 import { compressImage } from "../utils/imageCompress";
 
-import VisitFormModal, {
-  VisitFormModalData,
-} from "../components/VisitFormModal";
 
 
 
@@ -356,33 +353,7 @@ const CalendarPage: React.FC = () => {
   // 🔵 Controle de abas do modal
   const [tab, setTab] = useState<"dados" | "produtos" | "fotos">("dados");
 
-  const handleSharedCreateVisit = async (data: VisitFormModalData) => {
-    const [d, m, y] = data.date.split("/");
-    const iso = `${y}-${m}-${d}`;
 
-    const payload: any = {
-      client_id: Number(data.client_id),
-      property_id: data.property_id ? Number(data.property_id) : null,
-      plot_id: data.plot_id ? Number(data.plot_id) : null,
-      consultant_id: data.consultant_id ? Number(data.consultant_id) : null,
-      date: iso,
-      status: "planned",
-      culture: data.culture || "",
-      variety: data.variety || "",
-      recommendation: data.recommendation || "",
-      fenologia_real: data.fenologia_real || null,
-      products: data.products || [],
-      latitude: data.latitude,
-      longitude: data.longitude,
-      generate_schedule: false,
-      genPheno: false,
-    };
-
-    await createVisitWithSync(API_BASE, payload);
-    await loadVisits();
-    setOpen(false);
-    alert("✅ Nova visita criada com sucesso.");
-  };
 
   // ============================================================
   // 🎨 Cor dos eventos
@@ -2354,9 +2325,7 @@ useEffect(() => {
               window.innerWidth <= 768 ||
               document.body.dataset.platform === "mobile";
             if (isMobile) return;
-
-
-            const dateStr = info.dateStr;
+           
             const [y, m, d] = info.dateStr.split("-");
             setForm({
               id: null,
