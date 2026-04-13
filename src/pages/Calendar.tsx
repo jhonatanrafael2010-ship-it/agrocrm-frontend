@@ -27,6 +27,10 @@ import {
 import { deleteLocalVisitCascade } from "../utils/indexedDB";
 import { compressImage } from "../utils/imageCompress";
 
+import VisitFormModal, {
+  VisitFormModalData,
+} from "../components/VisitFormModal";
+
 
 
 /*  
@@ -352,7 +356,33 @@ const CalendarPage: React.FC = () => {
   // 🔵 Controle de abas do modal
   const [tab, setTab] = useState<"dados" | "produtos" | "fotos">("dados");
 
+  const handleSharedCreateVisit = async (data: VisitFormModalData) => {
+    const [d, m, y] = data.date.split("/");
+    const iso = `${y}-${m}-${d}`;
 
+    const payload: any = {
+      client_id: Number(data.client_id),
+      property_id: data.property_id ? Number(data.property_id) : null,
+      plot_id: data.plot_id ? Number(data.plot_id) : null,
+      consultant_id: data.consultant_id ? Number(data.consultant_id) : null,
+      date: iso,
+      status: "planned",
+      culture: data.culture || "",
+      variety: data.variety || "",
+      recommendation: data.recommendation || "",
+      fenologia_real: data.fenologia_real || null,
+      products: data.products || [],
+      latitude: data.latitude,
+      longitude: data.longitude,
+      generate_schedule: false,
+      genPheno: false,
+    };
+
+    await createVisitWithSync(API_BASE, payload);
+    await loadVisits();
+    setOpen(false);
+    alert("✅ Nova visita criada com sucesso.");
+  };
 
   // ============================================================
   // 🎨 Cor dos eventos
@@ -584,7 +614,29 @@ const CalendarPage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!events.length) return;
 
+    const params = new URLSearchParams(window.location.search);
+    const editVisitId = params.get("edit_visit_id");
+
+    if (!editVisitId) return;
+
+    const target = events.find((e) => {
+      const raw = e.extendedProps?.raw;
+      return String(raw?.id || "") === String(editVisitId);
+    });
+
+    if (!target?.extendedProps?.raw) return;
+
+    openVisitEditor(target.extendedProps.raw as Visit);
+
+    params.delete("edit_visit_id");
+    const newUrl =
+      window.location.pathname +
+      (params.toString() ? `?${params.toString()}` : "");
+    window.history.replaceState({}, "", newUrl);
+  }, [events]);
 
   // Reagir a "visits-synced" (quando voltar internet)
   useEffect(() => {
@@ -1961,6 +2013,44 @@ useEffect(() => {
   };
 
 
+  const openVisitEditor = (v: Visit) => {
+    let d = "";
+    if (v.date) {
+      const [yyyy, mm, dd] = v.date.split("-");
+      d = `${dd}/${mm}/${yyyy}`;
+    }
+
+    setForm({
+      id: v.id,
+      date: d || "",
+      originalDate: d || "",
+      dateBackup: d || "",
+      client_id: String(v.client_id || ""),
+      property_id: String(v.property_id || ""),
+      plot_id: String(v.plot_id || ""),
+      consultant_id: String(v.consultant_id || ""),
+      culture: v.culture || "",
+      variety: v.variety || "",
+      fenologia_real: v.fenologia_real || "",
+      genPheno: false,
+      savedPhotos: [
+        ...(v.photos || []),
+        ...((v as any).offlinePhotos || []),
+      ],
+      clientSearch: "",
+      latitude: v.latitude || null,
+      longitude: v.longitude || null,
+      status: v.status || "planned",
+      recommendation: v.recommendation || "",
+      products: v?.products || [],
+    });
+
+    setSelectedFiles([]);
+    setSelectedCaptions([]);
+    setTab("dados");
+    setOpen(true);
+  };
+
 
   // ============================================================
   // Render
@@ -2267,7 +2357,7 @@ useEffect(() => {
 
 
             const dateStr = info.dateStr;
-            const [y, m, d] = dateStr.split("-");
+            const [y, m, d] = info.dateStr.split("-");
             setForm({
               id: null,
               date: `${d}/${m}/${y}`,
@@ -2298,41 +2388,7 @@ useEffect(() => {
             info.jsEvent?.stopPropagation();
             const v = info.event.extendedProps?.raw as Visit | undefined;
             if (!v) return;
-            // ⛔ Nunca usar new Date(v.date) — causa bug de timezone
-            let d = null;
-            if (v.date) {
-              const [yyyy, mm, dd] = v.date.split("-");
-              d = `${dd}/${mm}/${yyyy}`;
-            }
-
-
-            setForm({
-              id: v.id,
-              date: d || "",
-              originalDate: d || "",
-              dateBackup: d || "",
-              client_id: String(v.client_id || ""),
-              property_id: String(v.property_id || ""),
-              plot_id: String(v.plot_id || ""),
-              consultant_id: String(v.consultant_id || ""),
-              culture: v.culture || "",
-              variety: v.variety || "",
-              fenologia_real: v.fenologia_real || "",
-              genPheno: false,
-              savedPhotos: [
-                ...(v.photos || []),
-                ...((v as any).offlinePhotos || []),
-              ],
-              clientSearch: "",
-              latitude: v.latitude || null,
-              longitude: v.longitude || null,
-              status: "planned",
-              recommendation: v.recommendation || "",   // só o texto técnico
-              products: v?.products || [],
-            });
-            setSelectedFiles([]);
-            setSelectedCaptions([]);
-            setOpen(true);
+            openVisitEditor(v);
           }}
           eventContent={(arg) => {
             const v = (arg.event.extendedProps?.raw as any) || {};

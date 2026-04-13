@@ -3,6 +3,7 @@ import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import PhotoCarousel from "../components/PhotoCarousel";
 
+
 // Tipos
 type Visit = {
   id: number;
@@ -73,6 +74,8 @@ const Visits: React.FC = () => {
     open: false,
     photos: [],
   });
+
+
 
   // ============================================================
   // 🔁 Carregar dados
@@ -153,6 +156,14 @@ const Visits: React.FC = () => {
 
     return found?.name || "—";
   }
+
+
+
+  function goToEditVisit(v: Visit) {
+    if (!v?.id) return;
+    window.location.href = `/calendar?edit_visit_id=${v.id}`;
+  }
+  
 
   async function handleDelete(id?: number) {
     if (!id) return;
@@ -748,14 +759,22 @@ const Visits: React.FC = () => {
                                   )}
 
                                   {!done && (
-                                    <button
-                                      className="btn btn-outline-success btn-sm"
-                                      onClick={() => handleMarkDone(v)}
-                                    >
-                                      ✅ Concluir
-                                    </button>
-                                  )}
+                                    <>
+                                      <button
+                                        className="btn btn-outline-primary btn-sm"
+                                        onClick={() => goToEditVisit(v)}
+                                      >
+                                        ✏️ Editar
+                                      </button>
 
+                                      <button
+                                        className="btn btn-outline-success btn-sm"
+                                        onClick={() => handleMarkDone(v)}
+                                      >
+                                        ✅ Concluir
+                                      </button>
+                                    </>
+                                  )}
                                   <button
                                     className="btn btn-outline-primary btn-sm"
                                     onClick={() =>
@@ -788,6 +807,7 @@ const Visits: React.FC = () => {
           </>
         )}
       </div>
+
 
       {/* MODAL DE RESUMO */}
       {summary?.open && (
