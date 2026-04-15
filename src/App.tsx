@@ -18,7 +18,31 @@ import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
 
 function App() {
-  const [route, setRoute] = useState<string>("Dashboard");
+  const [route, setRoute] = useState<string>(() => {
+    const openSection = sessionStorage.getItem("open_section");
+
+    if (openSection === "calendar") {
+      return "Calendário";
+    }
+
+    if (openSection === "visits") {
+      return "Acompanhamentos";
+    }
+
+    if (openSection === "clients") {
+      return "Clientes";
+    }
+
+    if (openSection === "properties") {
+      return "Propriedades";
+    }
+
+    if (openSection === "opportunities") {
+      return "Oportunidades";
+    }
+
+    return "Dashboard";
+  });
   const [isMobileApp, setIsMobileApp] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
@@ -108,6 +132,13 @@ function App() {
       bsOffcanvas?.hide();
     }
   }, [route]);
+
+  useEffect(() => {
+    const openSection = sessionStorage.getItem("open_section");
+    if (!openSection) return;
+
+    sessionStorage.removeItem("open_section");
+  }, []);
 
   // ============================================================
   // RENDER
