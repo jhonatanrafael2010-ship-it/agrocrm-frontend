@@ -751,6 +751,12 @@ const handleCreateOrUpdate = async () => {
   }
 
   const updatePayload: any = {
+    client_id: form.client_id ? Number(form.client_id) : null,
+    property_id: form.property_id ? Number(form.property_id) : null,
+    plot_id: form.plot_id ? Number(form.plot_id) : null,
+    consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+    culture: cultureName || "",
+    variety: form.variety || "",
     date: iso,
     fenologia_real: form.fenologia_real || null,
     products: form.products || [],
@@ -1368,8 +1374,9 @@ const handleEditSavedPhoto = async (
           await updateVisitWithSync(API_BASE, visitId, { 
             status: "done",
             date: finalDateISO,
-            fenologia_real: form.fenologia_real || null,   // 👈 ADICIONADO
-            recommendation: form.recommendation || "",     // 👈 garantir consistência
+            consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
+            fenologia_real: form.fenologia_real || null,
+            recommendation: form.recommendation || "",
             latitude: form.latitude,
             longitude: form.longitude,
             products: form.products || [],
@@ -1400,10 +1407,11 @@ const handleEditSavedPhoto = async (
         // -----------------------------------------
         const result = await updateVisitWithSync(API_BASE, visitId, {
           status: "done",
-          date: finalDateISO,            // ← agora o backend vai aceitar
+          date: finalDateISO,
+          consultant_id: form.consultant_id ? Number(form.consultant_id) : null,
           recommendation: form.recommendation ?? "",
           fenologia_real: form.fenologia_real ?? null,
-          preserve_date: false,          // ← NÃO PRESERVAR a antiga ao concluir
+          preserve_date: false,
           latitude: form.latitude,
           longitude: form.longitude,
           products: form.products || [],
