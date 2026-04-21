@@ -5,6 +5,7 @@ import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import EXIF from "exif-js";
 import { API_BASE } from "../config";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
 // =========================================
@@ -229,7 +230,7 @@ const VisitPhotos: React.FC<Props> = ({
   // ======================================================
   async function handleCameraCapture() {
     if (!visitId || visitId < 1) {
-      alert("⚠️ Primeiro SALVE a visita antes de adicionar fotos.");
+      notify.warning("Salve a visita antes de adicionar fotos");
       return;
     }
 
@@ -263,7 +264,7 @@ const VisitPhotos: React.FC<Props> = ({
         longitude,
       });
 
-      alert("📸 Foto salva offline!");
+      notify.success("Foto salva offline");
 
       // Atualizar lista local imediatamente
       const off = await loadOffline();
@@ -278,7 +279,7 @@ const VisitPhotos: React.FC<Props> = ({
       setSavedPhotos(merged);
     } catch (err: any) {
       console.error("Erro Camera/Salvar:", err);
-      alert(`❌ Falha ao capturar/salvar foto.\n\n${err?.name || ""} ${err?.message || ""}`);
+      notify.error(`Falha ao capturar/salvar foto: ${err?.message || err?.name || "erro desconhecido"}`);
     }
   }
 
@@ -288,7 +289,7 @@ const VisitPhotos: React.FC<Props> = ({
   // ======================================================
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!visitId || visitId < 1) {
-      alert("⚠️ Salve a visita antes de adicionar fotos.");
+      notify.warning("Salve a visita antes de adicionar fotos");
       return;
     }
 
@@ -390,21 +391,16 @@ const VisitPhotos: React.FC<Props> = ({
 
   const handleDeletePhoto = () => {
     if (!editingPhoto) return;
-    if (!window.confirm("🗑 Deseja realmente excluir esta foto?")) return;
-
-    // Atualiza local
-    setSavedPhotos((prev) => prev.filter((p) => p.id !== editingPhoto.id));
-
-    // Dispara para o pai
-    effectiveOnDelete?.(editingPhoto);
-
-    // Fecha painel
-    setEditingPhoto(null);
+    toastConfirm("Deseja realmente excluir esta foto?", () => {
+      setSavedPhotos((prev) => prev.filter((p) => p.id !== editingPhoto.id));
+      effectiveOnDelete?.(editingPhoto);
+      setEditingPhoto(null);
+    });
   };
 
   const handleReplacePhoto = () => {
     if (!editingPhoto || !editFile) {
-      alert("Selecione uma nova imagem para substituir.");
+      notify.warning("Selecione uma nova imagem para substituir");
       return;
     }
 
@@ -519,16 +515,11 @@ const VisitPhotos: React.FC<Props> = ({
               className="btn btn-sm btn-danger"
               title="Excluir"
               onClick={() => {
-                if (!window.confirm("🗑 Deseja realmente excluir esta foto?")) return;
-
-                // some do modal na hora
-                setSavedPhotos((prev) => prev.filter((x) => x.id !== p.id));
-
-                // chama o handler do Calendar (backend/offline)
-                effectiveOnDelete?.(p);
-
-                // se por acaso estava editando essa mesma foto, fecha painel
-                if (editingPhoto?.id === p.id) setEditingPhoto(null);
+                toastConfirm("Deseja realmente excluir esta foto?", () => {
+                  setSavedPhotos((prev) => prev.filter((x) => x.id !== p.id));
+                  effectiveOnDelete?.(p);
+                  if (editingPhoto?.id === p.id) setEditingPhoto(null);
+                });
               }}
               disabled={!effectiveOnDelete}
             >
