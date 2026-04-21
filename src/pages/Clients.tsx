@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import pencilIcon from "../assets/pencil.svg";
 import trashIcon from "../assets/trash.svg";
 import { API_BASE } from "../config";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
 
@@ -51,7 +52,7 @@ const Clients: React.FC = () => {
   }
 
   async function handleSave() {
-    if (!form.name.trim()) return alert("Nome é obrigatório");
+    if (!form.name.trim()) { notify.warning("Nome é obrigatório"); return; }
     setSubmitting(true);
     try {
       const method = editing ? "PUT" : "POST";
@@ -76,22 +77,23 @@ const Clients: React.FC = () => {
       setEditing(null);
       setForm({ name: "", document: "", segment: "", vendor: "" });
     } catch (err: any) {
-      alert(err?.message || "Erro ao salvar cliente");
+      notify.error(err?.message || "Erro ao salvar cliente");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDelete(id?: number) {
+  function handleDelete(id?: number) {
     if (!id) return;
-    if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
-    try {
-      const res = await fetch(`${API_BASE}clients/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      setClients((list) => list.filter((c) => c.id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Erro ao excluir cliente");
-    }
+    toastConfirm("Tem certeza que deseja excluir este cliente?", async () => {
+      try {
+        const res = await fetch(`${API_BASE}clients/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        setClients((list) => list.filter((c) => c.id !== id));
+      } catch (err: any) {
+        notify.error(err?.message || "Erro ao excluir cliente");
+      }
+    });
   }
 
   return (
