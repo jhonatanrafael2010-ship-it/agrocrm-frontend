@@ -7,6 +7,7 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
+import { Toaster } from "sonner";
 
 import {
   syncPendingVisits,
@@ -235,6 +236,19 @@ function App() {
             <Dashboard />
           )}
         </main>
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          duration={3500}
+          toastOptions={{
+            style: {
+              background: "var(--panel)",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+            },
+          }}
+        />
       </div>
     </div>
   );
