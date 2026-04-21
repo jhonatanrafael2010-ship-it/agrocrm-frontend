@@ -3,6 +3,7 @@ import DarkSelect from "../components/DarkSelect";
 import trashIcon from "../assets/trash.svg";
 import pencilIcon from "../assets/pencil.svg";
 import { API_BASE } from "../config";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
 type Client = { id: number; name: string };
@@ -121,7 +122,7 @@ const Properties: React.FC = () => {
 
   async function fillCurrentLocation() {
     if (!navigator.geolocation) {
-      alert("Geolocalização não suportada neste dispositivo.");
+      notify.warning("Geolocalização não suportada neste dispositivo");
       return;
     }
 
@@ -138,7 +139,7 @@ const Properties: React.FC = () => {
       },
       (err) => {
         console.error(err);
-        alert("Não consegui obter a localização atual.");
+        notify.error("Não consegui obter a localização atual");
       },
       {
         enableHighAccuracy: true,
@@ -166,7 +167,7 @@ const Properties: React.FC = () => {
   // salvar propriedade
   async function saveProperty() {
   if (!propForm.client_id || !propForm.name) {
-    alert("Cliente e nome são obrigatórios");
+    notify.warning("Cliente e nome são obrigatórios");
     return;
   }
   setSubmitting(true);
@@ -217,7 +218,7 @@ const Properties: React.FC = () => {
       longitude: "",
     });
   } catch (err: any) {
-    alert(err?.message || "Erro ao salvar propriedade");
+    notify.error(err?.message || "Erro ao salvar propriedade");
   } finally {
     setSubmitting(false);
   }
@@ -226,7 +227,7 @@ const Properties: React.FC = () => {
   // criar talhão
   async function createPlot() {
     if (!plotForm.property_id || !plotForm.name) {
-      alert("Propriedade e nome são obrigatórios");
+      notify.warning("Propriedade e nome são obrigatórios");
       return;
     }
     setSubmitting(true);
@@ -248,7 +249,7 @@ const Properties: React.FC = () => {
       setOpenPlot(false);
       setPlotForm({ property_id: "", name: "", area_ha: "", irrigated: false });
     } catch (err: any) {
-      alert(err?.message || "Erro ao criar talhão");
+      notify.error(err?.message || "Erro ao criar talhão");
     } finally {
       setSubmitting(false);
     }
@@ -257,7 +258,7 @@ const Properties: React.FC = () => {
   // criar plantio
   async function createPlanting() {
     if (!plantForm.plot_id) {
-      alert("Talhão é obrigatório");
+      notify.warning("Talhão é obrigatório");
       return;
     }
     setSubmitting(true);
@@ -279,27 +280,28 @@ const Properties: React.FC = () => {
       setOpenPlanting(false);
       setPlantForm({ plot_id: "", culture: "", variety: "", planting_date: "" });
     } catch (err: any) {
-      alert(err?.message || "Erro ao criar plantio");
+      notify.error(err?.message || "Erro ao criar plantio");
     } finally {
       setSubmitting(false);
     }
   }
 
   // deletar (propriedade / talhão / plantio)
-  async function deleteEntity(
+  function deleteEntity(
     id: number | undefined,
     endpoint: "properties" | "plots" | "plantings",
     setter: React.Dispatch<React.SetStateAction<any[]>>
   ) {
     if (!id) return;
-    if (!confirm("Deseja excluir este registro?")) return;
-    try {
-      const res = await fetch(`${API_BASE}${endpoint}/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`status ${res.status}`);
-      setter((list) => list.filter((item: any) => item.id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Erro ao excluir");
-    }
+    toastConfirm("Deseja excluir este registro?", async () => {
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        setter((list) => list.filter((item: any) => item.id !== id));
+      } catch (err: any) {
+        notify.error(err?.message || "Erro ao excluir");
+      }
+    });
   }
 
   return (
