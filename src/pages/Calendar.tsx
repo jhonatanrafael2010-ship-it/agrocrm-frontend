@@ -26,6 +26,7 @@ import {
 } from "../utils/indexedDB";
 import { deleteLocalVisitCascade } from "../utils/indexedDB";
 import { compressImage } from "../utils/imageCompress";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
 
@@ -689,12 +690,12 @@ const handleAutoSetLocation = (lat: number, lon: number) => {
 // ============================================================
 const handleCreateOrUpdate = async () => {
   if (!form.date) {
-    alert("Data é obrigatória.");
+    notify.warning("Data é obrigatória");
     return;
   }
 
   if (!form.client_id || Number.isNaN(Number(form.client_id)) || Number(form.client_id) <= 0) {
-    alert("Selecione um cliente válido na lista antes de salvar.");
+    notify.warning("Selecione um cliente válido na lista antes de salvar");
     return;
   }
 
@@ -742,7 +743,7 @@ const handleCreateOrUpdate = async () => {
 
   if (!createPayload.client_id || Number.isNaN(Number(createPayload.client_id))) {
     console.error("❌ client_id inválido no payload de criação:", createPayload);
-    alert("Cliente inválido. Selecione novamente o cliente na lista.");
+    notify.warning("Cliente inválido. Selecione novamente o cliente na lista");
     return;
   }
 
@@ -784,10 +785,7 @@ const handleCreateOrUpdate = async () => {
       console.log("🟦 Atualizando visita existente:", form.id);
 
       if (isTemporaryOfflineId(form.id)) {
-        alert(
-          "Esta visita ainda está pendente de sincronização e ainda não recebeu um ID real do servidor. " +
-          "Sincronize primeiro antes de editar online."
-        );
+        notify.warning("Visita pendente de sincronização — sincronize antes de editar");
         return;
       }
 
@@ -834,7 +832,7 @@ const handleCreateOrUpdate = async () => {
 
     if (!visitId || isNaN(visitId)) {
       console.error("❌ ERRO: ID inválido retornado:", result);
-      alert("Erro ao obter ID da visita. Tente novamente.");
+      notify.error("Erro ao obter ID da visita");
       return;
     }
 
@@ -850,7 +848,7 @@ const handleCreateOrUpdate = async () => {
     setSelectedCaptions([]);
 
     // Mantém o modal aberto com ID válido
-    alert("Visita salva com sucesso! Agora você pode adicionar fotos.");
+    notify.success("Visita salva — adicione as fotos agora");
 
     // Atualiza calendário
     await loadVisits();
@@ -877,22 +875,16 @@ const handleCreateOrUpdate = async () => {
       const msg = String(err?.message || "");
 
       if (msg.includes("HTTP 404")) {
-        alert(
-          "Erro no backend: a rota de criação/edição de visitas não foi encontrada (404). " +
-          "A sincronização não vai funcionar até corrigir o servidor."
-        );
+        notify.error("Rota de visitas não encontrada no servidor (404)");
         return;
       }
 
       if (msg.includes("HTTP 400")) {
-        alert(
-          "O backend recusou os dados da visita. " +
-          "Confira principalmente se o cliente foi realmente selecionado da lista."
-        );
+        notify.error("Servidor recusou os dados da visita (400)");
         return;
       }
 
-      alert("Erro ao salvar visita. Tente novamente.");
+      notify.error("Erro ao salvar visita");
     }
 };
 
@@ -902,7 +894,7 @@ const handleCreateOrUpdate = async () => {
 const handleSavePhotos = async () => {
   console.log("🚀 handleSavePhotos selectedFiles:", selectedFiles?.length);
   if (!form.id) {
-    alert("ID da visita não encontrado.");
+    notify.error("ID da visita não encontrado");
     return;
   }
 
@@ -952,9 +944,7 @@ const handleSavePhotos = async () => {
         savedPhotos: merged,
       };
     });
-    alert(
-      "🟠 Fotos salvas OFFLINE! Serão sincronizadas automaticamente quando a internet voltar."
-    );
+    notify.warning("Fotos salvas offline — serão sincronizadas quando a internet voltar");
 
     // reseta estado local
     setSelectedFiles([]);
@@ -1001,16 +991,16 @@ const handleSavePhotos = async () => {
     console.error("Upload falhou:", resp.status, text);
 
     if (resp.status === 500 && text.includes("No space")) {
-      alert("Servidor sem espaço para salvar fotos. Avise o suporte/adm do sistema.");
+      notify.error("Servidor sem espaço para salvar as fotos");
     } else {
-      alert("⚠️ Falha ao enviar fotos.");
+      notify.error("Falha ao enviar fotos");
     }
     return;
   }
 
 
   console.log("📸 Fotos enviadas com sucesso!");
-  alert("📸 Fotos enviadas!");
+  notify.success("Fotos enviadas");
 
 // 🔄 Atualiza as fotos no modal imediatamente (sem depender do calendário)
 try {
@@ -1044,7 +1034,7 @@ const handleDeleteSavedPhoto = async (photo: any) => {
   const visitId = Number(form.id);
 
   if (!visitId) {
-    alert("⚠️ Salve a visita primeiro para gerar o ID antes de enviar fotos.");
+    notify.warning("Salve a visita primeiro antes de enviar fotos");
     console.warn("Salvar fotos abortado: visitId inválido", form.id);
     return;
   }
@@ -1073,7 +1063,7 @@ const handleDeleteSavedPhoto = async (photo: any) => {
     });
 
     if (!resp.ok) {
-      alert("Falha ao excluir foto no servidor.");
+      notify.error("Falha ao excluir foto no servidor");
       return;
     }
 
@@ -1084,7 +1074,7 @@ const handleDeleteSavedPhoto = async (photo: any) => {
 
   } catch (err) {
     console.error(err);
-    alert("Erro ao excluir foto.");
+    notify.error("Erro ao excluir foto");
   }
 };
 
@@ -1099,7 +1089,7 @@ const handleReplaceSavedPhoto = async (
   const visitId = Number(form.id);
 
   if (!visitId) {
-    alert("⚠️ Salve a visita primeiro para gerar o ID antes de enviar fotos.");
+    notify.warning("Salve a visita primeiro antes de enviar fotos");
     console.warn("Salvar fotos abortado: visitId inválido", form.id);
     return;
   }
@@ -1151,7 +1141,7 @@ const handleReplaceSavedPhoto = async (
   });
 
   if (!resp.ok) {
-    alert("Falha ao enviar nova foto.");
+    notify.error("Falha ao enviar nova foto");
     return;
   }
 
@@ -1165,7 +1155,7 @@ const handleReplaceSavedPhoto = async (
     }));
   }
 
-  alert("Foto substituída com sucesso!");
+  notify.success("Foto substituída");
 };
 
 
@@ -1232,11 +1222,11 @@ const handleEditSavedPhoto = async (
       }
 
     } else {
-      alert("Erro ao atualizar legenda no servidor.");
+      notify.error("Erro ao atualizar legenda no servidor");
     }
   } catch (e) {
     console.error(e);
-    alert("Falha ao atualizar legenda.");
+    notify.error("Falha ao atualizar legenda");
   }
   };
 
@@ -1257,36 +1247,33 @@ const handleEditSavedPhoto = async (
   // ============================================================
   // 🗑️ Excluir (AGORA CORRIGIDO)
   // ============================================================
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!form.id) return;
-    if (!confirm("🗑 Deseja realmente excluir esta visita?")) return;
+    toastConfirm("Deseja realmente excluir esta visita?", async () => {
+      try {
+        const id = Number(form.id);
 
-    try {
-      const id = Number(form.id);
-
-      // 1️⃣ Se estiver online, apaga do servidor
-      if (navigator.onLine) {
-        try {
-          await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
-        } catch {
-          console.warn("⚠️ Falha ao excluir no servidor (offline)");
+        // 1️⃣ Se estiver online, apaga do servidor
+        if (navigator.onLine) {
+          try {
+            await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
+          } catch {
+            console.warn("⚠️ Falha ao excluir no servidor (offline)");
+          }
         }
+
+        // 2️⃣ SEMPRE remove localmente — online ou offline
+        await deleteLocalVisitCascade(id);
+
+        // 3️⃣ Atualiza agenda
+        await loadVisits();
+        setOpen(false);
+
+      } catch (e) {
+        console.error("Erro ao excluir:", e);
+        notify.error("Erro ao excluir a visita");
       }
-
-      // 2️⃣ SEMPRE remove localmente — online ou offline
-      await deleteLocalVisitCascade(id);
-
-
-
-
-      // 3️⃣ Atualiza agenda
-      await loadVisits();
-      setOpen(false);
-
-    } catch (e) {
-      console.error("Erro ao excluir:", e);
-      alert("Erro ao excluir a visita.");
-    }
+    });
   };
 
   // ============================================================
@@ -1304,9 +1291,9 @@ const handleEditSavedPhoto = async (
         if (cached) {
           const { latitude, longitude } = JSON.parse(cached);
           setForm((f) => ({ ...f, latitude, longitude }));
-          alert(`📍 Localização recuperada: ${latitude}, ${longitude}`);
+          notify.success(`Localização recuperada: ${latitude}, ${longitude}`);
         } else {
-          alert("⚠️ Sem conexão — localização anterior não encontrada.");
+          notify.warning("Sem conexão — localização anterior não encontrada");
         }
         return;
       }
@@ -1322,12 +1309,10 @@ const handleEditSavedPhoto = async (
         JSON.stringify({ latitude, longitude })
       );
 
-      alert(
-        `📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-      );
+      notify.success(`Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
       console.error("Erro ao obter localização:", err);
-      alert("⚠️ Falha ao capturar localização.");
+      notify.error("Falha ao capturar localização");
     }
   };
 
@@ -1341,10 +1326,7 @@ const handleEditSavedPhoto = async (
         const visitId = Number(form.id);
 
         if (isTemporaryOfflineId(visitId)) {
-          alert(
-            "Esta visita ainda está pendente de sincronização e ainda não recebeu um ID real do servidor. " +
-            "Sincronize primeiro antes de concluir/editar online."
-          );
+          notify.warning("Visita pendente de sincronização — sincronize antes de concluir");
           return;
         }
 
@@ -1382,7 +1364,7 @@ const handleEditSavedPhoto = async (
             products: form.products || [],
           });
 
-          alert("🟠 Visita concluída offline! Será sincronizada quando voltar a internet.");
+          notify.warning("Visita concluída offline — será sincronizada quando a internet voltar");
           setOpen(false);
           return;
         }
@@ -1420,9 +1402,9 @@ const handleEditSavedPhoto = async (
 
 
         if (result.synced) {
-          alert("✅ Visita concluída!");
+          notify.success("Visita concluída");
         } else {
-          alert("🟠 Visita concluída offline (pendente de sync).");
+          notify.warning("Visita concluída offline — pendente de sincronização");
         }
 
         await loadVisits();
@@ -1434,14 +1416,11 @@ const handleEditSavedPhoto = async (
         const msg = String(err?.message || "");
 
         if (msg.includes("HTTP 404")) {
-          alert(
-            "Erro no backend: a rota de atualização da visita não foi encontrada (404). " +
-            "Corrija o backend antes de sincronizar."
-          );
+          notify.error("Rota de atualização de visita não encontrada no servidor (404)");
           return;
         }
 
-        alert("❌ Erro ao concluir visita.");
+        notify.error("Erro ao concluir visita");
       }
     };
 
@@ -1451,7 +1430,7 @@ const handleEditSavedPhoto = async (
       const isReallyOffline = await computeIsOffline();
 
       if (isReallyOffline) {
-        alert("Você está offline. Conecte-se antes de sincronizar.");
+        notify.warning("Você está offline — conecte-se antes de sincronizar");
         return;
       }
 
@@ -1480,12 +1459,12 @@ const handleEditSavedPhoto = async (
           );
         } else {
           setSyncError(null);
-          alert("✅ Sincronização concluída com sucesso.");
+          notify.success("Sincronização concluída");
         }
       } catch (err: any) {
         console.error("❌ Erro na sincronização manual:", err);
         setSyncError(err?.message || "Falha ao sincronizar dados pendentes.");
-        alert("⚠️ Falha ao sincronizar. Veja o aviso no topo da agenda.");
+        notify.error("Falha ao sincronizar — veja o aviso no topo da agenda");
       } finally {
         setSyncing(false);
       }
@@ -1551,7 +1530,7 @@ const handleEditSavedPhoto = async (
     const isApp = Capacitor.isNativePlatform();
 
     if (!isApp) {
-      alert("Compartilhamento direto só funciona no APK.");
+      notify.warning("Compartilhamento direto só funciona no APK");
       return;
     }
 
@@ -1576,7 +1555,7 @@ const handleEditSavedPhoto = async (
       });
     } catch (err) {
       console.error("Erro ao compartilhar PDF:", err);
-      alert("❌ Não foi possível compartilhar o PDF.");
+      notify.error("Não foi possível compartilhar o PDF");
     }
   };
   */
@@ -1610,7 +1589,7 @@ const handleEditSavedPhoto = async (
       await FileOpener.open(saved.uri, "application/pdf");
     } catch (err) {
       console.error("Erro ao abrir PDF no APK:", err);
-      alert("❌ Não foi possível abrir o PDF no dispositivo.");
+      notify.error("Não foi possível abrir o PDF no dispositivo");
     }
   };
   */
