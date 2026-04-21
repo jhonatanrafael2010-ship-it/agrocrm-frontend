@@ -4,6 +4,7 @@ import trashIcon from "../assets/trash.svg";
 import DarkSelect from "../components/DarkSelect";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
 type Opportunity = {
@@ -75,7 +76,7 @@ const Opportunities: React.FC = () => {
       const updated = body.opportunity || body;
       setOpps((list) => list.map((it) => (it.id === updated.id ? updated : it)));
     } catch (err: any) {
-      alert(err?.message || "Erro ao atualizar oportunidade");
+      notify.error(err?.message || "Erro ao atualizar oportunidade");
     }
   }
 
@@ -85,7 +86,7 @@ const Opportunities: React.FC = () => {
   }
 
   async function handleSave() {
-    if (!form.client_id || !form.title) return alert("Cliente e título são obrigatórios");
+    if (!form.client_id || !form.title) { notify.warning("Cliente e título são obrigatórios"); return; }
     setSubmitting(true);
     try {
       let res, body;
@@ -126,25 +127,26 @@ const Opportunities: React.FC = () => {
       setEditing(null);
       setForm({ client_id: "", title: "", estimated_value: "" });
     } catch (err: any) {
-      alert(err?.message || "Erro ao salvar oportunidade");
+      notify.error(err?.message || "Erro ao salvar oportunidade");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function deleteOpportunity(id?: number) {
+  function deleteOpportunity(id?: number) {
     if (!id) return;
-    if (!confirm("Deseja excluir esta oportunidade?")) return;
-    try {
-      const res = await fetch(`${API_BASE}opportunities/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || `status ${res.status}`);
+    toastConfirm("Deseja excluir esta oportunidade?", async () => {
+      try {
+        const res = await fetch(`${API_BASE}opportunities/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message || `status ${res.status}`);
+        }
+        setOpps((list) => list.filter((o) => o.id !== id));
+      } catch (err: any) {
+        notify.error(err?.message || "Erro ao excluir oportunidade");
       }
-      setOpps((list) => list.filter((o) => o.id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Erro ao excluir oportunidade");
-    }
+    });
   }
 
   const grouped = STAGES.reduce((acc: Record<string, Opportunity[]>, s) => {
