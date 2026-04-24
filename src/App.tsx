@@ -214,8 +214,7 @@ function App() {
           <MobileMenu onNavigate={setRoute} activeItem={route} />
         ) : (
           <div
-            className="d-none d-lg-block bg-dark border-end border-secondary"
-            style={{ width: 240 }}
+            className="d-none d-lg-block sidebar-wrapper"
           >
             <Navbar activeItem={route} onNavigate={setRoute} />
           </div>

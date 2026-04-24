@@ -1,6 +1,16 @@
 /* =========================================================
-🌑 SIDEBAR PREMIUM — NutriCRM (escura permanente)
+🌑 SIDEBAR PREMIUM — NutriCRM (escura fixa lateral)
 ========================================================= */
+
+.sidebar-wrapper {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 200000;
+  align-self: flex-start;
+}
 
 .sidebar-premium {
   width: 260px;
@@ -10,8 +20,6 @@
   font-family: "Inter", sans-serif;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
-  position: relative;
-  z-index: 200000;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -125,7 +133,6 @@
   color: var(--item-color);
 }
 
-/* Hover */
 .sidebar-link:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #f3f4f6;
@@ -140,7 +147,6 @@
   height: 18px;
 }
 
-/* Ativo */
 .sidebar-link.active {
   background: color-mix(in srgb, var(--item-color) 12%, transparent);
   color: #ffffff;
@@ -248,14 +254,35 @@
 }
 
 /* =========================================================
+📐 Espaçamento páginas — respira da sidebar
+========================================================= */
+main.flex-grow-1 {
+  padding-left: 1.5rem !important;
+}
+
+.calendar-page,
+.calendar-shell,
+.calendar-header-sticky {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.fc {
+  padding-left: 4px;
+}
+
+/* =========================================================
 📱 Responsivo
 ========================================================= */
 @media (max-width: 992px) {
-  .sidebar-premium {
+  .sidebar-wrapper {
     position: fixed;
     top: 0;
     left: 0;
     height: 100dvh;
-    z-index: 200000;
+  }
+
+  main.flex-grow-1 {
+    padding-left: 1rem !important;
   }
 }
