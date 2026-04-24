@@ -167,6 +167,7 @@ function App() {
             lastSync={lastSync}
             syncing={syncing}
             offline={offline}
+            onNavigate={setRoute}
           />
           <div className="topbar-mobile-toggle d-lg-none">
             <button
