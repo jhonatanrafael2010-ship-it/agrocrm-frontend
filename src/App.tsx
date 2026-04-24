@@ -9,6 +9,9 @@ import VisitsPage from "./pages/Visits";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
+import Topbar from "./components/Topbar";
+
+
 import {
   syncPendingVisits,
   syncPendingPhotos,
@@ -146,68 +149,6 @@ function App() {
   // ============================================================
   return (
     <div className="app d-flex flex-column vh-100">
-      {/* navbar */}
-      <nav
-        className="navbar navbar-expand-lg shadow-sm sticky-top px-3"
-        style={{ background: "var(--panel)", color: "var(--text)" }}
-      >
-        <div className="container-fluid">
-          <button
-            className="btn btn-outline-light d-lg-none"
-            type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#mobileMenu"
-          >
-            ☰
-          </button>
-        </div>
-      </nav>
-
-      {/* offline bar */}
-      {offline && (
-        <div
-          style={{
-            background: "#ffcc00",
-            color: "#000",
-            padding: "6px 12px",
-            textAlign: "center",
-            fontWeight: 600,
-          }}
-        >
-          📴 Você está offline — dados do cache
-        </div>
-      )}
-
-      {/* syncing bar */}
-      {syncing && !offline && (
-        <div
-          style={{
-            background: "#007bff",
-            color: "#fff",
-            padding: "6px 12px",
-            textAlign: "center",
-            fontWeight: 600,
-            animation: "pulse 1.5s infinite",
-          }}
-        >
-          Sincronizando dados...
-        </div>
-      )}
-
-      {!syncing && lastSync && !offline && (
-        <div
-          style={{
-            background: "#28a745",
-            color: "#fff",
-            padding: "4px 10px",
-            textAlign: "center",
-            fontWeight: 500,
-          }}
-        >
-          ✅ Última sincronização: {lastSync}
-        </div>
-      )}
-
       {/* conteúdo */}
       <div className="d-flex flex-grow-1">
         {isMobileApp ? (
@@ -220,35 +161,53 @@ function App() {
           </div>
         )}
 
-        <main className="flex-grow-1 overflow-auto p-3">
-          {route === "Clientes" ? (
-            <Clients />
-          ) : route === "Propriedades" ? (
-            <PropertiesPage />
-          ) : route === "Calendário" ? (
-            <CalendarPage />
-          ) : route === "Oportunidades" ? (
-            <OpportunitiesPage />
-          ) : route === "Acompanhamentos" ? (
-            <VisitsPage />
-          ) : (
-            <Dashboard />
-          )}
+        <main className="flex-grow-1 overflow-auto d-flex flex-column">
+          <Topbar
+            activeItem={route}
+            lastSync={lastSync}
+            syncing={syncing}
+            offline={offline}
+          />
+          <div className="topbar-mobile-toggle d-lg-none">
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#mobileMenu"
+            >
+              ☰ Menu
+            </button>
+          </div>
+          <div className="page-content flex-grow-1">
+            {route === "Clientes" ? (
+              <Clients />
+            ) : route === "Propriedades" ? (
+              <PropertiesPage />
+            ) : route === "Calendário" ? (
+              <CalendarPage />
+            ) : route === "Oportunidades" ? (
+              <OpportunitiesPage />
+            ) : route === "Acompanhamentos" ? (
+              <VisitsPage />
+            ) : (
+              <Dashboard />
+            )}
+          </div>
         </main>
-        <Toaster
-          position="top-center"
-          richColors
-          closeButton
-          duration={3500}
-          toastOptions={{
-            style: {
-              background: "var(--panel)",
-              color: "var(--text)",
-              border: "1px solid var(--border)",
-            },
-          }}
-        />
       </div>
+      <Toaster
+        position="top-center"
+        richColors
+        closeButton
+        duration={3500}
+        toastOptions={{
+          style: {
+            background: "var(--panel)",
+            color: "var(--text)",
+            border: "1px solid var(--border)",
+          },
+        }}
+      />
     </div>
   );
 }

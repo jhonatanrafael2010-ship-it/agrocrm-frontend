@@ -286,3 +286,22 @@ main.flex-grow-1 {
     padding-left: 1rem !important;
   }
 }
+
+.page-content {
+  padding: 20px 24px;
+}
+
+.topbar-mobile-toggle {
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+main.flex-grow-1 {
+  padding-left: 0 !important;
+}
+
+@media (max-width: 992px) {
+  .page-content {
+    padding: 16px;
+  }
+}
