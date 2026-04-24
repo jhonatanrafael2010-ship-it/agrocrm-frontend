@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
+import KPICard from "../components/KPICard";
+import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase } from "lucide-react";
 
 type Client = { id: number; name: string };
 type Property = { id: number; name: string; client_id?: number };
@@ -331,28 +333,61 @@ const Dashboard: React.FC = () => {
       ) : (
         <>
           {/* CARDS DE RESUMO */}
-          <div className="row g-3 mb-4 justify-content-center">
-            {[
-              { icon: "👤", label: "Clientes", value: clients.length },
-              { icon: "🏠", label: "Propriedades", value: properties.length },
-              { icon: "🌱", label: "Talhões", value: plots.length },
-              { icon: "🌾", label: "Plantios", value: plantings.length },
-              { icon: "📝", label: "Acompanhamentos", value: visits.length },
-              { icon: "💼", label: "Oportunidades", value: opps.length },
-            ].map((card, i) => (
-              <div key={i} className="col-6 col-md-4 col-lg-2">
-                <div
-                  className="card border-0 shadow-sm text-center p-3"
-                  style={{ background: "var(--panel)", color: "var(--text)" }}
-                >
-                  <div className="fs-3">{card.icon}</div>
-                  <div className="fw-semibold" style={{ color: "var(--text-secondary)" }}>
-                    {card.label}
-                  </div>
-                  <div className="fs-5 fw-bold">{card.value}</div>
-                </div>
-              </div>
-            ))}
+          <div className="row g-3 mb-4">
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={Users}
+                label="Clientes"
+                value={clients.length}
+                variant="blue"
+                subtitle="Carteira ativa"
+              />
+            </div>
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={Map}
+                label="Propriedades"
+                value={properties.length}
+                variant="emerald"
+                subtitle="Fazendas cadastradas"
+              />
+            </div>
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={Sprout}
+                label="Talhões"
+                value={plots.length}
+                variant="teal"
+                subtitle="Áreas produtivas"
+              />
+            </div>
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={Wheat}
+                label="Plantios"
+                value={plantings.length}
+                variant="amber"
+                subtitle="Safras em campo"
+              />
+            </div>
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={ClipboardList}
+                label="Acompanhamentos"
+                value={visits.length}
+                variant="violet"
+                subtitle="Visitas registradas"
+              />
+            </div>
+            <div className="col-6 col-md-4 col-lg-2">
+              <KPICard
+                icon={Briefcase}
+                label="Oportunidades"
+                value={opps.length}
+                variant="rose"
+                subtitle="Pipeline ativo"
+              />
+            </div>
           </div>
 
           {/* FILTROS */}
