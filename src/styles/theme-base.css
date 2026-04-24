@@ -618,3 +618,105 @@ textarea:focus {
 [data-bs-theme='light'] .btn-close {
   filter: invert(0) grayscale(0);
 }
+
+/* =========================================================
+🎨 PALETA PREMIUM — NutriCRM
+Adicionar ao final de src/styles/theme-base.css
+========================================================= */
+
+:root {
+  /* Cores da marca */
+  --brand-primary: #0F3D2E;       /* Verde escuro */
+  --brand-secondary: #12343B;     /* Azul petróleo */
+  --brand-gold: #C9A227;          /* Champagne dourado */
+
+  /* Neutros */
+  --surface-bg: #F5F1E8;          /* Off-white */
+  --surface-card: #FFFFFF;        /* Cards */
+  --text-strong: #1F2937;         /* Grafite */
+  --text-muted: #6B7280;          /* Cinza */
+
+  /* Semânticos */
+  --semantic-success: #166534;    /* Verde técnico */
+  --semantic-danger: #B91C1C;     /* Vermelho fechado */
+  --semantic-warning: #C9A227;
+
+  /* Sobrescreve tokens antigos */
+  --bg: var(--surface-bg);
+  --panel: var(--surface-card);
+  --text: var(--text-strong);
+  --muted: var(--text-muted);
+  --accent: var(--brand-primary);
+  --accent-hover: #164f3b;
+  --danger: var(--semantic-danger);
+  --success: var(--semantic-success);
+  --warning: var(--brand-gold);
+  --border: rgba(15, 61, 46, 0.1);
+  --shadow: rgba(15, 61, 46, 0.08);
+}
+
+html[data-theme='light'] {
+  --bg: #F5F1E8;
+  --panel: #FFFFFF;
+  --text: #1F2937;
+  --muted: #6B7280;
+  --border: rgba(15, 61, 46, 0.1);
+  --shadow: rgba(15, 61, 46, 0.08);
+}
+
+body, html {
+  background-color: #F5F1E8 !important;
+  color: #1F2937 !important;
+}
+
+/* Botões primários */
+.btn-success,
+.btn-primary {
+  background: #0F3D2E !important;
+  border-color: #0F3D2E !important;
+  color: #ffffff !important;
+}
+
+.btn-success:hover,
+.btn-primary:hover {
+  background: #164f3b !important;
+  border-color: #164f3b !important;
+}
+
+.btn-outline-success {
+  color: #0F3D2E !important;
+  border-color: #0F3D2E !important;
+}
+
+.btn-outline-success:hover {
+  background: #0F3D2E !important;
+  color: #ffffff !important;
+}
+
+/* Títulos verdes */
+h1, h2, h3, h4, h5, h6 {
+  color: #1F2937;
+}
+
+.text-success {
+  color: #166534 !important;
+}
+
+.text-danger {
+  color: #B91C1C !important;
+}
+
+/* Cards com bordas sutis */
+.card {
+  border: 1px solid rgba(15, 61, 46, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(15, 61, 46, 0.05);
+}
+
+/* Input focus dourado suave */
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus {
+  border-color: #0F3D2E !important;
+  box-shadow: 0 0 0 3px rgba(15, 61, 46, 0.08) !important;
+}
