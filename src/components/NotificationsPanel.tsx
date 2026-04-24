@@ -120,7 +120,7 @@ const NotificationsPanel: React.FC<Props> = ({ onNavigate }) => {
       >
         <Bell size={18} />
         {unread > 0 && (
-          <span className="topbar-icon-dot">
+          <span className="notif-badge">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
