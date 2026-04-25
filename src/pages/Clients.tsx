@@ -5,18 +5,19 @@ import { API_BASE } from "../config";
 import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
-
 type Client = {
   id: number;
   name: string;
   document?: string;
   segment: string;
   vendor?: string;
+  region?: string;
 };
 
 
 const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -27,10 +28,12 @@ const Clients: React.FC = () => {
     document: "",
     segment: "",
     vendor: "",
+    region: "",
   });
 
   const theme = document.body.getAttribute("data-theme") || "light";
 
+  // ===== Carrega clientes =====
   useEffect(() => {
     setLoading(true);
     fetch(`${API_BASE}clients`)
@@ -46,23 +49,45 @@ const Clients: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // ===== Carrega lista de regiões disponíveis =====
+  useEffect(() => {
+    fetch(`${API_BASE}regions`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return await res.json();
+      })
+      .then((data) => setRegions(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error("fetch regions err", err);
+      });
+  }, []);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
   }
 
   async function handleSave() {
-    if (!form.name.trim()) { notify.warning("Nome é obrigatório"); return; }
+    if (!form.name.trim()) {
+      notify.warning("Nome é obrigatório");
+      return;
+    }
     setSubmitting(true);
     try {
       const method = editing ? "PUT" : "POST";
       const url = editing
         ? `${API_BASE}clients/${editing.id}`
         : `${API_BASE}clients`;
+
+      const payload = {
+        ...form,
+        region: form.region || null,
+      };
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || `status ${res.status}`);
@@ -75,7 +100,7 @@ const Clients: React.FC = () => {
       );
       setOpen(false);
       setEditing(null);
-      setForm({ name: "", document: "", segment: "", vendor: "" });
+      setForm({ name: "", document: "", segment: "", vendor: "", region: "" });
     } catch (err: any) {
       notify.error(err?.message || "Erro ao salvar cliente");
     } finally {
@@ -106,7 +131,7 @@ const Clients: React.FC = () => {
             onClick={() => {
               setOpen(true);
               setEditing(null);
-              setForm({ name: "", document: "", segment: "", vendor: "" });
+              setForm({ name: "", document: "", segment: "", vendor: "", region: "" });
             }}
           >
             + Novo Cliente
@@ -134,6 +159,7 @@ const Clients: React.FC = () => {
                       <th>Documento</th>
                       <th>Segmento</th>
                       <th>Vendedor</th>
+                      <th>Região</th>
                       <th className="text-end">Ações</th>
                     </tr>
                   </thead>
@@ -144,6 +170,15 @@ const Clients: React.FC = () => {
                         <td>{c.document || "--"}</td>
                         <td>{c.segment || "--"}</td>
                         <td>{c.vendor || "--"}</td>
+                        <td>
+                          {c.region ? (
+                            <span className="badge bg-success-subtle text-success">
+                              {c.region}
+                            </span>
+                          ) : (
+                            <span className="text-secondary">--</span>
+                          )}
+                        </td>
                         <td className="text-end">
                           <button
                             className="btn btn-outline-primary btn-sm me-2"
@@ -155,6 +190,7 @@ const Clients: React.FC = () => {
                                 document: c.document || "",
                                 segment: c.segment || "",
                                 vendor: c.vendor || "",
+                                region: c.region || "",
                               });
                             }}
                           >
@@ -193,7 +229,8 @@ const Clients: React.FC = () => {
                 <button className="btn-close" onClick={() => setOpen(false)} />
               </div>
               <div className="modal-body">
-                {["name", "document", "segment", "vendor"].map((field) => (
+                {/* Campos texto padrão */}
+                {(["name", "document", "segment", "vendor"] as const).map((field) => (
                   <div className="mb-3" key={field}>
                     <label className="form-label text-capitalize">
                       {field === "vendor" ? "Vendedor" : field}
@@ -217,6 +254,31 @@ const Clients: React.FC = () => {
                     />
                   </div>
                 ))}
+
+                {/* Dropdown de região */}
+                <div className="mb-3">
+                  <label className="form-label">Região</label>
+                  <select
+                    name="region"
+                    value={form.region}
+                    onChange={handleChange}
+                    className={`form-select ${
+                      theme === "dark"
+                        ? "bg-body-tertiary text-light border-secondary"
+                        : ""
+                    }`}
+                  >
+                    <option value="">— Sem região —</option>
+                    {regions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                  <small className="text-secondary">
+                    Usada nos relatórios para filtrar carteira por região.
+                  </small>
+                </div>
               </div>
               <div className="modal-footer border-0">
                 <button className="btn btn-secondary" onClick={() => setOpen(false)}>

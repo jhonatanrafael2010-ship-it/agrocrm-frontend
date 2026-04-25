@@ -135,9 +135,30 @@ const Dashboard: React.FC = () => {
 
   // modal de export
   const [exportOpen, setExportOpen] = useState(false);
+
+  // ===== Filtros do relatório Excel =====
+  const [regions, setRegions] = useState<string[]>([]);
+  const [seasons, setSeasons] = useState<Array<{ key: string; label: string; culture: string }>>([]);
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedSeason, setSelectedSeason] = useState<string>("");
   const [selectedCols, setSelectedCols] = useState<string[]>(
     ["date", "client", "property", "consultant", "culture", "variety", "status"]
   );
+
+  useEffect(() => {
+    // ===== Carrega listas de filtros (regiões e safras) =====
+    Promise.all([
+      fetch(`${API_BASE}regions`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`${API_BASE}seasons`).then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([rs, ss]) => {
+        setRegions(Array.isArray(rs) ? rs : []);
+        setSeasons(Array.isArray(ss) ? ss : []);
+      })
+      .catch((err) => {
+        console.warn("Falha ao carregar regions/seasons:", err);
+      });
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -245,7 +266,15 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      const url = `${API_BASE}reports/monthly.xlsx?start=${startDate}&end=${endDate}`;
+      // Monta query string com filtros opcionais
+      const params = new URLSearchParams({
+        start: startDate,
+        end: endDate,
+      });
+      if (selectedRegion) params.append("region", selectedRegion);
+      if (selectedSeason) params.append("season", selectedSeason);
+
+      const url = `${API_BASE}reports/monthly.xlsx?${params.toString()}`;
       const res = await fetch(url);
 
       if (!res.ok) {
@@ -254,7 +283,13 @@ const Dashboard: React.FC = () => {
       }
 
       const blob = await res.blob();
-      const fileName = `relatorio_visitas_${startDate}_a_${endDate}.xlsx`;
+
+      // Nome do arquivo reflete os filtros
+      const parts = [`relatorio_visitas_${startDate}_a_${endDate}`];
+      if (selectedRegion) parts.push(selectedRegion.replace(/\s+/g, "-").toLowerCase());
+      if (selectedSeason) parts.push(selectedSeason);
+      const fileName = `${parts.join("_")}.xlsx`;
+
       downloadBlob(fileName, blob);
     } catch (err) {
       console.error(err);
@@ -461,6 +496,37 @@ const Dashboard: React.FC = () => {
                       <span className="text-secondary">Selecione um intervalo</span>
                     )}
                   </div>
+
+                  {/* ===== Filtros do relatório Excel ===== */}
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ width: "auto", minWidth: 160 }}
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    title="Filtrar por região"
+                  >
+                    <option value="">Todas as regiões</option>
+                    {regions.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="form-select form-select-sm"
+                    style={{ width: "auto", minWidth: 160 }}
+                    value={selectedSeason}
+                    onChange={(e) => setSelectedSeason(e.target.value)}
+                    title="Filtrar por safra (cultura + janela de datas)"
+                  >
+                    <option value="">Todas as safras</option>
+                    {seasons.map((s) => (
+                      <option key={s.key} value={s.key}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
 
                   <button
                     className="btn btn-sm btn-outline-success"
