@@ -1,6 +1,10 @@
 /* =========================================================
 🌿 THEME-PREMIUM.CSS — AgroCRM Linguagem Visual Premium
+Paleta: Verde escuro + Off-white + Champagne
+Inclui: tipografia, modais, calendário, tabelas, botões
 ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
 
 :root,
 html[data-theme='light'],
@@ -44,6 +48,9 @@ body[data-theme='light'] {
   --accent-hover: var(--primary-hover);
   --accent-light: #1A6B4F;
   --input-bg: var(--panel);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
 }
 
 html[data-theme='dark'],
@@ -72,6 +79,53 @@ body[data-theme='dark'] {
 }
 
 /* =========================================================
+🔤 TIPOGRAFIA PREMIUM — Hierarquia profissional
+========================================================= */
+body {
+  font-family: var(--font-sans) !important;
+  font-feature-settings: "cv11", "ss01", "tnum";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+
+h1, h2, h3, h4, h5, h6,
+.modal-title,
+.topbar-title,
+.card-title {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--text-strong) !important;
+  line-height: 1.2 !important;
+}
+
+h1, .h1 { font-size: 1.75rem !important; font-weight: 800 !important; }
+h2, .h2 { font-size: 1.4rem !important; }
+h3, .h3 { font-size: 1.15rem !important; }
+h4, .h4 { font-size: 1rem !important; }
+
+.fw-bold { font-weight: 700 !important; }
+.fw-semibold { font-weight: 600 !important; }
+
+p, span, div, td, th, label, input, select, textarea, button {
+  font-family: var(--font-sans);
+}
+
+label, .form-label {
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+  color: var(--text-strong) !important;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px !important;
+}
+
+small, .small, .text-secondary {
+  font-size: 0.78rem !important;
+}
+
+/* =========================================================
 🃏 Cards
 ========================================================= */
 .card {
@@ -84,7 +138,14 @@ body[data-theme='dark'] {
 
 .card:hover {
   box-shadow: 0 4px 12px var(--shadow-md);
-  transform: translateY(-2px);
+}
+
+.card-header {
+  background: var(--panel-soft) !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-weight: 600 !important;
+  color: var(--text-strong) !important;
+  border-radius: 14px 14px 0 0 !important;
 }
 
 /* =========================================================
@@ -93,17 +154,18 @@ body[data-theme='dark'] {
 .topbar-premium {
   background: rgba(245, 241, 232, 0.92) !important;
   border-bottom: 1px solid var(--border) !important;
+  backdrop-filter: blur(12px);
 }
 
 html[data-theme='dark'] .topbar-premium {
   background: rgba(19, 30, 41, 0.92) !important;
 }
 
-.topbar-title { color: var(--text-strong) !important; }
+.topbar-title { color: var(--text-strong) !important; font-family: var(--font-display) !important; }
 .topbar-subtitle { color: var(--muted) !important; }
-.topbar-crumb-home { color: var(--primary) !important; }
+.topbar-crumb-home { color: var(--primary) !important; font-weight: 700 !important; }
 .topbar-crumb-home:hover { color: var(--primary-hover) !important; }
-.topbar-crumb-current { color: var(--text-strong) !important; }
+.topbar-crumb-current { color: var(--text-strong) !important; font-weight: 600 !important; }
 .topbar-crumb-section { color: var(--muted) !important; }
 .topbar-crumb-sep { color: var(--border-strong) !important; }
 
@@ -128,20 +190,9 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--muted) !important;
 }
 
-.topbar-badge.synced {
-  background: var(--success-soft) !important;
-  color: var(--success) !important;
-}
-
-.topbar-badge.syncing {
-  background: var(--secondary-soft) !important;
-  color: var(--secondary) !important;
-}
-
-.topbar-badge.offline {
-  background: var(--gold-soft) !important;
-  color: var(--warning) !important;
-}
+.topbar-badge.synced { background: var(--success-soft) !important; color: var(--success) !important; }
+.topbar-badge.syncing { background: var(--secondary-soft) !important; color: var(--secondary) !important; }
+.topbar-badge.offline { background: var(--gold-soft) !important; color: var(--warning) !important; }
 
 .topbar-premium .topbar-icon-btn {
   background: var(--panel) !important;
@@ -156,13 +207,14 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🧭 SIDEBAR PREMIUM — Tom creme + ícone ativo dourado
+🧭 SIDEBAR — Tom creme + ícone ativo dourado
 ========================================================= */
 .sidebar-premium {
   background: var(--bg) !important;
   border-right: 1px solid var(--border-strong) !important;
   box-shadow: 1px 0 8px var(--shadow) !important;
   color: var(--text) !important;
+  font-family: var(--font-sans) !important;
 }
 
 .sidebar-brand {
@@ -172,10 +224,7 @@ html[data-theme='dark'] .topbar-premium {
   margin: 0 !important;
 }
 
-.sidebar-logo-img {
-  filter: none !important;
-  width: 170px !important;
-}
+.sidebar-logo-img { filter: none !important; width: 170px !important; }
 
 .sidebar-section-title {
   color: var(--primary) !important;
@@ -185,7 +234,6 @@ html[data-theme='dark'] .topbar-premium {
   opacity: 0.7 !important;
 }
 
-/* Links normais — ignora --item-color, usa verde escuro */
 .sidebar-link {
   color: var(--text) !important;
   font-weight: 500 !important;
@@ -198,10 +246,7 @@ html[data-theme='dark'] .topbar-premium {
   border: 1px solid var(--border) !important;
 }
 
-.sidebar-link:hover {
-  background: var(--panel) !important;
-  color: var(--primary) !important;
-}
+.sidebar-link:hover { background: var(--panel) !important; color: var(--primary) !important; }
 
 .sidebar-link:hover .sidebar-link-icon {
   background: var(--primary-soft) !important;
@@ -209,7 +254,6 @@ html[data-theme='dark'] .topbar-premium {
   border-color: var(--primary) !important;
 }
 
-/* Ativo: fundo verde escuro + ícone dourado FORTE */
 .sidebar-link.active {
   background: var(--primary) !important;
   color: #fff !important;
@@ -232,13 +276,8 @@ html[data-theme='dark'] .topbar-premium {
   stroke-width: 2.5 !important;
 }
 
-.sidebar-link.active .sidebar-link-chevron {
-  color: var(--gold) !important;
-}
-
-.sidebar-link-indicator {
-  background: var(--gold) !important;
-}
+.sidebar-link.active .sidebar-link-chevron { color: var(--gold) !important; }
+.sidebar-link-indicator { background: var(--gold) !important; }
 
 .sidebar-user {
   background: var(--panel) !important;
@@ -252,23 +291,10 @@ html[data-theme='dark'] .topbar-premium {
   font-weight: 800 !important;
 }
 
-.sidebar-user-name {
-  color: var(--text-strong) !important;
-  font-weight: 600 !important;
-}
-
-.sidebar-user-role {
-  color: var(--muted) !important;
-}
-
-.sidebar-user-settings {
-  color: var(--muted) !important;
-}
-
-.sidebar-user-settings:hover {
-  background: var(--primary-soft) !important;
-  color: var(--primary) !important;
-}
+.sidebar-user-name { color: var(--text-strong) !important; font-weight: 600 !important; }
+.sidebar-user-role { color: var(--muted) !important; }
+.sidebar-user-settings { color: var(--muted) !important; }
+.sidebar-user-settings:hover { background: var(--primary-soft) !important; color: var(--primary) !important; }
 
 .sidebar-logout {
   background: var(--panel) !important;
@@ -284,28 +310,431 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🏷️ Inputs
+🔘 BOTÕES PREMIUM — Override gradientes verde claro
 ========================================================= */
-input:focus,
-select:focus,
-textarea:focus,
-.form-control:focus {
+.btn,
+button.btn {
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  border-radius: 9px !important;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.btn-primary,
+.btn-success,
+button.btn-save,
+.btn:not(.btn-outline-primary):not(.btn-outline-success):not(.btn-outline-danger):not(.btn-outline-secondary):not(.btn-cancel):not(.btn-secondary):not(.btn-danger):not(.btn-delete):not(.btn-light):not(.btn-warning):not(.btn-info) {
+  background: var(--primary) !important;
+  background-image: none !important;
+  border: 1px solid var(--primary) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+button.btn-save:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px var(--shadow-md) !important;
+}
+
+.btn-outline-primary,
+.btn-outline-success {
+  background: transparent !important;
+  border: 1.5px solid var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+.btn-secondary,
+.btn-cancel {
+  background: var(--panel) !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+.btn-secondary:hover,
+.btn-cancel:hover {
+  background: var(--panel-soft) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px var(--primary-soft) !important;
+}
+
+.btn-danger,
+.btn-delete {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #fff !important;
+}
+
+.btn-outline-danger {
+  background: transparent !important;
+  border: 1.5px solid var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+.btn-outline-danger:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
 }
 
 /* =========================================================
-📊 Tabelas
+🪟 MODAIS PREMIUM
 ========================================================= */
+.modal-content {
+  border-radius: 18px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 24px 64px rgba(15, 61, 46, 0.25) !important;
+  overflow: hidden;
+}
+
+.modal-header {
+  background: var(--panel) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 20px 24px !important;
+  position: relative;
+}
+
+.modal-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--gold), var(--primary));
+}
+
+.modal-title {
+  font-family: var(--font-display) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--text-strong) !important;
+}
+
+.modal-body {
+  padding: 24px !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+}
+
+.modal-footer {
+  background: var(--panel-soft) !important;
+  border-top: 1px solid var(--border) !important;
+  padding: 16px 24px !important;
+  gap: 8px;
+}
+
+/* Botões de aba dentro de modais (Dados/Produtos/Fotos) */
+.modal-body .btn-success,
+.modal-body button.btn-success {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* =========================================================
+📝 INPUTS / FORMS
+========================================================= */
+.form-control,
+.form-select,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+input[type="month"],
+input[type="search"],
+textarea,
+select {
+  background: var(--panel) !important;
+  border: 1.5px solid var(--border-strong) !important;
+  color: var(--text) !important;
+  border-radius: 9px !important;
+  padding: 9px 12px !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.9rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-soft) !important;
+  outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.7;
+}
+
+/* =========================================================
+📊 TABELAS PREMIUM
+========================================================= */
+.table {
+  font-family: var(--font-sans) !important;
+  color: var(--text) !important;
+  background: transparent !important;
+  --bs-table-bg: transparent !important;
+}
+
 .table thead th {
   background: var(--panel-soft) !important;
   color: var(--text-strong) !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
   border-bottom: 2px solid var(--border-strong) !important;
+  padding: 14px 16px !important;
+}
+
+.table tbody td {
+  padding: 13px 16px !important;
+  vertical-align: middle !important;
+  border-color: var(--border) !important;
+  font-size: 0.9rem !important;
+}
+
+.table tbody tr {
+  transition: background 0.15s ease;
 }
 
 .table tbody tr:hover {
   background: var(--primary-soft) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) td {
+  background: var(--panel-soft) !important;
+}
+
+/* Badges em tabela */
+.badge {
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  font-size: 0.72rem !important;
+}
+
+.badge.bg-success-subtle,
+.badge.bg-success {
+  background: var(--success-soft) !important;
+  color: var(--success) !important;
+  border: 1px solid var(--success-soft);
+}
+
+/* Botões ações pequenos em tabela (editar/excluir verdes claros) */
+.table .btn-outline-primary,
+.table .btn-outline-success {
+  background: var(--primary-soft) !important;
+  border: 1px solid var(--primary-soft) !important;
+  color: var(--primary) !important;
+  padding: 6px 9px !important;
+  background-image: none !important;
+}
+
+.table .btn-outline-primary:hover {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+.table .btn-outline-danger {
+  background: var(--danger-soft) !important;
+  border: 1px solid var(--danger-soft) !important;
+  color: var(--danger) !important;
+  padding: 6px 9px !important;
+}
+
+.table .btn-outline-danger:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+}
+
+/* =========================================================
+📅 CALENDÁRIO PREMIUM
+========================================================= */
+.calendar-page {
+  font-family: var(--font-sans) !important;
+}
+
+.calendar-page h2,
+.calendar-page .h2 {
+  font-family: var(--font-display) !important;
+  color: var(--text-strong) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text-strong) !important;
+}
+
+/* Botões de navegação calendário */
+.fc .fc-button,
+.fc .fc-button-primary {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 6px 14px !important;
+  box-shadow: 0 1px 2px var(--shadow);
+  text-transform: capitalize !important;
+}
+
+.fc .fc-button:hover {
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.fc .fc-button.fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.fc .fc-toolbar-title {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  color: var(--text-strong) !important;
+  font-size: 1.25rem !important;
+  text-transform: capitalize;
+}
+
+.fc th {
+  background: var(--panel-soft) !important;
+  color: var(--text-strong) !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  padding: 10px 0 !important;
+  border-color: var(--border) !important;
+}
+
+.fc .fc-daygrid-day {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+}
+
+.fc .fc-day-today {
+  background: var(--gold-soft) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  color: var(--gold-dark) !important;
+  font-weight: 800 !important;
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+  padding: 6px 8px !important;
+  font-size: 0.85rem;
+}
+
+/* Cards das visitas — cores sóbrias premium */
+.calendar-page .visit-card {
+  border-radius: 8px !important;
+  padding: 6px 9px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Visitas concluídas — verde técnico sóbrio */
+.calendar-page .visit-card[style*="rgb(34, 197, 94)"],
+.calendar-page .visit-card[style*="#22c55e"],
+.calendar-page .visit-card[style*="22c55e"],
+.calendar-page .visit-card[style*="green"] {
+  background: var(--success) !important;
+  background-color: var(--success) !important;
+}
+
+/* Visitas atrasadas — vermelho fechado */
+.calendar-page .visit-card[style*="rgb(239, 68, 68)"],
+.calendar-page .visit-card[style*="#ef4444"],
+.calendar-page .visit-card[style*="ef4444"],
+.calendar-page .visit-card[style*="red"] {
+  background: var(--danger) !important;
+  background-color: var(--danger) !important;
+}
+
+/* Filtros calendário */
+.calendar-page .calendar-filter,
+.calendar-page input[type="text"],
+.calendar-page select {
+  background: var(--panel) !important;
+  border: 1.5px solid var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+/* "mais +N" link dos eventos */
+.fc .fc-daygrid-more-link {
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem;
+}
+
+/* =========================================================
+📋 ACOMPANHAMENTOS — Cards visita
+========================================================= */
+/* Banner verde claro (concluído) — virou verde escuro premium */
+[class*="visits-page"] .bg-success,
+[class*="visits-page"] .bg-success-subtle {
+  background: var(--primary) !important;
+  color: #fff !important;
+}
+
+/* Cards de visita listados com fundo verde claro saturado */
+.visits-page .card,
+.visits-list .card {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Botões Ver / Exportar PDF */
+.visits-page .btn-success,
+.visits-list .btn-success {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+/* =========================================================
+🎯 KANBAN OPORTUNIDADES
+========================================================= */
+.opportunities-page .card-header,
+[class*="kanban"] .card-header {
+  background: var(--primary) !important;
+  color: #fff !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.85rem !important;
+  border-bottom: 3px solid var(--gold) !important;
+}
+
+/* =========================================================
+📅 INPUTS DATE/MONTH com ícone calendário verde
+========================================================= */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(20%) sepia(50%) saturate(800%) hue-rotate(110deg);
 }
 
 /* =========================================================
@@ -335,22 +764,26 @@ textarea:focus,
   --bs-body-color: var(--text);
   --bs-border-color: var(--border);
   --bs-card-bg: var(--panel);
+  --bs-font-sans-serif: var(--font-sans);
 }
 
 /* =========================================================
-🚫 Override botões
+💬 TOASTS / Sonner
 ========================================================= */
-.btn-primary,
-.btn-success,
-button.btn-save {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: #fff !important;
+[data-sonner-toaster] {
+  font-family: var(--font-sans) !important;
 }
 
-.btn-primary:hover,
-.btn-success:hover,
-button.btn-save:hover {
-  background: var(--primary-hover) !important;
-  border-color: var(--primary-hover) !important;
+/* =========================================================
+🔁 Barra de filtros / faixas verde claro nas páginas
+========================================================= */
+.dashboard-filters,
+[style*="background: linear-gradient"] {
+  /* Não força aqui — só onde tem gradiente verde claro inline conhecido */
+}
+
+/* Inputs date no Dashboard com fundo verde claro */
+.dashboard-page input[type="date"],
+.dashboard-page input[type="month"] {
+  background: var(--panel) !important;
 }
