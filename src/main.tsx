@@ -14,6 +14,10 @@ import './styles/index.css'
 import './styles/app.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
+
+import "./styles/theme-premium.css"
+
+
 // ============================================================
 // 🚀 Inicialização do app
 // ============================================================
