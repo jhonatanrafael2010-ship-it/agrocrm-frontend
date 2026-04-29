@@ -34,6 +34,7 @@ type Visit = {
     unit?: string;
     application_date?: string | null;
   }>;
+  photos?: Array<{ id?: number; url?: string; caption?: string }>;
 };
 
 type Opportunity = {
@@ -409,9 +410,9 @@ const Dashboard: React.FC = () => {
               <KPICard
                 icon={ClipboardList}
                 label="Acompanhamentos"
-                value={visits.length}
+                value={visits.filter(v => (v.photos?.length ?? 0) > 0).length}
                 variant="violet"
-                subtitle="Visitas registradas"
+                subtitle="Lançamentos com foto"
               />
             </div>
             <div className="col-6 col-md-4 col-lg-2">
