@@ -88,44 +88,6 @@ body[data-theme='dark'] {
 }
 
 /* =========================================================
-💎 KPI CARDS — Correção contraste ícones
-========================================================= */
-
-/* Remove glow que apaga ícones */
-.kpi-card-glow {
-  display: none !important;
-}
-
-/* Ícone maior, sombra forte, contraste garantido */
-.kpi-card .kpi-card-icon {
-  width: 52px !important;
-  height: 52px !important;
-  border-radius: 14px !important;
-  box-shadow: 0 6px 16px rgba(15, 61, 46, 0.25) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
-}
-
-.kpi-card .kpi-card-icon svg {
-  width: 24px !important;
-  height: 24px !important;
-  stroke-width: 2.4 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* Ícone amber: precisa contraste maior — cor escura forte */
-.kpi-amber .kpi-card-icon {
-  background: linear-gradient(135deg, #C9A227, #8F7318) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Hover do card eleva ícone */
-.kpi-card:hover .kpi-card-icon {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(15, 61, 46, 0.35) !important;
-  transition: all 0.25s ease;
-}
-
-/* =========================================================
 🔝 Topbar
 ========================================================= */
 .topbar-premium {
@@ -194,7 +156,7 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🧭 SIDEBAR PREMIUM — Tom creme uniformizado
+🧭 SIDEBAR PREMIUM — Tom creme + ícone ativo dourado
 ========================================================= */
 .sidebar-premium {
   background: var(--bg) !important;
@@ -203,7 +165,6 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--text) !important;
 }
 
-/* Logo: fundo creme uniforme */
 .sidebar-brand {
   border-bottom: 1px solid var(--border) !important;
   background: var(--bg) !important;
@@ -224,9 +185,11 @@ html[data-theme='dark'] .topbar-premium {
   opacity: 0.7 !important;
 }
 
+/* Links normais — ignora --item-color, usa verde escuro */
 .sidebar-link {
   color: var(--text) !important;
   font-weight: 500 !important;
+  --item-color: var(--primary) !important;
 }
 
 .sidebar-link-icon {
@@ -246,18 +209,27 @@ html[data-theme='dark'] .topbar-premium {
   border-color: var(--primary) !important;
 }
 
+/* Ativo: fundo verde escuro + ícone dourado FORTE */
 .sidebar-link.active {
   background: var(--primary) !important;
   color: #fff !important;
   border-left: 3px solid var(--gold) !important;
   padding-left: 11px !important;
   box-shadow: 0 2px 8px rgba(15, 61, 46, 0.25) !important;
+  --item-color: var(--gold) !important;
 }
 
 .sidebar-link.active .sidebar-link-icon {
-  background: rgba(255, 255, 255, 0.15) !important;
-  color: var(--gold-light) !important;
-  border-color: var(--gold) !important;
+  background: var(--gold) !important;
+  color: #0F3D2E !important;
+  border-color: var(--gold-light) !important;
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.5) !important;
+}
+
+.sidebar-link.active .sidebar-link-icon svg {
+  stroke: #0F3D2E !important;
+  color: #0F3D2E !important;
+  stroke-width: 2.5 !important;
 }
 
 .sidebar-link.active .sidebar-link-chevron {

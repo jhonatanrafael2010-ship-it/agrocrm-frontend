@@ -1,5 +1,5 @@
 /* =========================================================
-💎 KPI CARDS PREMIUM — Paleta executiva
+💎 KPI CARDS PREMIUM — NutriCRM
 ========================================================= */
 
 .kpi-card {
@@ -29,7 +29,7 @@
   border-color: rgba(15, 61, 46, 0.15);
 }
 
-/* Barra colorida lateral esquerda */
+/* Barra colorida lateral */
 .kpi-card::before {
   content: "";
   position: absolute;
@@ -41,93 +41,72 @@
 }
 
 /* =========================================================
-🎨 Variantes — cada uma com cor de acento
+🎨 Variantes — fundo SUAVE + ícone CONTRASTANTE escuro
 ========================================================= */
 
-/* Verde escuro — principal */
+/* Verde escuro premium */
 .kpi-emerald::before {
   background: linear-gradient(180deg, #0F3D2E, #166534);
 }
 .kpi-emerald .kpi-card-icon {
-  background: linear-gradient(135deg, #0F3D2E, #166534);
-  color: #ffffff;
-}
-.kpi-emerald .kpi-card-glow {
-  background: radial-gradient(circle, rgba(15, 61, 46, 0.1) 0%, transparent 70%);
+  background: rgba(15, 61, 46, 0.08);
+  color: #0F3D2E;
+  border: 1.5px solid rgba(15, 61, 46, 0.25);
 }
 
-/* Azul petróleo — secundária */
+/* Azul petróleo */
 .kpi-blue::before {
   background: linear-gradient(180deg, #12343B, #1e4a52);
 }
 .kpi-blue .kpi-card-icon {
-  background: linear-gradient(135deg, #12343B, #1e4a52);
-  color: #ffffff;
-}
-.kpi-blue .kpi-card-glow {
-  background: radial-gradient(circle, rgba(18, 52, 59, 0.1) 0%, transparent 70%);
+  background: rgba(18, 52, 59, 0.08);
+  color: #12343B;
+  border: 1.5px solid rgba(18, 52, 59, 0.25);
 }
 
-/* Champagne dourado — premium */
+/* Champagne dourado */
 .kpi-amber::before {
   background: linear-gradient(180deg, #C9A227, #a8871e);
 }
 .kpi-amber .kpi-card-icon {
-  background: linear-gradient(135deg, #C9A227, #a8871e);
-  color: #ffffff;
-}
-.kpi-amber .kpi-card-glow {
-  background: radial-gradient(circle, rgba(201, 162, 39, 0.12) 0%, transparent 70%);
+  background: rgba(201, 162, 39, 0.12);
+  color: #8F7318;
+  border: 1.5px solid rgba(201, 162, 39, 0.4);
 }
 
-/* Grafite — sóbria */
+/* Grafite */
 .kpi-violet::before {
   background: linear-gradient(180deg, #1F2937, #374151);
 }
 .kpi-violet .kpi-card-icon {
-  background: linear-gradient(135deg, #1F2937, #374151);
-  color: #ffffff;
-}
-.kpi-violet .kpi-card-glow {
-  background: radial-gradient(circle, rgba(31, 41, 55, 0.08) 0%, transparent 70%);
+  background: rgba(31, 41, 55, 0.08);
+  color: #1F2937;
+  border: 1.5px solid rgba(31, 41, 55, 0.25);
 }
 
-/* Vermelho fechado — alerta */
+/* Vermelho fechado */
 .kpi-rose::before {
   background: linear-gradient(180deg, #B91C1C, #991b1b);
 }
 .kpi-rose .kpi-card-icon {
-  background: linear-gradient(135deg, #B91C1C, #991b1b);
-  color: #ffffff;
-}
-.kpi-rose .kpi-card-glow {
-  background: radial-gradient(circle, rgba(185, 28, 28, 0.08) 0%, transparent 70%);
+  background: rgba(185, 28, 28, 0.08);
+  color: #B91C1C;
+  border: 1.5px solid rgba(185, 28, 28, 0.25);
 }
 
-/* Verde técnico — sucesso */
+/* Verde técnico */
 .kpi-teal::before {
   background: linear-gradient(180deg, #166534, #14532d);
 }
 .kpi-teal .kpi-card-icon {
-  background: linear-gradient(135deg, #166534, #14532d);
-  color: #ffffff;
-}
-.kpi-teal .kpi-card-glow {
-  background: radial-gradient(circle, rgba(22, 101, 52, 0.1) 0%, transparent 70%);
+  background: rgba(22, 101, 52, 0.10);
+  color: #166534;
+  border: 1.5px solid rgba(22, 101, 52, 0.3);
 }
 
-/* =========================================================
-✨ Elementos decorativos
-========================================================= */
+/* Glow desativado */
 .kpi-card-glow {
-  position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .kpi-card-pattern {
@@ -143,17 +122,27 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .kpi-card-icon {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(15, 61, 46, 0.15);
+  border-radius: 13px;
+  box-shadow: 0 2px 6px rgba(15, 61, 46, 0.08);
+  transition: all 0.25s ease;
+}
+
+.kpi-card-icon svg {
+  stroke-width: 2.4;
+}
+
+.kpi-card:hover .kpi-card-icon {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(15, 61, 46, 0.18);
 }
 
 .kpi-card-trend {
@@ -189,7 +178,7 @@
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.8px;
-  color: #1F2937;
+  color: #0F172A;
   margin-bottom: 6px;
   font-feature-settings: "tnum";
 }
@@ -226,7 +215,7 @@
   }
 
   .kpi-card-icon {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
   }
 }
