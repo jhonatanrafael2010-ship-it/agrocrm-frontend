@@ -1,5 +1,6 @@
 /* =========================================================
-🌿 THEME-PREMIUM.CSS — AgroCRM Linguagem Visual Premium
+🌿 THEME-PREMIUM.CSS — AgroCRM Linguagem Visual Premium v2
+Refinamento: hierarquia, respiro, KPIs, microinterações
 ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
@@ -31,9 +32,13 @@ body[data-theme='light'] {
   --warning: #B45309;
   --warning-soft: rgba(180, 83, 9, 0.12);
 
+  --info: #1E40AF;
+  --info-soft: rgba(30, 64, 175, 0.10);
+
   --bg: #F5F1E8;
   --panel: #FFFFFF;
   --panel-soft: #FAF7EF;
+  --panel-elevated: #FDFCF7;
 
   --text: #1F2937;
   --text-strong: #0F172A;
@@ -42,8 +47,9 @@ body[data-theme='light'] {
 
   --border: rgba(15, 61, 46, 0.10);
   --border-strong: rgba(15, 61, 46, 0.18);
-  --shadow: rgba(15, 61, 46, 0.08);
-  --shadow-md: rgba(15, 61, 46, 0.12);
+  --shadow: rgba(15, 61, 46, 0.06);
+  --shadow-md: rgba(15, 61, 46, 0.10);
+  --shadow-lg: rgba(15, 61, 46, 0.16);
 
   --accent: var(--primary);
   --accent-hover: var(--primary-hover);
@@ -52,6 +58,11 @@ body[data-theme='light'] {
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 }
 
 html[data-theme='dark'],
@@ -68,6 +79,7 @@ body[data-theme='dark'] {
   --bg: #0B1620;
   --panel: #131E29;
   --panel-soft: #1A2632;
+  --panel-elevated: #1F2C3A;
   --text: #E5E7EB;
   --text-strong: #F9FAFB;
   --muted: #9CA3AF;
@@ -75,6 +87,7 @@ body[data-theme='dark'] {
   --border-strong: rgba(255, 255, 255, 0.14);
   --shadow: rgba(0, 0, 0, 0.35);
   --shadow-md: rgba(0, 0, 0, 0.45);
+  --shadow-lg: rgba(0, 0, 0, 0.55);
   --accent: var(--primary);
   --accent-hover: var(--primary-hover);
 }
@@ -89,6 +102,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.005em;
   color: var(--text);
+  background: var(--bg) !important;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -122,19 +136,35 @@ small, .small {
   font-size: 0.78rem !important;
 }
 
+/* Texto verde antigo → grafite premium */
+.text-success {
+  color: var(--text-strong) !important;
+}
+
+/* Texto secundário sempre cinza médio */
+.text-secondary,
+[style*="var(--text-secondary)"] {
+  color: var(--muted) !important;
+}
+
 /* =========================================================
-🃏 Cards
+🃏 CARDS PREMIUM — sombras, hover refinado
 ========================================================= */
 .card {
   background: var(--panel) !important;
   border: 1px solid var(--border) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 1px 3px var(--shadow);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  border-radius: var(--radius-lg) !important;
+  box-shadow:
+    0 1px 2px var(--shadow),
+    0 1px 3px var(--shadow);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px var(--shadow-md);
+  box-shadow:
+    0 4px 8px var(--shadow-md),
+    0 8px 24px var(--shadow);
+  border-color: var(--border-strong) !important;
 }
 
 .card-header {
@@ -142,11 +172,78 @@ small, .small {
   border-bottom: 1px solid var(--border) !important;
   font-weight: 600 !important;
   color: var(--text-strong) !important;
-  border-radius: 14px 14px 0 0 !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
 }
 
 /* =========================================================
-🔝 Topbar
+📊 KPI CARDS — Dashboard (refinamento premium)
+========================================================= */
+.kpi-card,
+.dashboard-kpi-card,
+.row.g-3 > [class*="col-"] > .card {
+  position: relative;
+  overflow: hidden;
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 18px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kpi-card::before,
+.row.g-3 > [class*="col-"] > .card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  opacity: 0.85;
+}
+
+.kpi-card:hover,
+.row.g-3 > [class*="col-"] > .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px var(--shadow-md);
+  border-color: var(--primary-medium) !important;
+}
+
+/* Variantes de cor do KPICard (mantém handler) */
+.kpi-card[data-variant="blue"]::before,
+.kpi-card.variant-blue::before { background: var(--info); }
+.kpi-card[data-variant="emerald"]::before,
+.kpi-card.variant-emerald::before { background: var(--primary); }
+.kpi-card[data-variant="teal"]::before,
+.kpi-card.variant-teal::before { background: var(--secondary); }
+.kpi-card[data-variant="amber"]::before,
+.kpi-card.variant-amber::before { background: var(--gold); }
+.kpi-card[data-variant="violet"]::before,
+.kpi-card.variant-violet::before { background: #6D28D9; }
+.kpi-card[data-variant="rose"]::before,
+.kpi-card.variant-rose::before { background: var(--danger); }
+
+/* Ícones dos KPIs */
+.kpi-card svg,
+.dashboard-kpi-card svg {
+  color: var(--primary) !important;
+  opacity: 0.9;
+}
+
+/* Números grandes nos KPIs */
+.kpi-card .fs-3,
+.kpi-card .fs-4,
+.kpi-card .fs-5,
+.row.g-3 .fs-3,
+.row.g-3 .fs-5 {
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  color: var(--text-strong) !important;
+  letter-spacing: -0.03em;
+}
+
+/* =========================================================
+🔝 TOPBAR
 ========================================================= */
 .topbar-premium {
   background: rgba(245, 241, 232, 0.92) !important;
@@ -243,7 +340,10 @@ html[data-theme='dark'] .topbar-premium {
   border: 1px solid var(--border) !important;
 }
 
-.sidebar-link:hover { background: var(--panel) !important; color: var(--primary) !important; }
+.sidebar-link:hover {
+  background: var(--panel) !important;
+  color: var(--primary) !important;
+}
 
 .sidebar-link:hover .sidebar-link-icon {
   background: var(--primary-soft) !important;
@@ -291,7 +391,10 @@ html[data-theme='dark'] .topbar-premium {
 .sidebar-user-name { color: var(--text-strong) !important; font-weight: 600 !important; }
 .sidebar-user-role { color: var(--muted) !important; }
 .sidebar-user-settings { color: var(--muted) !important; }
-.sidebar-user-settings:hover { background: var(--primary-soft) !important; color: var(--primary) !important; }
+.sidebar-user-settings:hover {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
 
 .sidebar-logout {
   background: var(--panel) !important;
@@ -307,19 +410,30 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🔘 BOTÕES PREMIUM — Equilíbrio refinado
+🔘 BOTÕES PREMIUM
 ========================================================= */
 .btn,
 button.btn {
   font-family: var(--font-sans) !important;
   font-weight: 600 !important;
-  border-radius: 9px !important;
+  border-radius: var(--radius-sm) !important;
   letter-spacing: 0.01em;
   transition: all 0.2s ease !important;
   box-shadow: 0 1px 2px var(--shadow);
+  padding: 8px 16px !important;
 }
 
-/* Primary / Success / Save — verde escuro premium */
+.btn-sm {
+  padding: 6px 12px !important;
+  font-size: 0.85rem !important;
+}
+
+.btn-lg {
+  padding: 12px 24px !important;
+  font-size: 1rem !important;
+}
+
+/* Primary / Success / Save */
 .btn-primary,
 .btn-success,
 button.btn-save {
@@ -338,7 +452,7 @@ button.btn-save:hover {
   box-shadow: 0 4px 10px var(--shadow-md) !important;
 }
 
-/* Outline primary/success */
+/* Outline */
 .btn-outline-primary,
 .btn-outline-success {
   background: transparent !important;
@@ -350,9 +464,10 @@ button.btn-save:hover {
 .btn-outline-success:hover {
   background: var(--primary) !important;
   color: #fff !important;
+  transform: translateY(-1px);
 }
 
-/* Cancelar / Secondary — cinza claro com texto escuro (não preto) */
+/* Cancelar / Secondary */
 .btn-secondary,
 .btn-cancel,
 button.btn-secondary {
@@ -370,7 +485,7 @@ button.btn-secondary:hover {
   color: var(--text-strong) !important;
 }
 
-/* Danger / Delete sólidos */
+/* Danger */
 .btn-danger,
 .btn-delete {
   background: var(--danger) !important;
@@ -395,8 +510,20 @@ button.btn-secondary:hover {
   color: #fff !important;
 }
 
+.btn-outline-light {
+  background: var(--panel-soft) !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+.btn-outline-light:hover {
+  background: var(--panel) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
 /* =========================================================
-✏️🗑️ Botões de ação em tabela / cards — meio-termo
+✏️🗑️ Botões de ação em tabelas
 ========================================================= */
 .table .btn-outline-primary,
 .table .btn-outline-success,
@@ -426,7 +553,7 @@ button.btn-secondary:hover {
   color: #fff !important;
 }
 
-/* Mesmos botões em cards Kanban (Oportunidades) */
+/* Kanban Oportunidades */
 .opportunities-page .btn-outline-primary,
 [class*="kanban"] .btn-outline-primary {
   background: var(--success-medium) !important;
@@ -446,9 +573,7 @@ button.btn-secondary:hover {
   color: var(--danger) !important;
 }
 
-/* =========================================================
-🔄 Sincronizar agora / Limpar — botões header calendário
-========================================================= */
+/* Calendário */
 .calendar-page .btn-success,
 .calendar-page button.btn-success {
   background: var(--primary) !important;
@@ -469,7 +594,7 @@ button.btn-secondary:hover {
 🪟 MODAIS PREMIUM
 ========================================================= */
 .modal-content {
-  border-radius: 18px !important;
+  border-radius: var(--radius-xl) !important;
   border: 1px solid var(--border) !important;
   background: var(--panel) !important;
   box-shadow: 0 24px 64px rgba(15, 61, 46, 0.25) !important;
@@ -513,7 +638,6 @@ button.btn-secondary:hover {
   gap: 8px;
 }
 
-/* Botões dentro do modal — Cancelar visível mas não preto */
 .modal-footer .btn-secondary,
 .modal-footer .btn-cancel,
 .modal-body .btn-secondary,
@@ -523,7 +647,6 @@ button.btn-secondary {
   border: 1px solid var(--border-strong) !important;
 }
 
-/* Botão PDF dentro do modal */
 .modal-body .btn-light,
 .modal-footer .btn-light,
 button.btn-light {
@@ -537,17 +660,25 @@ button.btn-light {
   background: #DDD4BF !important;
 }
 
-/* Botões abas dentro modal: Dados/Produtos/Fotos */
 .modal-body .btn-success {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
 }
 
-/* Botão Editar (lápis) em fotos — verde escuro */
 .modal-body .btn-success[class*="edit"],
-.modal-body button[title*="editar" i],
 .modal-body button[title*="editar" i] {
   background: var(--primary) !important;
+}
+
+/* btn-close visível no fundo claro */
+.btn-close,
+.btn-close-white {
+  filter: invert(20%) sepia(15%) !important;
+  opacity: 0.6 !important;
+}
+
+.btn-close:hover {
+  opacity: 1 !important;
 }
 
 /* =========================================================
@@ -566,7 +697,7 @@ select {
   background: var(--panel) !important;
   border: 1.5px solid var(--border-strong) !important;
   color: var(--text) !important;
-  border-radius: 9px !important;
+  border-radius: var(--radius-sm) !important;
   padding: 9px 12px !important;
   font-family: var(--font-sans) !important;
   font-size: 0.9rem !important;
@@ -587,6 +718,12 @@ input::placeholder,
 textarea::placeholder {
   color: var(--muted) !important;
   opacity: 0.7;
+}
+
+.form-control-sm,
+.form-select-sm {
+  padding: 6px 10px !important;
+  font-size: 0.85rem !important;
 }
 
 /* =========================================================
@@ -630,7 +767,7 @@ textarea::placeholder {
 }
 
 /* =========================================================
-🏷️ Badges
+🏷️ BADGES
 ========================================================= */
 .badge {
   font-family: var(--font-sans) !important;
@@ -646,6 +783,22 @@ textarea::placeholder {
   background: var(--success-soft) !important;
   color: var(--success) !important;
   border: 1px solid var(--success-soft);
+}
+
+.badge.bg-secondary {
+  background: var(--secondary-soft) !important;
+  color: var(--secondary) !important;
+  border: 1px solid var(--border);
+}
+
+.badge.bg-warning {
+  background: var(--warning-soft) !important;
+  color: var(--warning) !important;
+}
+
+.badge.bg-danger {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
 }
 
 /* =========================================================
@@ -668,7 +821,7 @@ textarea::placeholder {
   border: 1px solid var(--border-strong) !important;
   color: var(--text) !important;
   font-weight: 600 !important;
-  border-radius: 8px !important;
+  border-radius: var(--radius-sm) !important;
   padding: 6px 14px !important;
   box-shadow: 0 1px 2px var(--shadow);
   text-transform: capitalize !important;
@@ -726,7 +879,7 @@ textarea::placeholder {
 }
 
 .calendar-page .visit-card {
-  border-radius: 8px !important;
+  border-radius: var(--radius-sm) !important;
   padding: 6px 9px !important;
   font-size: 0.75rem !important;
   font-weight: 500 !important;
@@ -800,6 +953,38 @@ input[type="month"]::-webkit-calendar-picker-indicator {
 }
 
 /* =========================================================
+📈 GRÁFICO Dashboard
+========================================================= */
+.chart-container svg rect[fill*="barGradient"] {
+  filter: drop-shadow(0 2px 4px var(--shadow));
+}
+
+/* Tooltip do gráfico */
+.chart-container .position-absolute {
+  background: var(--text-strong) !important;
+  color: #fff !important;
+  border: 1px solid var(--gold) !important;
+  border-radius: 6px !important;
+  font-family: var(--font-sans) !important;
+  box-shadow: 0 4px 12px var(--shadow-md) !important;
+}
+
+/* =========================================================
+📋 LISTAS premium
+========================================================= */
+.list-group-item {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  padding: 12px 16px !important;
+  transition: background 0.15s ease;
+}
+
+.list-group-item:hover {
+  background: var(--primary-soft) !important;
+}
+
+/* =========================================================
 🎯 Bootstrap sync
 ========================================================= */
 [data-bs-theme='light'],
@@ -817,4 +1002,38 @@ input[type="month"]::-webkit-calendar-picker-indicator {
 
 [data-sonner-toaster] {
   font-family: var(--font-sans) !important;
+}
+
+/* =========================================================
+✨ MICROINTERAÇÕES
+========================================================= */
+.btn:active {
+  transform: scale(0.98) !important;
+}
+
+.card,
+.list-group-item,
+.btn,
+.form-control,
+.form-select {
+  will-change: transform;
+}
+
+/* Scrollbar premium */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-soft);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
