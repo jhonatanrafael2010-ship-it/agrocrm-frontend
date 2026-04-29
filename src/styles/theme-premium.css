@@ -1,7 +1,5 @@
 /* =========================================================
 🌿 THEME-PREMIUM.CSS — AgroCRM Linguagem Visual Premium
-Paleta: Verde escuro + Off-white + Champagne
-Inclui: tipografia, modais, calendário, tabelas, botões
 ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
@@ -12,6 +10,7 @@ body[data-theme='light'] {
   --primary: #0F3D2E;
   --primary-hover: #14543F;
   --primary-soft: rgba(15, 61, 46, 0.08);
+  --primary-medium: rgba(15, 61, 46, 0.18);
 
   --secondary: #12343B;
   --secondary-soft: rgba(18, 52, 59, 0.08);
@@ -23,9 +22,11 @@ body[data-theme='light'] {
 
   --success: #166534;
   --success-soft: rgba(22, 101, 52, 0.12);
+  --success-medium: rgba(22, 101, 52, 0.22);
 
   --danger: #B91C1C;
   --danger-soft: rgba(185, 28, 28, 0.10);
+  --danger-medium: rgba(185, 28, 28, 0.20);
 
   --warning: #B45309;
   --warning-soft: rgba(180, 83, 9, 0.12);
@@ -79,7 +80,7 @@ body[data-theme='dark'] {
 }
 
 /* =========================================================
-🔤 TIPOGRAFIA PREMIUM — Hierarquia profissional
+🔤 TIPOGRAFIA
 ========================================================= */
 body {
   font-family: var(--font-sans) !important;
@@ -109,10 +110,6 @@ h4, .h4 { font-size: 1rem !important; }
 .fw-bold { font-weight: 700 !important; }
 .fw-semibold { font-weight: 600 !important; }
 
-p, span, div, td, th, label, input, select, textarea, button {
-  font-family: var(--font-sans);
-}
-
 label, .form-label {
   font-weight: 600 !important;
   font-size: 0.82rem !important;
@@ -121,7 +118,7 @@ label, .form-label {
   margin-bottom: 6px !important;
 }
 
-small, .small, .text-secondary {
+small, .small {
   font-size: 0.78rem !important;
 }
 
@@ -207,7 +204,7 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🧭 SIDEBAR — Tom creme + ícone ativo dourado
+🧭 SIDEBAR
 ========================================================= */
 .sidebar-premium {
   background: var(--bg) !important;
@@ -310,7 +307,7 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🔘 BOTÕES PREMIUM — Override gradientes verde claro
+🔘 BOTÕES PREMIUM — Equilíbrio refinado
 ========================================================= */
 .btn,
 button.btn {
@@ -322,10 +319,10 @@ button.btn {
   box-shadow: 0 1px 2px var(--shadow);
 }
 
+/* Primary / Success / Save — verde escuro premium */
 .btn-primary,
 .btn-success,
-button.btn-save,
-.btn:not(.btn-outline-primary):not(.btn-outline-success):not(.btn-outline-danger):not(.btn-outline-secondary):not(.btn-cancel):not(.btn-secondary):not(.btn-danger):not(.btn-delete):not(.btn-light):not(.btn-warning):not(.btn-info) {
+button.btn-save {
   background: var(--primary) !important;
   background-image: none !important;
   border: 1px solid var(--primary) !important;
@@ -341,6 +338,7 @@ button.btn-save:hover {
   box-shadow: 0 4px 10px var(--shadow-md) !important;
 }
 
+/* Outline primary/success */
 .btn-outline-primary,
 .btn-outline-success {
   background: transparent !important;
@@ -354,24 +352,36 @@ button.btn-save:hover {
   color: #fff !important;
 }
 
+/* Cancelar / Secondary — cinza claro com texto escuro (não preto) */
 .btn-secondary,
-.btn-cancel {
-  background: var(--panel) !important;
+.btn-cancel,
+button.btn-secondary {
+  background: #E8E2D3 !important;
+  background-image: none !important;
   border: 1px solid var(--border-strong) !important;
   color: var(--text) !important;
 }
 
 .btn-secondary:hover,
-.btn-cancel:hover {
-  background: var(--panel-soft) !important;
+.btn-cancel:hover,
+button.btn-secondary:hover {
+  background: #DDD4BF !important;
   border-color: var(--primary) !important;
+  color: var(--text-strong) !important;
 }
 
+/* Danger / Delete sólidos */
 .btn-danger,
 .btn-delete {
   background: var(--danger) !important;
   border-color: var(--danger) !important;
   color: #fff !important;
+}
+
+.btn-danger:hover,
+.btn-delete:hover {
+  background: #991717 !important;
+  border-color: #991717 !important;
 }
 
 .btn-outline-danger {
@@ -383,6 +393,76 @@ button.btn-save:hover {
 .btn-outline-danger:hover {
   background: var(--danger) !important;
   color: #fff !important;
+}
+
+/* =========================================================
+✏️🗑️ Botões de ação em tabela / cards — meio-termo
+========================================================= */
+.table .btn-outline-primary,
+.table .btn-outline-success,
+.table-responsive .btn-outline-primary,
+.table-responsive .btn-outline-success {
+  background: var(--success-medium) !important;
+  border: 1px solid var(--success) !important;
+  color: var(--success) !important;
+  padding: 7px 11px !important;
+}
+
+.table .btn-outline-primary:hover,
+.table .btn-outline-success:hover {
+  background: var(--success) !important;
+  color: #fff !important;
+}
+
+.table .btn-outline-danger {
+  background: var(--danger-medium) !important;
+  border: 1px solid var(--danger) !important;
+  color: var(--danger) !important;
+  padding: 7px 11px !important;
+}
+
+.table .btn-outline-danger:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+}
+
+/* Mesmos botões em cards Kanban (Oportunidades) */
+.opportunities-page .btn-outline-primary,
+[class*="kanban"] .btn-outline-primary {
+  background: var(--success-medium) !important;
+  border: 1px solid var(--success) !important;
+  color: var(--success) !important;
+}
+
+.opportunities-page .btn-outline-primary:hover {
+  background: var(--success) !important;
+  color: #fff !important;
+}
+
+.opportunities-page .btn-outline-danger,
+[class*="kanban"] .btn-outline-danger {
+  background: var(--danger-medium) !important;
+  border: 1px solid var(--danger) !important;
+  color: var(--danger) !important;
+}
+
+/* =========================================================
+🔄 Sincronizar agora / Limpar — botões header calendário
+========================================================= */
+.calendar-page .btn-success,
+.calendar-page button.btn-success {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.calendar-page .btn-secondary,
+.calendar-page button.btn-secondary,
+.calendar-page button[class*="limpar"],
+.calendar-page .btn-cancel {
+  background: #E8E2D3 !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text-strong) !important;
 }
 
 /* =========================================================
@@ -433,11 +513,41 @@ button.btn-save:hover {
   gap: 8px;
 }
 
-/* Botões de aba dentro de modais (Dados/Produtos/Fotos) */
-.modal-body .btn-success,
-.modal-body button.btn-success {
+/* Botões dentro do modal — Cancelar visível mas não preto */
+.modal-footer .btn-secondary,
+.modal-footer .btn-cancel,
+.modal-body .btn-secondary,
+button.btn-secondary {
+  background: #E8E2D3 !important;
+  color: var(--text-strong) !important;
+  border: 1px solid var(--border-strong) !important;
+}
+
+/* Botão PDF dentro do modal */
+.modal-body .btn-light,
+.modal-footer .btn-light,
+button.btn-light {
+  background: #E8E2D3 !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--text-strong) !important;
+}
+
+.modal-body .btn-light:hover,
+.modal-footer .btn-light:hover {
+  background: #DDD4BF !important;
+}
+
+/* Botões abas dentro modal: Dados/Produtos/Fotos */
+.modal-body .btn-success {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
+}
+
+/* Botão Editar (lápis) em fotos — verde escuro */
+.modal-body .btn-success[class*="edit"],
+.modal-body button[title*="editar" i],
+.modal-body button[title*="editar" i] {
+  background: var(--primary) !important;
 }
 
 /* =========================================================
@@ -519,7 +629,9 @@ textarea::placeholder {
   background: var(--panel-soft) !important;
 }
 
-/* Badges em tabela */
+/* =========================================================
+🏷️ Badges
+========================================================= */
 .badge {
   font-family: var(--font-sans) !important;
   font-weight: 600 !important;
@@ -536,39 +648,10 @@ textarea::placeholder {
   border: 1px solid var(--success-soft);
 }
 
-/* Botões ações pequenos em tabela (editar/excluir verdes claros) */
-.table .btn-outline-primary,
-.table .btn-outline-success {
-  background: var(--primary-soft) !important;
-  border: 1px solid var(--primary-soft) !important;
-  color: var(--primary) !important;
-  padding: 6px 9px !important;
-  background-image: none !important;
-}
-
-.table .btn-outline-primary:hover {
-  background: var(--primary) !important;
-  color: #fff !important;
-}
-
-.table .btn-outline-danger {
-  background: var(--danger-soft) !important;
-  border: 1px solid var(--danger-soft) !important;
-  color: var(--danger) !important;
-  padding: 6px 9px !important;
-}
-
-.table .btn-outline-danger:hover {
-  background: var(--danger) !important;
-  color: #fff !important;
-}
-
 /* =========================================================
-📅 CALENDÁRIO PREMIUM
+📅 CALENDÁRIO
 ========================================================= */
-.calendar-page {
-  font-family: var(--font-sans) !important;
-}
+.calendar-page { font-family: var(--font-sans) !important; }
 
 .calendar-page h2,
 .calendar-page .h2 {
@@ -578,7 +661,6 @@ textarea::placeholder {
   -webkit-text-fill-color: var(--text-strong) !important;
 }
 
-/* Botões de navegação calendário */
 .fc .fc-button,
 .fc .fc-button-primary {
   background: var(--panel) !important;
@@ -629,9 +711,7 @@ textarea::placeholder {
   border-color: var(--border) !important;
 }
 
-.fc .fc-day-today {
-  background: var(--gold-soft) !important;
-}
+.fc .fc-day-today { background: var(--gold-soft) !important; }
 
 .fc .fc-day-today .fc-daygrid-day-number {
   color: var(--gold-dark) !important;
@@ -645,7 +725,6 @@ textarea::placeholder {
   font-size: 0.85rem;
 }
 
-/* Cards das visitas — cores sóbrias premium */
 .calendar-page .visit-card {
   border-radius: 8px !important;
   padding: 6px 9px !important;
@@ -655,34 +734,6 @@ textarea::placeholder {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Visitas concluídas — verde técnico sóbrio */
-.calendar-page .visit-card[style*="rgb(34, 197, 94)"],
-.calendar-page .visit-card[style*="#22c55e"],
-.calendar-page .visit-card[style*="22c55e"],
-.calendar-page .visit-card[style*="green"] {
-  background: var(--success) !important;
-  background-color: var(--success) !important;
-}
-
-/* Visitas atrasadas — vermelho fechado */
-.calendar-page .visit-card[style*="rgb(239, 68, 68)"],
-.calendar-page .visit-card[style*="#ef4444"],
-.calendar-page .visit-card[style*="ef4444"],
-.calendar-page .visit-card[style*="red"] {
-  background: var(--danger) !important;
-  background-color: var(--danger) !important;
-}
-
-/* Filtros calendário */
-.calendar-page .calendar-filter,
-.calendar-page input[type="text"],
-.calendar-page select {
-  background: var(--panel) !important;
-  border: 1.5px solid var(--border-strong) !important;
-  color: var(--text) !important;
-}
-
-/* "mais +N" link dos eventos */
 .fc .fc-daygrid-more-link {
   color: var(--primary) !important;
   font-weight: 600 !important;
@@ -690,23 +741,20 @@ textarea::placeholder {
 }
 
 /* =========================================================
-📋 ACOMPANHAMENTOS — Cards visita
+📋 ACOMPANHAMENTOS
 ========================================================= */
-/* Banner verde claro (concluído) — virou verde escuro premium */
 [class*="visits-page"] .bg-success,
 [class*="visits-page"] .bg-success-subtle {
   background: var(--primary) !important;
   color: #fff !important;
 }
 
-/* Cards de visita listados com fundo verde claro saturado */
 .visits-page .card,
 .visits-list .card {
   background: var(--panel) !important;
   border: 1px solid var(--border) !important;
 }
 
-/* Botões Ver / Exportar PDF */
 .visits-page .btn-success,
 .visits-list .btn-success {
   background: var(--primary) !important;
@@ -729,7 +777,7 @@ textarea::placeholder {
 }
 
 /* =========================================================
-📅 INPUTS DATE/MONTH com ícone calendário verde
+📅 Inputs date
 ========================================================= */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator {
@@ -767,23 +815,6 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   --bs-font-sans-serif: var(--font-sans);
 }
 
-/* =========================================================
-💬 TOASTS / Sonner
-========================================================= */
 [data-sonner-toaster] {
   font-family: var(--font-sans) !important;
-}
-
-/* =========================================================
-🔁 Barra de filtros / faixas verde claro nas páginas
-========================================================= */
-.dashboard-filters,
-[style*="background: linear-gradient"] {
-  /* Não força aqui — só onde tem gradiente verde claro inline conhecido */
-}
-
-/* Inputs date no Dashboard com fundo verde claro */
-.dashboard-page input[type="date"],
-.dashboard-page input[type="month"] {
-  background: var(--panel) !important;
 }
