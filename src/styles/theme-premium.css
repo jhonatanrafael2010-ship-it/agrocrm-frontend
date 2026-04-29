@@ -1,6 +1,5 @@
 /* =========================================================
 🌿 THEME-PREMIUM.CSS — AgroCRM Linguagem Visual Premium
-Paleta: Verde escuro + Off-white + Champagne
 ========================================================= */
 
 :root,
@@ -89,20 +88,41 @@ body[data-theme='dark'] {
 }
 
 /* =========================================================
-📊 Cards KPI Dashboard — Ícones com fundo creme + ícone verde escuro
+💎 KPI CARDS — Correção contraste ícones
 ========================================================= */
-.card .fs-3 {
-  width: 56px;
-  height: 56px;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg) !important;
-  border: 1.5px solid var(--border-strong);
-  border-radius: 12px;
-  margin: 0 auto 12px;
-  font-size: 1.6rem !important;
-  box-shadow: inset 0 1px 2px var(--shadow);
+
+/* Remove glow que apaga ícones */
+.kpi-card-glow {
+  display: none !important;
+}
+
+/* Ícone maior, sombra forte, contraste garantido */
+.kpi-card .kpi-card-icon {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 16px rgba(15, 61, 46, 0.25) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+.kpi-card .kpi-card-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+  stroke-width: 2.4 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Ícone amber: precisa contraste maior — cor escura forte */
+.kpi-amber .kpi-card-icon {
+  background: linear-gradient(135deg, #C9A227, #8F7318) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Hover do card eleva ícone */
+.kpi-card:hover .kpi-card-icon {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(15, 61, 46, 0.35) !important;
+  transition: all 0.25s ease;
 }
 
 /* =========================================================
@@ -183,11 +203,11 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--text) !important;
 }
 
-/* Logo: fundo branco card */
+/* Logo: fundo creme uniforme */
 .sidebar-brand {
   border-bottom: 1px solid var(--border) !important;
-  background: var(--panel) !important;
-  padding: 18px 16px !important;
+  background: var(--bg) !important;
+  padding: 20px 16px !important;
   margin: 0 !important;
 }
 
@@ -196,7 +216,6 @@ html[data-theme='dark'] .topbar-premium {
   width: 170px !important;
 }
 
-/* Títulos seções: verde escuro */
 .sidebar-section-title {
   color: var(--primary) !important;
   letter-spacing: 1.4px !important;
@@ -205,7 +224,6 @@ html[data-theme='dark'] .topbar-premium {
   opacity: 0.7 !important;
 }
 
-/* Links: texto grafite */
 .sidebar-link {
   color: var(--text) !important;
   font-weight: 500 !important;
@@ -228,7 +246,6 @@ html[data-theme='dark'] .topbar-premium {
   border-color: var(--primary) !important;
 }
 
-/* Item ativo: verde escuro destaque com dourado */
 .sidebar-link.active {
   background: var(--primary) !important;
   color: #fff !important;
@@ -251,7 +268,6 @@ html[data-theme='dark'] .topbar-premium {
   background: var(--gold) !important;
 }
 
-/* Card usuário */
 .sidebar-user {
   background: var(--panel) !important;
   border: 1px solid var(--border) !important;
@@ -282,7 +298,6 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--primary) !important;
 }
 
-/* Botão Sair */
 .sidebar-logout {
   background: var(--panel) !important;
   border: 1px solid var(--danger-soft) !important;
@@ -351,7 +366,7 @@ textarea:focus,
 }
 
 /* =========================================================
-🚫 Override botões verde claro
+🚫 Override botões
 ========================================================= */
 .btn-primary,
 .btn-success,
