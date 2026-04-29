@@ -7,122 +7,79 @@ Importar APÓS theme-base.css e theme-agrocrm.css
 :root,
 html[data-theme='light'],
 body[data-theme='light'] {
-  /* ---- Paleta Premium ---- */
-  --primary: #0F3D2E;          /* Verde escuro premium */
+  --primary: #0F3D2E;
   --primary-hover: #14543F;
   --primary-soft: rgba(15, 61, 46, 0.08);
 
-  --secondary: #12343B;        /* Azul petróleo */
+  --secondary: #12343B;
   --secondary-soft: rgba(18, 52, 59, 0.08);
 
-  --gold: #C9A227;             /* Champagne / dourado */
-  --gold-soft: rgba(201, 162, 39, 0.12);
+  --gold: #C9A227;
+  --gold-light: #E0B83A;
+  --gold-soft: rgba(201, 162, 39, 0.15);
 
-  --success: #166534;          /* Verde técnico */
+  --success: #166534;
   --success-soft: rgba(22, 101, 52, 0.12);
 
-  --danger: #B91C1C;           /* Vermelho fechado */
+  --danger: #B91C1C;
   --danger-soft: rgba(185, 28, 28, 0.10);
 
   --warning: #B45309;
   --warning-soft: rgba(180, 83, 9, 0.12);
 
-  /* ---- Superfícies ---- */
-  --bg: #F5F1E8;               /* Off-white sofisticado */
-  --panel: #FFFFFF;            /* Cards brancos */
-  --panel-soft: #FAF7EF;       /* Variação suave */
+  --bg: #F5F1E8;
+  --panel: #FFFFFF;
+  --panel-soft: #FAF7EF;
 
-  /* ---- Texto ---- */
-  --text: #1F2937;             /* Grafite */
+  --text: #1F2937;
   --text-strong: #0F172A;
-  --muted: #6B7280;            /* Cinza médio */
+  --muted: #6B7280;
   --text-secondary: var(--muted);
 
-  /* ---- Bordas e sombras ---- */
   --border: rgba(15, 61, 46, 0.10);
   --border-strong: rgba(15, 61, 46, 0.18);
   --shadow: rgba(15, 61, 46, 0.08);
   --shadow-md: rgba(15, 61, 46, 0.12);
 
-  /* ---- Compatibilidade legado ---- */
   --accent: var(--primary);
   --accent-hover: var(--primary-hover);
   --accent-light: #1A6B4F;
   --input-bg: var(--panel);
 }
 
-/* =========================================================
-🌑 Tema escuro premium (mantém identidade)
-========================================================= */
 html[data-theme='dark'],
 body[data-theme='dark'] {
   --primary: #1F8B6B;
   --primary-hover: #26A07F;
   --primary-soft: rgba(31, 139, 107, 0.15);
-
   --secondary: #1B4A52;
   --gold: #D4B445;
+  --gold-light: #E8C95A;
   --gold-soft: rgba(212, 180, 69, 0.15);
-
   --success: #22C55E;
   --danger: #EF4444;
-
   --bg: #0B1620;
   --panel: #131E29;
   --panel-soft: #1A2632;
-
   --text: #E5E7EB;
   --text-strong: #F9FAFB;
   --muted: #9CA3AF;
-
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
   --shadow: rgba(0, 0, 0, 0.35);
   --shadow-md: rgba(0, 0, 0, 0.45);
-
   --accent: var(--primary);
   --accent-hover: var(--primary-hover);
 }
 
 /* =========================================================
-🎨 Sobrescreve cores legadas hardcoded
-========================================================= */
-
-/* Botões primary herdam verde escuro */
-.btn-primary,
-.btn-success {
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: #fff !important;
-}
-
-.btn-primary:hover,
-.btn-success:hover {
-  background: var(--primary-hover) !important;
-  border-color: var(--primary-hover) !important;
-}
-
-.btn-outline-primary,
-.btn-outline-success {
-  border-color: var(--primary) !important;
-  color: var(--primary) !important;
-  background: transparent !important;
-}
-
-.btn-outline-primary:hover,
-.btn-outline-success:hover {
-  background: var(--primary) !important;
-  color: #fff !important;
-}
-
-/* =========================================================
-🃏 Cards premium
+🃏 Cards
 ========================================================= */
 .card {
   background: var(--panel) !important;
   border: 1px solid var(--border) !important;
   border-radius: 14px !important;
-  box-shadow: 0 1px 3px var(--shadow), 0 1px 2px var(--shadow);
+  box-shadow: 0 1px 3px var(--shadow);
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
@@ -132,7 +89,7 @@ body[data-theme='dark'] {
 }
 
 /* =========================================================
-🔝 Topbar Premium override
+🔝 Topbar
 ========================================================= */
 .topbar-premium {
   background: rgba(255, 255, 255, 0.92) !important;
@@ -143,35 +100,14 @@ html[data-theme='dark'] .topbar-premium {
   background: rgba(19, 30, 41, 0.92) !important;
 }
 
-.topbar-title {
-  color: var(--text-strong) !important;
-}
+.topbar-title { color: var(--text-strong) !important; }
+.topbar-subtitle { color: var(--muted) !important; }
+.topbar-crumb-home { color: var(--primary) !important; }
+.topbar-crumb-home:hover { color: var(--primary-hover) !important; }
+.topbar-crumb-current { color: var(--text-strong) !important; }
+.topbar-crumb-section { color: var(--muted) !important; }
+.topbar-crumb-sep { color: var(--border-strong) !important; }
 
-.topbar-subtitle {
-  color: var(--muted) !important;
-}
-
-.topbar-crumb-home {
-  color: var(--primary) !important;
-}
-
-.topbar-crumb-home:hover {
-  color: var(--primary-hover) !important;
-}
-
-.topbar-crumb-current {
-  color: var(--text-strong) !important;
-}
-
-.topbar-crumb-section {
-  color: var(--muted) !important;
-}
-
-.topbar-crumb-sep {
-  color: var(--border-strong) !important;
-}
-
-/* Busca premium */
 .topbar-premium .topbar-search {
   background: var(--panel) !important;
   border: 1.5px solid var(--border-strong) !important;
@@ -184,13 +120,8 @@ html[data-theme='dark'] .topbar-premium {
   box-shadow: 0 0 0 3px var(--primary-soft) !important;
 }
 
-.topbar-search-icon {
-  color: var(--primary) !important;
-}
-
-.topbar-search-placeholder {
-  color: var(--muted) !important;
-}
+.topbar-search-icon { color: var(--primary) !important; }
+.topbar-search-placeholder { color: var(--muted) !important; }
 
 .topbar-search-kbd {
   background: var(--bg) !important;
@@ -198,7 +129,6 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--muted) !important;
 }
 
-/* Badges status */
 .topbar-badge.synced {
   background: var(--success-soft) !important;
   color: var(--success) !important;
@@ -214,7 +144,6 @@ html[data-theme='dark'] .topbar-premium {
   color: var(--warning) !important;
 }
 
-/* Botão ícone topbar */
 .topbar-premium .topbar-icon-btn {
   background: var(--panel-soft) !important;
   color: var(--muted) !important;
@@ -228,41 +157,77 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 /* =========================================================
-🧭 Sidebar Premium override
+🧭 SIDEBAR PREMIUM — Alto contraste
 ========================================================= */
 .sidebar-premium {
-  background: linear-gradient(180deg, var(--primary) 0%, #0A2D22 100%) !important;
-  border-right: 1px solid rgba(201, 162, 39, 0.15) !important;
+  background: linear-gradient(180deg, #0F3D2E 0%, #082218 100%) !important;
+  border-right: 2px solid rgba(201, 162, 39, 0.25) !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Logo: fundo claro destaca a marca */
 .sidebar-brand {
-  border-bottom: 1px solid rgba(201, 162, 39, 0.18) !important;
-  background: rgba(0, 0, 0, 0.12) !important;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.25) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  padding: 18px 16px !important;
+  margin: 0 !important;
+}
+
+.sidebar-logo-img {
+  filter: none !important;
+  width: 170px !important;
+}
+
+.sidebar-logo-img:hover {
+  filter: drop-shadow(0 2px 8px rgba(15, 61, 46, 0.3)) !important;
 }
 
 .sidebar-section-title {
-  color: rgba(201, 162, 39, 0.7) !important;
-  letter-spacing: 1.4px !important;
+  color: var(--gold-light) !important;
+  letter-spacing: 1.6px !important;
+  font-weight: 700 !important;
+  font-size: 0.7rem !important;
+  opacity: 0.95 !important;
 }
 
 .sidebar-link {
-  color: rgba(255, 255, 255, 0.72) !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-weight: 500 !important;
+}
+
+.sidebar-link-icon {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(201, 162, 39, 0.08) !important;
   color: #fff !important;
+}
+
+.sidebar-link:hover .sidebar-link-icon {
+  background: rgba(201, 162, 39, 0.2) !important;
+  color: var(--gold-light) !important;
+  border-color: rgba(201, 162, 39, 0.3) !important;
 }
 
 .sidebar-link.active {
-  background: rgba(201, 162, 39, 0.14) !important;
+  background: rgba(201, 162, 39, 0.15) !important;
   color: #fff !important;
+  border-left: 3px solid var(--gold) !important;
+  padding-left: 11px !important;
 }
 
 .sidebar-link.active .sidebar-link-icon {
-  background: rgba(201, 162, 39, 0.22) !important;
+  background: var(--gold-soft) !important;
+  color: var(--gold-light) !important;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.4) !important;
+}
+
+.sidebar-link.active .sidebar-link-chevron {
   color: var(--gold) !important;
-  box-shadow: 0 0 14px rgba(201, 162, 39, 0.35) !important;
 }
 
 .sidebar-link-indicator {
@@ -270,25 +235,51 @@ html[data-theme='dark'] .topbar-premium {
 }
 
 .sidebar-user {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(201, 162, 39, 0.12) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(201, 162, 39, 0.2) !important;
 }
 
 .sidebar-user-avatar {
   background: linear-gradient(135deg, var(--gold), #B8901F) !important;
-  box-shadow: 0 2px 10px rgba(201, 162, 39, 0.4) !important;
+  color: #0F3D2E !important;
+  box-shadow: 0 2px 12px rgba(201, 162, 39, 0.45) !important;
+  font-weight: 800 !important;
 }
 
 .sidebar-user-name {
   color: #fff !important;
+  font-weight: 600 !important;
 }
 
 .sidebar-user-role {
-  color: rgba(201, 162, 39, 0.75) !important;
+  color: var(--gold-light) !important;
+  opacity: 0.85 !important;
+}
+
+.sidebar-user-settings {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.sidebar-user-settings:hover {
+  background: rgba(201, 162, 39, 0.15) !important;
+  color: var(--gold-light) !important;
+}
+
+.sidebar-logout {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  color: #FCA5A5 !important;
+  font-weight: 600 !important;
+}
+
+.sidebar-logout:hover {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border-color: #EF4444 !important;
+  color: #FECACA !important;
 }
 
 /* =========================================================
-🏷️ Inputs premium
+🏷️ Inputs
 ========================================================= */
 input:focus,
 select:focus,
@@ -299,7 +290,7 @@ textarea:focus,
 }
 
 /* =========================================================
-📊 Tabelas premium
+📊 Tabelas
 ========================================================= */
 .table thead th {
   background: var(--panel-soft) !important;
@@ -313,7 +304,7 @@ textarea:focus,
 }
 
 /* =========================================================
-🌟 Detalhes champagne (uso moderado)
+🌟 Detalhes champagne
 ========================================================= */
 .badge-premium,
 .tag-premium {
@@ -339,4 +330,22 @@ textarea:focus,
   --bs-body-color: var(--text);
   --bs-border-color: var(--border);
   --bs-card-bg: var(--panel);
+}
+
+/* =========================================================
+🚫 Override botões verde claro do theme-agrocrm.css
+========================================================= */
+.btn-primary,
+.btn-success,
+button.btn-save {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+button.btn-save:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
