@@ -60,8 +60,8 @@
 ---------------------------------------- */
 .chat-fab {
   position: fixed;
-  bottom: 24px;
-  right: 20px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: max(20px, env(safe-area-inset-right, 20px));
   z-index: 9998;
   width: 56px;
   height: 56px;

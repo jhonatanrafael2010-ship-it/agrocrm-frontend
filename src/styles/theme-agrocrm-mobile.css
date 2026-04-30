@@ -51,20 +51,22 @@ body[data-platform="mobile"] {
 }
 
 /* =========================================================
-🧭 Header superior
+🧭 Header superior — respeitando notch/status bar
 ========================================================= */
 body[data-platform="mobile"] .app-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 58px;
+  height: calc(58px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left:  max(14px, env(safe-area-inset-left,  0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
   background: var(--panel-mobile);
   border-bottom: 1px solid var(--border-mobile);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
   box-shadow: 0 2px 8px var(--shadow-mobile);
   z-index: 9998;
 }
@@ -87,8 +89,10 @@ body[data-platform="mobile"] .menu-toggle {
 🏗️ Conteúdo principal
 ========================================================= */
 body[data-platform="mobile"] .main-content {
-  padding-top: 70px !important;
-  padding-bottom: 80px !important;
+  padding-top:    calc(70px + env(safe-area-inset-top,    0px)) !important;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-left:   env(safe-area-inset-left,  0px);
+  padding-right:  env(safe-area-inset-right, 0px);
   overflow-y: auto !important;
   min-height: 100vh;
   background: var(--bg-mobile);

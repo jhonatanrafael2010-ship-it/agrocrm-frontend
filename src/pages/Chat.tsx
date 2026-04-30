@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, Loader2 } from "lucide-react";
+import { Send, Camera, X, Loader2 } from "lucide-react";
+import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { API_BASE } from "../config";
 import "../styles/chat.css";
 
@@ -7,6 +8,7 @@ interface Message {
   id: number;
   role: "user" | "bot";
   text: string;
+  imageUrl?: string;
   timestamp: Date;
 }
 
@@ -22,6 +24,10 @@ function getOrCreateSession(): string {
 
 function getConsultantId(): string {
   return localStorage.getItem("nutricrm_consultant_id") || "";
+}
+
+function isNativeApp(): boolean {
+  return (window as any).Capacitor?.isNativePlatform?.() === true;
 }
 
 const CONSULTANT_OPTIONS = [
@@ -44,10 +50,13 @@ const Chat: React.FC = () => {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [consultantId, setConsultantId] = useState(getConsultantId);
   const [showConsultantPicker, setShowConsultantPicker] = useState(!getConsultantId());
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
   useEffect(() => {
@@ -60,39 +69,84 @@ const Chat: React.FC = () => {
     setShowConsultantPicker(false);
   }
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading) return;
+  async function handleCameraClick() {
+    if (isNativeApp()) {
+      try {
+        const img = await CapCamera.getPhoto({
+          quality: 75,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Prompt, // pergunta: câmera ou galeria
+          allowEditing: false,
+        });
+        if (img.dataUrl) setPendingPhoto(img.dataUrl);
+      } catch {
+        // usuário cancelou — sem ação
+      }
+    } else {
+      // fallback browser: input file
+      fileInputRef.current?.click();
+    }
+  }
 
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) setPendingPhoto(ev.target.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  async function sendMessage(text: string) {
+    const hasText = text.trim().length > 0;
+    const hasPhoto = pendingPhoto !== null;
+    if ((!hasText && !hasPhoto) || loading) return;
+
+    // Exibe mensagem do usuário com foto + texto
     const userMsg: Message = {
       id: nextId.current++,
       role: "user",
       text: text.trim(),
+      imageUrl: pendingPhoto ?? undefined,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    const photoToSend = pendingPhoto;
+    setPendingPhoto(null);
     setLoading(true);
 
+    // Reseta altura do textarea
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+
     try {
+      const photos = photoToSend
+        ? [{ dataUrl: photoToSend, filename: `foto_${Date.now()}.jpg` }]
+        : [];
+
       const res = await fetch(`${API_BASE}mobile/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: getOrCreateSession(),
           consultant_id: parseInt(consultantId) || undefined,
-          message: text.trim(),
-          photos: [],
+          message: text.trim() || "(foto)",
+          photos,
         }),
       });
 
       const data = await res.json();
-      const botMsg: Message = {
-        id: nextId.current++,
-        role: "bot",
-        text: data.response || (data.ok === false ? data.error : "Sem resposta."),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId.current++,
+          role: "bot",
+          text: data.response || (data.ok === false ? data.error : "Sem resposta."),
+          timestamp: new Date(),
+        },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -127,6 +181,7 @@ const Chat: React.FC = () => {
     return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  // ── Tela de seleção de consultor ──────────────────────────
   if (showConsultantPicker) {
     return (
       <div className="chat-consultant-picker">
@@ -149,6 +204,7 @@ const Chat: React.FC = () => {
     );
   }
 
+  // ── Tela principal do chat ─────────────────────────────────
   return (
     <div className="chat-screen">
       {/* Header */}
@@ -171,12 +227,21 @@ const Chat: React.FC = () => {
         </button>
       </div>
 
-      {/* Messages */}
+      {/* Mensagens */}
       <div className="chat-messages">
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble-row ${msg.role}`}>
             <div className={`chat-bubble ${msg.role}`}>
-              <pre className="chat-bubble-text">{msg.text}</pre>
+              {msg.imageUrl && (
+                <img
+                  src={msg.imageUrl}
+                  alt="foto"
+                  className="chat-bubble-img"
+                />
+              )}
+              {msg.text && (
+                <pre className="chat-bubble-text">{msg.text}</pre>
+              )}
               <span className="chat-bubble-time">{formatTime(msg.timestamp)}</span>
             </div>
           </div>
@@ -194,9 +259,36 @@ const Chat: React.FC = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input bar */}
+      {/* Preview da foto pendente */}
+      {pendingPhoto && (
+        <div className="chat-photo-preview">
+          <img src={pendingPhoto} alt="preview" />
+          <button
+            className="chat-photo-remove"
+            onClick={() => setPendingPhoto(null)}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Barra de input */}
       <div className="chat-input-bar">
-        <button className="chat-icon-btn" title="Enviar foto (em breve)">
+        {/* Input file oculto para fallback browser */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileInput}
+        />
+
+        <button
+          className="chat-icon-btn"
+          title="Foto"
+          onClick={handleCameraClick}
+          disabled={loading}
+        >
           <Camera size={20} />
         </button>
 
@@ -214,7 +306,7 @@ const Chat: React.FC = () => {
         <button
           className="chat-send-btn"
           onClick={() => sendMessage(input)}
-          disabled={loading || !input.trim()}
+          disabled={loading || (!input.trim() && !pendingPhoto)}
         >
           {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
         </button>
