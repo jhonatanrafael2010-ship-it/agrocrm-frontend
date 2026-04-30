@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { API_BASE } from "../config";
 import "../styles/chat.css";
@@ -70,10 +70,15 @@ const Chat: React.FC = () => {
   const [consultantId, setConsultantId] = useState(getConsultantId);
   const [showConsultantPicker, setShowConsultantPicker] = useState(!getConsultantId());
 
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoKeyRef = useRef(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -202,10 +207,65 @@ const Chat: React.FC = () => {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // On native mobile Enter should insert newline; only physical keyboards send on Enter
+    if (e.key === "Enter" && !e.shiftKey && !isNativeApp()) {
       e.preventDefault();
       sendMessage(input);
     }
+  }
+
+  async function handleMicStart() {
+    if (recording || loading) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const mr = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        setTranscribing(true);
+        try {
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            try {
+              const res = await fetch(`${API_BASE}mobile/transcribe`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ audio_base64: reader.result as string, format: ext }),
+              });
+              const data = await res.json();
+              if (data.ok && data.text) {
+                setInput((prev) => (prev ? prev + " " + data.text : data.text));
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = "auto";
+                  textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
+                }
+              }
+            } finally {
+              setTranscribing(false);
+            }
+          };
+          reader.readAsDataURL(blob);
+        } catch {
+          setTranscribing(false);
+        }
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch {
+      // permission denied or not supported
+    }
+  }
+
+  function handleMicStop() {
+    if (!recording) return;
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+    setRecording(false);
   }
 
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -326,7 +386,7 @@ const Chat: React.FC = () => {
           className="chat-icon-btn"
           title="Foto"
           onClick={() => setShowPhotoSheet(true)}
-          disabled={loading}
+          disabled={loading || recording}
         >
           <Camera size={20} />
         </button>
@@ -335,17 +395,26 @@ const Chat: React.FC = () => {
           ref={textareaRef}
           className="chat-input"
           rows={1}
-          placeholder="Digite uma mensagem..."
+          placeholder={transcribing ? "Transcrevendo..." : recording ? "Gravando... toque para parar" : "Digite uma mensagem..."}
           value={input}
           onChange={autoResize}
           onKeyDown={handleKeyDown}
-          disabled={loading}
+          disabled={loading || recording || transcribing}
         />
+
+        <button
+          className={`chat-icon-btn${recording ? " chat-icon-btn--recording" : ""}`}
+          title={recording ? "Parar gravação" : "Gravar áudio"}
+          onClick={recording ? handleMicStop : handleMicStart}
+          disabled={loading || transcribing}
+        >
+          {transcribing ? <Loader2 size={20} className="spin" /> : recording ? <MicOff size={20} /> : <Mic size={20} />}
+        </button>
 
         <button
           className="chat-send-btn"
           onClick={() => sendMessage(input)}
-          disabled={loading || (!input.trim() && pendingPhotos.length === 0)}
+          disabled={loading || recording || transcribing || (!input.trim() && pendingPhotos.length === 0)}
         >
           {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
         </button>

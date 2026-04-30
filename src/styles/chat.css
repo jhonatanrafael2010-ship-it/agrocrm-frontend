@@ -178,6 +178,17 @@
   background: var(--hover, #f3f4f6);
 }
 
+.chat-icon-btn--recording {
+  color: #ef4444 !important;
+  background: #fee2e2 !important;
+  animation: pulse-rec 1s ease-in-out infinite;
+}
+
+@keyframes pulse-rec {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .chat-send-btn {
   background: #16a34a;
   border: none;
