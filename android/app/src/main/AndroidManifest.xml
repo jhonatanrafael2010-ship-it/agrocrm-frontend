@@ -11,6 +11,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+    <!-- 🎙️ Microfone (gravação de voz no assistente) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <!-- 🌐 Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
