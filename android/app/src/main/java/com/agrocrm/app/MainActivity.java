@@ -30,12 +30,14 @@ public class MainActivity extends BridgeActivity {
     webSettings.setJavaScriptEnabled(true);
     webSettings.setMediaPlaybackRequiresUserGesture(false);
 
-    // Concede permissão de áudio ao WebView para getUserMedia funcionar
-    getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
-      @Override
-      public void onPermissionRequest(PermissionRequest request) {
-        request.grant(request.getResources());
-      }
-    });
+    // post() garante que rodamos DEPOIS do Capacitor configurar o próprio WebChromeClient
+    getBridge().getWebView().post(() ->
+      getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
+        @Override
+        public void onPermissionRequest(PermissionRequest request) {
+          request.grant(request.getResources());
+        }
+      })
+    );
   }
 }

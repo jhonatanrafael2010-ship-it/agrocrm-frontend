@@ -261,9 +261,10 @@ const Chat: React.FC = () => {
       mr.start();
       mediaRecorderRef.current = mr;
       setRecording(true);
-    } catch (err) {
-      console.error("Mic error:", err);
-      alert("Não foi possível acessar o microfone. Verifique as permissões do app.");
+    } catch (err: unknown) {
+      const name = err instanceof Error ? err.name : "Error";
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Microfone: ${name} — ${msg}`);
     }
   }
 
