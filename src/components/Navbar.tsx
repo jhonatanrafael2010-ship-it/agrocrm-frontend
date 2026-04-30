@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardList,
   Briefcase,
+  MessageSquare,
   LogOut,
   Settings,
   ChevronRight,
@@ -45,6 +46,12 @@ const Navbar: React.FC<Props> = ({
       items: [
         { label: "Calendário", icon: <Calendar size={18} />, color: "#ec4899" },
         { label: "Acompanhamentos", icon: <ClipboardList size={18} />, color: "#8b5cf6" },
+      ],
+    },
+    {
+      title: "Bot",
+      items: [
+        { label: "Assistente", icon: <MessageSquare size={18} />, color: "#16a34a" },
       ],
     },
   ];

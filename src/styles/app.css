@@ -56,6 +56,34 @@
 }
 
 /* ----------------------------------------
+💬 FAB — Botão flutuante do Assistente
+---------------------------------------- */
+.chat-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 9998;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.chat-fab:hover,
+.chat-fab:active {
+  background: #15803d;
+  transform: scale(1.08);
+}
+
+/* ----------------------------------------
 📱 Layout Mobile (APK)
 ---------------------------------------- */
 body[data-platform="mobile"] .app-header {

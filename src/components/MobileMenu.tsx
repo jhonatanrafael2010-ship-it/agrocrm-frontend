@@ -6,6 +6,7 @@ import {
   Calendar,
   ClipboardList,
   Briefcase,
+  MessageSquare,
   LogOut,
 } from "lucide-react";
 import "./MobileMenu.css";
@@ -31,6 +32,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
   }, []);
 
   const links = [
+    { label: "Assistente", icon: <MessageSquare size={18} /> },
     { label: "Dashboard", icon: <Home size={18} /> },
     { label: "Clientes", icon: <Users size={18} /> },
     { label: "Propriedades", icon: <Map size={18} /> },

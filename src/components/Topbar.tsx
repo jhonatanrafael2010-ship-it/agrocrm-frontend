@@ -25,6 +25,7 @@ const PAGE_META: Record<string, { subtitle: string; section: string }> = {
   Oportunidades: { subtitle: "Funil de vendas", section: "Gestão" },
   Calendário: { subtitle: "Agenda de visitas", section: "Operação" },
   Acompanhamentos: { subtitle: "Histórico de visitas", section: "Operação" },
+  Assistente: { subtitle: "Bot de lançamento de visitas", section: "Bot" },
 };
 
 const Topbar: React.FC<Props> = ({

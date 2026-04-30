@@ -6,6 +6,8 @@ import CalendarPage from "./pages/Calendar";
 import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
+import ChatPage from "./pages/Chat";
+import { MessageSquare } from "lucide-react";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -190,12 +192,25 @@ function App() {
               <OpportunitiesPage />
             ) : route === "Acompanhamentos" ? (
               <VisitsPage />
+            ) : route === "Assistente" ? (
+              <ChatPage />
             ) : (
               <Dashboard />
             )}
           </div>
         </main>
       </div>
+      {/* FAB do Assistente — só no mobile, fora da tela de chat */}
+      {isMobileApp && route !== "Assistente" && (
+        <button
+          className="chat-fab"
+          onClick={() => setRoute("Assistente")}
+          title="Assistente"
+        >
+          <MessageSquare size={24} />
+        </button>
+      )}
+
       <Toaster
         position="top-center"
         richColors
