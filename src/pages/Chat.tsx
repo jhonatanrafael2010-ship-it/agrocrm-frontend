@@ -218,14 +218,19 @@ const Chat: React.FC = () => {
     if (recording || loading) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
-      const mr = new MediaRecorder(stream, { mimeType });
+
+      let mimeType = "";
+      if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
+      else if (MediaRecorder.isTypeSupported("audio/mp4")) mimeType = "audio/mp4";
+
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: mimeType });
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        const actualType = mr.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(audioChunksRef.current, { type: actualType });
+        const ext = actualType.includes("mp4") ? "mp4" : "webm";
         setTranscribing(true);
         try {
           const reader = new FileReader();
@@ -256,8 +261,9 @@ const Chat: React.FC = () => {
       mr.start();
       mediaRecorderRef.current = mr;
       setRecording(true);
-    } catch {
-      // permission denied or not supported
+    } catch (err) {
+      console.error("Mic error:", err);
+      alert("Não foi possível acessar o microfone. Verifique as permissões do app.");
     }
   }
 
