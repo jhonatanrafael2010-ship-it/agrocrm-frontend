@@ -41,6 +41,16 @@
   --invert-close: 0;
 }
 
+/* Botão fechar — posição segura respeitando notch e bordas arredondadas */
+.offcanvas-close-btn {
+  position: absolute !important;
+  top:   max(16px, calc(env(safe-area-inset-top,   0px) + 12px)) !important;
+  right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)) !important;
+  width: 36px !important;
+  height: 36px !important;
+  filter: invert(0.4);
+}
+
 .app-logo {
   width: 160px;
   height: auto;

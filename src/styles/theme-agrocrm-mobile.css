@@ -86,6 +86,35 @@ body[data-platform="mobile"] .menu-toggle {
 }
 
 /* =========================================================
+🎯 Topbar — safe area horizontal
+========================================================= */
+body[data-platform="mobile"] .topbar-premium {
+  padding-left:  max(16px, env(safe-area-inset-left,  0px)) !important;
+  padding-right: max(16px, env(safe-area-inset-right, 0px)) !important;
+}
+
+/* =========================================================
+📋 Offcanvas (menu lateral) — safe area topo + lateral
+========================================================= */
+body[data-platform="mobile"] .offcanvas-header.app-logo-container {
+  padding-top:   max(16px, calc(env(safe-area-inset-top, 0px) + 12px));
+  padding-left:  max(16px, env(safe-area-inset-left,  0px));
+  padding-right: max(48px, calc(env(safe-area-inset-right, 0px) + 48px));
+  min-height: calc(64px + env(safe-area-inset-top, 0px));
+}
+
+body[data-platform="mobile"] .offcanvas-header.app-logo-container .btn-close {
+  top:   max(16px, calc(env(safe-area-inset-top,   0px) + 12px)) !important;
+  right: max(16px, calc(env(safe-area-inset-right, 0px) + 12px)) !important;
+}
+
+body[data-platform="mobile"] .offcanvas-body {
+  padding-left:   max(12px, env(safe-area-inset-left,  0px));
+  padding-right:  max(12px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+}
+
+/* =========================================================
 🏗️ Conteúdo principal
 ========================================================= */
 body[data-platform="mobile"] .main-content {

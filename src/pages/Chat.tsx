@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, X, Loader2 } from "lucide-react";
+import { Send, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { API_BASE } from "../config";
 import "../styles/chat.css";
@@ -8,8 +8,13 @@ interface Message {
   id: number;
   role: "user" | "bot";
   text: string;
-  imageUrl?: string;
+  images?: string[];
   timestamp: Date;
+}
+
+interface PendingPhoto {
+  dataUrl: string;
+  key: number;
 }
 
 function getOrCreateSession(): string {
@@ -28,6 +33,16 @@ function getConsultantId(): string {
 
 function isNativeApp(): boolean {
   return (window as any).Capacitor?.isNativePlatform?.() === true;
+}
+
+async function webPathToDataUrl(webPath: string): Promise<string> {
+  const res = await fetch(webPath);
+  const blob = await res.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
 }
 
 const CONSULTANT_OPTIONS = [
@@ -50,14 +65,15 @@ const Chat: React.FC = () => {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const [consultantId, setConsultantId] = useState(getConsultantId);
   const [showConsultantPicker, setShowConsultantPicker] = useState(!getConsultantId());
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const nextId = useRef(1);
+  const photoKeyRef = useRef(0);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,63 +85,82 @@ const Chat: React.FC = () => {
     setShowConsultantPicker(false);
   }
 
-  async function handleCameraClick() {
+  function addPhoto(dataUrl: string) {
+    setPendingPhotos((prev) => [
+      ...prev,
+      { dataUrl, key: photoKeyRef.current++ },
+    ]);
+  }
+
+  function removePhoto(key: number) {
+    setPendingPhotos((prev) => prev.filter((p) => p.key !== key));
+  }
+
+  async function handleTakePhoto() {
+    setShowPhotoSheet(false);
+    try {
+      const img = await CapCamera.getPhoto({
+        quality: 75,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        allowEditing: false,
+      });
+      if (img.dataUrl) addPhoto(img.dataUrl);
+    } catch {
+      // usuário cancelou
+    }
+  }
+
+  async function handlePickGallery() {
+    setShowPhotoSheet(false);
     if (isNativeApp()) {
       try {
-        const img = await CapCamera.getPhoto({
-          quality: 75,
-          resultType: CameraResultType.DataUrl,
-          source: CameraSource.Prompt, // pergunta: câmera ou galeria
-          allowEditing: false,
-        });
-        if (img.dataUrl) setPendingPhoto(img.dataUrl);
+        const result = await CapCamera.pickImages({ quality: 75, limit: 10 });
+        for (const photo of result.photos) {
+          const dataUrl = await webPathToDataUrl(photo.webPath);
+          addPhoto(dataUrl);
+        }
       } catch {
-        // usuário cancelou — sem ação
+        // usuário cancelou
       }
     } else {
-      // fallback browser: input file
       fileInputRef.current?.click();
     }
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (ev.target?.result) setPendingPhoto(ev.target.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) addPhoto(ev.target.result as string);
+      };
+      reader.readAsDataURL(file);
+    });
     e.target.value = "";
   }
 
   async function sendMessage(text: string) {
     const hasText = text.trim().length > 0;
-    const hasPhoto = pendingPhoto !== null;
-    if ((!hasText && !hasPhoto) || loading) return;
+    const hasPhotos = pendingPhotos.length > 0;
+    if ((!hasText && !hasPhotos) || loading) return;
 
-    // Exibe mensagem do usuário com foto + texto
     const userMsg: Message = {
-      id: nextId.current++,
+      id: Date.now(),
       role: "user",
       text: text.trim(),
-      imageUrl: pendingPhoto ?? undefined,
+      images: pendingPhotos.map((p) => p.dataUrl),
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    const photoToSend = pendingPhoto;
-    setPendingPhoto(null);
+    const photosToSend = [...pendingPhotos];
+    setPendingPhotos([]);
     setLoading(true);
 
-    // Reseta altura do textarea
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const photos = photoToSend
-        ? [{ dataUrl: photoToSend, filename: `foto_${Date.now()}.jpg` }]
-        : [];
-
       const res = await fetch(`${API_BASE}mobile/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -133,7 +168,10 @@ const Chat: React.FC = () => {
           session_id: getOrCreateSession(),
           consultant_id: parseInt(consultantId) || undefined,
           message: text.trim() || "(foto)",
-          photos,
+          photos: photosToSend.map((p, i) => ({
+            dataUrl: p.dataUrl,
+            filename: `foto_${Date.now()}_${i}.jpg`,
+          })),
         }),
       });
 
@@ -141,7 +179,7 @@ const Chat: React.FC = () => {
       setMessages((prev) => [
         ...prev,
         {
-          id: nextId.current++,
+          id: Date.now() + 1,
           role: "bot",
           text: data.response || (data.ok === false ? data.error : "Sem resposta."),
           timestamp: new Date(),
@@ -151,7 +189,7 @@ const Chat: React.FC = () => {
       setMessages((prev) => [
         ...prev,
         {
-          id: nextId.current++,
+          id: Date.now() + 1,
           role: "bot",
           text: "Erro de conexão. Tente novamente.",
           timestamp: new Date(),
@@ -181,7 +219,7 @@ const Chat: React.FC = () => {
     return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
-  // ── Tela de seleção de consultor ──────────────────────────
+  // ── Seleção de consultor ──────────────────────────────────
   if (showConsultantPicker) {
     return (
       <div className="chat-consultant-picker">
@@ -204,7 +242,7 @@ const Chat: React.FC = () => {
     );
   }
 
-  // ── Tela principal do chat ─────────────────────────────────
+  // ── Chat principal ────────────────────────────────────────
   return (
     <div className="chat-screen">
       {/* Header */}
@@ -232,12 +270,12 @@ const Chat: React.FC = () => {
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble-row ${msg.role}`}>
             <div className={`chat-bubble ${msg.role}`}>
-              {msg.imageUrl && (
-                <img
-                  src={msg.imageUrl}
-                  alt="foto"
-                  className="chat-bubble-img"
-                />
+              {msg.images && msg.images.length > 0 && (
+                <div className="chat-bubble-imgs">
+                  {msg.images.map((src, i) => (
+                    <img key={i} src={src} alt={`foto ${i + 1}`} className="chat-bubble-img" />
+                  ))}
+                </div>
               )}
               {msg.text && (
                 <pre className="chat-bubble-text">{msg.text}</pre>
@@ -259,26 +297,27 @@ const Chat: React.FC = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Preview da foto pendente */}
-      {pendingPhoto && (
-        <div className="chat-photo-preview">
-          <img src={pendingPhoto} alt="preview" />
-          <button
-            className="chat-photo-remove"
-            onClick={() => setPendingPhoto(null)}
-          >
-            <X size={14} />
-          </button>
+      {/* Preview de fotos pendentes */}
+      {pendingPhotos.length > 0 && (
+        <div className="chat-photos-preview">
+          {pendingPhotos.map((p) => (
+            <div key={p.key} className="chat-photo-thumb">
+              <img src={p.dataUrl} alt="preview" />
+              <button className="chat-photo-remove" onClick={() => removePhoto(p.key)}>
+                <X size={12} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Barra de input */}
       <div className="chat-input-bar">
-        {/* Input file oculto para fallback browser */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           style={{ display: "none" }}
           onChange={handleFileInput}
         />
@@ -286,7 +325,7 @@ const Chat: React.FC = () => {
         <button
           className="chat-icon-btn"
           title="Foto"
-          onClick={handleCameraClick}
+          onClick={() => setShowPhotoSheet(true)}
           disabled={loading}
         >
           <Camera size={20} />
@@ -306,11 +345,34 @@ const Chat: React.FC = () => {
         <button
           className="chat-send-btn"
           onClick={() => sendMessage(input)}
-          disabled={loading || (!input.trim() && !pendingPhoto)}
+          disabled={loading || (!input.trim() && pendingPhotos.length === 0)}
         >
           {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
         </button>
       </div>
+
+      {/* Bottom sheet — escolha de foto em português */}
+      {showPhotoSheet && (
+        <div className="chat-sheet-backdrop" onClick={() => setShowPhotoSheet(false)}>
+          <div className="chat-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="chat-sheet-handle" />
+            <button className="chat-sheet-option" onClick={handleTakePhoto}>
+              <Camera size={20} />
+              Tirar foto
+            </button>
+            <button className="chat-sheet-option" onClick={handlePickGallery}>
+              <ImageIcon size={20} />
+              Galeria
+            </button>
+            <button
+              className="chat-sheet-cancel"
+              onClick={() => setShowPhotoSheet(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

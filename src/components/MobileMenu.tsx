@@ -55,15 +55,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
       <img src={logo} alt="NutriCRM Logo" className="app-logo" />
       <button
         type="button"
-        className="btn-close"
+        className="btn-close offcanvas-close-btn"
         data-bs-dismiss="offcanvas"
         aria-label="Fechar"
-        style={{
-          position: "absolute",
-          top: "12px",
-          right: "14px",
-          filter: "invert(var(--invert-close, 0.5))"
-        }}
       ></button>
     </div>
 
