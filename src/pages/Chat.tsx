@@ -72,6 +72,7 @@ const Chat: React.FC = () => {
   const photoKeyRef = useRef(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,6 +82,13 @@ const Chat: React.FC = () => {
     fetchWithCache(`${API_BASE}consultants`, "consultants")
       .then((data) => setConsultantOptions(data || []))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    };
   }, []);
 
   function saveConsultant(id: string) {
@@ -215,8 +223,14 @@ const Chat: React.FC = () => {
 
   async function handleMicStart() {
     if (recording || loading) return;
+    // Libera stream anterior caso ainda esteja ativo
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
       let mimeType = "";
       if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
@@ -227,6 +241,7 @@ const Chat: React.FC = () => {
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
         const actualType = mr.mimeType || mimeType || "audio/webm";
         const blob = new Blob(audioChunksRef.current, { type: actualType });
         const ext = actualType.includes("mp4") ? "mp4" : "webm";
