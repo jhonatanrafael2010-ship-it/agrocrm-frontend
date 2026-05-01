@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { API_BASE } from "../config";
+import { fetchWithCache } from "../utils/offlineSync";
 import "../styles/chat.css";
 
 interface Message {
@@ -45,15 +46,6 @@ async function webPathToDataUrl(webPath: string): Promise<string> {
   });
 }
 
-const CONSULTANT_OPTIONS = [
-  { id: 1, name: "Jhonatan" },
-  { id: 2, name: "Consultor 2" },
-  { id: 3, name: "Consultor 3" },
-  { id: 4, name: "Consultor 4" },
-  { id: 5, name: "Consultor 5" },
-  { id: 6, name: "Consultor 6" },
-];
-
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -69,6 +61,7 @@ const Chat: React.FC = () => {
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
   const [consultantId, setConsultantId] = useState(getConsultantId);
   const [showConsultantPicker, setShowConsultantPicker] = useState(!getConsultantId());
+  const [consultantOptions, setConsultantOptions] = useState<{ id: number; name: string }[]>([]);
 
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -83,6 +76,12 @@ const Chat: React.FC = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    fetchWithCache(`${API_BASE}consultants`, "consultants")
+      .then((data) => setConsultantOptions(data || []))
+      .catch(() => {});
+  }, []);
 
   function saveConsultant(id: string) {
     localStorage.setItem("nutricrm_consultant_id", id);
@@ -294,15 +293,19 @@ const Chat: React.FC = () => {
           <h5>Quem é você?</h5>
           <p className="text-muted small">Escolha seu nome para começar</p>
           <div className="d-flex flex-column gap-2 mt-3">
-            {CONSULTANT_OPTIONS.map((c) => (
-              <button
-                key={c.id}
-                className="btn btn-outline-primary"
-                onClick={() => saveConsultant(String(c.id))}
-              >
-                {c.name}
-              </button>
-            ))}
+            {consultantOptions.length === 0 ? (
+              <p className="text-muted small text-center">Carregando...</p>
+            ) : (
+              consultantOptions.map((c) => (
+                <button
+                  key={c.id}
+                  className="btn btn-outline-primary"
+                  onClick={() => saveConsultant(String(c.id))}
+                >
+                  {c.name}
+                </button>
+              ))
+            )}
           </div>
         </div>
       </div>
