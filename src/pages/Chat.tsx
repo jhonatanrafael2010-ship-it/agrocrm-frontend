@@ -221,6 +221,19 @@ const Chat: React.FC = () => {
     }
   }
 
+  async function acquireMicStream(): Promise<MediaStream> {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotReadableError") {
+        // Hardware de áudio ocupado no Android — aguarda e tenta novamente
+        await new Promise((r) => setTimeout(r, 700));
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      throw err;
+    }
+  }
+
   async function handleMicStart() {
     if (recording || loading) return;
     // Libera stream anterior caso ainda esteja ativo
@@ -229,7 +242,7 @@ const Chat: React.FC = () => {
       streamRef.current = null;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await acquireMicStream();
       streamRef.current = stream;
 
       let mimeType = "";
