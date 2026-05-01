@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff, Download, Share2 } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import "../styles/chat.css";
@@ -104,23 +106,28 @@ const Chat: React.FC = () => {
   }
 
   async function handleSharePdf(label: string, r2url: string, filename: string) {
-    // Busca via proxy do backend (sem CORS)
     const proxyUrl = `${API_BASE}mobile/pdf-proxy?url=${encodeURIComponent(r2url)}`;
     try {
+      // Baixa PDF via proxy (sem CORS)
       const res = await fetch(proxyUrl);
       if (!res.ok) throw new Error("fetch falhou");
       const blob = await res.blob();
-      const file = new File([blob], filename, { type: "application/pdf" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: label });
-        return;
-      }
-    } catch {}
-    // Fallback: compartilha o link
-    try {
-      await navigator.share({ title: label, url: r2url });
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+        reader.readAsDataURL(blob);
+      });
+      // Salva em cache temporário
+      const saved = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+      });
+      // Compartilha o arquivo real via Intent nativo do Android
+      await Share.share({ title: label, url: saved.uri, dialogTitle: "Compartilhar PDF" });
       return;
     } catch {}
+    // Fallback: link
     try {
       await navigator.clipboard.writeText(r2url);
       showToast("Link copiado!");
