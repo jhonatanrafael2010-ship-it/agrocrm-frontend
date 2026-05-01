@@ -103,29 +103,34 @@ const Chat: React.FC = () => {
     setTimeout(() => setToast(""), 2500);
   }
 
+  async function fetchPdfBlob(url: string, filename: string): Promise<File> {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: "application/pdf" });
+  }
+
   async function handleDownloadPdf(url: string, filename: string) {
     const saved = downloadedPdfs.get(url);
     if (saved) {
-      const webUrl = Capacitor.convertFileSrc(saved);
-      window.open(webUrl, "_blank");
+      window.open(Capacitor.convertFileSrc(saved), "_blank");
       return;
     }
     setDownloadingPdfs(prev => new Set(prev).add(url));
     try {
-      const res = await fetch(url);
-      const blob = await res.blob();
+      const file = await fetchPdfBlob(url, filename);
       const base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-        reader.readAsDataURL(blob);
+        reader.readAsDataURL(file);
       });
+      // Directory.Cache não exige WRITE_EXTERNAL_STORAGE
       const result = await Filesystem.writeFile({
         path: filename,
         data: base64,
-        directory: Directory.Documents,
+        directory: Directory.Cache,
       });
       setDownloadedPdfs(prev => new Map(prev).set(url, result.uri));
-      showToast("PDF salvo em Documentos!");
+      showToast("PDF salvo! Toque em 📂 para abrir.");
     } catch {
       showToast("Erro ao salvar PDF.");
     } finally {
@@ -133,18 +138,20 @@ const Chat: React.FC = () => {
     }
   }
 
-  async function handleSharePdf(label: string, url: string) {
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: label, url });
+  async function handleSharePdf(label: string, url: string, filename: string) {
+    try {
+      const file = await fetchPdfBlob(url, filename);
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: label });
         return;
-      } catch {}
-    }
+      }
+    } catch {}
+    // fallback: copia link
     try {
       await navigator.clipboard.writeText(url);
       showToast("Link copiado!");
     } catch {
-      showToast("Não foi possível copiar o link.");
+      showToast("Não foi possível compartilhar.");
     }
   }
 
@@ -467,7 +474,7 @@ const Chat: React.FC = () => {
                       <button
                         className="chat-pdf-action-btn"
                         title="Compartilhar"
-                        onClick={() => handleSharePdf(item.label, item.url)}
+                        onClick={() => handleSharePdf(item.label, item.url, item.filename)}
                       >
                         <Share2 size={16} />
                       </button>
