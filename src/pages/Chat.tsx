@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff, Download, Share2 } from "lucide-react";
+import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
@@ -439,17 +439,15 @@ const Chat: React.FC = () => {
                   <div className="chat-pdf-actions">
                     <button
                       className="chat-pdf-action-btn chat-pdf-action-btn--download"
-                      title="Abrir PDF"
                       onClick={() => handleDownloadPdf(item.url)}
                     >
-                      <Download size={15} />
+                      ⬇ Abrir
                     </button>
                     <button
                       className="chat-pdf-action-btn chat-pdf-action-btn--share"
-                      title="Compartilhar PDF"
                       onClick={() => handleSharePdf(item.label, item.url, item.filename)}
                     >
-                      <Share2 size={15} />
+                      ↗ Enviar
                     </button>
                   </div>
                 </div>

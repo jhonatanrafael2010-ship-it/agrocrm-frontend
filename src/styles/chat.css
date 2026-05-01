@@ -392,32 +392,31 @@
 }
 
 .chat-pdf-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  color: #fff;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 16px;
   border: none;
   cursor: pointer;
-  text-decoration: none;
-  transition: background 0.15s;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
   flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.chat-pdf-action-btn:active {
+  opacity: 0.8;
 }
 
 .chat-pdf-action-btn--download {
   background: #16a34a;
 }
-.chat-pdf-action-btn--download:active {
-  background: #15803d;
-}
 
 .chat-pdf-action-btn--share {
   background: #2563eb;
-}
-.chat-pdf-action-btn--share:active {
-  background: #1d4ed8;
 }
 
 /* Toast */
