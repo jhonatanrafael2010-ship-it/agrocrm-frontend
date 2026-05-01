@@ -51,7 +51,7 @@ const Chat: React.FC = () => {
     {
       id: 0,
       role: "bot",
-      text: "Olá! Sou o assistente NutriCRM.\n\nExemplos do que posso fazer:\n• Lançar visita: 'cliente João Silva soja R5 ontem observações...'\n• Ver agenda: 'agenda da semana'\n• Ver rotina: 'meu dia'",
+      text: "Olá! Como posso ajudar?",
       timestamp: new Date(),
     },
   ]);
@@ -65,6 +65,7 @@ const Chat: React.FC = () => {
 
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -354,13 +355,22 @@ const Chat: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          className="btn btn-sm btn-link text-muted"
-          title="Trocar consultor"
-          onClick={() => setShowConsultantPicker(true)}
-        >
-          ⚙
-        </button>
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            className="chat-icon-btn"
+            title="Ajuda"
+            onClick={() => setShowHelp(true)}
+          >
+            <span style={{ fontWeight: 700, fontSize: 15 }}>?</span>
+          </button>
+          <button
+            className="btn btn-sm btn-link text-muted"
+            title="Trocar consultor"
+            onClick={() => setShowConsultantPicker(true)}
+          >
+            ⚙
+          </button>
+        </div>
       </div>
 
       {/* Mensagens */}
@@ -457,6 +467,37 @@ const Chat: React.FC = () => {
           {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
         </button>
       </div>
+
+      {/* Modal de ajuda */}
+      {showHelp && (
+        <div className="chat-sheet-backdrop" onClick={() => setShowHelp(false)}>
+          <div className="chat-sheet chat-help-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="chat-sheet-handle" />
+            <div className="chat-help-title">O que posso fazer</div>
+            <div className="chat-help-items">
+              <div className="chat-help-item">
+                <div className="chat-help-label">Lançar visita</div>
+                <div className="chat-help-example">"Cliente João Silva, soja R5, ontem, observações..."</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">Ver agenda da semana</div>
+                <div className="chat-help-example">"Agenda da semana" ou "minha semana"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">Rotina do dia</div>
+                <div className="chat-help-example">"Meu dia" ou "rotina de hoje"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">Gerar PDF de visita</div>
+                <div className="chat-help-example">"Gerar PDF da visita do cliente X"</div>
+              </div>
+            </div>
+            <button className="chat-sheet-cancel" onClick={() => setShowHelp(false)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom sheet — escolha de foto em português */}
       {showPhotoSheet && (

@@ -13,6 +13,7 @@
 
     <!-- 🎙️ Microfone (gravação de voz no assistente) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!-- 🌐 Internet -->
     <uses-permission android:name="android.permission.INTERNET" />

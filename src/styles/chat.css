@@ -364,6 +364,45 @@
   text-align: center;
 }
 
+/* Modal de ajuda */
+.chat-help-sheet {
+  gap: 0;
+}
+
+.chat-help-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #111);
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.chat-help-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.chat-help-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg, #f5f5f5);
+}
+
+.chat-help-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #16a34a;
+  margin-bottom: 3px;
+}
+
+.chat-help-example {
+  font-size: 12.5px;
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+}
+
 /* Spinner animation */
 @keyframes spin {
   to { transform: rotate(360deg); }

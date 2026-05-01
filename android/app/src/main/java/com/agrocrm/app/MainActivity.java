@@ -3,8 +3,6 @@ package com.agrocrm.app;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -29,15 +27,5 @@ public class MainActivity extends BridgeActivity {
     webSettings.setAllowFileAccess(true);
     webSettings.setJavaScriptEnabled(true);
     webSettings.setMediaPlaybackRequiresUserGesture(false);
-
-    // post() garante que rodamos DEPOIS do Capacitor configurar o próprio WebChromeClient
-    getBridge().getWebView().post(() ->
-      getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
-        @Override
-        public void onPermissionRequest(PermissionRequest request) {
-          request.grant(request.getResources());
-        }
-      })
-    );
   }
 }
