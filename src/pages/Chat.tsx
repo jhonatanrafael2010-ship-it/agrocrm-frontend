@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff, Download, FolderOpen, Share2 } from "lucide-react";
+import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff, Download, Share2 } from "lucide-react";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Capacitor } from "@capacitor/core";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import "../styles/chat.css";
@@ -69,8 +67,6 @@ const Chat: React.FC = () => {
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [downloadedPdfs, setDownloadedPdfs] = useState<Map<string, string>>(new Map());
-  const [downloadingPdfs, setDownloadingPdfs] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -103,50 +99,17 @@ const Chat: React.FC = () => {
     setTimeout(() => setToast(""), 2500);
   }
 
-  async function fetchPdfBlob(url: string, filename: string): Promise<File> {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return new File([blob], filename, { type: "application/pdf" });
+  function handleDownloadPdf(url: string) {
+    // Abre no browser do sistema onde o usuário pode baixar/salvar nativamente
+    window.open(url, "_system");
   }
 
-  async function handleDownloadPdf(url: string, filename: string) {
-    const saved = downloadedPdfs.get(url);
-    if (saved) {
-      window.open(Capacitor.convertFileSrc(saved), "_blank");
+  async function handleSharePdf(label: string, url: string) {
+    try {
+      await navigator.share({ title: label, url });
       return;
-    }
-    setDownloadingPdfs(prev => new Set(prev).add(url));
-    try {
-      const file = await fetchPdfBlob(url, filename);
-      const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
-        reader.readAsDataURL(file);
-      });
-      // Directory.Cache não exige WRITE_EXTERNAL_STORAGE
-      const result = await Filesystem.writeFile({
-        path: filename,
-        data: base64,
-        directory: Directory.Cache,
-      });
-      setDownloadedPdfs(prev => new Map(prev).set(url, result.uri));
-      showToast("PDF salvo! Toque em 📂 para abrir.");
-    } catch {
-      showToast("Erro ao salvar PDF.");
-    } finally {
-      setDownloadingPdfs(prev => { const s = new Set(prev); s.delete(url); return s; });
-    }
-  }
-
-  async function handleSharePdf(label: string, url: string, filename: string) {
-    try {
-      const file = await fetchPdfBlob(url, filename);
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: label });
-        return;
-      }
     } catch {}
-    // fallback: copia link
+    // Fallback: copia o link
     try {
       await navigator.clipboard.writeText(url);
       showToast("Link copiado!");
@@ -452,36 +415,27 @@ const Chat: React.FC = () => {
               {msg.text && (
                 <pre className="chat-bubble-text">{msg.text}</pre>
               )}
-              {msg.pdfItems && msg.pdfItems.map((item, i) => {
-                const isDownloading = downloadingPdfs.has(item.url);
-                const isSaved = downloadedPdfs.has(item.url);
-                return (
-                  <div key={i} className="chat-pdf-item">
-                    <span className="chat-pdf-label">{item.label}</span>
-                    <div className="chat-pdf-actions">
-                      <button
-                        className={`chat-pdf-action-btn${isSaved ? " chat-pdf-action-btn--saved" : ""}`}
-                        title={isSaved ? "Abrir PDF" : "Baixar PDF"}
-                        disabled={isDownloading}
-                        onClick={() => handleDownloadPdf(item.url, item.filename)}
-                      >
-                        {isDownloading
-                          ? <Loader2 size={16} className="spin" />
-                          : isSaved
-                            ? <FolderOpen size={16} />
-                            : <Download size={16} />}
-                      </button>
-                      <button
-                        className="chat-pdf-action-btn"
-                        title="Compartilhar"
-                        onClick={() => handleSharePdf(item.label, item.url, item.filename)}
-                      >
-                        <Share2 size={16} />
-                      </button>
-                    </div>
+              {msg.pdfItems && msg.pdfItems.map((item, i) => (
+                <div key={i} className="chat-pdf-item">
+                  <span className="chat-pdf-label">{item.label}</span>
+                  <div className="chat-pdf-actions">
+                    <button
+                      className="chat-pdf-action-btn"
+                      title="Baixar / Abrir PDF"
+                      onClick={() => handleDownloadPdf(item.url)}
+                    >
+                      <Download size={16} />
+                    </button>
+                    <button
+                      className="chat-pdf-action-btn"
+                      title="Compartilhar"
+                      onClick={() => handleSharePdf(item.label, item.url)}
+                    >
+                      <Share2 size={16} />
+                    </button>
                   </div>
-                );
-              })}
+                </div>
+              ))}
               <span className="chat-bubble-time">{formatTime(msg.timestamp)}</span>
             </div>
           </div>
