@@ -10,7 +10,7 @@ interface Message {
   role: "user" | "bot";
   text: string;
   images?: string[];
-  pdfUrls?: string[];
+  pdfItems?: { url: string; label: string; filename: string }[];
   timestamp: Date;
 }
 
@@ -196,7 +196,7 @@ const Chat: React.FC = () => {
           id: Date.now() + 1,
           role: "bot",
           text: data.response || (data.ok === false ? data.error : "Sem resposta."),
-          pdfUrls: data.pdf_urls?.length ? data.pdf_urls : undefined,
+          pdfItems: data.pdf_items?.length ? data.pdf_items : undefined,
           timestamp: new Date(),
         },
       ]);
@@ -390,17 +390,35 @@ const Chat: React.FC = () => {
               {msg.text && (
                 <pre className="chat-bubble-text">{msg.text}</pre>
               )}
-              {msg.pdfUrls && msg.pdfUrls.map((url, i) => (
-                <a
-                  key={i}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="chat-pdf-btn"
-                  style={i > 0 ? { marginTop: 4 } : undefined}
-                >
-                  {msg.pdfUrls!.length > 1 ? `Abrir PDF ${i + 1}` : "Abrir PDF"}
-                </a>
+              {msg.pdfItems && msg.pdfItems.map((item, i) => (
+                <div key={i} className="chat-pdf-item">
+                  <span className="chat-pdf-label">{item.label}</span>
+                  <div className="chat-pdf-actions">
+                    <a
+                      href={item.url}
+                      download={item.filename}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="chat-pdf-action-btn"
+                      title="Baixar PDF"
+                    >
+                      ⬇
+                    </a>
+                    <button
+                      className="chat-pdf-action-btn"
+                      title="Compartilhar"
+                      onClick={async () => {
+                        if (navigator.share) {
+                          try { await navigator.share({ title: item.label, url: item.url }); } catch {}
+                        } else {
+                          await navigator.clipboard.writeText(item.url);
+                        }
+                      }}
+                    >
+                      ↗
+                    </button>
+                  </div>
+                </div>
               ))}
               <span className="chat-bubble-time">{formatTime(msg.timestamp)}</span>
             </div>
