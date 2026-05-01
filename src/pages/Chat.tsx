@@ -10,7 +10,7 @@ interface Message {
   role: "user" | "bot";
   text: string;
   images?: string[];
-  pdfUrl?: string;
+  pdfUrls?: string[];
   timestamp: Date;
 }
 
@@ -196,7 +196,7 @@ const Chat: React.FC = () => {
           id: Date.now() + 1,
           role: "bot",
           text: data.response || (data.ok === false ? data.error : "Sem resposta."),
-          pdfUrl: data.pdf_url || undefined,
+          pdfUrls: data.pdf_urls?.length ? data.pdf_urls : undefined,
           timestamp: new Date(),
         },
       ]);
@@ -390,16 +390,18 @@ const Chat: React.FC = () => {
               {msg.text && (
                 <pre className="chat-bubble-text">{msg.text}</pre>
               )}
-              {msg.pdfUrl && (
+              {msg.pdfUrls && msg.pdfUrls.map((url, i) => (
                 <a
-                  href={msg.pdfUrl}
+                  key={i}
+                  href={url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="chat-pdf-btn"
+                  style={i > 0 ? { marginTop: 4 } : undefined}
                 >
-                  Abrir PDF
+                  {msg.pdfUrls!.length > 1 ? `Abrir PDF ${i + 1}` : "Abrir PDF"}
                 </a>
-              )}
+              ))}
               <span className="chat-bubble-time">{formatTime(msg.timestamp)}</span>
             </div>
           </div>

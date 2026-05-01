@@ -364,9 +364,9 @@
   text-align: center;
 }
 
-/* Botão abrir PDF */
+/* Botão(ões) abrir PDF */
 .chat-pdf-btn {
-  display: inline-block;
+  display: block;
   margin-top: 8px;
   padding: 6px 14px;
   background: #16a34a;
@@ -375,6 +375,7 @@
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+  text-align: center;
 }
 
 .chat-pdf-btn:active {
