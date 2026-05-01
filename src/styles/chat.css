@@ -402,13 +402,51 @@
   color: #fff;
   border: none;
   cursor: pointer;
-  font-size: 15px;
   text-decoration: none;
   transition: background 0.15s;
+  flex-shrink: 0;
 }
 
-.chat-pdf-action-btn:active {
+.chat-pdf-action-btn:active,
+.chat-pdf-action-btn:hover {
   background: #15803d;
+}
+
+.chat-pdf-action-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.chat-pdf-action-btn--saved {
+  background: #2563eb;
+}
+
+.chat-pdf-action-btn--saved:active,
+.chat-pdf-action-btn--saved:hover {
+  background: #1d4ed8;
+}
+
+/* Toast */
+.chat-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 20000;
+  pointer-events: none;
+  animation: fadeInOut 2.5s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Modal de ajuda */
