@@ -398,7 +398,6 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #16a34a;
   color: #fff;
   border: none;
   cursor: pointer;
@@ -407,22 +406,17 @@
   flex-shrink: 0;
 }
 
-.chat-pdf-action-btn:active,
-.chat-pdf-action-btn:hover {
+.chat-pdf-action-btn--download {
+  background: #16a34a;
+}
+.chat-pdf-action-btn--download:active {
   background: #15803d;
 }
 
-.chat-pdf-action-btn:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
-
-.chat-pdf-action-btn--saved {
+.chat-pdf-action-btn--share {
   background: #2563eb;
 }
-
-.chat-pdf-action-btn--saved:active,
-.chat-pdf-action-btn--saved:hover {
+.chat-pdf-action-btn--share:active {
   background: #1d4ed8;
 }
 

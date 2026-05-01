@@ -100,18 +100,29 @@ const Chat: React.FC = () => {
   }
 
   function handleDownloadPdf(url: string) {
-    // Abre no browser do sistema onde o usuário pode baixar/salvar nativamente
     window.open(url, "_system");
   }
 
-  async function handleSharePdf(label: string, url: string) {
+  async function handleSharePdf(label: string, r2url: string, filename: string) {
+    // Busca via proxy do backend (sem CORS)
+    const proxyUrl = `${API_BASE}mobile/pdf-proxy?url=${encodeURIComponent(r2url)}`;
     try {
-      await navigator.share({ title: label, url });
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error("fetch falhou");
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: label });
+        return;
+      }
+    } catch {}
+    // Fallback: compartilha o link
+    try {
+      await navigator.share({ title: label, url: r2url });
       return;
     } catch {}
-    // Fallback: copia o link
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(r2url);
       showToast("Link copiado!");
     } catch {
       showToast("Não foi possível compartilhar.");
@@ -420,18 +431,18 @@ const Chat: React.FC = () => {
                   <span className="chat-pdf-label">{item.label}</span>
                   <div className="chat-pdf-actions">
                     <button
-                      className="chat-pdf-action-btn"
-                      title="Baixar / Abrir PDF"
+                      className="chat-pdf-action-btn chat-pdf-action-btn--download"
+                      title="Abrir PDF"
                       onClick={() => handleDownloadPdf(item.url)}
                     >
-                      <Download size={16} />
+                      <Download size={15} />
                     </button>
                     <button
-                      className="chat-pdf-action-btn"
-                      title="Compartilhar"
-                      onClick={() => handleSharePdf(item.label, item.url)}
+                      className="chat-pdf-action-btn chat-pdf-action-btn--share"
+                      title="Compartilhar PDF"
+                      onClick={() => handleSharePdf(item.label, item.url, item.filename)}
                     >
-                      <Share2 size={16} />
+                      <Share2 size={15} />
                     </button>
                   </div>
                 </div>
