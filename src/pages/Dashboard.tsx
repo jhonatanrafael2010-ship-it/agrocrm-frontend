@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
 import KPICard from "../components/KPICard";
-import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase } from "lucide-react";
+import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, FileSpreadsheet, Loader2 } from "lucide-react";
 
 type Client = { id: number; name: string };
 type Property = { id: number; name: string; client_id?: number };
@@ -142,6 +142,7 @@ const Dashboard: React.FC = () => {
   const [seasons, setSeasons] = useState<Array<{ key: string; label: string; culture: string }>>([]);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedSeason, setSelectedSeason] = useState<string>("");
+  const [downloadingExcel, setDownloadingExcel] = useState(false);
   const [selectedCols, setSelectedCols] = useState<string[]>(
     ["date", "client", "property", "consultant", "culture", "variety", "status"]
   );
@@ -261,17 +262,13 @@ const Dashboard: React.FC = () => {
   // ✅ Excel formatado (backend)
   // ============================================================
   async function downloadExcel() {
+    if (!startDate || !endDate) {
+      alert("Selecione um intervalo (De / Até) para gerar o relatório.");
+      return;
+    }
+    setDownloadingExcel(true);
     try {
-      if (!startDate || !endDate) {
-        alert("Selecione um intervalo (De / Até) para gerar o relatório.");
-        return;
-      }
-
-      // Monta query string com filtros opcionais
-      const params = new URLSearchParams({
-        start: startDate,
-        end: endDate,
-      });
+      const params = new URLSearchParams({ start: startDate, end: endDate });
       if (selectedRegion) params.append("region", selectedRegion);
       if (selectedSeason) params.append("season", selectedSeason);
 
@@ -284,17 +281,15 @@ const Dashboard: React.FC = () => {
       }
 
       const blob = await res.blob();
-
-      // Nome do arquivo reflete os filtros
       const parts = [`relatorio_visitas_${startDate}_a_${endDate}`];
       if (selectedRegion) parts.push(selectedRegion.replace(/\s+/g, "-").toLowerCase());
       if (selectedSeason) parts.push(selectedSeason);
-      const fileName = `${parts.join("_")}.xlsx`;
-
-      downloadBlob(fileName, blob);
+      downloadBlob(`${parts.join("_")}.xlsx`, blob);
     } catch (err) {
       console.error(err);
       alert("Não foi possível gerar o Excel. Veja o console/log do backend.");
+    } finally {
+      setDownloadingExcel(false);
     }
   }
 
@@ -530,12 +525,34 @@ const Dashboard: React.FC = () => {
                   </select>
 
                   <button
-                    className="btn btn-sm btn-outline-success"
                     onClick={downloadExcel}
-                    disabled={!startDate || !endDate}
-                    title="Baixar Excel formatado (relatório profissional)"
+                    disabled={!startDate || !endDate || downloadingExcel}
+                    title="Baixar relatório gerencial em Excel (PowerBI style)"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 7,
+                      padding: "7px 16px",
+                      background: (!startDate || !endDate || downloadingExcel)
+                        ? "#9ca3af"
+                        : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: (!startDate || !endDate || downloadingExcel) ? "not-allowed" : "pointer",
+                      boxShadow: (!startDate || !endDate || downloadingExcel)
+                        ? "none"
+                        : "0 2px 8px rgba(22,163,74,0.35)",
+                      transition: "all 0.15s",
+                      whiteSpace: "nowrap",
+                    }}
                   >
-                    ⬇️ Baixar Excel
+                    {downloadingExcel
+                      ? <><Loader2 size={15} style={{ animation: "spin 0.8s linear infinite" }} /> Gerando...</>
+                      : <><FileSpreadsheet size={15} /> Baixar Excel</>
+                    }
                   </button>
                 </div>
               </div>
