@@ -3,6 +3,7 @@ import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff } from "lucid
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import "../styles/chat.css";
@@ -67,7 +68,6 @@ const Chat: React.FC = () => {
   const [consultantOptions, setConsultantOptions] = useState<{ id: number; name: string }[]>([]);
 
   const [recording, setRecording] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -75,9 +75,10 @@ const Chat: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoKeyRef = useRef(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
+  const speechPartialRef = useRef("");
+  const inputBaseRef = useRef("");
+  const speechListenerRef = useRef<{ remove: () => void } | null>(null);
+  const listeningStateListenerRef = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -91,8 +92,9 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
+      speechListenerRef.current?.remove();
+      listeningStateListenerRef.current?.remove();
+      SpeechRecognition.stop().catch(() => {});
     };
   }, []);
 
@@ -267,96 +269,84 @@ const Chat: React.FC = () => {
     }
   }
 
-  async function acquireMicStream(): Promise<MediaStream> {
-    const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: 1,
-        sampleRate: 16000,
-      },
-    };
-    try {
-      return await navigator.mediaDevices.getUserMedia(constraints);
-    } catch (err) {
-      if (err instanceof Error && err.name === "NotReadableError") {
-        await new Promise((r) => setTimeout(r, 700));
-        return await navigator.mediaDevices.getUserMedia(constraints);
+  function applyFinalSpeechText() {
+    const text = speechPartialRef.current.trim();
+    speechPartialRef.current = "";
+    setRecording(false);
+    speechListenerRef.current?.remove();
+    speechListenerRef.current = null;
+    listeningStateListenerRef.current?.remove();
+    listeningStateListenerRef.current = null;
+    if (text) {
+      const base = inputBaseRef.current;
+      const next = base ? `${base} ${text}` : text;
+      setInput(next);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
       }
-      throw err;
+    } else {
+      setInput(inputBaseRef.current);
     }
+    inputBaseRef.current = "";
   }
 
   async function handleMicStart() {
     if (recording || loading) return;
-    // Libera stream anterior caso ainda esteja ativo
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
     try {
-      const stream = await acquireMicStream();
-      streamRef.current = stream;
+      const { available } = await SpeechRecognition.available();
+      if (!available) {
+        alert("Reconhecimento de voz não disponível neste dispositivo.");
+        return;
+      }
+      const perms = await SpeechRecognition.requestPermissions();
+      if ((perms as any).speechRecognition !== "granted") {
+        alert("Permissão de microfone negada.");
+        return;
+      }
 
-      let mimeType = "";
-      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mimeType = "audio/webm;codecs=opus";
-      else if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
-      else if (MediaRecorder.isTypeSupported("audio/mp4")) mimeType = "audio/mp4";
+      speechPartialRef.current = "";
+      inputBaseRef.current = input;
 
-      const mrOptions: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
-      if (mimeType) mrOptions.mimeType = mimeType;
-      const mr = new MediaRecorder(stream, mrOptions);
-      audioChunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-        const actualType = mr.mimeType || mimeType || "audio/webm";
-        const blob = new Blob(audioChunksRef.current, { type: actualType });
-        const ext = actualType.includes("mp4") ? "mp4" : "webm";
-        setTranscribing(true);
-        try {
-          const reader = new FileReader();
-          reader.onloadend = async () => {
-            try {
-              const res = await fetch(`${API_BASE}mobile/transcribe`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ audio_base64: reader.result as string, format: ext }),
-              });
-              const data = await res.json();
-              if (data.ok && data.text) {
-                setInput((prev) => (prev ? prev + " " + data.text : data.text));
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = "auto";
-                  textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
-                }
-              }
-            } finally {
-              setTranscribing(false);
-            }
-          };
-          reader.readAsDataURL(blob);
-        } catch {
-          setTranscribing(false);
+      speechListenerRef.current?.remove();
+      listeningStateListenerRef.current?.remove();
+
+      speechListenerRef.current = await SpeechRecognition.addListener(
+        "partialResults",
+        (data: { matches: string[] }) => {
+          const match = data.matches?.[0] ?? "";
+          speechPartialRef.current = match;
+          const base = inputBaseRef.current;
+          setInput(base ? `${base} ${match}` : match);
         }
-      };
-      mr.start();
-      mediaRecorderRef.current = mr;
+      );
+
+      listeningStateListenerRef.current = await SpeechRecognition.addListener(
+        "listeningState",
+        (state: { status: string }) => {
+          if (state.status === "stopped") applyFinalSpeechText();
+        }
+      );
+
+      await SpeechRecognition.start({
+        language: "pt-BR",
+        maxResults: 1,
+        partialResults: true,
+        popup: false,
+      });
       setRecording(true);
     } catch (err: unknown) {
-      const name = err instanceof Error ? err.name : "Error";
+      speechListenerRef.current?.remove();
+      listeningStateListenerRef.current?.remove();
       const msg = err instanceof Error ? err.message : String(err);
-      alert(`Microfone: ${name} — ${msg}`);
+      alert(`Microfone: ${msg}`);
     }
   }
 
-  function handleMicStop() {
+  async function handleMicStop() {
     if (!recording) return;
-    mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current = null;
-    setRecording(false);
+    try { await SpeechRecognition.stop(); } catch {}
+    applyFinalSpeechText();
   }
 
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -518,26 +508,26 @@ const Chat: React.FC = () => {
           ref={textareaRef}
           className="chat-input"
           rows={1}
-          placeholder={transcribing ? "Transcrevendo..." : recording ? "Gravando... toque para parar" : "Digite uma mensagem..."}
+          placeholder={recording ? "Ouvindo... toque para parar" : "Digite uma mensagem..."}
           value={input}
           onChange={autoResize}
           onKeyDown={handleKeyDown}
-          disabled={loading || recording || transcribing}
+          disabled={loading || recording}
         />
 
         <button
           className={`chat-icon-btn${recording ? " chat-icon-btn--recording" : ""}`}
           title={recording ? "Parar gravação" : "Gravar áudio"}
           onClick={recording ? handleMicStop : handleMicStart}
-          disabled={loading || transcribing}
+          disabled={loading}
         >
-          {transcribing ? <Loader2 size={20} className="spin" /> : recording ? <MicOff size={20} /> : <Mic size={20} />}
+          {recording ? <MicOff size={20} /> : <Mic size={20} />}
         </button>
 
         <button
           className="chat-send-btn"
           onClick={() => sendMessage(input)}
-          disabled={loading || recording || transcribing || (!input.trim() && pendingPhotos.length === 0)}
+          disabled={loading || recording || (!input.trim() && pendingPhotos.length === 0)}
         >
           {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
         </button>
