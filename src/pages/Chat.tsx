@@ -268,13 +268,21 @@ const Chat: React.FC = () => {
   }
 
   async function acquireMicStream(): Promise<MediaStream> {
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 16000,
+      },
+    };
     try {
-      return await navigator.mediaDevices.getUserMedia({ audio: true });
+      return await navigator.mediaDevices.getUserMedia(constraints);
     } catch (err) {
       if (err instanceof Error && err.name === "NotReadableError") {
-        // Hardware de áudio ocupado no Android — aguarda e tenta novamente
         await new Promise((r) => setTimeout(r, 700));
-        return await navigator.mediaDevices.getUserMedia({ audio: true });
+        return await navigator.mediaDevices.getUserMedia(constraints);
       }
       throw err;
     }
@@ -292,10 +300,13 @@ const Chat: React.FC = () => {
       streamRef.current = stream;
 
       let mimeType = "";
-      if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) mimeType = "audio/webm;codecs=opus";
+      else if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
       else if (MediaRecorder.isTypeSupported("audio/mp4")) mimeType = "audio/mp4";
 
-      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const mrOptions: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+      if (mimeType) mrOptions.mimeType = mimeType;
+      const mr = new MediaRecorder(stream, mrOptions);
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = async () => {
