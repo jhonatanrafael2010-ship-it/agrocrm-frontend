@@ -75,10 +75,6 @@ const Chat: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoKeyRef = useRef(0);
-  const speechPartialRef = useRef("");
-  const inputBaseRef = useRef("");
-  const speechListenerRef = useRef<{ remove: () => void } | null>(null);
-  const listeningStateListenerRef = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -91,11 +87,7 @@ const Chat: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    return () => {
-      speechListenerRef.current?.remove();
-      listeningStateListenerRef.current?.remove();
-      SpeechRecognition.stop().catch(() => {});
-    };
+    return () => { SpeechRecognition.stop().catch(() => {}); };
   }, []);
 
   function showToast(msg: string) {
@@ -269,28 +261,6 @@ const Chat: React.FC = () => {
     }
   }
 
-  function applyFinalSpeechText() {
-    const text = speechPartialRef.current.trim();
-    speechPartialRef.current = "";
-    setRecording(false);
-    speechListenerRef.current?.remove();
-    speechListenerRef.current = null;
-    listeningStateListenerRef.current?.remove();
-    listeningStateListenerRef.current = null;
-    if (text) {
-      const base = inputBaseRef.current;
-      const next = base ? `${base} ${text}` : text;
-      setInput(next);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
-      }
-    } else {
-      setInput(inputBaseRef.current);
-    }
-    inputBaseRef.current = "";
-  }
-
   async function handleMicStart() {
     if (recording || loading) return;
     try {
@@ -304,50 +274,29 @@ const Chat: React.FC = () => {
         alert("Permissão de microfone negada.");
         return;
       }
-
-      speechPartialRef.current = "";
-      inputBaseRef.current = input;
-
-      speechListenerRef.current?.remove();
-      listeningStateListenerRef.current?.remove();
-
-      speechListenerRef.current = await SpeechRecognition.addListener(
-        "partialResults",
-        (data: { matches: string[] }) => {
-          const match = data.matches?.[0] ?? "";
-          speechPartialRef.current = match;
-          const base = inputBaseRef.current;
-          setInput(base ? `${base} ${match}` : match);
-        }
-      );
-
-      listeningStateListenerRef.current = await SpeechRecognition.addListener(
-        "listeningState",
-        (state: { status: string }) => {
-          if (state.status === "stopped") applyFinalSpeechText();
-        }
-      );
-
-      await SpeechRecognition.start({
+      setRecording(true);
+      const result = await SpeechRecognition.start({
         language: "pt-BR",
         maxResults: 1,
-        partialResults: true,
-        popup: false,
+        partialResults: false,
+        popup: true,
       });
-      setRecording(true);
-    } catch (err: unknown) {
-      speechListenerRef.current?.remove();
-      listeningStateListenerRef.current?.remove();
-      const msg = err instanceof Error ? err.message : String(err);
-      alert(`Microfone: ${msg}`);
+      const text = (result as any)?.matches?.[0]?.trim() ?? "";
+      if (text) {
+        setInput((prev) => (prev ? `${prev} ${text}` : text));
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
+        }
+      }
+    } catch {
+      // usuário cancelou o diálogo
+    } finally {
+      setRecording(false);
     }
   }
 
-  async function handleMicStop() {
-    if (!recording) return;
-    try { await SpeechRecognition.stop(); } catch {}
-    applyFinalSpeechText();
-  }
+  function handleMicStop() { /* popup: true — parar é feito pelo diálogo nativo */ }
 
   function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setInput(e.target.value);
@@ -508,7 +457,7 @@ const Chat: React.FC = () => {
           ref={textareaRef}
           className="chat-input"
           rows={1}
-          placeholder={recording ? "Ouvindo... toque para parar" : "Digite uma mensagem..."}
+          placeholder="Digite uma mensagem..."
           value={input}
           onChange={autoResize}
           onKeyDown={handleKeyDown}
