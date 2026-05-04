@@ -338,6 +338,30 @@ const Chat: React.FC = () => {
     return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  function renderBubbleText(text: string): React.ReactNode {
+    const lines = text.split("\n");
+    return (
+      <div className="chat-bubble-text">
+        {lines.map((line, i) => {
+          if (!line.trim()) return <br key={i} />;
+
+          // linha numerada: "1. Nome do Cliente - Cultura - Variedade"
+          if (/^\d+\.\s/.test(line)) {
+            const dashIdx = line.indexOf(" - ");
+            if (dashIdx !== -1) {
+              const bold = line.slice(0, dashIdx);
+              const rest = line.slice(dashIdx);
+              return <div key={i}><strong>{bold}</strong>{rest}</div>;
+            }
+            return <div key={i}><strong>{line}</strong></div>;
+          }
+
+          return <div key={i}>{line}</div>;
+        })}
+      </div>
+    );
+  }
+
   // ── Seleção de consultor ──────────────────────────────────
   if (showConsultantPicker) {
     return (
@@ -413,9 +437,7 @@ const Chat: React.FC = () => {
                   ))}
                 </div>
               )}
-              {msg.text && (
-                <pre className="chat-bubble-text">{msg.text}</pre>
-              )}
+              {msg.text && renderBubbleText(msg.text)}
               {msg.pdfItems && msg.pdfItems.map((item, i) => (
                 <div key={i} className="chat-pdf-item">
                   <span className="chat-pdf-label">{item.label}</span>
