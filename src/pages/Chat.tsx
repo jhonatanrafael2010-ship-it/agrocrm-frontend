@@ -22,6 +22,9 @@ interface PendingPhoto {
   key: number;
 }
 
+const CHAT_HISTORY_KEY = "nutricrm_chat_history";
+const MAX_HISTORY = 80;
+
 function getOrCreateSession(): string {
   const key = "nutricrm_chat_session";
   let sid = localStorage.getItem(key);
@@ -34,6 +37,27 @@ function getOrCreateSession(): string {
 
 function getConsultantId(): string {
   return localStorage.getItem("nutricrm_consultant_id") || "";
+}
+
+function loadHistory(): Message[] {
+  try {
+    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(messages: Message[]) {
+  try {
+    const toSave = messages.slice(-MAX_HISTORY).map((m) => ({
+      ...m,
+      images: undefined,
+    }));
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(toSave));
+  } catch {}
 }
 
 function isNativeApp(): boolean {
@@ -51,14 +75,12 @@ async function webPathToDataUrl(webPath: string): Promise<string> {
 }
 
 const Chat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      role: "bot",
-      text: "Olá! Como posso ajudar?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const history = loadHistory();
+    return history.length > 0
+      ? history
+      : [{ id: 0, role: "bot", text: "Olá! Como posso ajudar?", timestamp: new Date() }];
+  });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
@@ -81,6 +103,10 @@ const Chat: React.FC = () => {
   }, [messages]);
 
   useEffect(() => {
+    saveHistory(messages);
+  }, [messages]);
+
+  useEffect(() => {
     fetchWithCache(`${API_BASE}consultants`, "consultants")
       .then((data) => setConsultantOptions(data || []))
       .catch(() => {});
@@ -89,6 +115,9 @@ const Chat: React.FC = () => {
   useEffect(() => {
     return () => { SpeechRecognition.stop().catch(() => {}); };
   }, []);
+
+  const consultantName =
+    consultantOptions.find((c) => String(c.id) === consultantId)?.name || "";
 
   function showToast(msg: string) {
     setToast(msg);
@@ -346,7 +375,11 @@ const Chat: React.FC = () => {
           <div>
             <div className="chat-header-name">Assistente NutriCRM</div>
             <div className="chat-header-status">
-              {loading ? "digitando..." : "online"}
+              {loading
+                ? "digitando..."
+                : consultantName
+                ? `online · ${consultantName}`
+                : "online"}
             </div>
           </div>
         </div>
@@ -490,20 +523,44 @@ const Chat: React.FC = () => {
             <div className="chat-help-title">O que posso fazer</div>
             <div className="chat-help-items">
               <div className="chat-help-item">
-                <div className="chat-help-label">Lançar visita</div>
+                <div className="chat-help-label">📋 Lançar visita</div>
                 <div className="chat-help-example">"Cliente João Silva, soja R5, ontem, observações..."</div>
               </div>
               <div className="chat-help-item">
-                <div className="chat-help-label">Ver agenda da semana</div>
-                <div className="chat-help-example">"Agenda da semana" ou "minha semana"</div>
+                <div className="chat-help-label">📅 Agenda da semana</div>
+                <div className="chat-help-example">"Agenda da semana" · "visitas da semana"</div>
               </div>
               <div className="chat-help-item">
-                <div className="chat-help-label">Rotina do dia</div>
-                <div className="chat-help-example">"Meu dia" ou "rotina de hoje"</div>
+                <div className="chat-help-label">☀️ Rotina do dia</div>
+                <div className="chat-help-example">"Meu dia" · "agenda de hoje"</div>
               </div>
               <div className="chat-help-item">
-                <div className="chat-help-label">Gerar PDF de visita</div>
-                <div className="chat-help-example">"Gerar PDF da visita do cliente X"</div>
+                <div className="chat-help-label">🗓️ Visitas do mês</div>
+                <div className="chat-help-example">"Visitas do mês" · "minhas visitas do mês"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">🌱 Dias de plantado</div>
+                <div className="chat-help-example">"Dias de plantado dos meus clientes"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">⏰ Clientes atrasados</div>
+                <div className="chat-help-example">"Clientes atrasados" · "clientes sem visita"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">📐 Organizar semana</div>
+                <div className="chat-help-example">"Organiza minha semana" · "planeja minha semana"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">📄 Gerar PDF</div>
+                <div className="chat-help-example">"PDF da última visita" · "PDF do cliente X"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">📝 Dados de campo</div>
+                <div className="chat-help-example">"Me mostra os dados de campo do cliente X"</div>
+              </div>
+              <div className="chat-help-item">
+                <div className="chat-help-label">📸 Registrar foto</div>
+                <div className="chat-help-example">Toque no ícone da câmera e envie com a mensagem</div>
               </div>
             </div>
             <button className="chat-sheet-cancel" onClick={() => setShowHelp(false)}>
