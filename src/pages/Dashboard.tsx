@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
+import { fetchWithCache } from "../utils/offlineSync";
 import KPICard from "../components/KPICard";
 import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, FileSpreadsheet, Loader2 } from "lucide-react";
 
@@ -148,10 +149,9 @@ const Dashboard: React.FC = () => {
   );
 
   useEffect(() => {
-    // ===== Carrega listas de filtros (regiões e safras) =====
     Promise.all([
-      fetch(`${API_BASE}regions`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}seasons`).then((r) => (r.ok ? r.json() : [])),
+      fetchWithCache(`${API_BASE}regions`, "cultures"),
+      fetchWithCache(`${API_BASE}seasons`, "varieties"),
     ])
       .then(([rs, ss]) => {
         setRegions(Array.isArray(rs) ? rs : []);
@@ -167,12 +167,12 @@ const Dashboard: React.FC = () => {
     setLoading(true);
 
     Promise.all([
-      fetch(`${API_BASE}clients`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}properties`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}plots`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}plantings`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}visits?scope=all`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}opportunities`).then((r) => (r.ok ? r.json() : [])),
+      fetchWithCache(`${API_BASE}clients`, "clients"),
+      fetchWithCache(`${API_BASE}properties`, "properties"),
+      fetchWithCache(`${API_BASE}plots`, "plots"),
+      fetchWithCache(`${API_BASE}plantings`, "plantings"),
+      fetchWithCache(`${API_BASE}visits?scope=all`, "visits"),
+      fetchWithCache(`${API_BASE}opportunities`, "opportunities"),
     ])
       .then(([cs, ps, pls, pts, vs, os]) => {
         if (!mounted) return;

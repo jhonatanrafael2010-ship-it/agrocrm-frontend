@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import pencilIcon from "../assets/pencil.svg";
 import trashIcon from "../assets/trash.svg";
 import { API_BASE } from "../config";
+import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
@@ -33,33 +34,22 @@ const Clients: React.FC = () => {
 
   const theme = document.body.getAttribute("data-theme") || "light";
 
-  // ===== Carrega clientes =====
+  // ===== Carrega clientes e regiões =====
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_BASE}clients`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        return await res.json();
+    Promise.all([
+      fetchWithCache(`${API_BASE}clients`, "clients"),
+      fetchWithCache(`${API_BASE}regions`, "cultures"),
+    ])
+      .then(([cs, rs]) => {
+        setClients(cs as any[]);
+        setRegions(Array.isArray(rs) ? rs as any[] : []);
       })
-      .then((data) => setClients(data))
       .catch((err) => {
-        console.error("fetch clients err", err);
+        console.error("fetch clients/regions err", err);
         setError("Erro ao carregar clientes");
       })
       .finally(() => setLoading(false));
-  }, []);
-
-  // ===== Carrega lista de regiões disponíveis =====
-  useEffect(() => {
-    fetch(`${API_BASE}regions`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        return await res.json();
-      })
-      .then((data) => setRegions(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        console.error("fetch regions err", err);
-      });
   }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {

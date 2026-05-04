@@ -4,16 +4,18 @@
 // 📦 Configuração principal do IndexedDB
 // ============================================================
 const DB_NAME = "agrocrm_offline_db";
-const DB_VERSION = 9; // força limpar cache antiga do iOS
+const DB_VERSION = 10;
 
 // 🔹 Todas as stores válidas
 export type StoreName =
   | "clients"
   | "properties"
   | "plots"
+  | "plantings"
   | "cultures"
   | "varieties"
   | "consultants"
+  | "opportunities"
   | "visits"
   | "pending_visits"
   | "pending_photos";
@@ -32,9 +34,11 @@ function openDB(): Promise<IDBDatabase> {
         "clients",
         "properties",
         "plots",
+        "plantings",
         "cultures",
         "varieties",
         "consultants",
+        "opportunities",
         "visits",
         "pending_visits",
         "pending_photos",

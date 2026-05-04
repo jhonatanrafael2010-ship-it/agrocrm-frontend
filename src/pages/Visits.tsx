@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE } from "../config";
-import { fetchWithCache } from "../utils/offlineSync";
+import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
 import PhotoCarousel from "../components/PhotoCarousel";
 
 
@@ -87,10 +87,7 @@ const Visits: React.FC = () => {
       let vs: Visit[] = [];
 
       try {
-        const r1 = await fetch(`${API_BASE}visits?scope=all`, {
-          cache: "no-store",
-        });
-        vs = r1.ok ? await r1.json() : [];
+        vs = (await fetchWithCache(`${API_BASE}visits?scope=all`, "visits")) as Visit[];
       } catch {
         vs = [];
       }
@@ -176,6 +173,7 @@ const Visits: React.FC = () => {
     const res = await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
 
     if (res.ok) {
+      invalidateCache(`${API_BASE}visits?scope=all`);
       setVisits((list) => list.filter((v) => v.id !== id));
     }
   }
@@ -189,6 +187,7 @@ const Visits: React.FC = () => {
         body: JSON.stringify({ status: "done" }),
       });
       if (res.ok) {
+        invalidateCache(`${API_BASE}visits?scope=all`);
         setVisits((list) =>
           list.map((x) => (x.id === v.id ? { ...x, status: "done" } : x))
         );

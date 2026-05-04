@@ -4,6 +4,7 @@ import trashIcon from "../assets/trash.svg";
 import DarkSelect from "../components/DarkSelect";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
+import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
@@ -42,8 +43,8 @@ const Opportunities: React.FC = () => {
     let mounted = true;
     setLoading(true);
     Promise.all([
-      fetch(`${API_BASE}opportunities`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_BASE}clients`).then((r) => (r.ok ? r.json() : [])),
+      fetchWithCache(`${API_BASE}opportunities`, "opportunities"),
+      fetchWithCache(`${API_BASE}clients`, "clients"),
     ])
       .then(([ops, cs]) => {
         if (!mounted) return;

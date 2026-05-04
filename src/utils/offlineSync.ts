@@ -16,6 +16,13 @@ import {
   deleteFromStore,
 } from "./indexedDB";
 
+const _memCache = new Map<string, { data: any[]; expiresAt: number }>();
+const MEM_TTL_MS = 2 * 60 * 1000; // 2 minutes
+
+export function invalidateCache(url: string) {
+  _memCache.delete(url);
+}
+
 /**
  * Normaliza URL
  */
@@ -37,14 +44,23 @@ function isTemporaryOfflineId(value: any): boolean {
  */
 export async function fetchWithCache<T = any>(
   url: string,
-  store: StoreName
+  store: StoreName,
+  { skipMemCache = false }: { skipMemCache?: boolean } = {}
 ): Promise<T[]> {
+  if (!skipMemCache) {
+    const cached = _memCache.get(url);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data as T[];
+    }
+  }
+
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
 
     const data = await res.json();
     await putManyInStore(store, data);
+    _memCache.set(url, { data, expiresAt: Date.now() + MEM_TTL_MS });
     return data as T[];
   } catch {
     return await getAllFromStore<T>(store);
@@ -281,7 +297,8 @@ export async function syncPendingVisits(
 
   if (syncedCount > 0) {
     await syncPendingPhotos(apiBase);
-    await fetchWithCache(`${base}/visits?scope=all`, "visits");
+    invalidateCache(`${base}/visits?scope=all`);
+    await fetchWithCache(`${base}/visits?scope=all`, "visits", { skipMemCache: true });
     window.dispatchEvent(new Event("visits-synced"));
   }
 

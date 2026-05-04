@@ -3,6 +3,7 @@ import DarkSelect from "../components/DarkSelect";
 import trashIcon from "../assets/trash.svg";
 import pencilIcon from "../assets/pencil.svg";
 import { API_BASE } from "../config";
+import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
 
 
@@ -80,10 +81,10 @@ const Properties: React.FC = () => {
     let mounted = true;
     setLoading(true);
     Promise.all([
-      fetch(`${API_BASE}clients`).then((r) => r.json()),
-      fetch(`${API_BASE}properties`).then((r) => r.json()),
-      fetch(`${API_BASE}plots`).then((r) => r.json()),
-      fetch(`${API_BASE}plantings`).then((r) => r.json()),
+      fetchWithCache(`${API_BASE}clients`, "clients"),
+      fetchWithCache(`${API_BASE}properties`, "properties"),
+      fetchWithCache(`${API_BASE}plots`, "plots"),
+      fetchWithCache(`${API_BASE}plantings`, "plantings"),
     ])
       .then(([cs, ps, pls, pts]) => {
         if (!mounted) return;
