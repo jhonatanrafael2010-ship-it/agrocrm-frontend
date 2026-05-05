@@ -47,36 +47,9 @@ type Opportunity = {
   client_id?: number;
 };
 
-const VISIT_COLUMNS = [
-  { key: "date", label: "Data" },
-  { key: "client", label: "Cliente" },
-  { key: "property", label: "Propriedade" },
-  { key: "plot", label: "Talhão" },
-  { key: "consultant", label: "Consultor" },
-  { key: "culture", label: "Cultura" },
-  { key: "variety", label: "Variedade" },
-  { key: "fenologia_real", label: "Fenologia (observada)" },
-  { key: "status", label: "Status" },
-  { key: "recommendation", label: "Observações" },
-] as const;
-
 function formatDate(d: Date) {
   if (!d || isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
-}
-
-function monthRange(month: string) {
-  const [y, m] = month.split("-").map(Number);
-  const start = new Date(y, m - 1, 1);
-  const end = new Date(y, m, 1); // exclusivo
-  return { start, end };
-}
-
-function parseISODate(dateStr?: string) {
-  const d = (dateStr ?? "").slice(0, 10); // YYYY-MM-DD
-  const [y, m, day] = d.split("-").map(Number);
-  if (!y || !m || !day) return null;
-  return new Date(y, m - 1, day);
 }
 
 function downloadBlob(filename: string, blob: Blob) {
@@ -88,28 +61,6 @@ function downloadBlob(filename: string, blob: Blob) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-}
-
-function csvEscape(value: any) {
-  const s = String(value ?? "");
-  const needsQuotes = /[;"\n\r,]/.test(s);
-  const escaped = s.replace(/"/g, '""');
-  return needsQuotes ? `"${escaped}"` : escaped;
-}
-
-function toCsvByColumns(rows: Record<string, any>[], cols: string[]) {
-  const sep = ";";
-
-  const headerLabels = cols.map((c) => {
-    const meta = VISIT_COLUMNS.find((x) => x.key === c);
-    return meta?.label ?? c;
-  });
-
-  const headerLine = headerLabels.map(csvEscape).join(sep);
-  const lines = rows.map((r) => cols.map((c) => csvEscape(r[c])).join(sep));
-
-  // BOM ajuda Excel a abrir acentos certinho
-  return "\uFEFF" + [headerLine, ...lines].join("\n");
 }
 
 const Dashboard: React.FC = () => {
@@ -125,18 +76,11 @@ const Dashboard: React.FC = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
-  const [reportMonth, setReportMonth] = useState<string>(() => {
-    const now = new Date();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    return `${now.getFullYear()}-${m}`;
-  });
 
   const [clientsMap, setClientsMap] = useState<Record<number, string>>({});
   const [propsMap, setPropsMap] = useState<Record<number, string>>({});
   const [plotsMap, setPlotsMap] = useState<Record<number, string>>({});
 
-  // modal de export
-  const [exportOpen, setExportOpen] = useState(false);
 
   // ===== Filtros do relatório Excel =====
   const [regions, setRegions] = useState<string[]>([]);
@@ -144,9 +88,6 @@ const Dashboard: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedSeason, setSelectedSeason] = useState<string>("");
   const [downloadingExcel, setDownloadingExcel] = useState(false);
-  const [selectedCols, setSelectedCols] = useState<string[]>(
-    ["date", "client", "property", "consultant", "culture", "variety", "status"]
-  );
 
   useEffect(() => {
     Promise.all([
@@ -293,52 +234,6 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  // ============================================================
-  // ✅ CSV/Excel cru (frontend) com colunas escolhidas
-  // ============================================================
-  const monthVisits = useMemo(() => {
-    const { start, end } = monthRange(reportMonth);
-
-    return visits
-      .filter((v) => {
-        const d = parseISODate(v.date);
-        return d && d >= start && d < end;
-      })
-      .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  }, [visits, reportMonth]);
-
-  function buildVisitRow(v: Visit) {
-    return {
-      date: (v.date ?? "").slice(0, 10),
-      client: v.client_name ?? clientsMap[v.client_id ?? 0] ?? "",
-      property: propsMap[v.property_id ?? 0] ?? "",
-      plot: plotsMap[v.plot_id ?? 0] ?? "",
-      consultant: v.consultant_name ?? "—",
-      culture: v.culture ?? "—",
-      variety: v.variety ?? "—",
-      fenologia_real: v.fenologia_real ?? "",
-      status: v.status ?? "",
-      recommendation: v.recommendation ?? "",
-    };
-  }
-
-  function exportMonthlyVisitsCSVSelectedColumns() {
-    if (selectedCols.length === 0) {
-      alert("Selecione pelo menos 1 coluna para exportar.");
-      return;
-    }
-
-    const rows = monthVisits.map(buildVisitRow);
-    const csv = toCsvByColumns(rows, selectedCols);
-
-    downloadBlob(
-      `relatorio_visitas_${reportMonth}.csv`,
-      new Blob([csv], { type: "text/csv;charset=utf-8" })
-    );
-
-    setExportOpen(false);
-  }
-
   // para tabela "Últimas visitas" sem renderizar 200 linhas
   const lastVisits = useMemo(() => {
     const sorted = [...visits].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
@@ -459,29 +354,6 @@ const Dashboard: React.FC = () => {
                     />
                   </label>
 
-                  <label className="d-flex flex-column">
-                    <small className="text-secondary">Mês (Relatório)</small>
-                    <input
-                      type="month"
-                      className="form-control form-control-sm"
-                      style={{
-                        background: "var(--panel)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                      value={reportMonth}
-                      onChange={(e) => setReportMonth(e.target.value)}
-                    />
-                  </label>
-
-                  {/* ✅ MESMO BOTÃO: agora abre modal */}
-                  <button
-                    className="btn btn-outline-success btn-sm"
-                    onClick={() => setExportOpen(true)}
-                    title="Exportação rápida (CSV) com colunas configuráveis"
-                  >
-                    ⬇️ Exportar Visitas (CSV/Excel)
-                  </button>
                 </div>
 
                 <div className="ms-auto d-flex align-items-center gap-2 flex-wrap">
@@ -558,118 +430,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* ✅ MODAL EXPORT (colunas) */}
-          {exportOpen && (
-            <div
-              className="modal fade show d-block"
-              tabIndex={-1}
-              role="dialog"
-              style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
-              onClick={() => setExportOpen(false)}
-            >
-              <div
-                className="modal-dialog modal-dialog-centered"
-                role="document"
-                style={{ maxWidth: "720px", width: "96%" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div
-                  className="modal-content border-0 shadow-lg"
-                  style={{
-                    background: "var(--panel)",
-                    color: "var(--text)",
-                    borderRadius: "14px",
-                  }}
-                >
-                  <div className="modal-header border-0">
-                    <div>
-                      <h5 className="modal-title mb-1">Exportar visitas (CSV)</h5>
-                      <small className="text-secondary">
-                        Mês selecionado: <b>{reportMonth}</b> — {monthVisits.length} visitas
-                      </small>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn-close btn-close-white"
-                      aria-label="Fechar"
-                      onClick={() => setExportOpen(false)}
-                    />
-                  </div>
-
-                  <div className="modal-body">
-                    <div className="d-flex flex-wrap gap-2">
-                      {VISIT_COLUMNS.map((c) => (
-                        <label key={c.key} className="d-flex align-items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedCols.includes(c.key)}
-                            onChange={(e) => {
-                              setSelectedCols((prev) => {
-                                if (e.target.checked) return [...prev, c.key];
-                                return prev.filter((x) => x !== c.key);
-                              });
-                            }}
-                          />
-                          <span>{c.label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <hr />
-
-                    <div className="d-flex gap-2 flex-wrap">
-                      <button
-                        className="btn btn-success"
-                        disabled={selectedCols.length === 0 || monthVisits.length === 0}
-                        onClick={exportMonthlyVisitsCSVSelectedColumns}
-                      >
-                        Baixar CSV
-                      </button>
-
-                      <button
-                        className="btn btn-outline-light"
-                        onClick={() =>
-                          setSelectedCols([
-                            "date",
-                            "client",
-                            "property",
-                            "consultant",
-                            "culture",
-                            "variety",
-                            "status",
-                          ])
-                        }
-                      >
-                        Preset “Resumo”
-                      </button>
-
-                      <button
-                        className="btn btn-outline-light"
-                        onClick={() => setSelectedCols(VISIT_COLUMNS.map((x) => x.key))}
-                      >
-                        Marcar todas
-                      </button>
-
-                      <button
-                        className="btn btn-outline-danger ms-auto"
-                        onClick={() => setExportOpen(false)}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-
-                    {monthVisits.length === 0 && (
-                      <div className="text-secondary mt-3">
-                        Não há visitas nesse mês para exportar.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* GRÁFICO */}
           {startDate && endDate && days.length > 0 && (
