@@ -79,7 +79,6 @@ const Dashboard: React.FC = () => {
 
   const [clientsMap, setClientsMap] = useState<Record<number, string>>({});
   const [propsMap, setPropsMap] = useState<Record<number, string>>({});
-  const [plotsMap, setPlotsMap] = useState<Record<number, string>>({});
 
 
   // ===== Filtros do relatório Excel =====
@@ -132,10 +131,6 @@ const Dashboard: React.FC = () => {
         const pMap: Record<number, string> = {};
         (ps || []).forEach((p: any) => (pMap[p.id] = p.name));
         setPropsMap(pMap);
-
-        const plMap: Record<number, string> = {};
-        (pls || []).forEach((pl: any) => (plMap[pl.id] = pl.name));
-        setPlotsMap(plMap);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
