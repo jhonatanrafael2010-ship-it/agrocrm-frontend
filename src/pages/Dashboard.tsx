@@ -70,13 +70,13 @@ async function downloadBlob(filename: string, blob: Blob) {
       });
       await Share.share({
         title: filename,
-        url: saved.uri,
+        files: [saved.uri],
         dialogTitle: "Salvar relatório Excel",
       });
       return;
     } catch (err) {
       console.error("Erro ao salvar no dispositivo:", err);
-      alert("Não foi possível salvar o arquivo. Tente novamente.");
+      alert("Erro: " + (err instanceof Error ? err.message : String(err)));
       return;
     }
   }
