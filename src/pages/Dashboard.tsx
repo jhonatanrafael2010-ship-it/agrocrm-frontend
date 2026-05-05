@@ -3,6 +3,9 @@ import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import KPICard from "../components/KPICard";
 import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 type Client = { id: number; name: string };
 type Property = { id: number; name: string; client_id?: number };
@@ -52,7 +55,31 @@ function formatDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function downloadBlob(filename: string, blob: Blob) {
+async function downloadBlob(filename: string, blob: Blob) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+        reader.readAsDataURL(blob);
+      });
+      const saved = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+      });
+      await Share.share({
+        title: filename,
+        url: saved.uri,
+        dialogTitle: "Salvar relatório Excel",
+      });
+      return;
+    } catch (err) {
+      console.error("Erro ao salvar no dispositivo:", err);
+      alert("Não foi possível salvar o arquivo. Tente novamente.");
+      return;
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -220,7 +247,7 @@ const Dashboard: React.FC = () => {
       const parts = [`relatorio_visitas_${startDate}_a_${endDate}`];
       if (selectedRegion) parts.push(selectedRegion.replace(/\s+/g, "-").toLowerCase());
       if (selectedSeason) parts.push(selectedSeason);
-      downloadBlob(`${parts.join("_")}.xlsx`, blob);
+      await downloadBlob(`${parts.join("_")}.xlsx`, blob);
     } catch (err) {
       console.error(err);
       alert("Não foi possível gerar o Excel. Veja o console/log do backend.");
