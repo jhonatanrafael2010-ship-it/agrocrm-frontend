@@ -708,13 +708,6 @@ const handleCreateOrUpdate = async () => {
     cultureName = byId ? byId.name : form.culture;
   }
 
-  const normalize = (s: string | undefined | null) =>
-    (s || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-
   // =======================
   // 📦 MONTA PAYLOAD BASE
   // =======================
