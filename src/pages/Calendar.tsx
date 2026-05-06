@@ -325,7 +325,7 @@ const CalendarPage: React.FC = () => {
     culture: "",
     variety: "",
     recommendation: "",
-    genPheno: true,
+    genPheno: false,
     savedPhotos: [] as any[],
     clientSearch: "",
     latitude: null as number | null,
@@ -715,12 +715,6 @@ const handleCreateOrUpdate = async () => {
       .toLowerCase()
       .trim();
 
-  const normalizedCulture = normalize(cultureName);
-  const isPhenoCulture =
-    normalizedCulture.startsWith("milho") ||
-    normalizedCulture.startsWith("soja") ||
-    normalizedCulture.startsWith("algodao");
-
   // =======================
   // 📦 MONTA PAYLOAD BASE
   // =======================
@@ -737,8 +731,8 @@ const handleCreateOrUpdate = async () => {
     products: form.products || [],
     latitude: form.latitude,
     longitude: form.longitude,
-    generate_schedule: isPhenoCulture,
-    genPheno: isPhenoCulture,
+    generate_schedule: false,
+    genPheno: false,
   };
 
   if (!createPayload.client_id || Number.isNaN(Number(createPayload.client_id))) {
@@ -2321,7 +2315,7 @@ useEffect(() => {
               variety: "",
               recommendation: "",
               fenologia_real: "",
-              genPheno: true,
+              genPheno: false,
               savedPhotos: [],
               clientSearch: "",
               latitude: null,
@@ -2442,7 +2436,7 @@ useEffect(() => {
               variety: "",
               recommendation: "",
               fenologia_real: "",
-              genPheno: true,
+              genPheno: false,
               savedPhotos: [],
               clientSearch: "",
               latitude: null,
@@ -2817,71 +2811,6 @@ useEffect(() => {
                           </option>
                         ))}
                       </select>
-                    </div>
-
-                    {/* Toggle Fenológico */}
-                    <div className="col-12 mt-3">
-                      <label className="fw-semibold mb-1">
-                        Cronograma Fenológico
-                      </label>
-
-                      <div
-                        onClick={() =>
-                          setForm((f) => ({ ...f, genPheno: !f.genPheno }))
-                        }
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          cursor: "pointer",
-                          padding: "10px 14px",
-                          borderRadius: "12px",
-                          background: "var(--input-bg)",
-                          border: `1px solid ${
-                            form.genPheno ? "#28a745" : "var(--border)"
-                          }`,
-                          transition: "all 0.25s ease",
-                          userSelect: "none",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 42,
-                            height: 22,
-                            borderRadius: 50,
-                            background: form.genPheno ? "#28a745" : "#777",
-                            position: "relative",
-                            transition: "all 0.2s ease-in-out",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 18,
-                              height: 18,
-                              background: "#fff",
-                              borderRadius: "50%",
-                              position: "absolute",
-                              top: 2,
-                              left: form.genPheno ? 22 : 2,
-                              transition: "all 0.2s ease-in-out",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                            }}
-                          ></div>
-                        </div>
-
-                        <span
-                          style={{
-                            fontSize: "0.95rem",
-                            fontWeight: 500,
-                            color: form.genPheno
-                              ? "#28a745"
-                              : "var(--text-muted)",
-                            transition: "color 0.25s ease",
-                          }}
-                        >
-                          Gerar cronograma fenológico (milho/soja/algodão)
-                        </span>
-                      </div>
                     </div>
 
                     {/* Localização */}
