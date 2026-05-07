@@ -481,6 +481,12 @@
   font-style: italic;
 }
 
+.chat-help-detail {
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 2px;
+}
+
 /* Spinner animation */
 @keyframes spin {
   to { transform: rotate(360deg); }

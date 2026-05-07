@@ -546,7 +546,8 @@ const Chat: React.FC = () => {
             <div className="chat-help-items">
               <div className="chat-help-item">
                 <div className="chat-help-label">📋 Lançar visita</div>
-                <div className="chat-help-example">"Cliente João Silva, soja R5, ontem, observações..."</div>
+                <div className="chat-help-example">"Cliente João Silva" e siga o fluxo guiado</div>
+                <div className="chat-help-detail">Cultura → Objetivo (Plantio/Emergência/Vegetativo/Reprodutivo/Colheita) → Fenologia → Data → Observações</div>
               </div>
               <div className="chat-help-item">
                 <div className="chat-help-label">📅 Agenda da semana</div>
@@ -562,27 +563,23 @@ const Chat: React.FC = () => {
               </div>
               <div className="chat-help-item">
                 <div className="chat-help-label">🌱 Dias de plantado</div>
-                <div className="chat-help-example">"Dias de plantado dos meus clientes"</div>
+                <div className="chat-help-example">"Dias de plantado" · "quantos dias de plantado"</div>
               </div>
               <div className="chat-help-item">
                 <div className="chat-help-label">⏰ Clientes atrasados</div>
-                <div className="chat-help-example">"Clientes atrasados" · "clientes sem visita"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">📐 Organizar semana</div>
-                <div className="chat-help-example">"Organiza minha semana" · "planeja minha semana"</div>
+                <div className="chat-help-example">"Clientes atrasados" · "ranking de atraso"</div>
               </div>
               <div className="chat-help-item">
                 <div className="chat-help-label">📄 Gerar PDF</div>
                 <div className="chat-help-example">"PDF da última visita" · "PDF do cliente X"</div>
               </div>
               <div className="chat-help-item">
-                <div className="chat-help-label">📝 Dados de campo</div>
-                <div className="chat-help-example">"Me mostra os dados de campo do cliente X"</div>
+                <div className="chat-help-label">📸 Enviar fotos</div>
+                <div className="chat-help-example">Toque no ícone da câmera, envie e informe os detalhes</div>
               </div>
               <div className="chat-help-item">
-                <div className="chat-help-label">📸 Registrar foto</div>
-                <div className="chat-help-example">Toque no ícone da câmera e envie com a mensagem</div>
+                <div className="chat-help-label">❌ Cancelar</div>
+                <div className="chat-help-example">"Cancelar" a qualquer momento para recomeçar</div>
               </div>
             </div>
             <button className="chat-sheet-cancel" onClick={() => setShowHelp(false)}>
