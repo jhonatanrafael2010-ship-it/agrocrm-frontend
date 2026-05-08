@@ -1,4 +1,39 @@
 import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  IconButton,
+  Button,
+  TextField,
+  MenuItem,
+  Collapse,
+  Stack,
+  Divider,
+  Avatar,
+  LinearProgress,
+  Paper,
+  InputAdornment,
+  Tooltip,
+} from "@mui/material";
+import {
+  ExpandMore as ExpandMoreIcon,
+  Visibility as VisibilityIcon,
+  PictureAsPdf as PdfIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Clear as ClearIcon,
+  Agriculture as AgricultureIcon,
+  Place as PlaceIcon,
+  Person as PersonIcon,
+  PhotoCamera as PhotoIcon,
+  Search as SearchIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
 import PhotoCarousel from "../components/PhotoCarousel";
@@ -358,460 +393,432 @@ const Visits: React.FC = () => {
   // Render
   // ============================================================
   return (
-    <div
-      className={`container-fluid py-4 ${
-        theme === "dark" ? "text-light" : "text-dark"
-      }`}
-    >
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
-          <h2 className="fw-bold">📋 Acompanhamentos</h2>
-        </div>
-      </div>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+            <AgricultureIcon color="primary" />
+            Acompanhamentos
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Relatórios de campo e acompanhamento de ciclos
+          </Typography>
+        </Box>
+      </Box>
 
-      {/* FILTROS */}
-      <div className="col-12 col-lg-10 mx-auto mb-3">
-        <div
-          className={`p-3 rounded shadow-sm ${
-            theme === "dark" ? "bg-dark-subtle" : "bg-light"
-          }`}
-        >
-          <div className="row g-3 align-items-end">
-            <div className="col-md-2">
-              <label>Início</label>
-              <input
-                type="date"
-                value={filterStart}
-                onChange={(e) => setFilterStart(e.target.value)}
-                className="form-control"
-              />
-            </div>
+      {/* Filtros - MUI */}
+      <Paper sx={{ p: 2, mb: 3 }} elevation={0}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ flexWrap: "wrap" }} useFlexGap>
+          <TextField
+            label="Data início"
+            type="date"
+            size="small"
+            value={filterStart}
+            onChange={(e) => setFilterStart(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ minWidth: 140 }}
+          />
+          <TextField
+            label="Data fim"
+            type="date"
+            size="small"
+            value={filterEnd}
+            onChange={(e) => setFilterEnd(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ minWidth: 140 }}
+          />
+          <TextField
+            label="Cliente"
+            size="small"
+            value={clientSearch}
+            onChange={(e) => setClientSearch(e.target.value)}
+            placeholder="Buscar cliente..."
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ minWidth: 180 }}
+          />
+          <TextField
+            select
+            label="Consultor"
+            size="small"
+            value={selectedConsultant}
+            onChange={(e) => setSelectedConsultant(e.target.value)}
+            sx={{ minWidth: 140 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {consultants.map((c) => (
+              <MenuItem key={c.id} value={String(c.id)}>{c.name}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Cultura"
+            size="small"
+            value={selectedCulture}
+            onChange={(e) => { setSelectedCulture(e.target.value); setSelectedVariety(""); }}
+            sx={{ minWidth: 120 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {cultures.map((c) => (
+              <MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Variedade"
+            size="small"
+            value={selectedVariety}
+            onChange={(e) => setSelectedVariety(e.target.value)}
+            sx={{ minWidth: 140 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {filteredVarieties.map((v) => (
+              <MenuItem key={v.name} value={v.name}>{v.name}</MenuItem>
+            ))}
+          </TextField>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ClearIcon />}
+            onClick={() => {
+              setSelectedConsultant("");
+              setSelectedCulture("");
+              setSelectedVariety("");
+              setClientSearch("");
+              setFilterClient("");
+              setFilterStart("");
+              setFilterEnd("");
+            }}
+          >
+            Limpar
+          </Button>
+        </Stack>
 
-          <div className="mt-3 d-flex justify-content-start">
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => {
-                setSelectedConsultant("");
-                setSelectedCulture("");
-                setSelectedVariety("");
-                setClientSearch("");
-                setFilterClient("");
-                setFilterStart("");
-                setFilterEnd("");
+        {/* Autocomplete dropdown para cliente */}
+        {clientSearch && (
+          <Paper
+            sx={{
+              position: "absolute",
+              zIndex: 10,
+              mt: 1,
+              maxHeight: 200,
+              overflow: "auto",
+              width: 200,
+            }}
+          >
+            {clients
+              .filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()))
+              .slice(0, 10)
+              .map((c) => (
+                <MenuItem
+                  key={c.id}
+                  onClick={() => {
+                    setFilterClient(String(c.id));
+                    setClientSearch(c.name);
+                  }}
+                >
+                  {c.name}
+                </MenuItem>
+              ))}
+          </Paper>
+        )}
+      </Paper>
+
+      {/* Loading */}
+      {loading && <LinearProgress sx={{ mb: 2 }} />}
+
+      {/* Empty state */}
+      {!loading && Object.keys(groups).length === 0 && (
+        <Paper sx={{ p: 6, textAlign: "center" }}>
+          <AgricultureIcon sx={{ fontSize: 64, opacity: 0.3, mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Nenhum acompanhamento encontrado
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Crie visitas para começar a acompanhar seus ciclos
+          </Typography>
+        </Paper>
+      )}
+
+      {/* Cards de acompanhamento */}
+      <Stack spacing={2}>
+        {Object.entries(groups).map(([gid, group]) => {
+          const first = group[0];
+          const clientName = clients.find((c) => c.id === first.client_id)?.name || "—";
+          const propertyName = properties.find((p) => p.id === first.property_id)?.name || "—";
+          const plotName = plots.find((p) => p.id === first.plot_id)?.name || "—";
+          const hasAnyPhoto = group.some((v) => (v.photos?.length ?? 0) > 0);
+          const doneCount = group.filter((v) => v.status === "done").length;
+          const headerData = {
+            clientName,
+            propertyName,
+            plotName,
+            culture: first.culture || "",
+            variety: first.variety || "",
+          };
+
+          return (
+            <Card
+              key={gid}
+              sx={{
+                borderLeft: hasAnyPhoto ? "4px solid" : "none",
+                borderLeftColor: "primary.main",
               }}
             >
-              Limpar filtros
-            </button>
-          </div>
-
-
-
-            <div className="col-md-2">
-              <label>Fim</label>
-              <input
-                type="date"
-                value={filterEnd}
-                onChange={(e) => setFilterEnd(e.target.value)}
-                className="form-control"
-              />
-            </div>
-
-            <div className="col-md-3 position-relative">
-              <label>Cliente</label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Buscar cliente..."
-                value={clientSearch}
-                onChange={(e) => setClientSearch(e.target.value)}
-              />
-              {clientSearch && (
-                <ul
-                  className="list-group position-absolute w-100 mt-1"
-                  style={{ maxHeight: 150, overflowY: "auto", zIndex: 20 }}
-                >
-                  {clients
-                    .filter((c) =>
-                      c.name.toLowerCase().includes(clientSearch.toLowerCase())
-                    )
-                    .map((c) => (
-                      <li
-                        key={c.id}
-                        className="list-group-item list-group-item-action"
-                        onClick={() => {
-                          setFilterClient(String(c.id));
-                          setClientSearch(c.name);
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {c.name}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="col-md-2">
-              <label>Consultor</label>
-              <select
-                value={selectedConsultant}
-                onChange={(e) => setSelectedConsultant(e.target.value)}
-                className="form-select"
+              <CardContent
+                sx={{ cursor: "pointer", "&:hover": { bgcolor: "action.hover" } }}
+                onClick={() => toggleGroup(gid)}
               >
-                <option value="">Todos</option>
-                {consultants.map((c) => (
-                  <option key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-md-1">
-              <label>Cultura</label>
-              <select
-                value={selectedCulture}
-                onChange={(e) => {
-                  setSelectedCulture(e.target.value);
-                  setSelectedVariety("");
-                }}
-                className="form-select"
-              >
-                <option value="">Todas</option>
-                {cultures.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-md-2">
-              <label>Variedade</label>
-              <select
-                value={selectedVariety}
-                onChange={(e) => setSelectedVariety(e.target.value)}
-                className="form-select"
-              >
-                <option value="">Todas</option>
-                {filteredVarieties.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* LISTA AGRUPADA */}
-      <div className="col-12 col-lg-10 mx-auto">
-        {loading && (
-          <div className="text-center text-secondary py-4">Carregando…</div>
-        )}
-
-        {!loading && (
-          <>
-            {Object.keys(groups).length === 0 ? (
-              <div className="text-center text-secondary py-4">
-                Nenhum acompanhamento encontrado.
-              </div>
-            ) : (
-              <div className="accordion">
-                {Object.entries(groups).map(([gid, group]) => {
-                  const first = group[0];
-
-                  const clientName =
-                    clients.find((c) => c.id === first.client_id)?.name || "—";
-
-                  const propertyName =
-                    properties.find((p) => p.id === first.property_id)?.name ||
-                    "—";
-
-                  const plotName =
-                    plots.find((p) => p.id === first.plot_id)?.name || "—";
-
-                  const hasAnyPhoto = group.some(
-                    (v) => (v.photos?.length ?? 0) > 0
-                  );
-
-                  const headerData = {
-                    clientName,
-                    propertyName,
-                    plotName,
-                    culture: first.culture || "",
-                    variety: first.variety || "",
-                  };
-
-                  return (
-                    <div key={gid} className="mb-3">
-                      {/* Cabeçalho */}
-                      <div
-                        className={`p-3 rounded shadow-sm d-flex justify-content-between align-items-center ${
-                          hasAnyPhoto
-                            ? "bg-success text-white"
-                            : theme === "dark"
-                            ? "bg-dark"
-                            : "bg-light"
-                        }`}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => toggleGroup(gid)}
-                      >
-                        <div>
-                          {/* Linha 1: Cliente ---- Fazenda — Talhão */}
-                          <div style={{ fontWeight: 600 }}>
-                            {clientName}{" "}
-                            <span style={{ opacity: 0.6 }}> ---- </span>
-                            {propertyName} — {plotName}
-                          </div>
-
-                          {/* Linha 2: Consultor */}
-                          <div
-                            style={{
-                              fontSize: "0.78rem",
-                              opacity: 0.8,
-                              marginTop: 2,
-                            }}
-                          >
-                            {getConsultantNameFromGroup(group)}
-                          </div>
-
-                          {/* Linha 3: Cultura + Variedade */}
-                          <div style={{ fontSize: "0.85rem", marginTop: 4 }}>
-                            {first.culture || ""} {first.variety || ""}
-                          </div>
-                        </div>
-
-                        <div className="d-flex align-items-center gap-3">
-                          <button
-                            className={`btn btn-sm ${
-                              hasAnyPhoto
-                                ? "btn-outline-light"
-                                : "btn-outline-primary"
-                            }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSummary({
-                                open: true,
-                                visits: group,
-                                header: headerData,
-                              });
-                            }}
-                          >
-                            👁 Ver
-                          </button>
-
-                          <button
-                            className={`btn btn-sm ${
-                              hasAnyPhoto
-                                ? "btn-outline-light"
-                                : "btn-outline-secondary"
-                            }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportGroupToPDF(group, headerData);
-                            }}
-                          >
-                            📄 Exportar PDF
-                          </button>
-
-                          <div style={{ fontSize: "1.2rem" }}>
-                            {openGroups[gid] ? "▲" : "▼"}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Conteúdo expandido */}
-                      {openGroups[gid] && (
-                        <div
-                          className={`shadow-sm rounded-bottom p-3 ${
-                            theme === "dark" ? "bg-black" : "bg-white"
-                          }`}
-                        >
-                          {/* Linha do tempo visual */}
-                          <div
-                            style={{
-                              display: "flex",
-                              overflowX: "auto",
-                              paddingBottom: 8,
-                              marginBottom: 12,
-                              borderBottom: "1px solid rgba(0,0,0,0.1)",
-                            }}
-                          >
-                            {group.map((v, index) => {
-                              const done =
-                                (v.status || "").toLowerCase() === "done";
-                              return (
-                                <div
-                                  key={v.id}
-                                  style={{
-                                    minWidth: 120,
-                                    textAlign: "center",
-                                    marginRight:
-                                      index < group.length - 1 ? 24 : 0,
-                                    position: "relative",
-                                  }}
-                                >
-                                  {/* Linha entre os pontos */}
-                                  {index < group.length - 1 && (
-                                    <div
-                                      style={{
-                                        position: "absolute",
-                                        top: 14,
-                                        left: "60%",
-                                        width: 40,
-                                        height: 2,
-                                        backgroundColor: done
-                                          ? "#28a745"
-                                          : "#ccc",
-                                      }}
-                                    />
-                                  )}
-
-                                  {/* Ponto */}
-                                  <div
-                                    style={{
-                                      width: 18,
-                                      height: 18,
-                                      borderRadius: "50%",
-                                      margin: "0 auto",
-                                      backgroundColor: done
-                                        ? "#28a745"
-                                        : "#ccc",
-                                      border: done
-                                        ? "2px solid #155724"
-                                        : "2px solid #999",
-                                    }}
-                                  ></div>
-
-                                  <div
-                                    style={{
-                                      fontSize: "0.75rem",
-                                      marginTop: 4,
-                                      fontWeight: done ? 600 : 400,
-                                    }}
-                                  >
-                                    {v.recommendation ||
-                                      `Visita ${index + 1}`}
-                                  </div>
-                                  <div
-                                    style={{
-                                      fontSize: "0.7rem",
-                                      color: "#666",
-                                    }}
-                                  >
-                                    {formatDateBR(v.date)}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Lista detalhada */}
-                          {group.map((v) => {
-                            const hasPhotos = (v.photos?.length ?? 0) > 0;
-                            const done =
-                              (v.status || "").toLowerCase() === "done";
-
-                            return (
-                              <div
-                                key={v.id}
-                                className="d-flex justify-content-between align-items-center p-2 border-bottom"
-                                style={{
-                                  background: done
-                                    ? "#d1e7dd"
-                                    : hasPhotos
-                                    ? "#d4edda"
-                                    : "transparent",
-                                  borderLeft: done
-                                    ? "4px solid #198754"
-                                    : hasPhotos
-                                    ? "4px solid #28a745"
-                                    : "none",
-                                }}
-                              >
-                                <div>
-                                  <div>
-                                    <strong>{formatDateBR(v.date)}</strong>{" "}
-                                    {done && (
-                                      <span
-                                        style={{
-                                          fontSize: "0.75rem",
-                                          color: "#155724",
-                                        }}
-                                      >
-                                        (concluída)
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div style={{ fontSize: "0.85rem" }}>
-                                    {v.recommendation || "--"}
-                                  </div>
-                                </div>
-
-                                <div className="d-flex gap-2">
-                                  {(v.photos?.length ?? 0) > 0 && (
-                                    <span
-                                      style={{
-                                        fontSize: "0.8rem",
-                                        alignSelf: "center",
-                                      }}
-                                    >
-                                      📸 {(v.photos?.length ?? 0)}
-                                    </span>
-                                  )}
-
-                                  {!done && (
-                                    <>
-                                      <button
-                                        className="btn btn-outline-primary btn-sm"
-                                        onClick={() => goToEditVisit(v)}
-                                      >
-                                        ✏️ Editar
-                                      </button>
-
-                                      <button
-                                        className="btn btn-outline-success btn-sm"
-                                        onClick={() => handleMarkDone(v)}
-                                      >
-                                        ✅ Concluir
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    className="btn btn-outline-primary btn-sm"
-                                    onClick={() =>
-                                      window.open(
-                                        `${API_BASE}visits/${v.id}/pdf`,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    PDF
-                                  </button>
-
-                                  <button
-                                    className="btn btn-outline-danger btn-sm"
-                                    onClick={() => handleDelete(v.id)}
-                                  >
-                                    Excluir
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {clientName}
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center", mt: 0.5, color: "text.secondary" }}>
+                      <PlaceIcon fontSize="small" color="primary" />
+                      <Typography variant="body2">
+                        {propertyName} — {plotName}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap" }} useFlexGap>
+                      {first.culture && (
+                        <Chip
+                          size="small"
+                          icon={<AgricultureIcon />}
+                          label={first.culture}
+                          color="primary"
+                          variant="outlined"
+                        />
                       )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                      {first.variety && (
+                        <Chip size="small" label={first.variety} color="info" variant="outlined" />
+                      )}
+                      <Chip
+                        size="small"
+                        icon={<PersonIcon />}
+                        label={getConsultantNameFromGroup(group)}
+                        variant="outlined"
+                      />
+                      <Chip
+                        size="small"
+                        icon={hasAnyPhoto ? <PhotoIcon /> : <ScheduleIcon />}
+                        label={`${doneCount}/${group.length} visitas`}
+                        color={hasAnyPhoto ? "success" : "default"}
+                        variant="outlined"
+                      />
+                    </Stack>
+                  </Box>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Tooltip title="Ver resumo">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSummary({ open: true, visits: group, header: headerData });
+                        }}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Exportar PDF">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          exportGroupToPDF(group, headerData);
+                        }}
+                      >
+                        <PdfIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <IconButton size="small">
+                      <ExpandMoreIcon
+                        sx={{
+                          transform: openGroups[gid] ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s",
+                        }}
+                      />
+                    </IconButton>
+                  </Stack>
+                </Box>
+              </CardContent>
 
+              <Collapse in={openGroups[gid]}>
+                <Divider />
+                <CardContent>
+                  {/* Timeline de visitas */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      overflowX: "auto",
+                      pb: 2,
+                      mb: 2,
+                      gap: 0,
+                    }}
+                  >
+                    {group.map((v, index) => {
+                      const done = (v.status || "").toLowerCase() === "done";
+                      const hasPhoto = (v.photos?.length ?? 0) > 0;
+                      return (
+                        <Box
+                          key={v.id}
+                          sx={{
+                            minWidth: 100,
+                            textAlign: "center",
+                            position: "relative",
+                            mr: index < group.length - 1 ? 3 : 0,
+                          }}
+                        >
+                          {/* Linha conectora */}
+                          {index < group.length - 1 && (
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                top: 12,
+                                left: "60%",
+                                width: 40,
+                                height: 3,
+                                bgcolor: done ? "primary.main" : "divider",
+                                borderRadius: 1,
+                              }}
+                            />
+                          )}
+                          {/* Dot */}
+                          <Avatar
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              mx: "auto",
+                              bgcolor: done ? "primary.main" : "grey.400",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              boxShadow: hasPhoto ? "0 0 0 3px rgba(22, 163, 74, 0.3)" : "none",
+                            }}
+                          >
+                            {done ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : index + 1}
+                          </Avatar>
+                          <Typography variant="caption" sx={{ fontWeight: 600, mt: 1, display: "block" }}>
+                            {(v.recommendation || "").slice(0, 15) || "Visita"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDateBR(v.date)}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+
+                  {/* Lista de visitas */}
+                  <Stack spacing={1.5}>
+                    {group.map((v) => {
+                      const done = (v.status || "").toLowerCase() === "done";
+                      return (
+                        <Paper
+                          key={v.id}
+                          variant="outlined"
+                          sx={{ p: 1.5, display: "flex", gap: 1.5, alignItems: "flex-start" }}
+                        >
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              bgcolor: done ? "primary.main" : "warning.main",
+                              mt: 0.5,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {v.recommendation?.split("\n")[0] || "Sem observação"}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatDateBR(v.date)}
+                              </Typography>
+                            </Box>
+                            {v.recommendation && v.recommendation.includes("\n") && (
+                              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "pre-wrap" }}>
+                                {v.recommendation.split("\n").slice(1).join("\n")}
+                              </Typography>
+                            )}
+                            {(v.photos?.length ?? 0) > 0 && (
+                              <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
+                                {v.photos?.slice(0, 4).map((photo: any, i: number) => (
+                                  <Box
+                                    key={i}
+                                    component="img"
+                                    src={photo.url || photo}
+                                    onClick={() => setCarousel({ open: true, photos: v.photos || [] })}
+                                    sx={{
+                                      width: 48,
+                                      height: 48,
+                                      borderRadius: 1,
+                                      objectFit: "cover",
+                                      cursor: "pointer",
+                                      "&:hover": { opacity: 0.8 },
+                                    }}
+                                  />
+                                ))}
+                              </Stack>
+                            )}
+                          </Box>
+                          <Stack direction="row" spacing={0.5}>
+                            <Tooltip title="Editar">
+                              <IconButton size="small" onClick={() => goToEditVisit(v)}>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            {!done && (
+                              <Tooltip title="Marcar concluída">
+                                <IconButton size="small" color="primary" onClick={() => handleMarkDone(v)}>
+                                  <CheckCircleIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            <Tooltip title="Excluir">
+                              <IconButton size="small" color="error" onClick={() => handleDelete(v.id)}>
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </Paper>
+                      );
+                    })}
+                  </Stack>
+
+                  {/* Botão adicionar visita */}
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<AddIcon />}
+                    sx={{
+                      mt: 2,
+                      borderStyle: "dashed",
+                      color: "text.secondary",
+                      "&:hover": { borderColor: "primary.main", color: "primary.main" },
+                    }}
+                    onClick={() => {
+                      // TODO: Abrir modal ou ir para assistente com contexto
+                      alert("Em breve: adicionar visita a este ciclo");
+                    }}
+                  >
+                    Adicionar visita a este ciclo
+                  </Button>
+                </CardContent>
+              </Collapse>
+            </Card>
+          );
+        })}
+      </Stack>
 
       {/* MODAL DE RESUMO */}
       {summary?.open && (
@@ -920,7 +927,7 @@ const Visits: React.FC = () => {
           onClose={() => setCarousel({ open: false, photos: [] })}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

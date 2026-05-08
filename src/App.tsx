@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { lightTheme, darkTheme } from "./theme/muiTheme";
 import Navbar from "./components/Navbar";
 import Clients from "./pages/Clients";
 import PropertiesPage from "./pages/Properties";
@@ -53,6 +55,11 @@ function App() {
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [isDarkMode, _setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved === "dark";
+    return document.body.getAttribute("data-theme") === "dark";
+  });
 
 
   useEffect(() => {
@@ -149,7 +156,11 @@ function App() {
   // ============================================================
   // RENDER
   // ============================================================
+  const muiTheme = isDarkMode ? darkTheme : lightTheme;
+
   return (
+    <ThemeProvider theme={muiTheme}>
+    <CssBaseline />
     <div className="app d-flex flex-column vh-100">
       {/* conteúdo */}
       <div className="d-flex flex-grow-1">
@@ -225,6 +236,7 @@ function App() {
         }}
       />
     </div>
+    </ThemeProvider>
   );
 }
 
