@@ -10,15 +10,19 @@
   overflow: hidden;
 }
 
-/* Header */
+/* Header - fixo no topo */
 .chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top, 10px));
   background: var(--panel, #fff);
   border-bottom: 1px solid var(--border, #e5e7eb);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .chat-header-info {

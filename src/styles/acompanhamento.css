@@ -1,0 +1,477 @@
+/* ──────────────────────────────────────────────────────────────
+   ACOMPANHAMENTO - Relatorios de Campo
+────────────────────────────────────────────────────────────── */
+
+.acomp-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header da pagina */
+.acomp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border, #e5e7eb);
+}
+
+.acomp-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text, #111);
+  margin: 0;
+}
+
+.acomp-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 2px;
+}
+
+/* Filtros compactos */
+.acomp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--panel, #fff);
+  border-radius: 12px;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.acomp-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.acomp-filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.acomp-filter-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: var(--bg, #f9fafb);
+  color: var(--text, #111);
+}
+
+.acomp-filter-input:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
+}
+
+/* Cards de Plantio/Ciclo */
+.acomp-card {
+  background: var(--panel, #fff);
+  border-radius: 16px;
+  border: 1px solid var(--border, #e5e7eb);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.acomp-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.acomp-card--has-photos {
+  border-left: 4px solid #16a34a;
+}
+
+/* Header do card */
+.acomp-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.acomp-card-header:hover {
+  background: var(--hover, rgba(0, 0, 0, 0.02));
+}
+
+.acomp-card-info {
+  flex: 1;
+}
+
+.acomp-card-client {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #111);
+  margin-bottom: 4px;
+}
+
+.acomp-card-location {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.acomp-card-location-icon {
+  color: #16a34a;
+}
+
+.acomp-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.acomp-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.acomp-card-badge--culture {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+
+.acomp-card-badge--variety {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.acomp-card-badge--consultant {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.acomp-card-badge--visits {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+/* Acoes do card */
+.acomp-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.acomp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.acomp-btn--primary {
+  background: #16a34a;
+  color: #fff;
+}
+
+.acomp-btn--primary:hover {
+  background: #15803d;
+}
+
+.acomp-btn--secondary {
+  background: var(--bg, #f3f4f6);
+  color: var(--text, #374151);
+  border: 1px solid var(--border, #d1d5db);
+}
+
+.acomp-btn--secondary:hover {
+  background: var(--hover, #e5e7eb);
+}
+
+.acomp-btn--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.acomp-expand-icon {
+  font-size: 1rem;
+  transition: transform 0.2s;
+}
+
+.acomp-expand-icon--open {
+  transform: rotate(180deg);
+}
+
+/* Timeline de visitas */
+.acomp-card-body {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.acomp-timeline {
+  display: flex;
+  overflow-x: auto;
+  padding: 20px 0 12px;
+  gap: 0;
+  scrollbar-width: thin;
+}
+
+.acomp-timeline-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  position: relative;
+}
+
+.acomp-timeline-line {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: var(--border, #e5e7eb);
+}
+
+.acomp-timeline-item:last-child .acomp-timeline-line {
+  display: none;
+}
+
+.acomp-timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--border, #e5e7eb);
+  border: 3px solid var(--panel, #fff);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.acomp-timeline-dot--done {
+  background: #16a34a;
+}
+
+.acomp-timeline-dot--pending {
+  background: #f59e0b;
+}
+
+.acomp-timeline-dot--has-photo {
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.3);
+}
+
+.acomp-timeline-label {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text, #111);
+  text-align: center;
+}
+
+.acomp-timeline-date {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 2px;
+}
+
+/* Lista de visitas detalhada */
+.acomp-visits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.acomp-visit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg, #f9fafb);
+  border-radius: 10px;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.acomp-visit-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.acomp-visit-status--done {
+  background: #16a34a;
+}
+
+.acomp-visit-status--pending {
+  background: #f59e0b;
+}
+
+.acomp-visit-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.acomp-visit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.acomp-visit-fenology {
+  font-weight: 700;
+  color: var(--text, #111);
+}
+
+.acomp-visit-date {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.acomp-visit-obs {
+  font-size: 0.85rem;
+  color: var(--text, #374151);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.acomp-visit-photos {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.acomp-visit-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.acomp-visit-photo:hover {
+  transform: scale(1.05);
+}
+
+.acomp-visit-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Botao de nova visita flutuante no card */
+.acomp-card-add-visit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border: 2px dashed var(--border, #d1d5db);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.acomp-card-add-visit:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.05);
+}
+
+/* Estado vazio */
+.acomp-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted, #6b7280);
+}
+
+.acomp-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.acomp-empty-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text, #374151);
+  margin-bottom: 4px;
+}
+
+.acomp-empty-text {
+  font-size: 0.9rem;
+}
+
+/* Responsivo mobile */
+@media (max-width: 768px) {
+  .acomp-container {
+    padding: 12px;
+  }
+
+  .acomp-filters {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .acomp-filter-group {
+    min-width: 100%;
+  }
+
+  .acomp-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .acomp-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .acomp-card-meta {
+    flex-wrap: wrap;
+  }
+
+  .acomp-btn span:not(.acomp-btn-icon) {
+    display: none;
+  }
+
+  .acomp-btn--icon {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { API_BASE } from "../config";
 import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
 import PhotoCarousel from "../components/PhotoCarousel";
+import "../styles/acompanhamento.css";
 
 
 // Tipos
