@@ -10,10 +10,7 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  Alert,
-  IconButton,
   Avatar,
-  Tooltip,
   Button,
   Dialog,
   DialogTitle,
@@ -276,12 +273,6 @@ const VisitLinking: React.FC = () => {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split("-");
     return `${d}/${m}/${y}`;
-  }
-
-  function getStatusColor(status: string | null) {
-    if (!status) return "default";
-    if (status === "done") return "success";
-    return "default";
   }
 
   // Render visit card
