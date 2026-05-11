@@ -4,9 +4,47 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
-import DarkSelect from "../components/DarkSelect";
 import "../styles/Calendar.css";
 import { Geolocation } from "@capacitor/geolocation";
+import {
+  Box,
+  Typography,
+  TextField,
+  MenuItem,
+  Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Paper,
+  Chip,
+  CircularProgress,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Fab,
+  Autocomplete,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  MyLocation as LocationIcon,
+  Sync as SyncIcon,
+  Delete as DeleteIcon,
+  CheckCircle as CheckIcon,
+  PictureAsPdf as PdfIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  WifiOff as OfflineIcon,
+  Warning as WarningIcon,
+} from "@mui/icons-material";
 // import { FileOpener } from '@awesome-cordova-plugins/file-opener';
 // import { Capacitor } from '@capacitor/core';
 import VisitPhotos from "../components/VisitPhotos";
@@ -195,14 +233,6 @@ const CalendarPage: React.FC = () => {
     }, []);
 
 
-    useEffect(() => {
-      const close = (e: MouseEvent) => {
-        const el = e.target as HTMLElement;
-        if (!el.closest(".filters-row")) setClientFilterOpen(false);
-      };
-      document.addEventListener("mousedown", close);
-      return () => document.removeEventListener("mousedown", close);
-    }, []);
 
 
 
@@ -289,7 +319,6 @@ const CalendarPage: React.FC = () => {
   const [selectedClient, setSelectedClient] = useState<string>("");
 
   const [clientFilterText, setClientFilterText] = useState<string>("");
-  const [clientFilterOpen, setClientFilterOpen] = useState<boolean>(false);
 
 
   // Estado de sincronização
@@ -1695,101 +1724,117 @@ useEffect(() => {
     const units = ["L/ha", "mL/ha", "kg/ha", "g/ha", "%", "p.c", "Outro"];
 
     return (
-      <div className="product-advanced" style={{ width: "100%" }}>
-        <h4 className="mb-3">Produtos Aplicados</h4>
+      <Box sx={{ width: "100%" }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          Produtos Aplicados
+        </Typography>
 
-        <table className="product-table">
-          <thead>
-            <tr>
-              <th style={{ width: "30%" }}>Produto</th>
-              <th style={{ width: "15%" }}>Dose</th>
-              <th style={{ width: "20%" }}>Unidade</th>
-              <th style={{ width: "25%" }}>Data Aplicação</th>
-              <th style={{ width: "10%" }}>Ação</th>
-            </tr>
-          </thead>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: "action.hover" }}>
+                <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 100 }}>Dose</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 120 }}>Unidade</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 150 }}>Data Aplicação</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 60 }}>Ação</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {form.products.map((p, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={p.product_name}
+                      placeholder="Nome do produto"
+                      onChange={(e) => {
+                        const updated = [...form.products];
+                        updated[i].product_name = e.target.value;
+                        setForm({ ...form, products: updated });
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={p.dose}
+                      placeholder="1.5"
+                      onChange={(e) => {
+                        const updated = [...form.products];
+                        updated[i].dose = e.target.value;
+                        setForm({ ...form, products: updated });
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      select
+                      size="small"
+                      fullWidth
+                      value={p.unit}
+                      onChange={(e) => {
+                        const updated = [...form.products];
+                        updated[i].unit = e.target.value;
+                        setForm({ ...form, products: updated });
+                      }}
+                    >
+                      <MenuItem value="">Unidade</MenuItem>
+                      {units.map((u) => (
+                        <MenuItem key={u} value={u}>
+                          {u}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      type="date"
+                      value={p.application_date || ""}
+                      onChange={(e) => {
+                        const updated = [...form.products];
+                        updated[i].application_date = e.target.value;
+                        setForm({ ...form, products: updated });
+                      }}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      color="error"
+                      size="small"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          products: form.products.filter((_, idx) => idx !== i),
+                        })
+                      }
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {form.products.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ textAlign: "center", py: 3, color: "text.secondary" }}>
+                    Nenhum produto adicionado
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          <tbody>
-            {form.products.map((p, i) => (
-              <tr key={i}>
-                <td>
-                  <input
-                    className="form-control"
-                    value={p.product_name}
-                    placeholder="Nome do produto"
-                    onChange={(e) => {
-                      const updated = [...form.products];
-                      updated[i].product_name = e.target.value;
-                      setForm({ ...form, products: updated });
-                    }}
-                  />
-                </td>
-
-                <td>
-                  <input
-                    className="form-control"
-                    value={p.dose}
-                    placeholder="1.5"
-                    onChange={(e) => {
-                      const updated = [...form.products];
-                      updated[i].dose = e.target.value;
-                      setForm({ ...form, products: updated });
-                    }}
-                  />
-                </td>
-
-                <td>
-                  <select
-                    className="form-select"
-                    value={p.unit}
-                    onChange={(e) => {
-                      const updated = [...form.products];
-                      updated[i].unit = e.target.value;
-                      setForm({ ...form, products: updated });
-                    }}
-                  >
-                    <option value="">Unidade</option>
-                    {units.map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-
-                <td>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={p.application_date || ""}
-                    onChange={(e) => {
-                      const updated = [...form.products];
-                      updated[i].application_date = e.target.value;
-                      setForm({ ...form, products: updated });
-                    }}
-                  />
-                </td>
-
-                <td>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() =>
-                      setForm({
-                        ...form,
-                        products: form.products.filter((_, idx) => idx !== i),
-                      })
-                    }
-                  >
-                    ❌
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <button
-          className="btn btn-primary mt-3"
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          sx={{ mt: 2 }}
           onClick={() =>
             setForm({
               ...form,
@@ -1805,9 +1850,9 @@ useEffect(() => {
             })
           }
         >
-          ➕ Adicionar Produto
-        </button>
-      </div>
+          Adicionar Produto
+        </Button>
+      </Box>
     );
   };
 
@@ -1995,223 +2040,160 @@ useEffect(() => {
   // Render
   // ============================================================
   return (
-    <div className="calendar-page d-flex flex-column">
-      {/* 🔹 Cabeçalho fixo da agenda */}
-      <div className="calendar-header-sticky" ref={headerRef}>
-        {/* 🛰️ Banner de modo offline */}
+    <Box className="calendar-page" sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Header fixo */}
+      <Paper
+        ref={headerRef}
+        elevation={2}
+        sx={{
+          p: 2,
+          mb: 1,
+          borderRadius: 2,
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          bgcolor: "background.paper",
+        }}
+      >
+        {/* Banners de status */}
         {offline && (
-          <div
-            style={{
-              backgroundColor: "#ffcc00",
-              color: "#000",
-              padding: "6px 12px",
-              textAlign: "center",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              borderRadius: "6px",
-              marginBottom: "6px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-            }}
+          <Alert
+            severity="warning"
+            icon={<OfflineIcon />}
+            sx={{ mb: 1, fontWeight: 600 }}
           >
-            📴 Você está offline — exibindo dados do cache local
-          </div>
+            Você está offline — exibindo dados do cache local
+          </Alert>
         )}
 
-        {/* 🔸 Alerta de visitas pendentes de sincronização */}
         {events.some((e) => e.extendedProps?.raw?.offline) && (
-          <div
-            style={{
-              backgroundColor: "#ffcc00",
-              color: "#000",
-              padding: "4px 8px",
-              borderRadius: "6px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              textAlign: "center",
-              marginBottom: "8px",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-            }}
+          <Alert
+            severity="warning"
+            icon={<WarningIcon />}
+            sx={{ mb: 1 }}
           >
-            ⚠️ Existem visitas pendentes de sincronização (
+            Existem visitas pendentes de sincronização (
             {events.filter((e) => e.extendedProps?.raw?.offline).length})
-          </div>
-        )}
-        
-        {syncError && (
-          <div
-            style={{
-              backgroundColor: "#dc3545",
-              color: "#fff",
-              padding: "6px 12px",
-              textAlign: "center",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              borderRadius: "6px",
-              marginBottom: "6px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-            }}
-          >
-            ⚠️ {syncError}
-          </div>
+          </Alert>
         )}
 
-        {/* 🔁 Indicador de sincronização */}
+        {syncError && (
+          <Alert severity="error" sx={{ mb: 1 }}>
+            {syncError}
+          </Alert>
+        )}
+
         {syncing && (
-          <div
-            style={{
-              backgroundColor: "#007bff",
-              color: "#fff",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              marginBottom: "6px",
-              textAlign: "center",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-              animation: "pulse 1.5s infinite",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-            }}
+          <Alert
+            severity="info"
+            icon={<CircularProgress size={20} />}
+            sx={{ mb: 1 }}
           >
-            <span className="sync-spinner"></span>
             Sincronizando visitas com o servidor...
-          </div>
+          </Alert>
         )}
 
         {!syncing && lastSync && (
-          <div
-            style={{
-              backgroundColor: "#28a745",
-              color: "#fff",
-              padding: "4px 10px",
-              borderRadius: "6px",
-              marginBottom: "6px",
-              textAlign: "center",
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
-            }}
-          >
-            ✅ Última sincronização: {lastSync}
-          </div>
+          <Alert severity="success" sx={{ mb: 1, py: 0 }}>
+            Última sincronização: {lastSync}
+          </Alert>
         )}
 
-        <div className="title-row">
-          <h2 className="mb-0">Agenda de Visitas</h2>
-        </div>
+        {/* Título */}
+        <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+          Agenda de Visitas
+        </Typography>
 
-        <div className="filters-row"> 
-          <select
+        {/* Filtros */}
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 1.5,
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            select
+            size="small"
+            label="Consultor"
             value={selectedConsultant}
             onChange={(e) => setSelectedConsultant(e.target.value)}
-            className="form-select form-select-sm calendar-filter"
+            sx={{ minWidth: 180 }}
           >
-            <option value="">Todos os consultores</option>
+            <MenuItem value="">Todos os consultores</MenuItem>
             {consultants.map((c) => (
-              <option key={c.id} value={String(c.id)}>
+              <MenuItem key={c.id} value={String(c.id)}>
                 {c.name}
-              </option>
+              </MenuItem>
             ))}
-          </select>
+          </TextField>
 
-          <select
+          <TextField
+            select
+            size="small"
+            label="Variedade"
             value={selectedVariety}
             onChange={(e) => setSelectedVariety(e.target.value)}
-            className="form-select form-select-sm calendar-filter"
+            sx={{ minWidth: 180 }}
           >
-            <option value="">Todas as variedades</option>
+            <MenuItem value="">Todas as variedades</MenuItem>
             {varieties.map((v) => (
-              <option key={v.id} value={v.name}>
+              <MenuItem key={v.id} value={v.name}>
                 {v.name}
-              </option>
+              </MenuItem>
             ))}
-          </select>
+          </TextField>
 
-           <div className="position-relative" style={{ minWidth: 220, flex: "1 1 220px" }}>
-            <input
-              type="text"
-              className="form-control form-control-sm calendar-filter"
-              placeholder="Filtrar cliente..."
-              value={clientFilterText}
-              onChange={(e) => {
-                setClientFilterText(e.target.value);
-                setClientFilterOpen(true);
-
-                // se apagou o texto, limpa o filtro
-                if (e.target.value.trim() === "") {
-                  setSelectedClient("");
-                }
-              }}
-              onFocus={() => setClientFilterOpen(true)}
-            />
-
-            {clientFilterOpen && clientFilterText.trim().length > 0 && (
-              <div className="list-group position-absolute w-100 mt-1 client-filter-dropdown">
-
-                {clients
-                  .filter((c) =>
-                    c.name.toLowerCase().includes(clientFilterText.toLowerCase())
-                  )
-                  .slice(0, 10)
-                  .map((c) => (
-                    <button
-                      type="button"
-                      key={c.id}
-                      className={`list-group-item list-group-item-action client-filter-item ${
-                        String(c.id) === selectedClient ? "active" : ""
-                      }`}
-
-                      onClick={() => {
-                        setSelectedClient(String(c.id));
-                        setClientFilterText(c.name); // mostra o nome selecionado
-                        setClientFilterOpen(false);
-                      }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-
-                {clients.filter((c) =>
-                  c.name.toLowerCase().includes(clientFilterText.toLowerCase())
-                ).length === 0 && (
-                  <div className="list-group-item text-muted">
-                    Nenhum cliente encontrado
-                  </div>
-                )}
-              </div>
+          <Autocomplete
+            size="small"
+            options={clients}
+            getOptionLabel={(option) => option.name}
+            value={clients.find((c) => String(c.id) === selectedClient) || null}
+            onChange={(_, newValue) => {
+              setSelectedClient(newValue ? String(newValue.id) : "");
+              setClientFilterText(newValue?.name || "");
+            }}
+            inputValue={clientFilterText}
+            onInputChange={(_, newValue) => setClientFilterText(newValue)}
+            sx={{ minWidth: 220, flex: "1 1 220px" }}
+            renderInput={(params) => (
+              <TextField {...params} label="Cliente" placeholder="Filtrar cliente..." />
             )}
-            <button
-              type="button"
-              className="btn btn-outline-success btn-sm"
-              onClick={handleManualSync}
-              disabled={syncing || offline}
-              style={{ whiteSpace: "nowrap" }}
-            >
-              🔄 Sincronizar agora
-            </button>
-            {/* ✅ AGORA SIM: botão sempre visível */}
-            <button
-              type="button"
-              className="btn btn-outline-light btn-sm"
-              style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}
-              onClick={() => {
-                setSelectedConsultant("");
-                setSelectedVariety("");
-                setSelectedClient("");
-                setClientFilterText("");
-                setClientFilterOpen(false);
-              }}
-            >
-              Limpar
-            </button>
-          </div>
-        </div>
-      </div>
+          />
 
-      {loading && <div className="text-muted mb-2">Carregando...</div>}
+          <Button
+            variant="outlined"
+            color="success"
+            size="small"
+            startIcon={syncing ? <CircularProgress size={16} /> : <SyncIcon />}
+            onClick={handleManualSync}
+            disabled={syncing || offline}
+          >
+            Sincronizar
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            size="small"
+            onClick={() => {
+              setSelectedConsultant("");
+              setSelectedVariety("");
+              setSelectedClient("");
+              setClientFilterText("");
+            }}
+          >
+            Limpar
+          </Button>
+        </Box>
+      </Paper>
+
+      {loading && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
 
       <div className="calendar-shell" style={{ flex: "1 1 auto" }}>
         <FullCalendar
@@ -2406,16 +2388,12 @@ useEffect(() => {
 
 
             
-      {/* ➕ FAB no mobile */}
+      {/* FAB no mobile */}
       {document.body.dataset.platform === "mobile" && (
-        <button
-          className="fab"
+        <Fab
+          color="primary"
+          aria-label="Nova visita"
           onClick={() => {
-            const btn = document.querySelector(".fab");
-            if (btn) {
-              btn.classList.add("pressed");
-              setTimeout(() => btn.classList.remove("pressed"), 180);
-            }
             setForm({
               id: null,
               date: new Date().toLocaleDateString("pt-BR"),
@@ -2441,582 +2419,458 @@ useEffect(() => {
             setSelectedCaptions([]);
             setOpen(true);
           }}
-          aria-label="Nova visita"
+          sx={{
+            position: "fixed",
+            bottom: 90,
+            right: 20,
+            zIndex: 1000,
+            bgcolor: "primary.main",
+            "&:hover": { bgcolor: "primary.dark" },
+          }}
         >
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5c.552 0 1 .448 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6c0-.552.448-1 1-1z" />
-          </svg>
-        </button>
+          <AddIcon />
+        </Fab>
       )}
 
-      {/* ============================== */}
-      {/* 🔵 MODAL DE CRIAÇÃO / EDIÇÃO  */}
-      {/* ============================== */}
-      {open && (
-        <div
-          className="modal fade show d-block"
-          tabIndex={-1}
-          role="dialog"
-          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      {/* Modal de Criação / Edição */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              maxHeight: "90vh",
+            },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
         >
-          <div
-            className="modal-dialog modal-dialog-centered"
-            role="document"
-            style={{
-              maxWidth: "1200px",   // ← largura maior
-              width: "98%",         // ← responsivo
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {form.id ? "Editar Visita" : "Nova Visita"}
+          </Typography>
+          <IconButton onClick={() => setOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        {/* Abas */}
+        <Tabs
+          value={tab}
+          onChange={(_, newValue) => setTab(newValue)}
+          sx={{ px: 3, borderBottom: 1, borderColor: "divider" }}
+        >
+          <Tab label="Dados da Visita" value="dados" />
+          <Tab label="Produtos Aplicados" value="produtos" />
+          {form.id && <Tab label="Fotos" value="fotos" />}
+        </Tabs>
+
+        <DialogContent dividers sx={{ p: 3 }}>
+          {/* ABA — DADOS */}
+          {tab === "dados" && (
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
+              {/* Data */}
+              <Box sx={{ gridColumn: { xs: "1", md: "1" } }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Data</Typography>
+                  <Chip
+                    label="Hoje"
+                    size="small"
+                    color="success"
+                    onClick={() => {
+                      const now = new Date();
+                      const tStr =
+                        String(now.getDate()).padStart(2, "0") +
+                        "/" +
+                        String(now.getMonth() + 1).padStart(2, "0") +
+                        "/" +
+                        now.getFullYear();
+                      setForm((f) => ({ ...f, date: tStr }));
+                    }}
+                    sx={{ cursor: "pointer" }}
+                  />
+                </Box>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="date"
+                  value={form.date}
+                  onChange={handleChange}
+                  placeholder="dd/mm/aaaa"
+                />
+              </Box>
+
+              {/* Cliente */}
+              <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}>
+                <Autocomplete
+                  size="small"
+                  options={clients}
+                  getOptionLabel={(option) => option.name}
+                  value={clients.find((c) => String(c.id) === form.client_id) || null}
+                  onChange={(_, newValue) => {
+                    setForm((f) => ({
+                      ...f,
+                      client_id: newValue ? String(newValue.id) : "",
+                      clientSearch: newValue?.name || "",
+                      property_id: "",
+                      plot_id: "",
+                    }));
+                  }}
+                  inputValue={form.clientSearch || resolvedClientName}
+                  onInputChange={(_, newValue) => {
+                    setForm((f) => ({ ...f, clientSearch: newValue }));
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Cliente" placeholder="Digite o nome do cliente..." />
+                  )}
+                />
+                {form.clientSearch.trim() !== "" && !resolvedClient && (
+                  <Alert severity="warning" sx={{ mt: 1, py: 0 }}>
+                    Selecione um cliente da lista para gravar o ID corretamente.
+                  </Alert>
+                )}
+              </Box>
+
+              {/* Propriedade */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Propriedade"
+                name="property_id"
+                value={form.property_id}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    property_id: e.target.value,
+                    plot_id: "",
+                  }))
+                }
+              >
+                <MenuItem value="">Selecione propriedade</MenuItem>
+                {filteredProperties.map((p) => (
+                  <MenuItem key={p.id} value={String(p.id)}>
+                    {p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Talhão */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Talhão"
+                name="plot_id"
+                value={form.plot_id}
+                onChange={handleChange}
+              >
+                <MenuItem value="">Selecione talhão</MenuItem>
+                {filteredPlots.map((pl) => (
+                  <MenuItem key={pl.id} value={String(pl.id)}>
+                    {pl.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Cultura */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Cultura"
+                name="culture"
+                value={form.culture}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    culture: e.target.value,
+                    variety: "",
+                  }))
+                }
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {cultures.map((c) => (
+                  <MenuItem key={c.id} value={c.name}>
+                    {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Variedade */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Variedade"
+                name="variety"
+                value={form.variety}
+                onChange={(e) => setForm((f) => ({ ...f, variety: e.target.value }))}
+                disabled={!form.culture}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {varieties
+                  .filter((v) => v.culture.toLowerCase() === form.culture.toLowerCase())
+                  .map((v) => (
+                    <MenuItem key={v.id} value={v.name}>
+                      {v.name}
+                    </MenuItem>
+                  ))}
+              </TextField>
+
+              {/* Consultor */}
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Consultor"
+                name="consultant_id"
+                value={form.consultant_id}
+                onChange={(e) => setForm((f) => ({ ...f, consultant_id: e.target.value }))}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {consultants.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              {/* Localização */}
+              <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  startIcon={<LocationIcon />}
+                  onClick={handleGetLocation}
+                >
+                  Capturar Localização
+                </Button>
+                {form.latitude && form.longitude && (
+                  <Chip
+                    label={`${form.latitude.toFixed(5)}, ${form.longitude.toFixed(5)}`}
+                    size="small"
+                    color="success"
+                    sx={{ ml: 1 }}
+                  />
+                )}
+              </Box>
+
+              {/* Fenologia */}
+              <TextField
+                fullWidth
+                size="small"
+                label="Fenologia Observada"
+                name="fenologia_real"
+                value={form.fenologia_real}
+                onChange={handleChange}
+                placeholder="Ex: V6, R1, 6 folhas..."
+              />
+
+              {/* Observações */}
+              <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Observações"
+                  name="recommendation"
+                  value={form.recommendation}
+                  onChange={(e) => setForm((f) => ({ ...f, recommendation: e.target.value }))}
+                  placeholder="Descreva observações..."
+                />
+              </Box>
+            </Box>
+          )}
+
+          {/* ABA — PRODUTOS */}
+          {tab === "produtos" && (
+            <Box sx={{ overflowX: "auto" }}>
+              {renderProdutosSection()}
+            </Box>
+          )}
+
+          {/* ABA — FOTOS */}
+          {tab === "fotos" && form.id && (
+            <Box>
+              <VisitPhotos
+                visitId={form.id ? Number(form.id) : null}
+                photos={form.savedPhotos}
+                onFilesSelected={(files, captions) => {
+                  console.log("📩 Calendar recebeu files:", files.length);
+                  setSelectedFiles(files);
+                  setSelectedCaptions(captions);
+                }}
+                onDelete={handleDeleteSavedPhoto}
+                onReplace={handleReplaceSavedPhoto}
+                onEdit={handleEditSavedPhoto}
+                onAutoLocation={handleAutoSetLocation}
+              />
+
+              {selectedFiles.length > 0 && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  fullWidth
+                  sx={{ mt: 2 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSavePhotos();
+                  }}
+                >
+                  Salvar Fotos
+                </Button>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+
+        {/* Rodapé */}
+        <DialogActions sx={{ px: 3, py: 2, flexWrap: "wrap", gap: 1 }}>
+          {form.id && isTemporaryOfflineId(form.id) && (
+            <Alert severity="warning" sx={{ width: "100%", mb: 1 }}>
+              Esta visita ainda está pendente de sincronização e ainda não recebeu ID real do servidor.
+            </Alert>
+          )}
+
+          <Button variant="outlined" color="inherit" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+
+          {!form.id && (
+            <Button variant="contained" color="success" onClick={handleCreateOrUpdate}>
+              Salvar
+            </Button>
+          )}
+
+          {form.id && (
+            <>
+              {!isTemporaryOfflineId(form.id) && (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<PdfIcon />}
+                  href={`${API_BASE}visits/${form.id}/pdf`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  PDF
+                </Button>
+              )}
+
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<CheckIcon />}
+                onClick={markDone}
+                disabled={isTemporaryOfflineId(form.id)}
+              >
+                Concluir
+              </Button>
+
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleDelete}
+              >
+                Excluir
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Lightbox Modal */}
+      <Dialog
+        open={lightboxOpen}
+        onClose={handleCloseLightbox}
+        maxWidth="lg"
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "transparent",
+              boxShadow: "none",
+              overflow: "visible",
+            },
+          },
+          backdrop: {
+            sx: { bgcolor: "rgba(0,0,0,0.9)" },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <IconButton
+            onClick={handlePrevLightbox}
+            sx={{
+              position: "absolute",
+              left: -60,
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
             }}
           >
+            <ChevronLeftIcon sx={{ fontSize: 40 }} />
+          </IconButton>
 
-            <div
-              className="modal-content border-0 shadow-lg"
-              style={{
-                background: "var(--panel)",
-                color: "var(--text)",
-                transition: "background 0.3s ease, color 0.3s ease",
-                maxHeight: "90vh",     // ← faz o modal caber na tela
-                overflowY: "auto",     // ← scroll interno
-                borderRadius: "14px",
-                paddingBottom: "10px",
-              }}
-            >
+          <Box
+            component="img"
+            src={lightboxUrl || ""}
+            alt="Visualização ampliada"
+            sx={{
+              maxWidth: "90vw",
+              maxHeight: "85vh",
+              objectFit: "contain",
+              borderRadius: 2,
+            }}
+          />
 
-              {/* 🔷 Cabeçalho */}
-              <div className="modal-header border-0">
-                <h5 className="modal-title">
-                  {form.id ? "Editar Visita" : "Nova Visita"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  aria-label="Fechar"
-                  onClick={() => setOpen(false)}
-                ></button>
-              </div>
-
-              {/* 🔷 Abas do modal */}
-              <div
-                className="modal-tabs"
-                style={{
-                  display: "flex",
-                  borderBottom: "1px solid var(--border)",
-                  marginBottom: "15px",
-                }}
-              >
-                <button
-                  onClick={() => setTab("dados")}
-                  className={tab === "dados" ? "tab-active" : "tab"}
-                >
-                  📝 Dados da Visita
-                </button>
-
-                <button
-                  onClick={() => setTab("produtos")}
-                  className={tab === "produtos" ? "tab-active" : "tab"}
-                >
-                  🧪 Produtos Aplicados
-                </button>
-
-                {form.id && (
-                  <button
-                    onClick={() => setTab("fotos")}
-                    className={tab === "fotos" ? "tab-active" : "tab"}
-                  >
-                    📸 Fotos
-                  </button>
-                )}
-              </div>
-
-              {/* ========================== */}
-              {/* 🔵 CONTEÚDO DO MODAL       */}
-              {/* ========================== */}
-              <div className="modal-body">
-                {/* 🔹 ABA — DADOS */}
-                {tab === "dados" && (
-                  <div className="row g-3">
-                    {/* Data */}
-                    <div className="col-md-4">
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <label className="form-label fw-semibold">Data</label>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const now = new Date();
-                            const tStr =
-                              String(now.getDate()).padStart(2, "0") +
-                              "/" +
-                              String(now.getMonth() + 1).padStart(2, "0") +
-                              "/" +
-                              now.getFullYear();
-
-                            setForm((f) => ({ ...f, date: tStr }));
-                          }}
-                          style={{
-                            background: "#28a745",
-                            border: "none",
-                            color: "white",
-                            padding: "3px 8px",
-                            borderRadius: "6px",
-                            fontSize: "0.75rem",
-                            cursor: "pointer",
-                            transition: "0.2s",
-                          }}
-                        >
-                          Hoje
-                        </button>
-                      </div>
-
-                      <input
-                        name="date"
-                        value={form.date}
-                        onChange={handleChange}
-                        placeholder="dd/mm/aaaa"
-                        className="form-control"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      />
-                    </div>
-
-                    {/* Cliente */}
-                    <div className="col-12 position-relative">
-                      <label className="form-label fw-semibold">Cliente</label>
-
-                      <input
-                        type="text"
-                        className="form-control"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                        value={resolvedClientName}
-                        onChange={(e) => {
-                          const value = e.target.value;
-
-                          setForm((f) => ({
-                            ...f,
-                            clientSearch: value,
-                            client_id: "",
-                            property_id: "",
-                            plot_id: "",
-                          }));
-                        }}
-                        placeholder="Digite o nome do cliente..."
-                      />
-
-                      {form.clientSearch.trim().length > 0 && (
-                        <ul
-                          className="list-group position-absolute w-100 mt-1"
-                          style={{
-                            maxHeight: "150px",
-                            overflowY: "auto",
-                            zIndex: 20,
-                          }}
-                        >
-                          {clients
-                            .filter((c) =>
-                              c.name.toLowerCase().includes(form.clientSearch.toLowerCase())
-                            )
-                            .slice(0, 12)
-                            .map((c) => (
-                              <li
-                                key={c.id}
-                                className={`list-group-item list-group-item-action ${
-                                  form.client_id === String(c.id)
-                                    ? "active bg-success text-white"
-                                    : "bg-dark text-light"
-                                }`}
-                                onClick={() =>
-                                  setForm((f) => ({
-                                    ...f,
-                                    client_id: String(c.id),
-                                    clientSearch: c.name,
-                                    property_id: "",
-                                    plot_id: "",
-                                  }))
-                                }
-                                style={{ cursor: "pointer" }}
-                              >
-                                {c.name}
-                              </li>
-                            ))}
-
-                          {clients.filter((c) =>
-                            c.name.toLowerCase().includes(form.clientSearch.toLowerCase())
-                          ).length === 0 && (
-                            <li className="list-group-item bg-dark text-light">
-                              Nenhum cliente encontrado
-                            </li>
-                          )}
-                        </ul>
-                      )}
-
-                      {form.clientSearch.trim() !== "" && !resolvedClient && (
-                        <div
-                          style={{
-                            marginTop: "6px",
-                            fontSize: "0.85rem",
-                            color: "#ffcc00",
-                            fontWeight: 600,
-                          }}
-                        >
-                          ⚠️ Selecione um cliente da lista para gravar o ID corretamente.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Propriedade */}
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Propriedade</label>
-                      <DarkSelect
-                        name="property_id"
-                        value={form.property_id}
-                        placeholder="Selecione propriedade"
-                        options={[
-                          { value: "", label: "Selecione propriedade" },
-                          ...filteredProperties.map((p) => ({
-                            value: String(p.id),
-                            label: p.name,
-                          })),
-                        ]}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            property_id: e.target.value,
-                            plot_id: "",
-                          }))
-                        }
-                      />
-                    </div>
-
-                    {/* Talhão */}
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Talhão</label>
-                      <DarkSelect
-                        name="plot_id"
-                        value={form.plot_id}
-                        placeholder="Selecione talhão"
-                        options={[
-                          { value: "", label: "Selecione talhão" },
-                          ...filteredPlots.map((pl) => ({
-                            value: String(pl.id),
-                            label: pl.name,
-                          })),
-                        ]}
-                        onChange={handleChange}
-                      />
-                    </div>
-
-                    {/* Cultura */}
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Cultura</label>
-                      <select
-                        name="culture"
-                        value={form.culture}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            culture: e.target.value,
-                            variety: "",
-                          }))
-                        }
-                        className="form-select"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      >
-                        <option value="">Selecione</option>
-                        {cultures.map((c) => (
-                          <option key={c.id} value={c.name}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Variedade */}
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Variedade</label>
-                      <select
-                        name="variety"
-                        value={form.variety}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, variety: e.target.value }))
-                        }
-                        disabled={!form.culture}
-                        className="form-select"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      >
-                        <option value="">Selecione</option>
-                        {varieties
-                          .filter(
-                            (v) =>
-                              v.culture.toLowerCase() ===
-                              form.culture.toLowerCase()
-                          )
-                          .map((v) => (
-                            <option key={v.id} value={v.name}>
-                              {v.name}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-
-                    {/* Consultor */}
-                    <div className="col-md-6">
-                      <label className="form-label fw-semibold">Consultor</label>
-                      <select
-                        name="consultant_id"
-                        value={form.consultant_id}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            consultant_id: e.target.value,
-                          }))
-                        }
-                        className="form-select"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      >
-                        <option value="">Selecione</option>
-                        {consultants.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Localização */}
-                    <div className="col-12 mt-3">
-                      <button
-                        type="button"
-                        className="btn btn-outline-info"
-                        onClick={handleGetLocation}
-                      >
-                        📍 Capturar Localização
-                      </button>
-                    </div>
-
-                    {/* Fenologia real */}
-                    <div className="col-12">
-                      <label className="form-label fw-semibold">
-                        Fenologia Observada
-                      </label>
-                      <input
-                        type="text"
-                        name="fenologia_real"
-                        value={form.fenologia_real}
-                        onChange={handleChange}
-                        placeholder="Ex: V6, R1, 6 folhas..."
-                        className="form-control"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      />
-                    </div>
-
-                    {/* Observações */}
-                    <div className="col-12">
-                      <label className="form-label fw-semibold">
-                        Observações
-                      </label>
-                      <textarea
-                        name="recommendation"
-                        value={form.recommendation}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            recommendation: e.target.value,
-                          }))
-                        }
-                        placeholder="Descreva observações..."
-                        className="form-control"
-                        style={{
-                          background: "var(--input-bg)",
-                          color: "var(--text)",
-                          borderColor: "var(--border)",
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* 🔹 ABA — PRODUTOS */}
-                {tab === "produtos" && (
-                  <div className="p-2" style={{ overflowX: "auto" }}>
-                    {renderProdutosSection()}
-                  </div>
-                )}
-
-                {/* 🔹 ABA — FOTOS */}
-                {tab === "fotos" && form.id && (
-                  <div className="p-2">
-
-                    {/* Componente responsável por:
-                        - selecionar fotos
-                        - mostrar preview
-                        - editar legenda
-                    */}
-                    <VisitPhotos
-                      visitId={form.id ? Number(form.id) : null}
-                      photos={form.savedPhotos}
-
-                      // 🔥 AQUI ESTÁ A LIGAÇÃO QUE FALTAVA
-                      onFilesSelected={(files, captions) => {
-                        console.log("📩 Calendar recebeu files:", files.length);
-                        setSelectedFiles(files);
-                        setSelectedCaptions(captions);
-                      }}
-
-                      onDelete={handleDeleteSavedPhoto}
-                      onReplace={handleReplaceSavedPhoto}
-                      onEdit={handleEditSavedPhoto}
-                      onAutoLocation={handleAutoSetLocation}
-                    />
-
-                    {/* Botão salvar — usa o estado do Calendar */}
-                    {selectedFiles.length > 0 && (
-                      <button
-                        type="button"
-                        className="btn btn-success mt-3 w-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSavePhotos();
-                        }}
-                      >
-                        💾 Salvar Fotos
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Rodapé */}
-              <div className="modal-footer border-0">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancelar
-                </button>
-
-                {!form.id && (
-                  <button
-                    className="btn btn-success"
-                    onClick={handleCreateOrUpdate}
-                  >
-                    💾 Salvar
-                  </button>
-                )}
-
-                {form.id && (
-                  <>
-                    {isTemporaryOfflineId(form.id) && (
-                      <div
-                        style={{
-                          width: "100%",
-                          background: "#ffcc00",
-                          color: "#000",
-                          padding: "8px 10px",
-                          borderRadius: "8px",
-                          fontWeight: 600,
-                          textAlign: "center",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        ⚠️ Esta visita ainda está pendente de sincronização e ainda não recebeu ID real do servidor.
-                      </div>
-                    )}
-
-                    {!isTemporaryOfflineId(form.id) && (
-                      <a
-                        href={`${API_BASE}visits/${form.id}/pdf`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-outline-primary d-flex align-items-center"
-                      >
-                        📄 PDF
-                      </a>
-                    )}
-
-                    <button
-                      className="btn btn-success"
-                      onClick={markDone}
-                      disabled={isTemporaryOfflineId(form.id)}
-                    >
-                      ✅ Concluir
-                    </button>
-
-                    <button className="btn btn-danger" onClick={handleDelete}>
-                      🗑 Excluir
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🖼️ Lightbox Modal */}
-      {lightboxOpen && (
-        <div className="lightbox-overlay" onClick={handleCloseLightbox}>
-          <div
-            className="lightbox-content"
-            onClick={(e) => e.stopPropagation()}
+          <IconButton
+            onClick={handleNextLightbox}
+            sx={{
+              position: "absolute",
+              right: -60,
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
           >
-            <button
-              className="lightbox-nav left"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrevLightbox();
-              }}
-            >
-              ⟵
-            </button>
+            <ChevronRightIcon sx={{ fontSize: 40 }} />
+          </IconButton>
 
-            <img src={lightboxUrl || ""} alt="Visualização ampliada" />
-
-            <button
-              className="lightbox-nav right"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNextLightbox();
-              }}
-            >
-              ⟶
-            </button>
-
-            <button className="lightbox-close" onClick={handleCloseLightbox}>
-              ✕
-            </button>
-          </div>
-        </div>
-       )}
-    </div>
+          <IconButton
+            onClick={handleCloseLightbox}
+            sx={{
+              position: "absolute",
+              top: -50,
+              right: 0,
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </Dialog>
+    </Box>
   );
 };
 
