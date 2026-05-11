@@ -34,6 +34,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckIcon,
   DragIndicator as DragIcon,
+  PhotoCamera as PhotoIcon,
 } from "@mui/icons-material";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
@@ -50,6 +51,11 @@ type Planting = {
   variety: string | null;
   planting_date: string | null;
 };
+type Photo = {
+  id: number;
+  url: string;
+  thumbnail_url?: string;
+};
 type Visit = {
   id: number;
   client_id: number;
@@ -62,6 +68,7 @@ type Visit = {
   fenologia_real: string | null;
   status: string | null;
   recommendation: string | null;
+  photos?: Photo[];
 };
 
 const VisitLinking: React.FC = () => {
@@ -288,9 +295,10 @@ const VisitLinking: React.FC = () => {
     const propName = getPropertyName(visit.property_id);
     const plotName = getPlotName(visit.plot_id);
     const clientName = getClientName(visit.client_id);
+    const photos = visit.photos || [];
 
     return (
-      <Box sx={{ p: 1, maxWidth: 300 }}>
+      <Box sx={{ p: 1, maxWidth: 320 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
           Detalhes da Visita #{visit.id}
         </Typography>
@@ -307,6 +315,49 @@ const VisitLinking: React.FC = () => {
             <Typography variant="caption" sx={{ mt: 0.5 }}>
               <strong>Observação:</strong> {visit.recommendation.length > 100 ? visit.recommendation.slice(0, 100) + "..." : visit.recommendation}
             </Typography>
+          )}
+          {photos.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                <PhotoIcon sx={{ fontSize: 14 }} />
+                <strong>{photos.length} foto{photos.length > 1 ? "s" : ""}</strong>
+              </Typography>
+              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                {photos.slice(0, 4).map((photo, idx) => (
+                  <Box
+                    key={photo.id || idx}
+                    component="img"
+                    src={photo.thumbnail_url || photo.url}
+                    alt={`Foto ${idx + 1}`}
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      objectFit: "cover",
+                      borderRadius: 1,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  />
+                ))}
+                {photos.length > 4 && (
+                  <Box
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 1,
+                      bgcolor: "action.hover",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      +{photos.length - 4}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           )}
         </Box>
       </Box>
@@ -960,6 +1011,40 @@ const VisitLinking: React.FC = () => {
                     <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
                       {detailVisit.recommendation}
                     </Typography>
+                  </Box>
+                )}
+
+                {(detailVisit.photos?.length ?? 0) > 0 && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <PhotoIcon sx={{ fontSize: 14 }} />
+                      Fotos ({detailVisit.photos!.length})
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
+                      {detailVisit.photos!.map((photo, idx) => (
+                        <Box
+                          key={photo.id || idx}
+                          component="img"
+                          src={photo.thumbnail_url || photo.url}
+                          alt={`Foto ${idx + 1}`}
+                          onClick={() => window.open(photo.url, "_blank")}
+                          sx={{
+                            width: 80,
+                            height: 80,
+                            objectFit: "cover",
+                            borderRadius: 2,
+                            border: "2px solid",
+                            borderColor: "divider",
+                            cursor: "pointer",
+                            transition: "transform 0.2s, box-shadow 0.2s",
+                            "&:hover": {
+                              transform: "scale(1.05)",
+                              boxShadow: 3,
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
                   </Box>
                 )}
               </Box>
