@@ -1,8 +1,34 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  TextField,
+  MenuItem,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  CircularProgress,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+} from "@mui/material";
+import {
+  FileDownload as FileDownloadIcon,
+} from "@mui/icons-material";
+import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, Loader2 } from "lucide-react";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import KPICard from "../components/KPICard";
-import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, FileSpreadsheet, Loader2 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
@@ -15,22 +41,17 @@ type Planting = { id: number; culture?: string };
 type Visit = {
   id: number;
   date?: string;
-
   client_id?: number;
   property_id?: number;
   plot_id?: number;
-
   client_name?: string;
   consultant_id?: number;
   consultant_name?: string;
-
   status?: string;
   culture?: string;
   variety?: string;
-
   recommendation?: string;
   fenologia_real?: string;
-
   products?: Array<{
     id?: number;
     product_name?: string;
@@ -103,12 +124,9 @@ const Dashboard: React.FC = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
-
   const [clientsMap, setClientsMap] = useState<Record<number, string>>({});
   const [propsMap, setPropsMap] = useState<Record<number, string>>({});
 
-
-  // ===== Filtros do relatório Excel =====
   const [regions, setRegions] = useState<string[]>([]);
   const [seasons, setSeasons] = useState<Array<{ key: string; label: string; culture: string }>>([]);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
@@ -167,9 +185,6 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
-  // ============================================================
-  // 🔍 Filtros opps (vendas)
-  // ============================================================
   function inRange(dateStr?: string) {
     if (!dateStr) return false;
     const d = dateStr.slice(0, 10);
@@ -190,9 +205,6 @@ const Dashboard: React.FC = () => {
     return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
-  // ============================================================
-  // 📈 Gráfico (vendas por dia)
-  // ============================================================
   let days: string[] = [];
   let dailySums: number[] = [];
 
@@ -221,9 +233,6 @@ const Dashboard: React.FC = () => {
   const maxSum = Math.max(...dailySums, 1);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
-  // ============================================================
-  // ✅ Excel formatado (backend)
-  // ============================================================
   async function downloadExcel() {
     if (!startDate || !endDate) {
       alert("Selecione um intervalo (De / Até) para gerar o relatório.");
@@ -256,350 +265,285 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  // para tabela "Últimas visitas" sem renderizar 200 linhas
   const lastVisits = useMemo(() => {
     const sorted = [...visits].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     return sorted.slice(0, 12);
   }, [visits]);
 
-  // ============================================================
-  // Render
-  // ============================================================
   return (
-    <div className="container-fluid py-4 text-light">
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto">
-          <h2 className="fw-bold mb-2 text-success">📊 Dashboard</h2>
-          <p className="mb-0" style={{ color: "var(--text-secondary)" }}>
-            Acompanhe os principais indicadores de clientes, visitas e vendas.
-          </p>
-        </div>
-      </div>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: "primary.main", mb: 0.5 }}>
+          Dashboard
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Acompanhe os principais indicadores de clientes, visitas e vendas.
+        </Typography>
+      </Box>
 
       {loading ? (
-        <div className="text-secondary text-center py-4">Carregando...</div>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <>
-          {/* CARDS DE RESUMO */}
-          <div className="row g-3 mb-4">
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={Users}
-                label="Clientes"
-                value={clients.length}
-                variant="blue"
-                subtitle="Carteira ativa"
-              />
-            </div>
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={Map}
-                label="Propriedades"
-                value={properties.length}
-                variant="emerald"
-                subtitle="Fazendas cadastradas"
-              />
-            </div>
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={Sprout}
-                label="Talhões"
-                value={plots.length}
-                variant="teal"
-                subtitle="Áreas produtivas"
-              />
-            </div>
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={Wheat}
-                label="Plantios"
-                value={plantings.length}
-                variant="amber"
-                subtitle="Safras em campo"
-              />
-            </div>
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={ClipboardList}
-                label="Acompanhamentos"
-                value={visits.filter(v => (v.photos?.length ?? 0) > 0).length}
-                variant="violet"
-                subtitle="Lançamentos com foto"
-              />
-            </div>
-            <div className="col-6 col-md-4 col-lg-2">
-              <KPICard
-                icon={Briefcase}
-                label="Oportunidades"
-                value={opps.length}
-                variant="rose"
-                subtitle="Pipeline ativo"
-              />
-            </div>
-          </div>
+          {/* KPI Cards */}
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={Users} label="Clientes" value={clients.length} variant="blue" subtitle="Carteira ativa" />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={Map} label="Propriedades" value={properties.length} variant="emerald" subtitle="Fazendas cadastradas" />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={Sprout} label="Talhões" value={plots.length} variant="teal" subtitle="Áreas produtivas" />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={Wheat} label="Plantios" value={plantings.length} variant="amber" subtitle="Safras em campo" />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={ClipboardList} label="Acompanhamentos" value={visits.filter(v => (v.photos?.length ?? 0) > 0).length} variant="violet" subtitle="Lançamentos com foto" />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+              <KPICard icon={Briefcase} label="Oportunidades" value={opps.length} variant="rose" subtitle="Pipeline ativo" />
+            </Grid>
+          </Grid>
 
-          {/* FILTROS */}
-          <div className="row mb-4 justify-content-center">
-            <div className="col-12 col-lg-10">
-              <div
-                className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3"
-                style={{ background: "var(--panel)", color: "var(--text)" }}
+          {/* Filters Card */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 2,
+                }}
               >
-                <div className="d-flex gap-3 align-items-center flex-wrap">
-                  <label className="d-flex flex-column">
-                    <small className="text-secondary">De</small>
-                    <input
-                      type="date"
-                      className="form-control form-control-sm"
-                      style={{
-                        background: "var(--panel)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </label>
+                <TextField
+                  label="De"
+                  type="date"
+                  size="small"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: 160 }}
+                />
+                <TextField
+                  label="Até"
+                  type="date"
+                  size="small"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: 160 }}
+                />
 
-                  <label className="d-flex flex-column">
-                    <small className="text-secondary">Até</small>
-                    <input
-                      type="date"
-                      className="form-control form-control-sm"
-                      style={{
-                        background: "var(--panel)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
-                      }}
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </label>
+                <Box sx={{ flex: 1 }} />
 
-                </div>
+                {startDate && endDate && (
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "success.main" }}>
+                    Vendas (fechadas): {fmtCurrency(totalSales)}
+                  </Typography>
+                )}
 
-                <div className="ms-auto d-flex align-items-center gap-2 flex-wrap">
-                  <div className="fw-semibold text-success">
-                    {startDate && endDate ? (
-                      <>Vendas (fechadas): {fmtCurrency(totalSales)}</>
-                    ) : (
-                      <span className="text-secondary">Selecione um intervalo</span>
-                    )}
-                  </div>
-
-                  {/* ===== Filtros do relatório Excel ===== */}
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: "auto", minWidth: 160 }}
-                    value={selectedRegion}
-                    onChange={(e) => setSelectedRegion(e.target.value)}
-                    title="Filtrar por região"
-                  >
-                    <option value="">Todas as regiões</option>
-                    {regions.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    className="form-select form-select-sm"
-                    style={{ width: "auto", minWidth: 160 }}
-                    value={selectedSeason}
-                    onChange={(e) => setSelectedSeason(e.target.value)}
-                    title="Filtrar por safra (cultura + janela de datas)"
-                  >
-                    <option value="">Todas as safras</option>
-                    {seasons.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    onClick={downloadExcel}
-                    disabled={!startDate || !endDate || downloadingExcel}
-                    title="Baixar relatório gerencial em Excel (PowerBI style)"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 7,
-                      padding: "7px 16px",
-                      background: (!startDate || !endDate || downloadingExcel)
-                        ? "#9ca3af"
-                        : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 8,
-                      fontWeight: 600,
-                      fontSize: 13,
-                      cursor: (!startDate || !endDate || downloadingExcel) ? "not-allowed" : "pointer",
-                      boxShadow: (!startDate || !endDate || downloadingExcel)
-                        ? "none"
-                        : "0 2px 8px rgba(22,163,74,0.35)",
-                      transition: "all 0.15s",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {downloadingExcel
-                      ? <><Loader2 size={15} style={{ animation: "spin 0.8s linear infinite" }} /> Gerando...</>
-                      : <><FileSpreadsheet size={15} /> Baixar Excel</>
-                    }
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* GRÁFICO */}
-          {startDate && endDate && days.length > 0 && (
-            <div className="row mb-5 justify-content-center">
-              <div className="col-12 col-lg-10">
-                <div
-                  className="card border-0 shadow-sm p-4"
-                  style={{ background: "var(--panel)", color: "var(--text)" }}
+                <TextField
+                  select
+                  label="Região"
+                  size="small"
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  sx={{ minWidth: 160 }}
                 >
-                  <h5 className="mb-3" style={{ color: "var(--text-secondary)" }}>
-                    📈 Vendas por dia
-                  </h5>
+                  <MenuItem value="">Todas as regiões</MenuItem>
+                  {regions.map((r) => (
+                    <MenuItem key={r} value={r}>{r}</MenuItem>
+                  ))}
+                </TextField>
 
-                  <div className="chart-container position-relative">
-                    <svg width="100%" height="120" viewBox={`0 0 ${days.length * 30} 100`}>
-                      {dailySums.map((v, i) => {
-                        const barH = Math.round((v / maxSum) * 60);
-                        const x = i * 30 + 10;
-                        const y = 80 - barH;
+                <TextField
+                  select
+                  label="Safra"
+                  size="small"
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(e.target.value)}
+                  sx={{ minWidth: 160 }}
+                >
+                  <MenuItem value="">Todas as safras</MenuItem>
+                  {seasons.map((s) => (
+                    <MenuItem key={s.key} value={s.key}>{s.label}</MenuItem>
+                  ))}
+                </TextField>
 
-                        return (
-                          <g key={i}>
-                            <rect
-                              x={x}
-                              y={y}
-                              width={18}
-                              height={barH}
-                              fill="url(#barGradient)"
-                              rx="5"
-                              onMouseEnter={(ev: any) =>
-                                setTooltip({
-                                  x: ev.clientX,
-                                  y: ev.clientY,
-                                  text: `${days[i]}: ${fmtCurrency(v)}`,
-                                })
-                              }
-                              onMouseLeave={() => setTooltip(null)}
-                            />
-                            <text x={x + 9} y={96} fontSize={10} fill="#9fb3b6" textAnchor="middle">
-                              {days[i].slice(5)}
-                            </text>
-                          </g>
-                        );
-                      })}
+                <Button
+                  variant="contained"
+                  startIcon={downloadingExcel ? <Loader2 size={16} style={{ animation: "spin 0.8s linear infinite" }} /> : <FileDownloadIcon />}
+                  onClick={downloadExcel}
+                  disabled={!startDate || !endDate || downloadingExcel}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                >
+                  {downloadingExcel ? "Gerando..." : "Baixar Excel"}
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
 
-                      <defs>
-                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2dd36f" />
-                          <stop offset="100%" stopColor="#0a3d2c" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
+          {/* Chart */}
+          {startDate && endDate && days.length > 0 && (
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, color: "text.secondary" }}>
+                  Vendas por dia
+                </Typography>
 
-                    {tooltip && (
-                      <div
-                        className="position-absolute bg-dark text-light px-2 py-1 rounded border border-success"
-                        style={{
-                          left: tooltip.x - 250,
-                          top: tooltip.y - 80,
-                          fontSize: "0.8rem",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        {tooltip.text}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                <Box sx={{ position: "relative", overflowX: "auto" }}>
+                  <svg width="100%" height="120" viewBox={`0 0 ${days.length * 30} 100`} style={{ minWidth: days.length * 30 }}>
+                    {dailySums.map((v, i) => {
+                      const barH = Math.round((v / maxSum) * 60);
+                      const x = i * 30 + 10;
+                      const y = 80 - barH;
 
-          {/* Últimas visitas */}
-          <div className="row mb-5 justify-content-center">
-            <div className="col-12 col-lg-10">
-              <div
-                className="card border-0 shadow-sm text-center p-3"
-                style={{ background: "var(--panel)", color: "var(--text)" }}
-              >
-                <h5 style={{ color: "var(--text)" }}>🧭 Últimas Visitas</h5>
-                <div className="table-responsive">
-                  <table className="table table-sm align-middle" style={{ background: "var(--panel)", color: "var(--text)" }}>
-                    <thead>
-                      <tr>
-                        <th>Data</th>
-                        <th>Cliente</th>
-                        <th>Propriedade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lastVisits.map((v) => (
-                        <tr key={v.id}>
-                          <td>{v.date?.split("T")[0] ?? "--"}</td>
-                          <td>{clientsMap[v.client_id ?? 0] ?? "-"}</td>
-                          <td>{propsMap[v.property_id ?? 0] ?? "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
+                      return (
+                        <g key={i}>
+                          <rect
+                            x={x}
+                            y={y}
+                            width={18}
+                            height={barH}
+                            fill="url(#barGradient)"
+                            rx="5"
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={(ev: any) =>
+                              setTooltip({
+                                x: ev.clientX,
+                                y: ev.clientY,
+                                text: `${days[i]}: ${fmtCurrency(v)}`,
+                              })
+                            }
+                            onMouseLeave={() => setTooltip(null)}
+                          />
+                          <text x={x + 9} y={96} fontSize={10} fill="#9ca3af" textAnchor="middle">
+                            {days[i].slice(5)}
+                          </text>
+                        </g>
+                      );
+                    })}
 
-          {/* Oportunidades */}
-          <div className="row justify-content-center">
-            <div className="col-12 col-lg-10">
-              <div
-                className="card border-0 p-3 shadow-sm d-flex flex-wrap align-items-center gap-3"
-                style={{ background: "var(--panel)", color: "var(--text)" }}
-              >
-                <h5 className="mb-3" style={{ color: "var(--text-secondary)" }}>
-                  💼 Últimas Oportunidades
-                </h5>
+                    <defs>
+                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22c55e" />
+                        <stop offset="100%" stopColor="#15803d" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
 
-                <ul className="list-group list-group-flush">
-                  {(startDate && endDate ? filteredOpps : opps).slice(0, 12).map((o) => (
-                    <li
-                      key={o.id}
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                      style={{
-                        background: "var(--panel)",
-                        color: "var(--text)",
-                        borderColor: "var(--border)",
+                  {tooltip && (
+                    <Paper
+                      elevation={8}
+                      sx={{
+                        position: "fixed",
+                        left: tooltip.x + 10,
+                        top: tooltip.y - 40,
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: "0.8rem",
+                        fontWeight: 500,
+                        pointerEvents: "none",
+                        zIndex: 1000,
                       }}
                     >
-                      <span>{o.title ?? "Sem título"}</span>
-                      <span>
+                      {tooltip.text}
+                    </Paper>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Last Visits */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Últimas Visitas
+              </Typography>
+
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Data</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Propriedade</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {lastVisits.map((v) => (
+                      <TableRow key={v.id} hover>
+                        <TableCell>{v.date?.split("T")[0] ?? "--"}</TableCell>
+                        <TableCell>{clientsMap[v.client_id ?? 0] ?? "-"}</TableCell>
+                        <TableCell>{propsMap[v.property_id ?? 0] ?? "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+
+          {/* Opportunities */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Últimas Oportunidades
+              </Typography>
+
+              <List disablePadding>
+                {(startDate && endDate ? filteredOpps : opps).slice(0, 12).map((o, idx) => (
+                  <React.Fragment key={o.id}>
+                    {idx > 0 && <Divider />}
+                    <ListItem
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        py: 1.5,
+                      }}
+                    >
+                      <ListItemText
+                        primary={o.title ?? "Sem título"}
+                        slotProps={{
+                          primary: { sx: { fontWeight: 500 } },
+                        }}
+                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         {o.stage && (
-                          <span
-                            className={`badge ${
-                              o.stage.toLowerCase() === "fechadas" ? "bg-success" : "bg-secondary"
-                            } me-2`}
-                          >
-                            {o.stage}
-                          </span>
+                          <Chip
+                            label={o.stage}
+                            size="small"
+                            color={o.stage.toLowerCase() === "fechadas" ? "success" : "default"}
+                            sx={{ fontWeight: 600 }}
+                          />
                         )}
-                        <span className="text-secondary">{fmtCurrency(o.estimated_value || 0)}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
+                        <Typography variant="body2" color="text.secondary">
+                          {fmtCurrency(o.estimated_value || 0)}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  </React.Fragment>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

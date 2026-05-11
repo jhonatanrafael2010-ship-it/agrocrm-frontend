@@ -9,7 +9,6 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import ChatPage from "./pages/Chat";
-import { MessageSquare } from "lucide-react";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -164,35 +163,25 @@ function App() {
     <div className="app d-flex flex-column vh-100">
       {/* conteúdo */}
       <div className="d-flex flex-grow-1">
-        {isMobileApp ? (
-          <MobileMenu onNavigate={setRoute} activeItem={route} />
-        ) : (
-          <div
-            className="d-none d-lg-block sidebar-wrapper"
-          >
+        {/* Sidebar desktop */}
+        {!isMobileApp && (
+          <div className="d-none d-lg-block sidebar-wrapper">
             <Navbar activeItem={route} onNavigate={setRoute} />
           </div>
         )}
 
         <main className="flex-grow-1 overflow-auto d-flex flex-column">
-          <Topbar
-            activeItem={route}
-            lastSync={lastSync}
-            syncing={syncing}
-            offline={offline}
-            onNavigate={setRoute}
-          />
-          <div className="topbar-mobile-toggle d-lg-none">
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              type="button"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#mobileMenu"
-            >
-              ☰ Menu
-            </button>
-          </div>
-          <div className="page-content flex-grow-1">
+          {/* Topbar apenas no desktop */}
+          {!isMobileApp && (
+            <Topbar
+              activeItem={route}
+              lastSync={lastSync}
+              syncing={syncing}
+              offline={offline}
+              onNavigate={setRoute}
+            />
+          )}
+          <div className="page-content flex-grow-1" style={{ paddingBottom: isMobileApp ? 80 : 0 }}>
             {route === "Clientes" ? (
               <Clients />
             ) : route === "Propriedades" ? (
@@ -211,15 +200,10 @@ function App() {
           </div>
         </main>
       </div>
-      {/* FAB do Assistente — só no mobile, fora da tela de chat */}
-      {isMobileApp && route !== "Assistente" && (
-        <button
-          className="chat-fab"
-          onClick={() => setRoute("Assistente")}
-          title="Assistente"
-        >
-          <MessageSquare size={24} />
-        </button>
+
+      {/* Mobile Menu (Drawer + BottomNavigation) */}
+      {isMobileApp && (
+        <MobileMenu onNavigate={setRoute} activeItem={route} />
       )}
 
       <Toaster

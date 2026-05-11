@@ -1,17 +1,30 @@
 import React from "react";
 import {
-  LayoutDashboard,
-  Users,
-  Map,
-  Calendar,
-  ClipboardList,
-  Briefcase,
-  MessageSquare,
-  LogOut,
-  Settings,
-  ChevronRight,
-} from "lucide-react";
-import "./Navbar.css";
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Divider,
+  Avatar,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import {
+  Dashboard as DashboardIcon,
+  People as PeopleIcon,
+  Map as MapIcon,
+  CalendarMonth as CalendarIcon,
+  Assignment as AssignmentIcon,
+  BusinessCenter as BusinessIcon,
+  SmartToy as AssistantIcon,
+  Logout as LogoutIcon,
+  Settings as SettingsIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
+import logo from "../assets/nutricrm_logo.png";
 
 type Props = {
   activeItem?: string;
@@ -20,106 +33,227 @@ type Props = {
   userRole?: string;
 };
 
+const sections = [
+  {
+    title: "Principal",
+    items: [
+      { label: "Dashboard", icon: <DashboardIcon />, color: "#6366f1" },
+    ],
+  },
+  {
+    title: "Gestão",
+    items: [
+      { label: "Clientes", icon: <PeopleIcon />, color: "#3b82f6" },
+      { label: "Propriedades", icon: <MapIcon />, color: "#10b981" },
+      { label: "Oportunidades", icon: <BusinessIcon />, color: "#f59e0b" },
+    ],
+  },
+  {
+    title: "Operação",
+    items: [
+      { label: "Calendário", icon: <CalendarIcon />, color: "#ec4899" },
+      { label: "Acompanhamentos", icon: <AssignmentIcon />, color: "#8b5cf6" },
+    ],
+  },
+  {
+    title: "Bot",
+    items: [
+      { label: "Assistente", icon: <AssistantIcon />, color: "#16a34a" },
+    ],
+  },
+];
+
 const Navbar: React.FC<Props> = ({
   activeItem = "Dashboard",
   onNavigate = () => {},
   userName = "Usuário",
   userRole = "Consultor",
 }) => {
-  const sections = [
-    {
-      title: "Principal",
-      items: [
-        { label: "Dashboard", icon: <LayoutDashboard size={18} />, color: "#6366f1" },
-      ],
-    },
-    {
-      title: "Gestão",
-      items: [
-        { label: "Clientes", icon: <Users size={18} />, color: "#3b82f6" },
-        { label: "Propriedades", icon: <Map size={18} />, color: "#10b981" },
-        { label: "Oportunidades", icon: <Briefcase size={18} />, color: "#f59e0b" },
-      ],
-    },
-    {
-      title: "Operação",
-      items: [
-        { label: "Calendário", icon: <Calendar size={18} />, color: "#ec4899" },
-        { label: "Acompanhamentos", icon: <ClipboardList size={18} />, color: "#8b5cf6" },
-      ],
-    },
-    {
-      title: "Bot",
-      items: [
-        { label: "Assistente", icon: <MessageSquare size={18} />, color: "#16a34a" },
-      ],
-    },
-  ];
-
   return (
-    <aside className="sidebar-premium d-flex flex-column">
-      <div className="sidebar-brand">
-        <img
-          src="https://agrocrm-backend.onrender.com/static/nutricrm_logo.png"
-          alt="NutriCRM"
-          className="sidebar-logo-img"
-          onClick={() => onNavigate("Dashboard")}
-        />
-      </div>
-
-      <nav className="sidebar-nav flex-grow-1">
-        {sections.map((sec) => (
-          <div key={sec.title} className="sidebar-section">
-            <div className="sidebar-section-title">{sec.title}</div>
-            {sec.items.map((item) => {
-              const isActive = activeItem === item.label;
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => onNavigate(item.label)}
-                  className={`sidebar-link ${isActive ? "active" : ""}`}
-                  style={
-                    {
-                      "--item-color": item.color,
-                    } as React.CSSProperties
-                  }
-                >
-                  <span className="sidebar-link-indicator" />
-                  <span className="sidebar-link-icon">{item.icon}</span>
-                  <span className="sidebar-link-label">{item.label}</span>
-                  {isActive && <ChevronRight size={14} className="sidebar-link-chevron" />}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      <div className="sidebar-user">
-        <div className="sidebar-user-avatar">
-          {userName.charAt(0).toUpperCase()}
-        </div>
-        <div className="sidebar-user-info">
-          <div className="sidebar-user-name">{userName}</div>
-          <div className="sidebar-user-role">{userRole}</div>
-        </div>
-        <button
-          className="sidebar-user-settings"
-          title="Configurações"
-          onClick={() => onNavigate("Configurações")}
-        >
-          <Settings size={16} />
-        </button>
-      </div>
-
-      <button
-        className="sidebar-logout"
-        onClick={() => alert("🚪 Logout realizado!")}
+    <Box
+      component="aside"
+      sx={{
+        width: 260,
+        height: "100vh",
+        bgcolor: "background.paper",
+        borderRight: 1,
+        borderColor: "divider",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Logo */}
+      <Box
+        sx={{
+          p: 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          cursor: "pointer",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+        onClick={() => onNavigate("Dashboard")}
       >
-        <LogOut size={16} />
-        <span>Sair</span>
-      </button>
-    </aside>
+        <Avatar
+          src={logo}
+          alt="NutriCRM"
+          variant="rounded"
+          sx={{ width: 44, height: 44 }}
+        />
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2, color: "primary.main" }}>
+            NutriCRM
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Gestão Agrícola
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Navigation */}
+      <Box sx={{ flex: 1, overflowY: "auto", py: 1 }}>
+        {sections.map((section, idx) => (
+          <Box key={section.title}>
+            {idx > 0 && <Divider sx={{ my: 1 }} />}
+            <Typography
+              variant="overline"
+              sx={{
+                px: 2,
+                py: 1,
+                display: "block",
+                color: "text.secondary",
+                fontWeight: 600,
+                fontSize: "0.7rem",
+                letterSpacing: 1,
+              }}
+            >
+              {section.title}
+            </Typography>
+            <List disablePadding>
+              {section.items.map((item) => {
+                const isActive = activeItem === item.label;
+                return (
+                  <ListItem key={item.label} disablePadding sx={{ px: 1 }}>
+                    <ListItemButton
+                      selected={isActive}
+                      onClick={() => onNavigate(item.label)}
+                      sx={{
+                        borderRadius: 2,
+                        mb: 0.5,
+                        py: 1,
+                        "&.Mui-selected": {
+                          bgcolor: `${item.color}15`,
+                          "&:hover": {
+                            bgcolor: `${item.color}25`,
+                          },
+                          "& .MuiListItemIcon-root": {
+                            color: item.color,
+                          },
+                          "& .MuiListItemText-primary": {
+                            color: item.color,
+                            fontWeight: 600,
+                          },
+                        },
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                        },
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                          color: isActive ? item.color : "text.secondary",
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontSize: "0.9rem",
+                              fontWeight: isActive ? 600 : 400,
+                            },
+                          },
+                        }}
+                      />
+                      {isActive && (
+                        <ChevronRightIcon
+                          sx={{ fontSize: 18, color: item.color, opacity: 0.7 }}
+                        />
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
+        ))}
+      </Box>
+
+      {/* User section */}
+      <Box sx={{ borderTop: 1, borderColor: "divider", p: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: "primary.main",
+              fontWeight: 700,
+            }}
+          >
+            {userName.charAt(0).toUpperCase()}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, lineHeight: 1.2 }}
+              noWrap
+            >
+              {userName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {userRole}
+            </Typography>
+          </Box>
+          <Tooltip title="Configurações">
+            <IconButton
+              size="small"
+              onClick={() => onNavigate("Configurações")}
+            >
+              <SettingsIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <ListItemButton
+          onClick={() => alert("Logout realizado!")}
+          sx={{
+            borderRadius: 2,
+            color: "error.main",
+            py: 1,
+            "&:hover": {
+              bgcolor: "error.lighter",
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: "error.main" }}>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Sair"
+            slotProps={{
+              primary: {
+                sx: { fontSize: "0.9rem", fontWeight: 500 },
+              },
+            }}
+          />
+        </ListItemButton>
+      </Box>
+    </Box>
   );
 };
 

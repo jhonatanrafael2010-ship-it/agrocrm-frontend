@@ -1,12 +1,37 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Camera, X, Loader2, Image as ImageIcon, Mic, MicOff } from "lucide-react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  TextField,
+  Avatar,
+  Button,
+  Paper,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  List,
+  Drawer,
+  Chip,
+  Divider,
+} from "@mui/material";
+import {
+  Send as SendIcon,
+  CameraAlt as CameraIcon,
+  Close as CloseIcon,
+  Image as ImageIcon,
+  Mic as MicIcon,
+  MicOff as MicOffIcon,
+  Help as HelpIcon,
+  Settings as SettingsIcon,
+} from "@mui/icons-material";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
-import "../styles/chat.css";
 
 interface Message {
   id: number;
@@ -113,11 +138,12 @@ const Chat: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    return () => { SpeechRecognition.stop().catch(() => {}); };
+    return () => {
+      SpeechRecognition.stop().catch(() => {});
+    };
   }, []);
 
-  const consultantName =
-    consultantOptions.find((c) => String(c.id) === consultantId)?.name || "";
+  const consultantName = consultantOptions.find((c) => String(c.id) === consultantId)?.name || "";
 
   function showToast(msg: string) {
     setToast(msg);
@@ -131,7 +157,6 @@ const Chat: React.FC = () => {
   async function handleSharePdf(label: string, r2url: string, filename: string) {
     const proxyUrl = `${API_BASE}mobile/pdf-proxy?url=${encodeURIComponent(r2url)}`;
     try {
-      // Baixa PDF via proxy (sem CORS)
       const res = await fetch(proxyUrl);
       if (!res.ok) throw new Error("fetch falhou");
       const blob = await res.blob();
@@ -140,17 +165,14 @@ const Chat: React.FC = () => {
         reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
         reader.readAsDataURL(blob);
       });
-      // Salva em cache temporário
       const saved = await Filesystem.writeFile({
         path: filename,
         data: base64,
         directory: Directory.Cache,
       });
-      // Compartilha o arquivo real via Intent nativo do Android
       await Share.share({ title: label, url: saved.uri, dialogTitle: "Compartilhar PDF" });
       return;
     } catch {}
-    // Fallback: link
     try {
       await navigator.clipboard.writeText(r2url);
       showToast("Link copiado!");
@@ -166,10 +188,7 @@ const Chat: React.FC = () => {
   }
 
   function addPhoto(dataUrl: string) {
-    setPendingPhotos((prev) => [
-      ...prev,
-      { dataUrl, key: photoKeyRef.current++ },
-    ]);
+    setPendingPhotos((prev) => [...prev, { dataUrl, key: photoKeyRef.current++ }]);
   }
 
   function removePhoto(key: number) {
@@ -186,9 +205,7 @@ const Chat: React.FC = () => {
         allowEditing: false,
       });
       if (img.dataUrl) addPhoto(img.dataUrl);
-    } catch {
-      // usuário cancelou
-    }
+    } catch {}
   }
 
   async function handlePickGallery() {
@@ -200,9 +217,7 @@ const Chat: React.FC = () => {
           const dataUrl = await webPathToDataUrl(photo.webPath);
           addPhoto(dataUrl);
         }
-      } catch {
-        // usuário cancelou
-      }
+      } catch {}
     } else {
       fileInputRef.current?.click();
     }
@@ -237,8 +252,6 @@ const Chat: React.FC = () => {
     const photosToSend = [...pendingPhotos];
     setPendingPhotos([]);
     setLoading(true);
-
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
       const res = await fetch(`${API_BASE}mobile/chat`, {
@@ -282,8 +295,7 @@ const Chat: React.FC = () => {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    // On native mobile Enter should insert newline; only physical keyboards send on Enter
+  function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey && !isNativeApp()) {
       e.preventDefault();
       sendMessage(input);
@@ -311,185 +323,242 @@ const Chat: React.FC = () => {
         popup: true,
       });
       const text = (result as any)?.matches?.[0]?.trim() ?? "";
-      if (text) {
-        setInput((prev) => (prev ? `${prev} ${text}` : text));
-        if (textareaRef.current) {
-          textareaRef.current.style.height = "auto";
-          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`;
-        }
-      }
+      if (text) setInput((prev) => (prev ? `${prev} ${text}` : text));
     } catch {
-      // usuário cancelou o diálogo
     } finally {
       setRecording(false);
     }
-  }
-
-  function handleMicStop() { /* popup: true — parar é feito pelo diálogo nativo */ }
-
-  function autoResize(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    setInput(e.target.value);
-    const el = e.target;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }
 
   function formatTime(d: Date) {
     return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
-  function renderBubbleText(text: string): React.ReactNode {
-    const lines = text.split("\n");
-    return (
-      <div className="chat-bubble-text">
-        {lines.map((line, i) => {
-          if (!line.trim()) return <br key={i} />;
-
-          // linha numerada: "1. Nome do Cliente - Cultura - Variedade"
-          if (/^\d+\.\s/.test(line)) {
-            const dashIdx = line.indexOf(" - ");
-            if (dashIdx !== -1) {
-              const bold = line.slice(0, dashIdx);
-              const rest = line.slice(dashIdx);
-              return <div key={i}><strong>{bold}</strong>{rest}</div>;
-            }
-            return <div key={i}><strong>{line}</strong></div>;
-          }
-
-          return <div key={i}>{line}</div>;
-        })}
-      </div>
-    );
-  }
-
-  // ── Seleção de consultor ──────────────────────────────────
   if (showConsultantPicker) {
     return (
-      <div className="chat-consultant-picker">
-        <div className="chat-picker-card">
-          <h5>Quem é você?</h5>
-          <p className="text-muted small">Escolha seu nome para começar</p>
-          <div className="d-flex flex-column gap-2 mt-3">
+      <Box
+        sx={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+        }}
+      >
+        <Paper sx={{ p: 4, maxWidth: 400, width: "100%", borderRadius: 3, textAlign: "center" }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            Quem é você?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Escolha seu nome para começar
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {consultantOptions.length === 0 ? (
-              <p className="text-muted small text-center">Carregando...</p>
+              <CircularProgress size={24} sx={{ mx: "auto" }} />
             ) : (
               consultantOptions.map((c) => (
-                <button
+                <Button
                   key={c.id}
-                  className="btn btn-outline-primary"
+                  variant="outlined"
                   onClick={() => saveConsultant(String(c.id))}
+                  sx={{ textTransform: "none", fontWeight: 600 }}
                 >
                   {c.name}
-                </button>
+                </Button>
               ))
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Paper>
+      </Box>
     );
   }
 
-  // ── Chat principal ────────────────────────────────────────
   return (
-    <div className="chat-screen">
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
+      }}
+    >
       {/* Header */}
-      <div className="chat-header">
-        <div className="chat-header-info">
-          <div className="chat-avatar">N</div>
-          <div>
-            <div className="chat-header-name">Assistente NutriCRM</div>
-            <div className="chat-header-status">
-              {loading
-                ? "digitando..."
-                : consultantName
-                ? `online · ${consultantName}`
-                : "online"}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            className="chat-icon-btn"
-            title="Ajuda"
-            onClick={() => setShowHelp(true)}
-          >
-            <span style={{ fontWeight: 700, fontSize: 15 }}>?</span>
-          </button>
-          <button
-            className="btn btn-sm btn-link text-muted"
-            title="Trocar consultor"
-            onClick={() => setShowConsultantPicker(true)}
-          >
-            ⚙
-          </button>
-        </div>
-      </div>
+      <Paper
+        elevation={1}
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py: 1.5,
+          borderRadius: 0,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Avatar sx={{ bgcolor: "primary.main", fontWeight: 700 }}>N</Avatar>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+              Assistente NutriCRM
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {loading ? "digitando..." : consultantName ? `online · ${consultantName}` : "online"}
+            </Typography>
+          </Box>
+        </Box>
+        <Box>
+          <IconButton size="small" onClick={() => setShowHelp(true)}>
+            <HelpIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => setShowConsultantPicker(true)}>
+            <SettingsIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Paper>
 
-      {/* Mensagens */}
-      <div className="chat-messages">
+      {/* Messages */}
+      <Box sx={{ flex: 1, overflow: "auto", p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
         {messages.map((msg) => (
-          <div key={msg.id} className={`chat-bubble-row ${msg.role}`}>
-            <div className={`chat-bubble ${msg.role}`}>
+          <Box
+            key={msg.id}
+            sx={{
+              display: "flex",
+              justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+            }}
+          >
+            <Paper
+              elevation={0}
+              sx={{
+                maxWidth: "80%",
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: msg.role === "user" ? "primary.main" : "action.hover",
+                color: msg.role === "user" ? "primary.contrastText" : "text.primary",
+              }}
+            >
               {msg.images && msg.images.length > 0 && (
-                <div className="chat-bubble-imgs">
+                <Box sx={{ display: "flex", gap: 0.5, mb: 1, flexWrap: "wrap" }}>
                   {msg.images.map((src, i) => (
-                    <img key={i} src={src} alt={`foto ${i + 1}`} className="chat-bubble-img" />
+                    <Box
+                      key={i}
+                      component="img"
+                      src={src}
+                      alt={`foto ${i + 1}`}
+                      sx={{ width: 80, height: 80, objectFit: "cover", borderRadius: 1 }}
+                    />
                   ))}
-                </div>
+                </Box>
               )}
-              {msg.text && renderBubbleText(msg.text)}
-              {msg.pdfItems && msg.pdfItems.map((item, i) => (
-                <div key={i} className="chat-pdf-item">
-                  <span className="chat-pdf-label">{item.label}</span>
-                  <div className="chat-pdf-actions">
-                    <button
-                      className="chat-pdf-action-btn chat-pdf-action-btn--download"
-                      onClick={() => handleDownloadPdf(item.url)}
-                    >
-                      ⬇ Abrir
-                    </button>
-                    <button
-                      className="chat-pdf-action-btn chat-pdf-action-btn--share"
-                      onClick={() => handleSharePdf(item.label, item.url, item.filename)}
-                    >
-                      ↗ Enviar
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <span className="chat-bubble-time">{formatTime(msg.timestamp)}</span>
-            </div>
-          </div>
+              {msg.text && (
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                  {msg.text}
+                </Typography>
+              )}
+              {msg.pdfItems &&
+                msg.pdfItems.map((item, i) => (
+                  <Box key={i} sx={{ mt: 1, p: 1, bgcolor: "background.paper", borderRadius: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                      {item.label}
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <Button size="small" variant="outlined" onClick={() => handleDownloadPdf(item.url)}>
+                        Abrir
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleSharePdf(item.label, item.url, item.filename)}
+                      >
+                        Enviar
+                      </Button>
+                    </Box>
+                  </Box>
+                ))}
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  textAlign: "right",
+                  mt: 0.5,
+                  opacity: 0.7,
+                }}
+              >
+                {formatTime(msg.timestamp)}
+              </Typography>
+            </Paper>
+          </Box>
         ))}
 
         {loading && (
-          <div className="chat-bubble-row bot">
-            <div className="chat-bubble bot chat-typing">
-              <Loader2 size={16} className="spin" />
-              <span>processando...</span>
-            </div>
-          </div>
+          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "action.hover",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <CircularProgress size={16} />
+              <Typography variant="body2" color="text.secondary">
+                processando...
+              </Typography>
+            </Paper>
+          </Box>
         )}
 
         <div ref={bottomRef} />
-      </div>
+      </Box>
 
-      {/* Preview de fotos pendentes */}
+      {/* Photo previews */}
       {pendingPhotos.length > 0 && (
-        <div className="chat-photos-preview">
+        <Box sx={{ display: "flex", gap: 1, p: 1, borderTop: 1, borderColor: "divider" }}>
           {pendingPhotos.map((p) => (
-            <div key={p.key} className="chat-photo-thumb">
-              <img src={p.dataUrl} alt="preview" />
-              <button className="chat-photo-remove" onClick={() => removePhoto(p.key)}>
-                <X size={12} />
-              </button>
-            </div>
+            <Box key={p.key} sx={{ position: "relative" }}>
+              <Box
+                component="img"
+                src={p.dataUrl}
+                sx={{ width: 60, height: 60, objectFit: "cover", borderRadius: 1 }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => removePhoto(p.key)}
+                sx={{
+                  position: "absolute",
+                  top: -8,
+                  right: -8,
+                  bgcolor: "error.main",
+                  color: "white",
+                  "&:hover": { bgcolor: "error.dark" },
+                  width: 20,
+                  height: 20,
+                }}
+              >
+                <CloseIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Box>
           ))}
-        </div>
+        </Box>
       )}
 
-      {/* Barra de input */}
-      <div className="chat-input-bar">
+      {/* Input bar */}
+      <Paper
+        elevation={2}
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 1,
+          p: 1.5,
+          borderRadius: 0,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <input
           ref={fileInputRef}
           type="file"
@@ -499,121 +568,123 @@ const Chat: React.FC = () => {
           onChange={handleFileInput}
         />
 
-        <button
-          className="chat-icon-btn"
-          title="Foto"
-          onClick={() => setShowPhotoSheet(true)}
-          disabled={loading || recording}
-        >
-          <Camera size={20} />
-        </button>
+        <IconButton onClick={() => setShowPhotoSheet(true)} disabled={loading || recording}>
+          <CameraIcon />
+        </IconButton>
 
-        <textarea
-          ref={textareaRef}
-          className="chat-input"
-          rows={1}
+        <TextField
+          inputRef={textareaRef}
+          multiline
+          maxRows={4}
+          fullWidth
           placeholder="Digite uma mensagem..."
           value={input}
-          onChange={autoResize}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={loading || recording}
+          size="small"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 3,
+            },
+          }}
         />
 
-        <button
-          className={`chat-icon-btn${recording ? " chat-icon-btn--recording" : ""}`}
-          title={recording ? "Parar gravação" : "Gravar áudio"}
-          onClick={recording ? handleMicStop : handleMicStart}
+        <IconButton
+          onClick={handleMicStart}
           disabled={loading}
+          sx={recording ? { color: "error.main" } : {}}
         >
-          {recording ? <MicOff size={20} /> : <Mic size={20} />}
-        </button>
+          {recording ? <MicOffIcon /> : <MicIcon />}
+        </IconButton>
 
-        <button
-          className="chat-send-btn"
+        <IconButton
+          color="primary"
           onClick={() => sendMessage(input)}
           disabled={loading || recording || (!input.trim() && pendingPhotos.length === 0)}
+          sx={{
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            "&:hover": { bgcolor: "primary.dark" },
+            "&.Mui-disabled": { bgcolor: "action.disabledBackground" },
+          }}
         >
-          {loading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
-        </button>
-      </div>
+          {loading ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
+        </IconButton>
+      </Paper>
 
-      {/* Modal de ajuda */}
-      {showHelp && (
-        <div className="chat-sheet-backdrop" onClick={() => setShowHelp(false)}>
-          <div className="chat-sheet chat-help-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="chat-sheet-handle" />
-            <div className="chat-help-title">O que posso fazer</div>
-            <div className="chat-help-items">
-              <div className="chat-help-item">
-                <div className="chat-help-label">📋 Lançar visita</div>
-                <div className="chat-help-example">"Cliente João Silva" e siga o fluxo guiado</div>
-                <div className="chat-help-detail">Cultura → Objetivo (Plantio/Emergência/Vegetativo/Reprodutivo/Colheita) → Fenologia → Data → Observações</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">📅 Agenda da semana</div>
-                <div className="chat-help-example">"Agenda da semana" · "visitas da semana"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">☀️ Rotina do dia</div>
-                <div className="chat-help-example">"Meu dia" · "agenda de hoje"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">🗓️ Visitas do mês</div>
-                <div className="chat-help-example">"Visitas do mês" · "minhas visitas do mês"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">🌱 Dias de plantado</div>
-                <div className="chat-help-example">"Dias de plantado" · "quantos dias de plantado"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">⏰ Clientes atrasados</div>
-                <div className="chat-help-example">"Clientes atrasados" · "ranking de atraso"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">📄 Gerar PDF</div>
-                <div className="chat-help-example">"PDF da última visita" · "PDF do cliente X"</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">📸 Enviar fotos</div>
-                <div className="chat-help-example">Toque no ícone da câmera, envie e informe os detalhes</div>
-              </div>
-              <div className="chat-help-item">
-                <div className="chat-help-label">❌ Cancelar</div>
-                <div className="chat-help-example">"Cancelar" a qualquer momento para recomeçar</div>
-              </div>
-            </div>
-            <button className="chat-sheet-cancel" onClick={() => setShowHelp(false)}>
-              Fechar
-            </button>
-          </div>
-        </div>
+      {/* Help Dialog */}
+      <Dialog open={showHelp} onClose={() => setShowHelp(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>O que posso fazer</DialogTitle>
+        <DialogContent>
+          <List disablePadding>
+            {[
+              { label: "Lançar visita", example: '"Cliente João Silva" e siga o fluxo guiado' },
+              { label: "Agenda da semana", example: '"Agenda da semana" · "visitas da semana"' },
+              { label: "Rotina do dia", example: '"Meu dia" · "agenda de hoje"' },
+              { label: "Visitas do mês", example: '"Visitas do mês"' },
+              { label: "Dias de plantado", example: '"Dias de plantado"' },
+              { label: "Clientes atrasados", example: '"Clientes atrasados"' },
+              { label: "Gerar PDF", example: '"PDF da última visita" · "PDF do cliente X"' },
+              { label: "Cancelar", example: '"Cancelar" a qualquer momento' },
+            ].map((item, i) => (
+              <Box key={i} sx={{ py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {item.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {item.example}
+                </Typography>
+              </Box>
+            ))}
+          </List>
+          <Button fullWidth variant="outlined" onClick={() => setShowHelp(false)} sx={{ mt: 2 }}>
+            Fechar
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Photo Sheet */}
+      <Drawer anchor="bottom" open={showPhotoSheet} onClose={() => setShowPhotoSheet(false)}>
+        <Box sx={{ p: 2, pb: 4 }}>
+          <Box sx={{ width: 40, height: 4, bgcolor: "divider", borderRadius: 2, mx: "auto", mb: 2 }} />
+          <Button
+            fullWidth
+            startIcon={<CameraIcon />}
+            onClick={handleTakePhoto}
+            sx={{ justifyContent: "flex-start", py: 1.5, mb: 1, textTransform: "none" }}
+          >
+            Tirar foto
+          </Button>
+          <Button
+            fullWidth
+            startIcon={<ImageIcon />}
+            onClick={handlePickGallery}
+            sx={{ justifyContent: "flex-start", py: 1.5, mb: 1, textTransform: "none" }}
+          >
+            Galeria
+          </Button>
+          <Divider sx={{ my: 1 }} />
+          <Button fullWidth onClick={() => setShowPhotoSheet(false)} sx={{ textTransform: "none" }}>
+            Cancelar
+          </Button>
+        </Box>
+      </Drawer>
+
+      {/* Toast */}
+      {toast && (
+        <Chip
+          label={toast}
+          sx={{
+            position: "fixed",
+            bottom: 100,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1400,
+          }}
+        />
       )}
-
-      {/* Bottom sheet — escolha de foto em português */}
-      {showPhotoSheet && (
-        <div className="chat-sheet-backdrop" onClick={() => setShowPhotoSheet(false)}>
-          <div className="chat-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="chat-sheet-handle" />
-            <button className="chat-sheet-option" onClick={handleTakePhoto}>
-              <Camera size={20} />
-              Tirar foto
-            </button>
-            <button className="chat-sheet-option" onClick={handlePickGallery}>
-              <ImageIcon size={20} />
-              Galeria
-            </button>
-            <button
-              className="chat-sheet-cancel"
-              onClick={() => setShowPhotoSheet(false)}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {toast && <div className="chat-toast">{toast}</div>}
-    </div>
+    </Box>
   );
 };
 

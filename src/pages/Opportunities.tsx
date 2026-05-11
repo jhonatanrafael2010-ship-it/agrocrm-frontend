@@ -1,12 +1,32 @@
 import React, { useEffect, useState } from "react";
-import pencilIcon from "../assets/pencil.svg";
-import trashIcon from "../assets/trash.svg";
-import DarkSelect from "../components/DarkSelect";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  CircularProgress,
+  Alert,
+  IconButton,
+  Paper,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Check as CheckIcon,
+} from "@mui/icons-material";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
-
 
 type Opportunity = {
   id: number;
@@ -18,13 +38,12 @@ type Opportunity = {
 
 type Client = { id: number; name: string };
 
-
 const STAGES = [
-  { key: "prospecção", label: "Prospecção" },
-  { key: "cotação", label: "Cotação" },
-  { key: "negociação", label: "Negociação" },
-  { key: "fechadas", label: "Fechadas" },
-  { key: "perdidas", label: "Perdidas" },
+  { key: "prospecção", label: "Prospecção", color: "#6366f1" },
+  { key: "cotação", label: "Cotação", color: "#3b82f6" },
+  { key: "negociação", label: "Negociação", color: "#f59e0b" },
+  { key: "fechadas", label: "Fechadas", color: "#10b981" },
+  { key: "perdidas", label: "Perdidas", color: "#ef4444" },
 ];
 
 const Opportunities: React.FC = () => {
@@ -36,8 +55,6 @@ const Opportunities: React.FC = () => {
   const [form, setForm] = useState({ client_id: "", title: "", estimated_value: "" });
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-
-  const theme = document.body.getAttribute("data-theme") || "light";
 
   useEffect(() => {
     let mounted = true;
@@ -81,13 +98,11 @@ const Opportunities: React.FC = () => {
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  }
-
   async function handleSave() {
-    if (!form.client_id || !form.title) { notify.warning("Cliente e título são obrigatórios"); return; }
+    if (!form.client_id || !form.title) {
+      notify.warning("Cliente e título são obrigatórios");
+      return;
+    }
     setSubmitting(true);
     try {
       let res, body;
@@ -98,9 +113,7 @@ const Opportunities: React.FC = () => {
           body: JSON.stringify({
             client_id: Number(form.client_id),
             title: form.title,
-            estimated_value: form.estimated_value
-              ? Number(form.estimated_value)
-              : undefined,
+            estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined,
           }),
         });
         body = await res.json();
@@ -114,9 +127,7 @@ const Opportunities: React.FC = () => {
           body: JSON.stringify({
             client_id: Number(form.client_id),
             title: form.title,
-            estimated_value: form.estimated_value
-              ? Number(form.estimated_value)
-              : undefined,
+            estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined,
           }),
         });
         body = await res.json();
@@ -124,9 +135,7 @@ const Opportunities: React.FC = () => {
         const created = body.opportunity || body;
         setOpps((o) => [created, ...o]);
       }
-      setOpen(false);
-      setEditing(null);
-      setForm({ client_id: "", title: "", estimated_value: "" });
+      closeModal();
     } catch (err: any) {
       notify.error(err?.message || "Erro ao salvar oportunidade");
     } finally {
@@ -150,10 +159,29 @@ const Opportunities: React.FC = () => {
     });
   }
 
+  function openModal(op?: Opportunity) {
+    setOpen(true);
+    if (op) {
+      setEditing(op);
+      setForm({
+        client_id: op.client_id ? String(op.client_id) : "",
+        title: op.title || "",
+        estimated_value: op.estimated_value ? String(op.estimated_value) : "",
+      });
+    } else {
+      setEditing(null);
+      setForm({ client_id: "", title: "", estimated_value: "" });
+    }
+  }
+
+  function closeModal() {
+    setOpen(false);
+    setEditing(null);
+    setForm({ client_id: "", title: "", estimated_value: "" });
+  }
+
   const grouped = STAGES.reduce((acc: Record<string, Opportunity[]>, s) => {
-    acc[s.key] = opps.filter(
-      (o) => (o.stage || "prospecção").toLowerCase() === s.key
-    );
+    acc[s.key] = opps.filter((o) => (o.stage || "prospecção").toLowerCase() === s.key);
     return acc;
   }, {} as Record<string, Opportunity[]>);
 
@@ -165,192 +193,237 @@ const Opportunities: React.FC = () => {
     if (fromStage === toStage) return;
 
     const opId = Number(draggableId);
-    setOpps((list) =>
-      list.map((it) => (it.id === opId ? { ...it, stage: toStage } : it))
-    );
+    setOpps((list) => list.map((it) => (it.id === opId ? { ...it, stage: toStage } : it)));
     changeStageRemote(opId, toStage);
   }
 
   return (
-    <div className={`container-fluid py-4 ${theme === "dark" ? "text-light" : "text-dark"}`}>
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
-          <h2 className="fw-bold">💼 Oportunidades</h2>
-          <button className="btn btn-success btn-sm" onClick={() => setOpen(true)}>
-            + Nova Oportunidade
-          </button>
-        </div>
-      </div>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1600, mx: "auto" }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Oportunidades
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => openModal()}
+          sx={{ textTransform: "none", fontWeight: 600 }}
+        >
+          Nova Oportunidade
+        </Button>
+      </Box>
 
       {loading ? (
-        <div className="text-center text-secondary py-3">Carregando...</div>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <CircularProgress />
+        </Box>
       ) : error ? (
-        <div className="alert alert-danger">{error}</div>
+        <Alert severity="error">{error}</Alert>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="row justify-content-center g-3">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+                lg: "repeat(5, 1fr)",
+              },
+              gap: 2,
+            }}
+          >
             {STAGES.map((s) => (
-              <div key={s.key} className="col-12 col-md-6 col-lg-2">
-                <div
-                  className={`card shadow-sm border-0 h-100 ${
-                    theme === "dark" ? "bg-dark" : "bg-white"
-                  }`}
-                >
-                  <div className="card-header fw-bold text-center text-capitalize">
-                    {s.label}
-                  </div>
-                  <Droppable droppableId={s.key}>
-                    {(provided) => (
-                      <div
-                        className="card-body p-2"
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                      >
-                        {(grouped[s.key] || []).map((op, idx) => (
-                          <Draggable key={op.id} draggableId={`${op.id}`} index={idx}>
-                            {(prov) => (
-                              <div
-                                ref={prov.innerRef}
-                                {...prov.draggableProps}
-                                {...prov.dragHandleProps}
-                                className={`p-2 mb-2 rounded border ${
-                                  theme === "dark" ? "border-secondary bg-secondary" : "bg-light"
-                                }`}
+              <Card
+                key={s.key}
+                sx={{
+                  minHeight: 400,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <CardHeader
+                  title={s.label}
+                  slotProps={{
+                    title: {
+                      sx: {
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                        textTransform: "capitalize",
+                      },
+                    },
+                  }}
+                  sx={{
+                    bgcolor: `${s.color}15`,
+                    borderBottom: `3px solid ${s.color}`,
+                    py: 1.5,
+                  }}
+                />
+                <Droppable droppableId={s.key}>
+                  {(provided) => (
+                    <CardContent
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      sx={{
+                        flex: 1,
+                        p: 1.5,
+                        bgcolor: "action.hover",
+                        minHeight: 200,
+                      }}
+                    >
+                      {(grouped[s.key] || []).map((op, idx) => (
+                        <Draggable key={op.id} draggableId={`${op.id}`} index={idx}>
+                          {(prov) => (
+                            <Paper
+                              ref={prov.innerRef}
+                              {...prov.draggableProps}
+                              {...prov.dragHandleProps}
+                              elevation={1}
+                              sx={{
+                                p: 1.5,
+                                mb: 1.5,
+                                borderRadius: 2,
+                                borderLeft: `3px solid ${s.color}`,
+                                transition: "box-shadow 0.2s",
+                                "&:hover": {
+                                  boxShadow: 4,
+                                },
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                sx={{ fontWeight: 600, mb: 0.5 }}
                               >
-                                <div className="fw-semibold">{op.title}</div>
-                                <div className="text-secondary small mb-1">
-                                  {clientName(op.client_id)}
-                                </div>
-                                {op.estimated_value && (
-                                  <div className="small text-success fw-bold">
-                                    R$ {op.estimated_value.toLocaleString("pt-BR")}
-                                  </div>
+                                {op.title}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", mb: 0.5 }}
+                              >
+                                {clientName(op.client_id)}
+                              </Typography>
+                              {op.estimated_value && (
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 700, color: "success.main" }}
+                                >
+                                  R$ {op.estimated_value.toLocaleString("pt-BR")}
+                                </Typography>
+                              )}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                  gap: 0.5,
+                                  mt: 1,
+                                }}
+                              >
+                                {s.key !== "fechadas" && (
+                                  <IconButton
+                                    size="small"
+                                    color="success"
+                                    onClick={() => changeStageRemote(op.id, "fechadas")}
+                                    title="Marcar como fechada"
+                                  >
+                                    <CheckIcon fontSize="small" />
+                                  </IconButton>
                                 )}
-                                <div className="d-flex justify-content-end gap-1 mt-2">
-                                  {s.key !== "fechadas" && (
-                                    <button
-                                      className="btn btn-outline-success btn-sm"
-                                      onClick={() =>
-                                        changeStageRemote(op.id, "fechadas")
-                                      }
-                                    >
-                                      Fechar
-                                    </button>
-                                  )}
-                                  <button
-                                    className="btn btn-outline-primary btn-sm"
-                                    onClick={() => {
-                                      setOpen(true);
-                                      setEditing(op);
-                                      setForm({
-                                        client_id: op.client_id
-                                          ? String(op.client_id)
-                                          : "",
-                                        title: op.title || "",
-                                        estimated_value: op.estimated_value
-                                          ? String(op.estimated_value)
-                                          : "",
-                                      });
-                                    }}
-                                  >
-                                    <img src={pencilIcon} alt="Editar" width={16} />
-                                  </button>
-                                  <button
-                                    className="btn btn-outline-danger btn-sm"
-                                    onClick={() => deleteOpportunity(op.id)}
-                                  >
-                                    <img src={trashIcon} alt="Excluir" width={16} />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </div>
-              </div>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => openModal(op)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => deleteOpportunity(op.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Paper>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </CardContent>
+                  )}
+                </Droppable>
+              </Card>
             ))}
-          </div>
+          </Box>
         </DragDropContext>
       )}
 
-      {/* MODAL NOVA/EDITAR */}
-      {open && (
-        <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : ""}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">
-                  {editing ? "Editar Oportunidade" : "Nova Oportunidade"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => {
-                    setOpen(false);
-                    setEditing(null);
-                  }}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Cliente</label>
-                <DarkSelect
-                  name="client_id"
-                  value={form.client_id}
-                  placeholder="Selecione cliente"
-                  options={[
-                    { value: "", label: "Selecione cliente" },
-                    ...clients
-                      .slice()
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((c) => ({ value: String(c.id), label: c.name })),
-                  ]}
-                  onChange={handleChange as any}
-                />
-
-                <label className="form-label mt-3">Título</label>
-                <input
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Valor estimado</label>
-                <input
-                  name="estimated_value"
-                  value={form.estimated_value}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="form-control"
-                />
-              </div>
-              <div className="modal-footer border-0">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setOpen(false);
-                    setEditing(null);
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleSave}
-                  disabled={submitting}
-                >
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Modal */}
+      <Dialog
+        open={open}
+        onClose={closeModal}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {editing ? "Editar Oportunidade" : "Nova Oportunidade"}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <TextField
+              select
+              label="Cliente"
+              value={form.client_id}
+              onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
+              fullWidth
+              required
+            >
+              <MenuItem value="">Selecione cliente</MenuItem>
+              {clients
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+              label="Título"
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Valor estimado"
+              value={form.estimated_value}
+              onChange={(e) => setForm((f) => ({ ...f, estimated_value: e.target.value }))}
+              placeholder="0"
+              fullWidth
+              type="number"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeModal} color="inherit">
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handleSave} disabled={submitting}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

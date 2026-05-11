@@ -1,7 +1,25 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Bell, AlertCircle, Clock, CheckCircle2, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  IconButton,
+  Badge,
+  Popover,
+  Typography,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import {
+  Notifications as BellIcon,
+  Error as AlertIcon,
+  Schedule as ClockIcon,
+  CheckCircle as CheckIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
-import "./NotificationsPanel.css";
 
 type Notification = {
   id: string;
@@ -16,17 +34,28 @@ type Props = {
   onNavigate: (route: string) => void;
 };
 
-const ICONS = {
-  overdue: <AlertCircle size={16} />,
-  pending: <Clock size={16} />,
-  info: <CheckCircle2 size={16} />,
+const TYPE_CONFIG = {
+  overdue: {
+    icon: <AlertIcon fontSize="small" />,
+    color: "#ef4444",
+    bgcolor: "#fef2f2",
+  },
+  pending: {
+    icon: <ClockIcon fontSize="small" />,
+    color: "#f59e0b",
+    bgcolor: "#fffbeb",
+  },
+  info: {
+    icon: <CheckIcon fontSize="small" />,
+    color: "#10b981",
+    bgcolor: "#ecfdf5",
+  },
 };
 
 const NotificationsPanel: React.FC<Props> = ({ onNavigate }) => {
-  const [open, setOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
@@ -94,82 +123,152 @@ const NotificationsPanel: React.FC<Props> = ({ onNavigate }) => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
+  const open = Boolean(anchorEl);
   const unread = items.length;
 
   function handleClick(n: Notification) {
     if (n.route) onNavigate(n.route);
-    setOpen(false);
+    setAnchorEl(null);
   }
 
   return (
-    <div className="notif-wrapper" ref={ref}>
-      <button
-        className="topbar-icon-btn"
-        title="Notificações"
-        onClick={() => setOpen((o) => !o)}
+    <>
+      <IconButton
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={{
+          color: "text.secondary",
+          "&:hover": { color: "text.primary" },
+        }}
       >
-        <Bell size={18} />
-        {unread > 0 && (
-          <span className="notif-badge">
-            {unread > 9 ? "9+" : unread}
-          </span>
-        )}
-      </button>
+        <Badge
+          badgeContent={unread > 9 ? "9+" : unread}
+          color="error"
+          invisible={unread === 0}
+        >
+          <BellIcon />
+        </Badge>
+      </IconButton>
 
-      {open && (
-        <div className="notif-panel">
-          <div className="notif-header">
-            <div>
-              <div className="notif-title">Notificações</div>
-              <div className="notif-sub">
-                {unread === 0 ? "Tudo em dia" : `${unread} pendente(s)`}
-              </div>
-            </div>
-            <button className="notif-close" onClick={() => setOpen(false)}>
-              <X size={16} />
-            </button>
-          </div>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 360,
+              maxHeight: 480,
+              borderRadius: 3,
+              mt: 1,
+            },
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 2,
+            py: 1.5,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              Notificações
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {unread === 0 ? "Tudo em dia" : `${unread} pendente(s)`}
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => setAnchorEl(null)}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
 
-          <div className="notif-body">
-            {loading && items.length === 0 && (
-              <div className="notif-empty">Carregando...</div>
-            )}
+        {/* Body */}
+        <Box sx={{ maxHeight: 380, overflow: "auto" }}>
+          {loading && items.length === 0 && (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress size={24} />
+            </Box>
+          )}
 
-            {!loading && items.length === 0 && (
-              <div className="notif-empty">
-                <CheckCircle2 size={32} />
-                <div>Nenhuma notificação</div>
-              </div>
-            )}
+          {!loading && items.length === 0 && (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <CheckIcon sx={{ fontSize: 40, color: "success.main", mb: 1 }} />
+              <Typography color="text.secondary">
+                Nenhuma notificação
+              </Typography>
+            </Box>
+          )}
 
-            {items.map((n) => (
-              <button
-                key={n.id}
-                className={`notif-item type-${n.type}`}
-                onClick={() => handleClick(n)}
-              >
-                <span className="notif-icon">{ICONS[n.type]}</span>
-                <div className="notif-text">
-                  <div className="notif-item-title">{n.title}</div>
-                  <div className="notif-item-msg">{n.message}</div>
-                </div>
-                <div className="notif-time">{n.time}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+          <List disablePadding>
+            {items.map((n, idx) => {
+              const config = TYPE_CONFIG[n.type];
+              return (
+                <React.Fragment key={n.id}>
+                  {idx > 0 && <Divider />}
+                  <ListItemButton
+                    onClick={() => handleClick(n)}
+                    sx={{
+                      py: 1.5,
+                      px: 2,
+                      "&:hover": {
+                        bgcolor: config.bgcolor,
+                      },
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 36,
+                        color: config.color,
+                      }}
+                    >
+                      {config.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={n.title}
+                      secondary={n.message}
+                      slotProps={{
+                        primary: {
+                          sx: {
+                            fontWeight: 600,
+                            fontSize: "0.875rem",
+                            color: config.color,
+                          },
+                        },
+                        secondary: {
+                          sx: { fontSize: "0.8rem" },
+                        },
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ whiteSpace: "nowrap", ml: 1 }}
+                    >
+                      {n.time}
+                    </Typography>
+                  </ListItemButton>
+                </React.Fragment>
+              );
+            })}
+          </List>
+        </Box>
+      </Popover>
+    </>
   );
 };
 

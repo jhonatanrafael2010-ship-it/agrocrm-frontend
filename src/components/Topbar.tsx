@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
 import {
-  ChevronRight,
-  Search,
-  RefreshCw,
-  CheckCircle2,
-  WifiOff,
-} from "lucide-react";
+  Box,
+  Typography,
+  Chip,
+  Breadcrumbs,
+  Link,
+  Paper,
+} from "@mui/material";
+import {
+  ChevronRight as ChevronRightIcon,
+  Search as SearchIcon,
+  Sync as SyncIcon,
+  CheckCircle as CheckCircleIcon,
+  WifiOff as WifiOffIcon,
+} from "@mui/icons-material";
 import SearchModal from "./SearchModal";
 import NotificationsPanel from "./NotificationsPanel";
-import "./Topbar.css";
 
 type Props = {
   activeItem: string;
@@ -51,61 +58,175 @@ const Topbar: React.FC<Props> = ({
 
   return (
     <>
-      <header className="topbar-premium">
-        <div className="topbar-left">
-          <nav className="topbar-breadcrumb">
-            <span
-              className="topbar-crumb-home"
+      <Box
+        component="header"
+        sx={{
+          px: 3,
+          py: 2,
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
+        {/* Left side - Breadcrumb & Title */}
+        <Box sx={{ minWidth: 0 }}>
+          <Breadcrumbs
+            separator={<ChevronRightIcon sx={{ fontSize: 14, color: "text.secondary" }} />}
+            sx={{ mb: 0.5 }}
+          >
+            <Link
+              component="button"
+              underline="hover"
+              color="text.secondary"
               onClick={() => onNavigate("Dashboard")}
+              sx={{
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                cursor: "pointer",
+                border: "none",
+                background: "none",
+              }}
             >
               NutriCRM
-            </span>
-            <ChevronRight size={14} className="topbar-crumb-sep" />
-            <span className="topbar-crumb-section">{meta.section}</span>
-            <ChevronRight size={14} className="topbar-crumb-sep" />
-            <span className="topbar-crumb-current">{activeItem}</span>
-          </nav>
-          <div className="topbar-title-row">
-            <h1 className="topbar-title">{activeItem}</h1>
+            </Link>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", fontWeight: 500 }}
+            >
+              {meta.section}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.primary", fontWeight: 600 }}
+            >
+              {activeItem}
+            </Typography>
+          </Breadcrumbs>
+
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{ fontWeight: 700, lineHeight: 1.2 }}
+            >
+              {activeItem}
+            </Typography>
             {meta.subtitle && (
-              <span className="topbar-subtitle">{meta.subtitle}</span>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ display: { xs: "none", md: "block" } }}
+              >
+                {meta.subtitle}
+              </Typography>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className="topbar-right">
-          <button
-            className="topbar-search"
+        {/* Right side - Search & Status */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          {/* Search Button */}
+          <Paper
+            component="button"
             onClick={() => setSearchOpen(true)}
-            type="button"
+            elevation={0}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 1.5,
+              py: 0.75,
+              bgcolor: "action.hover",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              "&:hover": {
+                bgcolor: "action.selected",
+                borderColor: "primary.main",
+              },
+            }}
           >
-            <Search size={16} className="topbar-search-icon" />
-            <span className="topbar-search-placeholder">Buscar...</span>
-            <kbd className="topbar-search-kbd">⌘K</kbd>
-          </button>
+            <SearchIcon sx={{ fontSize: 18, color: "text.secondary" }} />
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ display: { xs: "none", sm: "block" } }}
+            >
+              Buscar...
+            </Typography>
+            <Box
+              component="kbd"
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                px: 0.75,
+                py: 0.25,
+                bgcolor: "background.paper",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                fontSize: "0.7rem",
+                fontFamily: "monospace",
+                color: "text.secondary",
+              }}
+            >
+              ⌘K
+            </Box>
+          </Paper>
 
-          <div className="topbar-status">
+          {/* Sync Status */}
+          <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center" }}>
             {offline ? (
-              <span className="topbar-badge offline">
-                <WifiOff size={14} />
-                Offline
-              </span>
+              <Chip
+                icon={<WifiOffIcon sx={{ fontSize: 16 }} />}
+                label="Offline"
+                size="small"
+                color="error"
+                variant="outlined"
+                sx={{ fontWeight: 500 }}
+              />
             ) : syncing ? (
-              <span className="topbar-badge syncing">
-                <RefreshCw size={14} className="topbar-spin" />
-                Sincronizando
-              </span>
+              <Chip
+                icon={
+                  <SyncIcon
+                    sx={{
+                      fontSize: 16,
+                      animation: "spin 1s linear infinite",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                }
+                label="Sincronizando"
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 500 }}
+              />
             ) : lastSync ? (
-              <span className="topbar-badge synced">
-                <CheckCircle2 size={14} />
-                {lastSync}
-              </span>
+              <Chip
+                icon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+                label={lastSync}
+                size="small"
+                color="success"
+                variant="outlined"
+                sx={{ fontWeight: 500 }}
+              />
             ) : null}
-          </div>
+          </Box>
 
+          {/* Notifications */}
           <NotificationsPanel onNavigate={onNavigate} />
-        </div>
-      </header>
+        </Box>
+      </Box>
 
       <SearchModal
         open={searchOpen}

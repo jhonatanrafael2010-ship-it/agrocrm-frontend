@@ -1,11 +1,42 @@
-import React from "react";
-import DarkSelect from "../components/DarkSelect";
-import trashIcon from "../assets/trash.svg";
-import pencilIcon from "../assets/pencil.svg";
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  CircularProgress,
+  Alert,
+  Grid,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  MyLocation as LocationIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
-
 
 type Client = { id: number; name: string };
 type Property = {
@@ -32,23 +63,20 @@ type Planting = {
   planting_date?: string;
 };
 
-
 const Properties: React.FC = () => {
-  const [clients, setClients] = React.useState<Client[]>([]);
-  const [properties, setProperties] = React.useState<Property[]>([]);
-  const [plots, setPlots] = React.useState<Plot[]>([]);
-  const [plantings, setPlantings] = React.useState<Planting[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [plots, setPlots] = useState<Plot[]>([]);
+  const [plantings, setPlantings] = useState<Planting[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // modais
-  const [openProp, setOpenProp] = React.useState(false);
-  const [openPlot, setOpenPlot] = React.useState(false);
-  const [openPlanting, setOpenPlanting] = React.useState(false);
-  const [editingProp, setEditingProp] = React.useState<Property | null>(null);
+  const [openProp, setOpenProp] = useState(false);
+  const [openPlot, setOpenPlot] = useState(false);
+  const [openPlanting, setOpenPlanting] = useState(false);
+  const [editingProp, setEditingProp] = useState<Property | null>(null);
 
-  // forms
-  const [propForm, setPropForm] = React.useState({
+  const [propForm, setPropForm] = useState({
     client_id: "",
     name: "",
     city_state: "MT",
@@ -57,27 +85,26 @@ const Properties: React.FC = () => {
     longitude: "",
   });
 
-  const [clientSearch, setClientSearch] = React.useState("");
-  const [showClientSuggestions, setShowClientSuggestions] = React.useState(false);
-  const [plotForm, setPlotForm] = React.useState({
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+
+  const [plotForm, setPlotForm] = useState({
     property_id: "",
     name: "",
     area_ha: "",
     irrigated: false,
   });
-  const [plantForm, setPlantForm] = React.useState({
+
+  const [plantForm, setPlantForm] = useState({
     plot_id: "",
     culture: "",
     variety: "",
     planting_date: "",
   });
 
-  const [submitting, setSubmitting] = React.useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // pega o tema atual do body (dark/light)
-  const theme = document.body.getAttribute("data-theme") || "light";
-
-  React.useEffect(() => {
+  useEffect(() => {
     let mounted = true;
     setLoading(true);
     Promise.all([
@@ -103,129 +130,82 @@ const Properties: React.FC = () => {
     };
   }, []);
 
-  // handlers
-  function handlePropChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setPropForm((f) => ({ ...f, [name]: value }));
-  }
-  function handlePlotChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value, type } = e.target as HTMLInputElement;
-    if (type === "checkbox") {
-      setPlotForm((f) => ({ ...f, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setPlotForm((f) => ({ ...f, [name]: value }));
-    }
-  }
-  function handlePlantChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setPlantForm((f) => ({ ...f, [name]: value }));
-  }
+  const filteredClients = useMemo(() => {
+    const q = clientSearch.trim().toLowerCase();
+    const sorted = clients.slice().sort((a, b) => a.name.localeCompare(b.name));
+    if (!q) return sorted.slice(0, 12);
+    return sorted.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 12);
+  }, [clients, clientSearch]);
 
   async function fillCurrentLocation() {
     if (!navigator.geolocation) {
       notify.warning("Geolocalização não suportada neste dispositivo");
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
         setPropForm((f) => ({
           ...f,
-          latitude: String(lat),
-          longitude: String(lon),
+          latitude: String(pos.coords.latitude),
+          longitude: String(pos.coords.longitude),
         }));
+        notify.success("Localização capturada");
       },
       (err) => {
         console.error(err);
         notify.error("Não consegui obter a localização atual");
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
-
-  const filteredClients = React.useMemo(() => {
-    const q = clientSearch.trim().toLowerCase();
-
-    const sorted = clients
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    if (!q) return sorted.slice(0, 12);
-
-    return sorted
-      .filter((c) => c.name.toLowerCase().includes(q))
-      .slice(0, 12);
-  }, [clients, clientSearch]);
-
-  // salvar propriedade
   async function saveProperty() {
-  if (!propForm.client_id || !propForm.name) {
-    notify.warning("Cliente e nome são obrigatórios");
-    return;
-  }
-  setSubmitting(true);
-  try {
-    let res, body;
-
-    const payload = {
-      client_id: Number(propForm.client_id),
-      name: propForm.name.trim(),
-      city_state: propForm.city_state.trim() || "MT",
-      area_ha: propForm.area_ha ? Number(propForm.area_ha) : null,
-      latitude: propForm.latitude ? Number(propForm.latitude) : null,
-      longitude: propForm.longitude ? Number(propForm.longitude) : null,
-    };
-
-    if (editingProp) {
-      res = await fetch(`${API_BASE}properties/${editingProp.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      body = await res.json();
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-      const updated = body.property || body;
-      setProperties((p) => p.map((pr) => (pr.id === updated.id ? updated : pr)));
-    } else {
-      res = await fetch(`${API_BASE}properties`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      body = await res.json();
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-      const created = body.property || body;
-      setProperties((p) => [created, ...p]);
+    if (!propForm.client_id || !propForm.name) {
+      notify.warning("Cliente e nome são obrigatórios");
+      return;
     }
+    setSubmitting(true);
+    try {
+      const payload = {
+        client_id: Number(propForm.client_id),
+        name: propForm.name.trim(),
+        city_state: propForm.city_state.trim() || "MT",
+        area_ha: propForm.area_ha ? Number(propForm.area_ha) : null,
+        latitude: propForm.latitude ? Number(propForm.latitude) : null,
+        longitude: propForm.longitude ? Number(propForm.longitude) : null,
+      };
 
-    setOpenProp(false);
-    setEditingProp(null);
-    setClientSearch("");
-    setShowClientSuggestions(false);
-    setPropForm({
-      client_id: "",
-      name: "",
-      city_state: "MT",
-      area_ha: "",
-      latitude: "",
-      longitude: "",
-    });
-  } catch (err: any) {
-    notify.error(err?.message || "Erro ao salvar propriedade");
-  } finally {
-    setSubmitting(false);
+      let res, body;
+      if (editingProp) {
+        res = await fetch(`${API_BASE}properties/${editingProp.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        body = await res.json();
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+        const updated = body.property || body;
+        setProperties((p) => p.map((pr) => (pr.id === updated.id ? updated : pr)));
+      } else {
+        res = await fetch(`${API_BASE}properties`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        body = await res.json();
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+        const created = body.property || body;
+        setProperties((p) => [created, ...p]);
+      }
+
+      closePropertyModal();
+    } catch (err: any) {
+      notify.error(err?.message || "Erro ao salvar propriedade");
+    } finally {
+      setSubmitting(false);
+    }
   }
-}
 
-  // criar talhão
   async function createPlot() {
     if (!plotForm.property_id || !plotForm.name) {
       notify.warning("Propriedade e nome são obrigatórios");
@@ -256,7 +236,6 @@ const Properties: React.FC = () => {
     }
   }
 
-  // criar plantio
   async function createPlanting() {
     if (!plantForm.plot_id) {
       notify.warning("Talhão é obrigatório");
@@ -287,7 +266,6 @@ const Properties: React.FC = () => {
     }
   }
 
-  // deletar (propriedade / talhão / plantio)
   function deleteEntity(
     id: number | undefined,
     endpoint: "properties" | "plots" | "plantings",
@@ -305,546 +283,541 @@ const Properties: React.FC = () => {
     });
   }
 
+  function closePropertyModal() {
+    setOpenProp(false);
+    setEditingProp(null);
+    setClientSearch("");
+    setShowClientSuggestions(false);
+    setPropForm({
+      client_id: "",
+      name: "",
+      city_state: "MT",
+      area_ha: "",
+      latitude: "",
+      longitude: "",
+    });
+  }
+
+  function openPropertyModal(prop?: Property) {
+    if (prop) {
+      setEditingProp(prop);
+      const clientName = clients.find((c) => c.id === prop.client_id)?.name || "";
+      setPropForm({
+        client_id: String(prop.client_id),
+        name: prop.name || "",
+        city_state: prop.city_state || "MT",
+        area_ha: prop.area_ha ? String(prop.area_ha) : "",
+        latitude: prop.latitude != null ? String(prop.latitude) : "",
+        longitude: prop.longitude != null ? String(prop.longitude) : "",
+      });
+      setClientSearch(clientName);
+    } else {
+      setEditingProp(null);
+      setPropForm({
+        client_id: "",
+        name: "",
+        city_state: "MT",
+        area_ha: "",
+        latitude: "",
+        longitude: "",
+      });
+      setClientSearch("");
+    }
+    setShowClientSuggestions(false);
+    setOpenProp(true);
+  }
+
   return (
-    <div className={`container-fluid py-4 ${theme === "dark" ? "text-light" : "text-dark"}`}>
-      {/* título e ações */}
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
-          <h2 className="fw-bold">🏠 Propriedades & Talhões</h2>
-          <div className="d-flex gap-2">
-            <button
-              className="btn btn-success btn-sm"
-              onClick={() => {
-                setEditingProp(null);
-                setPropForm({
-                  client_id: "",
-                  name: "",
-                  city_state: "MT",
-                  area_ha: "",
-                  latitude: "",
-                  longitude: "",
-                });
-                setClientSearch("");
-                setShowClientSuggestions(false);
-                setOpenProp(true);
-              }}
-            >
-              + Nova Propriedade
-            </button>
-            <button className="btn btn-success btn-sm" onClick={() => setOpenPlot(true)}>
-              + Novo Talhão
-            </button>
-          </div>
-        </div>
-      </div>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Propriedades & Talhões
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => openPropertyModal()}
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          >
+            Nova Propriedade
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenPlot(true)}
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          >
+            Novo Talhão
+          </Button>
+        </Box>
+      </Box>
 
       {error && (
-        <div className="row mb-3">
-          <div className="col-12 col-lg-10 mx-auto">
-            <div className="alert alert-danger">{error}</div>
-          </div>
-        </div>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
       )}
 
-      {/* listas principais */}
-      <div className="row justify-content-center g-4">
-        {/* Propriedades */}
-        <div className="col-12 col-lg-5">
-          <div className={`card shadow-sm border-0 ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
-            <div className="card-body">
-              <h5 className="card-title mb-3">Propriedades</h5>
-              {loading ? (
-                <div className="text-secondary py-3 text-center">Carregando...</div>
-              ) : (
-                <div className="table-responsive">
-                  <table
-                    className={`table table-sm align-middle ${
-                      theme === "dark" ? "table-dark" : "table-striped"
-                    }`}
-                  >
-                    <thead>
-                      <tr>
-                        <th>Cliente</th>
-                        <th>Propriedade</th>
-                        <th>Cidade/UF</th>
-                        <th>Área</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {properties.map((p) => (
-                        <tr key={p.id}>
-                          <td>{clients.find((c) => c.id === p.client_id)?.name ?? p.client_id}</td>
-                          <td>{p.name}</td>
-                          <td>{p.city_state ?? "--"}</td>
-                          <td>{p.area_ha ?? "--"}</td>
-                          <td className="text-end">
-                            <button
-                              className="btn btn-outline-primary btn-sm me-1"
-                              onClick={() => {
-                                setOpenProp(true);
-                                setEditingProp(p);
-                                const clientName =
-                                  clients.find((c) => c.id === p.client_id)?.name || "";
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <Grid container spacing={3}>
+            {/* Properties Table */}
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    Propriedades
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Propriedade</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Cidade/UF</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Área</TableCell>
+                          <TableCell align="right"></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {properties.map((p) => (
+                          <TableRow key={p.id} hover>
+                            <TableCell>
+                              {clients.find((c) => c.id === p.client_id)?.name ?? p.client_id}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{p.name}</TableCell>
+                            <TableCell>{p.city_state ?? "--"}</TableCell>
+                            <TableCell>{p.area_ha ?? "--"}</TableCell>
+                            <TableCell align="right">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => openPropertyModal(p)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => deleteEntity(p.id, "properties", setProperties)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {properties.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                              <Typography color="text.secondary">
+                                Nenhuma propriedade cadastrada
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Grid>
 
-                                setPropForm({
-                                  client_id: String(p.client_id),
-                                  name: p.name || "",
-                                  city_state: p.city_state || "MT",
-                                  area_ha: p.area_ha ? String(p.area_ha) : "",
-                                  latitude: p.latitude != null ? String(p.latitude) : "",
-                                  longitude: p.longitude != null ? String(p.longitude) : "",
-                                });
-                                setClientSearch(clientName);
-                                setShowClientSuggestions(false);
-                              }}
-                            >
-                              <img src={pencilIcon} alt="Editar" width={18} />
-                            </button>
-                            <button
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => deleteEntity(p.id, "properties", setProperties)}
-                            >
-                              <img src={trashIcon} alt="Excluir" width={18} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {!loading && properties.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="text-center text-secondary py-3">
-                            Nenhuma propriedade cadastrada
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+            {/* Plots Table */}
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    Talhões
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600 }}>Fazenda</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Talhão</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Área</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Irrig.</TableCell>
+                          <TableCell align="right"></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {plots.map((pl) => (
+                          <TableRow key={pl.id} hover>
+                            <TableCell>
+                              {properties.find((pp) => pp.id === pl.property_id)?.name ?? pl.property_id}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{pl.name}</TableCell>
+                            <TableCell>{pl.area_ha ?? "--"}</TableCell>
+                            <TableCell>{pl.irrigated ? "Sim" : "—"}</TableCell>
+                            <TableCell align="right">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => deleteEntity(pl.id, "plots", setPlots)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {plots.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                              <Typography color="text.secondary">
+                                Nenhum talhão cadastrado
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
-        {/* Talhões */}
-        <div className="col-12 col-lg-5">
-          <div className={`card shadow-sm border-0 ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
-            <div className="card-body">
-              <h5 className="card-title mb-3">Talhões</h5>
-              <div className="table-responsive">
-                <table
-                  className={`table table-sm align-middle ${
-                    theme === "dark" ? "table-dark" : "table-striped"
-                  }`}
+          {/* Plantings Table */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Plantios
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => setOpenPlanting(true)}
+                  sx={{ textTransform: "none", fontWeight: 600 }}
                 >
-                  <thead>
-                    <tr>
-                      <th>Fazenda</th>
-                      <th>Talhão</th>
-                      <th>Área</th>
-                      <th>Irrig.</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {plots.map((pl) => (
-                      <tr key={pl.id}>
-                        <td>{properties.find((pp) => pp.id === pl.property_id)?.name ?? pl.property_id}</td>
-                        <td>{pl.name}</td>
-                        <td>{pl.area_ha ?? "--"}</td>
-                        <td>{pl.irrigated ? "Sim" : "—"}</td>
-                        <td className="text-end">
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => deleteEntity(pl.id, "plots", setPlots)}
-                          >
-                            <img src={trashIcon} alt="Excluir" width={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {!loading && plots.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="text-center py-3 text-secondary">
-                          Nenhum talhão cadastrado
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Plantios */}
-      <div className="row justify-content-center mt-4">
-        <div className="col-12 col-lg-10">
-          <div className={`card shadow-sm border-0 ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="card-title mb-0">🌾 Plantios</h5>
-                <button className="btn btn-success btn-sm" onClick={() => setOpenPlanting(true)}>
-                  + Novo Plantio
-                </button>
-              </div>
-              <div className="table-responsive">
-                <table
-                  className={`table table-sm align-middle ${
-                    theme === "dark" ? "table-dark" : "table-striped"
-                  }`}
-                >
-                  <thead>
-                    <tr>
-                      <th>Talhão</th>
-                      <th>Cultura</th>
-                      <th>Variedade</th>
-                      <th>Plantio</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                  Novo Plantio
+                </Button>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Talhão</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Cultura</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Variedade</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Plantio</TableCell>
+                      <TableCell align="right"></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {plantings.map((pt) => (
-                      <tr key={pt.id}>
-                        <td>{plots.find((pl) => pl.id === pt.plot_id)?.name ?? pt.plot_id}</td>
-                        <td>{pt.culture ?? "--"}</td>
-                        <td>{pt.variety ?? "--"}</td>
-                        <td>{pt.planting_date ?? "--"}</td>
-                        <td className="text-end">
-                          <button
-                            className="btn btn-outline-danger btn-sm"
+                      <TableRow key={pt.id} hover>
+                        <TableCell>
+                          {plots.find((pl) => pl.id === pt.plot_id)?.name ?? pt.plot_id}
+                        </TableCell>
+                        <TableCell>{pt.culture ?? "--"}</TableCell>
+                        <TableCell>{pt.variety ?? "--"}</TableCell>
+                        <TableCell>{pt.planting_date ?? "--"}</TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            size="small"
+                            color="error"
                             onClick={() => deleteEntity(pt.id, "plantings", setPlantings)}
                           >
-                            <img src={trashIcon} alt="Excluir" width={18} />
-                          </button>
-                        </td>
-                      </tr>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                    {!loading && plantings.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="text-center py-3 text-secondary">
-                          Nenhum plantio cadastrado
-                        </td>
-                      </tr>
+                    {plantings.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                          <Typography color="text.secondary">
+                            Nenhum plantio cadastrado
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-      {/* MODAL PROPRIEDADE */}
-      {openProp && (
-        <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : ""}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">
-                  {editingProp ? "Editar Propriedade" : "Nova Propriedade"}
-                </h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => {
-                    setOpenProp(false);
-                    setEditingProp(null);
-                    setClientSearch("");
-                    setShowClientSuggestions(false);
-                    setPropForm({
-                      client_id: "",
-                      name: "",
-                      city_state: "MT",
-                      area_ha: "",
-                      latitude: "",
-                      longitude: "",
-                    });
+      {/* Property Modal */}
+      <Dialog
+        open={openProp}
+        onClose={closePropertyModal}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {editingProp ? "Editar Propriedade" : "Nova Propriedade"}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <Box sx={{ position: "relative" }}>
+              <TextField
+                label="Cliente"
+                value={clientSearch}
+                onChange={(e) => {
+                  setClientSearch(e.target.value);
+                  setShowClientSuggestions(true);
+                  setPropForm((f) => ({ ...f, client_id: "" }));
+                }}
+                onFocus={() => setShowClientSuggestions(true)}
+                placeholder="Digite o nome do cliente"
+                fullWidth
+                error={!propForm.client_id && clientSearch.length > 0}
+                helperText={
+                  propForm.client_id
+                    ? `Cliente selecionado: ${clientSearch}`
+                    : "Selecione um cliente da lista"
+                }
+                color={propForm.client_id ? "success" : undefined}
+              />
+              {showClientSuggestions && (
+                <Paper
+                  sx={{
+                    position: "absolute",
+                    top: "100%",
+                    left: 0,
+                    right: 0,
+                    zIndex: 10,
+                    maxHeight: 220,
+                    overflow: "auto",
+                    mt: 0.5,
                   }}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Cliente</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Digite o nome do cliente"
-                  value={clientSearch}
-                  onChange={(e) => {
-                    setClientSearch(e.target.value);
-                    setShowClientSuggestions(true);
-                    setPropForm((f) => ({ ...f, client_id: "" }));
-                  }}
-                  onFocus={() => setShowClientSuggestions(true)}
-                />
-
-                {showClientSuggestions && (
-                  <div
-                    className={`mt-2 border rounded ${
-                      theme === "dark" ? "bg-black border-secondary" : "bg-white"
-                    }`}
-                    style={{ maxHeight: 220, overflowY: "auto" }}
-                  >
+                  elevation={4}
+                >
+                  <List disablePadding>
                     {filteredClients.length > 0 ? (
                       filteredClients.map((c) => (
-                        <button
+                        <ListItemButton
                           key={c.id}
-                          type="button"
-                          className={`w-100 text-start px-3 py-2 border-0 ${
-                            theme === "dark" ? "bg-black text-light" : "bg-white text-dark"
-                          }`}
                           onClick={() => {
                             setPropForm((f) => ({ ...f, client_id: String(c.id) }));
                             setClientSearch(c.name);
                             setShowClientSuggestions(false);
                           }}
-                          style={{ cursor: "pointer" }}
                         >
-                          {c.name}
-                        </button>
+                          <ListItemText primary={c.name} />
+                        </ListItemButton>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-secondary">Nenhum cliente encontrado</div>
+                      <ListItemButton disabled>
+                        <ListItemText primary="Nenhum cliente encontrado" />
+                      </ListItemButton>
                     )}
-                  </div>
-                )}
+                  </List>
+                </Paper>
+              )}
+            </Box>
 
-                {!propForm.client_id && (
-                  <div className="form-text text-danger">
-                    Selecione um cliente da lista filtrada.
-                  </div>
-                )}
-                
-                {propForm.client_id && (
-                  <div className="form-text text-success">
-                    Cliente selecionado: {clientSearch}
-                  </div>
-                )}
-
-                <label className="form-label mt-3">Nome</label>
-                <input
-                  name="name"
-                  value={propForm.name}
-                  onChange={handlePropChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Cidade/UF</label>
-                <input
-                  name="city_state"
-                  value={propForm.city_state}
-                  onChange={handlePropChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Latitude</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="latitude"
+            <TextField
+              label="Nome"
+              value={propForm.name}
+              onChange={(e) => setPropForm((f) => ({ ...f, name: e.target.value }))}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Cidade/UF"
+              value={propForm.city_state}
+              onChange={(e) => setPropForm((f) => ({ ...f, city_state: e.target.value }))}
+              fullWidth
+            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  label="Latitude"
                   value={propForm.latitude}
-                  onChange={(e) =>
-                    setPropForm((f) => ({ ...f, latitude: e.target.value }))
-                  }
+                  onChange={(e) => setPropForm((f) => ({ ...f, latitude: e.target.value }))}
                   placeholder="-13.0581"
+                  fullWidth
                 />
-
-                <label className="form-label mt-3">Longitude</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="longitude"
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  label="Longitude"
                   value={propForm.longitude}
-                  onChange={(e) =>
-                    setPropForm((f) => ({ ...f, longitude: e.target.value }))
-                  }
+                  onChange={(e) => setPropForm((f) => ({ ...f, longitude: e.target.value }))}
                   placeholder="-55.9172"
+                  fullWidth
                 />
+              </Grid>
+            </Grid>
+            <Button
+              variant="outlined"
+              startIcon={<LocationIcon />}
+              onClick={fillCurrentLocation}
+              sx={{ alignSelf: "flex-start" }}
+            >
+              Usar localização atual
+            </Button>
+            <TextField
+              label="Área (ha)"
+              value={propForm.area_ha}
+              onChange={(e) => setPropForm((f) => ({ ...f, area_ha: e.target.value }))}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closePropertyModal} color="inherit">
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={saveProperty} disabled={submitting}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary btn-sm mt-3"
-                  onClick={fillCurrentLocation}
-                >
-                  Usar localização atual
-                </button>
-
-                <label className="form-label mt-3">Área (ha)</label>
-                <input
-                  name="area_ha"
-                  value={propForm.area_ha}
-                  onChange={handlePropChange}
-                  className="form-control"
+      {/* Plot Modal */}
+      <Dialog
+        open={openPlot}
+        onClose={() => setOpenPlot(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Novo Talhão</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <TextField
+              select
+              label="Propriedade"
+              value={plotForm.property_id}
+              onChange={(e) => setPlotForm((f) => ({ ...f, property_id: e.target.value }))}
+              fullWidth
+              required
+            >
+              <MenuItem value="">Selecione uma propriedade</MenuItem>
+              {properties
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((p) => (
+                  <MenuItem key={p.id} value={String(p.id)}>
+                    {p.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+              label="Nome"
+              value={plotForm.name}
+              onChange={(e) => setPlotForm((f) => ({ ...f, name: e.target.value }))}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Área (ha)"
+              value={plotForm.area_ha}
+              onChange={(e) => setPlotForm((f) => ({ ...f, area_ha: e.target.value }))}
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={plotForm.irrigated}
+                  onChange={(e) => setPlotForm((f) => ({ ...f, irrigated: e.target.checked }))}
                 />
-              </div>
-              <div className="modal-footer border-0">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setOpenProp(false);
-                    setEditingProp(null);
-                    setClientSearch("");
-                    setShowClientSuggestions(false);
-                    setPropForm({
-                      client_id: "",
-                      name: "",
-                      city_state: "MT",
-                      area_ha: "",
-                      latitude: "",
-                      longitude: "",
-                    });
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button className="btn btn-success" onClick={saveProperty} disabled={submitting}>
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              }
+              label="Irrigado"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenPlot(false)} color="inherit">
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={createPlot} disabled={submitting}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* MODAL TALHÃO */}
-      {openPlot && (
-        <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : ""}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">Novo Talhão</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setOpenPlot(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Propriedade</label>
-                <DarkSelect
-                  name="property_id"
-                  value={plotForm.property_id}
-                  placeholder="Selecione uma propriedade"
-                  options={[
-                    { value: "", label: "Selecione uma propriedade" },
-                    ...properties
-                      .slice()
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((p) => ({ value: String(p.id), label: p.name })),
-                  ]}
-                  onChange={handlePlotChange as any}
-                />
-
-                <label className="form-label mt-3">Nome</label>
-                <input
-                  name="name"
-                  value={plotForm.name}
-                  onChange={handlePlotChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Área (ha)</label>
-                <input
-                  name="area_ha"
-                  value={plotForm.area_ha}
-                  onChange={handlePlotChange}
-                  className="form-control"
-                />
-
-                <div className="form-check mt-3">
-                  <input
-                    id="irrigated"
-                    type="checkbox"
-                    name="irrigated"
-                    checked={plotForm.irrigated}
-                    onChange={handlePlotChange as any}
-                    className="form-check-input"
-                  />
-                  <label htmlFor="irrigated" className="form-check-label">
-                    Irrigado
-                  </label>
-                </div>
-              </div>
-              <div className="modal-footer border-0">
-                <button className="btn btn-secondary" onClick={() => setOpenPlot(false)}>
-                  Cancelar
-                </button>
-                <button className="btn btn-success" onClick={createPlot} disabled={submitting}>
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL PLANTIO */}
-      {openPlanting && (
-        <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : ""}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">Novo Plantio</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setOpenPlanting(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Talhão</label>
-                <DarkSelect
-                  name="plot_id"
-                  value={plantForm.plot_id}
-                  placeholder="Selecione um talhão"
-                  options={[
-                    { value: "", label: "Selecione um talhão" },
-                    ...plots
-                      .slice()
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((p) => ({ value: String(p.id), label: p.name })),
-                  ]}
-                  onChange={handlePlantChange as any}
-                />
-
-                <label className="form-label mt-3">Cultura</label>
-                <input
-                  name="culture"
-                  value={plantForm.culture}
-                  onChange={handlePlantChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Variedade</label>
-                <input
-                  name="variety"
-                  value={plantForm.variety}
-                  onChange={handlePlantChange}
-                  className="form-control"
-                />
-
-                <label className="form-label mt-3">Data plantio</label>
-                <input
-                  type="date"
-                  name="planting_date"
-                  value={plantForm.planting_date}
-                  onChange={handlePlantChange}
-                  className="form-control"
-                />
-              </div>
-              <div className="modal-footer border-0">
-                <button className="btn btn-secondary" onClick={() => setOpenPlanting(false)}>
-                  Cancelar
-                </button>
-                <button className="btn btn-success" onClick={createPlanting} disabled={submitting}>
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* Planting Modal */}
+      <Dialog
+        open={openPlanting}
+        onClose={() => setOpenPlanting(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Novo Plantio</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <TextField
+              select
+              label="Talhão"
+              value={plantForm.plot_id}
+              onChange={(e) => setPlantForm((f) => ({ ...f, plot_id: e.target.value }))}
+              fullWidth
+              required
+            >
+              <MenuItem value="">Selecione um talhão</MenuItem>
+              {plots
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((p) => (
+                  <MenuItem key={p.id} value={String(p.id)}>
+                    {p.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+            <TextField
+              label="Cultura"
+              value={plantForm.culture}
+              onChange={(e) => setPlantForm((f) => ({ ...f, culture: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="Variedade"
+              value={plantForm.variety}
+              onChange={(e) => setPlantForm((f) => ({ ...f, variety: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="Data plantio"
+              type="date"
+              value={plantForm.planting_date}
+              onChange={(e) => setPlantForm((f) => ({ ...f, planting_date: e.target.value }))}
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenPlanting(false)} color="inherit">
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={createPlanting} disabled={submitting}>
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

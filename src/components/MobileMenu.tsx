@@ -1,113 +1,241 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import {
-  Home,
-  Users,
-  Map,
-  Calendar,
-  ClipboardList,
-  Briefcase,
-  MessageSquare,
-  LogOut,
-} from "lucide-react";
-import "./MobileMenu.css";
+  Drawer,
+  Box,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  IconButton,
+  Typography,
+  BottomNavigation,
+  BottomNavigationAction,
+  Paper,
+  Avatar,
+} from "@mui/material";
+import {
+  Home as HomeIcon,
+  People as PeopleIcon,
+  Map as MapIcon,
+  CalendarMonth as CalendarIcon,
+  Assignment as AssignmentIcon,
+  BusinessCenter as BusinessIcon,
+  SmartToy as AssistantIcon,
+  Logout as LogoutIcon,
+  Menu as MenuIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
-
-
-// @ts-ignore
-declare const bootstrap: any;
 
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
   activeItem?: string;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
-  useEffect(() => {
-    const offcanvasEl = document.getElementById("mobileMenu");
-    if (offcanvasEl) {
-      offcanvasEl.addEventListener("hide.bs.offcanvas", () => {
-        document.body.classList.remove("offcanvas-open");
-      });
-    }
-  }, []);
+const menuItems = [
+  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente" },
+  { label: "Dashboard", icon: <HomeIcon />, route: "Dashboard" },
+  { label: "Clientes", icon: <PeopleIcon />, route: "Clientes" },
+  { label: "Propriedades", icon: <MapIcon />, route: "Propriedades" },
+  { label: "Calendário", icon: <CalendarIcon />, route: "Calendário" },
+  { label: "Acompanhamentos", icon: <AssignmentIcon />, route: "Acompanhamentos" },
+  { label: "Oportunidades", icon: <BusinessIcon />, route: "Oportunidades" },
+];
 
-  const links = [
-    { label: "Assistente", icon: <MessageSquare size={18} /> },
-    { label: "Dashboard", icon: <Home size={18} /> },
-    { label: "Clientes", icon: <Users size={18} /> },
-    { label: "Propriedades", icon: <Map size={18} /> },
-    { label: "Calendário", icon: <Calendar size={18} /> },
-    { label: "Acompanhamentos", icon: <ClipboardList size={18} /> },
-    { label: "Oportunidades", icon: <Briefcase size={18} /> },
-  ];
+// Bottom nav mostra apenas os 4 mais usados
+const bottomNavItems = [
+  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente" },
+  { label: "Calendário", icon: <CalendarIcon />, route: "Calendário" },
+  { label: "Acompanhar", icon: <AssignmentIcon />, route: "Acompanhamentos" },
+  { label: "Menu", icon: <MenuIcon />, route: "_menu" },
+];
+
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleNavigate = (route: string) => {
+    if (route === "_menu") {
+      setDrawerOpen(true);
+    } else {
+      onNavigate(route);
+      setDrawerOpen(false);
+    }
+  };
+
+  const getBottomNavValue = () => {
+    const idx = bottomNavItems.findIndex((item) => item.route === activeItem);
+    return idx >= 0 ? idx : -1;
+  };
 
   return (
-    <div
-      className="offcanvas offcanvas-start"
-      tabIndex={-1}
-      id="mobileMenu"
-      aria-labelledby="mobileMenuLabel"
-    >
-    {/* ========================================================= */}
-    {/* 🔰 Cabeçalho com logo NutriCRM */}
-    {/* ========================================================= */}
-    <div className="offcanvas-header app-logo-container">
-      <img src={logo} alt="NutriCRM Logo" className="app-logo" />
-      <button
-        type="button"
-        className="btn-close offcanvas-close-btn"
-        data-bs-dismiss="offcanvas"
-        aria-label="Fechar"
-      ></button>
-    </div>
-
-
-      {/* ========================================================= */}
-      {/* 🔹 Corpo com links de navegação */}
-      {/* ========================================================= */}
-      <div
-        className="offcanvas-body d-flex flex-column justify-content-between p-3"
-        role="navigation"
+    <>
+      {/* Drawer lateral */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 280,
+              bgcolor: "background.paper",
+            },
+          },
+        }}
       >
-        <div className="list-group list-group-flush">
-          {links.map((item) => {
-            const isActive = activeItem === item.label;
+        {/* Header com logo */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar
+              src={logo}
+              alt="NutriCRM"
+              variant="rounded"
+              sx={{ width: 40, height: 40 }}
+            />
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                NutriCRM
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Gestão Agrícola
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={() => setDrawerOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Lista de navegação */}
+        <List sx={{ flex: 1, py: 1 }}>
+          {menuItems.map((item) => {
+            const isActive = activeItem === item.route;
             return (
-              <button
-                key={item.label}
-                className={`list-group-item d-flex align-items-center gap-2 ${
-                  isActive ? "active" : ""
-                }`}
-                onClick={() => {
-                  onNavigate(item.label);
-                  const offcanvasEl = document.getElementById("mobileMenu");
-                  if (offcanvasEl) {
-                    const bsOffcanvas =
-                      bootstrap.Offcanvas.getInstance(offcanvasEl);
-                    bsOffcanvas?.hide();
-                  }
-                }}
-              >
-                {item.icon}
-                {item.label}
-              </button>
+              <ListItem key={item.route} disablePadding>
+                <ListItemButton
+                  selected={isActive}
+                  onClick={() => handleNavigate(item.route)}
+                  sx={{
+                    mx: 1,
+                    borderRadius: 2,
+                    mb: 0.5,
+                    "&.Mui-selected": {
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      "&:hover": {
+                        bgcolor: "primary.dark",
+                      },
+                      "& .MuiListItemIcon-root": {
+                        color: "primary.contrastText",
+                      },
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                      color: isActive ? "inherit" : "text.secondary",
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontWeight: isActive ? 600 : 400,
+                          fontSize: "0.95rem",
+                        },
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             );
           })}
-        </div>
+        </List>
 
-        {/* ========================================================= */}
-        {/* 🚪 Rodapé (Logout) */}
-        {/* ========================================================= */}
-        <div className="border-top border-secondary pt-3">
-          <button
-            className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
-            onClick={() => alert("🚪 Logout realizado!")}
+        <Divider />
+
+        {/* Footer com logout */}
+        <Box sx={{ p: 2 }}>
+          <ListItemButton
+            onClick={() => alert("Logout realizado!")}
+            sx={{
+              borderRadius: 2,
+              color: "error.main",
+              "&:hover": {
+                bgcolor: "error.lighter",
+              },
+            }}
           >
-            <LogOut size={18} /> Sair
-          </button>
-        </div>
-      </div>
-    </div>
+            <ListItemIcon sx={{ minWidth: 40, color: "error.main" }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary="Sair" />
+          </ListItemButton>
+        </Box>
+      </Drawer>
+
+      {/* Bottom Navigation fixo */}
+      <Paper
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          borderTop: 1,
+          borderColor: "divider",
+          pb: "env(safe-area-inset-bottom)",
+        }}
+        elevation={8}
+      >
+        <BottomNavigation
+          value={getBottomNavValue()}
+          onChange={(_, newValue) => {
+            handleNavigate(bottomNavItems[newValue].route);
+          }}
+          showLabels
+          sx={{
+            height: 64,
+            "& .MuiBottomNavigationAction-root": {
+              minWidth: 60,
+              py: 1,
+              "&.Mui-selected": {
+                color: "primary.main",
+              },
+            },
+            "& .MuiBottomNavigationAction-label": {
+              fontSize: "0.7rem",
+              "&.Mui-selected": {
+                fontSize: "0.7rem",
+              },
+            },
+          }}
+        >
+          {bottomNavItems.map((item) => (
+            <BottomNavigationAction
+              key={item.route}
+              label={item.label}
+              icon={item.icon}
+            />
+          ))}
+        </BottomNavigation>
+      </Paper>
+    </>
   );
 };
 

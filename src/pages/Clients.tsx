@@ -1,10 +1,34 @@
 import React, { useEffect, useState } from "react";
-import pencilIcon from "../assets/pencil.svg";
-import trashIcon from "../assets/trash.svg";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Chip,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
-
 
 type Client = {
   id: number;
@@ -14,7 +38,6 @@ type Client = {
   vendor?: string;
   region?: string;
 };
-
 
 const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -32,9 +55,6 @@ const Clients: React.FC = () => {
     region: "",
   });
 
-  const theme = document.body.getAttribute("data-theme") || "light";
-
-  // ===== Carrega clientes e regiões =====
   useEffect(() => {
     setLoading(true);
     Promise.all([
@@ -43,7 +63,7 @@ const Clients: React.FC = () => {
     ])
       .then(([cs, rs]) => {
         setClients(cs as any[]);
-        setRegions(Array.isArray(rs) ? rs as any[] : []);
+        setRegions(Array.isArray(rs) ? (rs as any[]) : []);
       })
       .catch((err) => {
         console.error("fetch clients/regions err", err);
@@ -52,7 +72,9 @@ const Clients: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
   }
@@ -102,7 +124,9 @@ const Clients: React.FC = () => {
     if (!id) return;
     toastConfirm("Tem certeza que deseja excluir este cliente?", async () => {
       try {
-        const res = await fetch(`${API_BASE}clients/${id}`, { method: "DELETE" });
+        const res = await fetch(`${API_BASE}clients/${id}`, {
+          method: "DELETE",
+        });
         if (!res.ok) throw new Error(`Status ${res.status}`);
         setClients((list) => list.filter((c) => c.id !== id));
       } catch (err: any) {
@@ -111,182 +135,204 @@ const Clients: React.FC = () => {
     });
   }
 
+  function openModal(client?: Client) {
+    setOpen(true);
+    if (client) {
+      setEditing(client);
+      setForm({
+        name: client.name || "",
+        document: client.document || "",
+        segment: client.segment || "",
+        vendor: client.vendor || "",
+        region: client.region || "",
+      });
+    } else {
+      setEditing(null);
+      setForm({ name: "", document: "", segment: "", vendor: "", region: "" });
+    }
+  }
+
   return (
-    <div className={`container-fluid py-4 ${theme === "dark" ? "text-light" : "text-dark"}`}>
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
-          <h2 className="fw-bold">👤 Clientes</h2>
-          <button
-            className="btn btn-success btn-sm"
-            onClick={() => {
-              setOpen(true);
-              setEditing(null);
-              setForm({ name: "", document: "", segment: "", vendor: "", region: "" });
-            }}
-          >
-            + Novo Cliente
-          </button>
-        </div>
-      </div>
-
-      <div className="row justify-content-center">
-        <div className="col-12 col-lg-10">
-          {loading ? (
-            <div className="text-secondary py-3 text-center">Carregando...</div>
-          ) : error ? (
-            <div className="alert alert-danger">{error}</div>
-          ) : (
-            <div className={`card shadow-sm border-0 ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
-              <div className="table-responsive">
-                <table
-                  className={`table table-sm align-middle ${
-                    theme === "dark" ? "table-dark" : "table-striped"
-                  }`}
-                >
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Documento</th>
-                      <th>Segmento</th>
-                      <th>Vendedor</th>
-                      <th>Região</th>
-                      <th className="text-end">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clients.map((c) => (
-                      <tr key={c.id}>
-                        <td>{c.name}</td>
-                        <td>{c.document || "--"}</td>
-                        <td>{c.segment || "--"}</td>
-                        <td>{c.vendor || "--"}</td>
-                        <td>
-                          {c.region ? (
-                            <span className="badge bg-success-subtle text-success">
-                              {c.region}
-                            </span>
-                          ) : (
-                            <span className="text-secondary">--</span>
-                          )}
-                        </td>
-                        <td className="text-end">
-                          <button
-                            className="btn btn-outline-primary btn-sm me-2"
-                            onClick={() => {
-                              setOpen(true);
-                              setEditing(c);
-                              setForm({
-                                name: c.name || "",
-                                document: c.document || "",
-                                segment: c.segment || "",
-                                vendor: c.vendor || "",
-                                region: c.region || "",
-                              });
-                            }}
-                          >
-                            <img src={pencilIcon} alt="Editar" width={18} />
-                          </button>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => handleDelete(c.id)}
-                          >
-                            <img src={trashIcon} alt="Excluir" width={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Modal Bootstrap */}
-      {open && (
-        <div
-          className="modal fade show d-block"
-          role="dialog"
-          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Clientes
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => openModal()}
+          sx={{ textTransform: "none", fontWeight: 600 }}
         >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : "bg-white text-dark"}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">
-                  {editing ? "Editar Cliente" : "Novo Cliente"}
-                </h5>
-                <button className="btn-close" onClick={() => setOpen(false)} />
-              </div>
-              <div className="modal-body">
-                {/* Campos texto padrão */}
-                {(["name", "document", "segment", "vendor"] as const).map((field) => (
-                  <div className="mb-3" key={field}>
-                    <label className="form-label text-capitalize">
-                      {field === "vendor" ? "Vendedor" : field}
-                    </label>
-                    <input
-                      name={field}
-                      value={(form as any)[field]}
-                      onChange={handleChange}
-                      className={`form-control ${
-                        theme === "dark"
-                          ? "bg-body-tertiary text-light border-secondary"
-                          : ""
-                      }`}
-                      placeholder={
-                        field === "name"
-                          ? "Ex.: Fazenda Boa Vista"
-                          : field === "vendor"
-                          ? "Responsável"
-                          : ""
-                      }
-                    />
-                  </div>
-                ))}
+          Novo Cliente
+        </Button>
+      </Box>
 
-                {/* Dropdown de região */}
-                <div className="mb-3">
-                  <label className="form-label">Região</label>
-                  <select
-                    name="region"
-                    value={form.region}
-                    onChange={handleChange}
-                    className={`form-select ${
-                      theme === "dark"
-                        ? "bg-body-tertiary text-light border-secondary"
-                        : ""
-                    }`}
-                  >
-                    <option value="">— Sem região —</option>
-                    {regions.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                  <small className="text-secondary">
-                    Usada nos relatórios para filtrar carteira por região.
-                  </small>
-                </div>
-              </div>
-              <div className="modal-footer border-0">
-                <button className="btn btn-secondary" onClick={() => setOpen(false)}>
-                  Cancelar
-                </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleSave}
-                  disabled={submitting}
-                >
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Content */}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <Card>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Documento</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Segmento</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Vendedor</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    Ações
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {clients.map((c) => (
+                  <TableRow key={c.id} hover>
+                    <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
+                    <TableCell>{c.document || "--"}</TableCell>
+                    <TableCell>{c.segment || "--"}</TableCell>
+                    <TableCell>{c.vendor || "--"}</TableCell>
+                    <TableCell>
+                      {c.region ? (
+                        <Chip
+                          label={c.region}
+                          size="small"
+                          color="success"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          --
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => openModal(c)}
+                        sx={{ mr: 0.5 }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {clients.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary">
+                        Nenhum cliente cadastrado
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
       )}
-    </div>
+
+      {/* Modal */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: { sx: { borderRadius: 3 } },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {editing ? "Editar Cliente" : "Novo Cliente"}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <TextField
+              label="Nome"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Ex.: Fazenda Boa Vista"
+              fullWidth
+              required
+            />
+            <TextField
+              label="Documento"
+              name="document"
+              value={form.document}
+              onChange={handleChange}
+              placeholder="CPF ou CNPJ"
+              fullWidth
+            />
+            <TextField
+              label="Segmento"
+              name="segment"
+              value={form.segment}
+              onChange={handleChange}
+              fullWidth
+            />
+            <TextField
+              label="Vendedor"
+              name="vendor"
+              value={form.vendor}
+              onChange={handleChange}
+              placeholder="Responsável"
+              fullWidth
+            />
+            <TextField
+              select
+              label="Região"
+              name="region"
+              value={form.region}
+              onChange={handleChange}
+              fullWidth
+              helperText="Usada nos relatórios para filtrar carteira por região."
+            >
+              <MenuItem value="">— Sem região —</MenuItem>
+              {regions.map((r) => (
+                <MenuItem key={r} value={r}>
+                  {r}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpen(false)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={submitting}
+          >
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

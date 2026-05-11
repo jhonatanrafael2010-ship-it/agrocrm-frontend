@@ -1,7 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Search, X, Users, Map, Briefcase, ClipboardList } from "lucide-react";
+import {
+  Dialog,
+  Box,
+  InputBase,
+  Typography,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
+import {
+  Search as SearchIcon,
+  Close as CloseIcon,
+  People as PeopleIcon,
+  Map as MapIcon,
+  BusinessCenter as BusinessIcon,
+  Assignment as AssignmentIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
-import "./SearchModal.css";
 
 type Result = {
   type: "client" | "property" | "visit" | "opportunity";
@@ -17,10 +36,17 @@ type Props = {
 };
 
 const ICONS = {
-  client: <Users size={16} />,
-  property: <Map size={16} />,
-  visit: <ClipboardList size={16} />,
-  opportunity: <Briefcase size={16} />,
+  client: <PeopleIcon fontSize="small" />,
+  property: <MapIcon fontSize="small" />,
+  visit: <AssignmentIcon fontSize="small" />,
+  opportunity: <BusinessIcon fontSize="small" />,
+};
+
+const COLORS = {
+  client: "#3b82f6",
+  property: "#10b981",
+  visit: "#8b5cf6",
+  opportunity: "#f59e0b",
 };
 
 const LABELS = {
@@ -160,64 +186,145 @@ const SearchModal: React.FC<Props> = ({ open, onClose, onNavigate }) => {
     }
   }
 
-  if (!open) return null;
-
   return (
-    <div className="search-modal-overlay" onClick={onClose}>
-      <div className="search-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="search-modal-header">
-          <Search size={18} className="search-modal-icon" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Buscar clientes, propriedades, visitas..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKey}
-          />
-          <button className="search-modal-close" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            overflow: "hidden",
+            maxHeight: "70vh",
+          },
+        },
+      }}
+    >
+      {/* Search Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: 2,
+          py: 1.5,
+          borderBottom: 1,
+          borderColor: "divider",
+          gap: 1.5,
+        }}
+      >
+        <SearchIcon sx={{ color: "text.secondary" }} />
+        <InputBase
+          inputRef={inputRef}
+          fullWidth
+          placeholder="Buscar clientes, propriedades, visitas..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKey}
+          sx={{
+            fontSize: "1rem",
+            "& input::placeholder": {
+              color: "text.secondary",
+              opacity: 1,
+            },
+          }}
+        />
+        <IconButton size="small" onClick={onClose}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
 
-        <div className="search-modal-body">
-          {loading && <div className="search-modal-empty">Buscando...</div>}
+      {/* Results Body */}
+      <Box sx={{ maxHeight: 400, overflow: "auto" }}>
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
 
-          {!loading && query && results.length === 0 && (
-            <div className="search-modal-empty">Nenhum resultado</div>
-          )}
+        {!loading && query && results.length === 0 && (
+          <Box sx={{ py: 4, textAlign: "center" }}>
+            <Typography color="text.secondary">Nenhum resultado</Typography>
+          </Box>
+        )}
 
-          {!loading && !query && (
-            <div className="search-modal-hint">
-              <kbd>↑</kbd> <kbd>↓</kbd> navegar &nbsp;
-              <kbd>↵</kbd> abrir &nbsp;
-              <kbd>esc</kbd> fechar
-            </div>
-          )}
+        {!loading && !query && (
+          <Box sx={{ py: 3, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              <Box component="kbd" sx={kbdStyle}>↑</Box>{" "}
+              <Box component="kbd" sx={kbdStyle}>↓</Box> navegar{" "}
+              <Box component="kbd" sx={kbdStyle}>↵</Box> abrir{" "}
+              <Box component="kbd" sx={kbdStyle}>esc</Box> fechar
+            </Typography>
+          </Box>
+        )}
 
-          {results.map((r, idx) => (
-            <button
-              key={`${r.type}-${r.id}`}
-              className={`search-modal-item ${idx === selectedIdx ? "active" : ""}`}
-              onClick={() => handleSelect(r)}
-              onMouseEnter={() => setSelectedIdx(idx)}
-            >
-              <span className={`search-modal-type type-${r.type}`}>
-                {ICONS[r.type]}
-              </span>
-              <div className="search-modal-item-text">
-                <div className="search-modal-title">{r.title}</div>
-                {r.subtitle && (
-                  <div className="search-modal-sub">{r.subtitle}</div>
-                )}
-              </div>
-              <span className="search-modal-label">{LABELS[r.type]}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+        {results.length > 0 && (
+          <List disablePadding>
+            {results.map((r, idx) => (
+              <ListItemButton
+                key={`${r.type}-${r.id}`}
+                selected={idx === selectedIdx}
+                onClick={() => handleSelect(r)}
+                onMouseEnter={() => setSelectedIdx(idx)}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  "&.Mui-selected": {
+                    bgcolor: `${COLORS[r.type]}10`,
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    color: COLORS[r.type],
+                  }}
+                >
+                  {ICONS[r.type]}
+                </ListItemIcon>
+                <ListItemText
+                  primary={r.title}
+                  secondary={r.subtitle}
+                  slotProps={{
+                    primary: { sx: { fontWeight: 500, fontSize: "0.9rem" } },
+                    secondary: { sx: { fontSize: "0.8rem" } },
+                  }}
+                />
+                <Chip
+                  label={LABELS[r.type]}
+                  size="small"
+                  sx={{
+                    bgcolor: `${COLORS[r.type]}15`,
+                    color: COLORS[r.type],
+                    fontWeight: 600,
+                    fontSize: "0.7rem",
+                  }}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        )}
+      </Box>
+    </Dialog>
   );
+};
+
+const kbdStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  px: 0.75,
+  py: 0.25,
+  mx: 0.25,
+  bgcolor: "action.hover",
+  border: 1,
+  borderColor: "divider",
+  borderRadius: 1,
+  fontSize: "0.75rem",
+  fontFamily: "monospace",
+  minWidth: 24,
 };
 
 export default SearchModal;
