@@ -1,4 +1,7 @@
 import {
+  _extends
+} from "./chunk-HQ6ZTAWL.js";
+import {
   require_react_dom
 } from "./chunk-OUWKCDPP.js";
 import {
@@ -1527,17 +1530,6 @@ var rafSchd = function rafSchd2(fn) {
   return wrapperFn;
 };
 var raf_schd_esm_default = rafSchd;
-
-// node_modules/@babel/runtime/helpers/esm/extends.js
-function _extends() {
-  return _extends = Object.assign ? Object.assign.bind() : function(n) {
-    for (var e = 1; e < arguments.length; e++) {
-      var t = arguments[e];
-      for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
-    }
-    return n;
-  }, _extends.apply(null, arguments);
-}
 
 // node_modules/@hello-pangea/dnd/dist/dnd.esm.js
 var isProduction$1 = false;

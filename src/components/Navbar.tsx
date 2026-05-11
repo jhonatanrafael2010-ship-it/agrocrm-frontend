@@ -23,6 +23,7 @@ import {
   Logout as LogoutIcon,
   Settings as SettingsIcon,
   ChevronRight as ChevronRightIcon,
+  Link as LinkIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 
@@ -53,6 +54,7 @@ const sections = [
     items: [
       { label: "Calendário", icon: <CalendarIcon />, color: "#ec4899" },
       { label: "Acompanhamentos", icon: <AssignmentIcon />, color: "#8b5cf6" },
+      { label: "Vincular Visitas", icon: <LinkIcon />, color: "#0ea5e9" },
     ],
   },
   {

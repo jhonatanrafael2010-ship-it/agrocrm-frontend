@@ -24,6 +24,7 @@ import {
   Logout as LogoutIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
+  Link as LinkIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 
@@ -39,6 +40,7 @@ const menuItems = [
   { label: "Propriedades", icon: <MapIcon />, route: "Propriedades", color: "#10b981" },
   { label: "Calendário", icon: <CalendarIcon />, route: "Calendário", color: "#ec4899" },
   { label: "Acompanhamentos", icon: <AssignmentIcon />, route: "Acompanhamentos", color: "#8b5cf6" },
+  { label: "Vincular Visitas", icon: <LinkIcon />, route: "Vincular Visitas", color: "#0ea5e9" },
   { label: "Oportunidades", icon: <BusinessIcon />, route: "Oportunidades", color: "#f59e0b" },
 ];
 

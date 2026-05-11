@@ -9,6 +9,7 @@ import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import ChatPage from "./pages/Chat";
+import VisitLinkingPage from "./pages/VisitLinking";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -192,6 +193,8 @@ function App() {
               <OpportunitiesPage />
             ) : route === "Acompanhamentos" ? (
               <VisitsPage />
+            ) : route === "Vincular Visitas" ? (
+              <VisitLinkingPage />
             ) : route === "Assistente" ? (
               <ChatPage />
             ) : (
