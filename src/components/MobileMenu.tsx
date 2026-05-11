@@ -10,8 +10,6 @@ import {
   Divider,
   IconButton,
   Typography,
-  BottomNavigation,
-  BottomNavigationAction,
   Paper,
   Avatar,
 } from "@mui/material";
@@ -35,21 +33,20 @@ interface MobileMenuProps {
 }
 
 const menuItems = [
-  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente" },
-  { label: "Dashboard", icon: <HomeIcon />, route: "Dashboard" },
-  { label: "Clientes", icon: <PeopleIcon />, route: "Clientes" },
-  { label: "Propriedades", icon: <MapIcon />, route: "Propriedades" },
-  { label: "Calendário", icon: <CalendarIcon />, route: "Calendário" },
-  { label: "Acompanhamentos", icon: <AssignmentIcon />, route: "Acompanhamentos" },
-  { label: "Oportunidades", icon: <BusinessIcon />, route: "Oportunidades" },
+  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente", color: "#16a34a" },
+  { label: "Dashboard", icon: <HomeIcon />, route: "Dashboard", color: "#6366f1" },
+  { label: "Clientes", icon: <PeopleIcon />, route: "Clientes", color: "#3b82f6" },
+  { label: "Propriedades", icon: <MapIcon />, route: "Propriedades", color: "#10b981" },
+  { label: "Calendário", icon: <CalendarIcon />, route: "Calendário", color: "#ec4899" },
+  { label: "Acompanhamentos", icon: <AssignmentIcon />, route: "Acompanhamentos", color: "#8b5cf6" },
+  { label: "Oportunidades", icon: <BusinessIcon />, route: "Oportunidades", color: "#f59e0b" },
 ];
 
-// Bottom nav mostra apenas os 4 mais usados
 const bottomNavItems = [
-  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente" },
-  { label: "Calendário", icon: <CalendarIcon />, route: "Calendário" },
-  { label: "Acompanhar", icon: <AssignmentIcon />, route: "Acompanhamentos" },
-  { label: "Menu", icon: <MenuIcon />, route: "_menu" },
+  { label: "Assistente", icon: <AssistantIcon />, route: "Assistente", color: "#16a34a" },
+  { label: "Agenda", icon: <CalendarIcon />, route: "Calendário", color: "#ec4899" },
+  { label: "Visitas", icon: <AssignmentIcon />, route: "Acompanhamentos", color: "#8b5cf6" },
+  { label: "Menu", icon: <MenuIcon />, route: "_menu", color: "#6b7280" },
 ];
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
@@ -64,9 +61,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
     }
   };
 
-  const getBottomNavValue = () => {
-    const idx = bottomNavItems.findIndex((item) => item.route === activeItem);
-    return idx >= 0 ? idx : -1;
+  const isActive = (route: string) => {
+    if (route === "_menu") return false;
+    return activeItem === route;
   };
 
   return (
@@ -79,8 +76,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
         slotProps={{
           paper: {
             sx: {
-              width: 280,
+              width: 300,
               bgcolor: "background.paper",
+              borderTopRightRadius: 24,
+              borderBottomRightRadius: 24,
             },
           },
         }}
@@ -91,9 +90,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            p: 2,
-            borderBottom: 1,
-            borderColor: "divider",
+            p: 2.5,
+            background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+            color: "white",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -101,51 +100,67 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
               src={logo}
               alt="NutriCRM"
               variant="rounded"
-              sx={{ width: 40, height: 40 }}
+              sx={{
+                width: 44,
+                height: 44,
+                bgcolor: "white",
+                p: 0.5,
+              }}
             />
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                 NutriCRM
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ opacity: 0.9 }}>
                 Gestão Agrícola
               </Typography>
             </Box>
           </Box>
-          <IconButton onClick={() => setDrawerOpen(false)} size="small">
+          <IconButton
+            onClick={() => setDrawerOpen(false)}
+            size="small"
+            sx={{ color: "white" }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
 
         {/* Lista de navegação */}
-        <List sx={{ flex: 1, py: 1 }}>
+        <List sx={{ flex: 1, py: 2, px: 1 }}>
           {menuItems.map((item) => {
-            const isActive = activeItem === item.route;
+            const active = activeItem === item.route;
             return (
-              <ListItem key={item.route} disablePadding>
+              <ListItem key={item.route} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
-                  selected={isActive}
+                  selected={active}
                   onClick={() => handleNavigate(item.route)}
                   sx={{
-                    mx: 1,
-                    borderRadius: 2,
-                    mb: 0.5,
+                    borderRadius: 3,
+                    py: 1.5,
+                    transition: "all 0.2s ease",
                     "&.Mui-selected": {
-                      bgcolor: "primary.main",
-                      color: "primary.contrastText",
+                      bgcolor: `${item.color}15`,
                       "&:hover": {
-                        bgcolor: "primary.dark",
+                        bgcolor: `${item.color}25`,
                       },
                       "& .MuiListItemIcon-root": {
-                        color: "primary.contrastText",
+                        color: item.color,
                       },
+                      "& .MuiListItemText-primary": {
+                        color: item.color,
+                        fontWeight: 600,
+                      },
+                    },
+                    "&:hover": {
+                      bgcolor: "action.hover",
+                      transform: "translateX(4px)",
                     },
                   }}
                 >
                   <ListItemIcon
                     sx={{
-                      minWidth: 40,
-                      color: isActive ? "inherit" : "text.secondary",
+                      minWidth: 44,
+                      color: active ? item.color : "text.secondary",
                     }}
                   >
                     {item.icon}
@@ -155,7 +170,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
                     slotProps={{
                       primary: {
                         sx: {
-                          fontWeight: isActive ? 600 : 400,
+                          fontWeight: active ? 600 : 500,
                           fontSize: "0.95rem",
                         },
                       },
@@ -174,22 +189,28 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
           <ListItemButton
             onClick={() => alert("Logout realizado!")}
             sx={{
-              borderRadius: 2,
+              borderRadius: 3,
+              py: 1.5,
               color: "error.main",
               "&:hover": {
                 bgcolor: "error.lighter",
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40, color: "error.main" }}>
+            <ListItemIcon sx={{ minWidth: 44, color: "error.main" }}>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary="Sair" />
+            <ListItemText
+              primary="Sair"
+              slotProps={{
+                primary: { sx: { fontWeight: 500 } },
+              }}
+            />
           </ListItemButton>
         </Box>
       </Drawer>
 
-      {/* Bottom Navigation fixo */}
+      {/* Bottom Navigation Premium */}
       <Paper
         sx={{
           position: "fixed",
@@ -197,43 +218,102 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
           left: 0,
           right: 0,
           zIndex: 1100,
-          borderTop: 1,
-          borderColor: "divider",
           pb: "env(safe-area-inset-bottom)",
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
         }}
-        elevation={8}
+        elevation={16}
       >
-        <BottomNavigation
-          value={getBottomNavValue()}
-          onChange={(_, newValue) => {
-            handleNavigate(bottomNavItems[newValue].route);
-          }}
-          showLabels
+        {/* Barra decorativa no topo */}
+        <Box
           sx={{
-            height: 64,
-            "& .MuiBottomNavigationAction-root": {
-              minWidth: 60,
-              py: 1,
-              "&.Mui-selected": {
-                color: "primary.main",
-              },
-            },
-            "& .MuiBottomNavigationAction-label": {
-              fontSize: "0.7rem",
-              "&.Mui-selected": {
-                fontSize: "0.7rem",
-              },
-            },
+            height: 3,
+            background: "linear-gradient(90deg, #16a34a, #3b82f6, #8b5cf6, #ec4899)",
+          }}
+        />
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-around",
+            alignItems: "center",
+            height: 70,
+            px: 1,
+            bgcolor: "background.paper",
           }}
         >
-          {bottomNavItems.map((item) => (
-            <BottomNavigationAction
-              key={item.route}
-              label={item.label}
-              icon={item.icon}
-            />
-          ))}
-        </BottomNavigation>
+          {bottomNavItems.map((item) => {
+            const active = isActive(item.route);
+            return (
+              <Box
+                key={item.route}
+                onClick={() => handleNavigate(item.route)}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flex: 1,
+                  py: 1,
+                  cursor: "pointer",
+                  position: "relative",
+                  transition: "all 0.2s ease",
+                  "&:active": {
+                    transform: "scale(0.95)",
+                  },
+                }}
+              >
+                {/* Indicador ativo */}
+                {active && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: -3,
+                      width: 24,
+                      height: 3,
+                      borderRadius: 2,
+                      bgcolor: item.color,
+                    }}
+                  />
+                )}
+
+                {/* Container do ícone */}
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: active ? `${item.color}15` : "transparent",
+                    color: active ? item.color : "text.secondary",
+                    transition: "all 0.2s ease",
+                    mb: 0.25,
+                    "& svg": {
+                      fontSize: 24,
+                    },
+                  }}
+                >
+                  {item.icon}
+                </Box>
+
+                {/* Label */}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "0.7rem",
+                    fontWeight: active ? 600 : 500,
+                    color: active ? item.color : "text.secondary",
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
       </Paper>
     </>
   );

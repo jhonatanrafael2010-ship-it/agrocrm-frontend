@@ -334,6 +334,53 @@ const Chat: React.FC = () => {
     return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  function renderFormattedText(text: string, isUser: boolean): React.ReactNode {
+    const lines = text.split("\n");
+    return (
+      <Box component="span">
+        {lines.map((line, i) => {
+          if (!line.trim()) return <br key={i} />;
+
+          // Linha numerada: "1. Nome do Cliente - Cultura - Variedade" ou "1. Nome - 45 dias"
+          if (/^\d+\.\s/.test(line)) {
+            const dashIdx = line.indexOf(" - ");
+            if (dashIdx !== -1) {
+              const bold = line.slice(0, dashIdx);
+              const rest = line.slice(dashIdx);
+              return (
+                <Typography
+                  key={i}
+                  component="div"
+                  variant="body2"
+                  sx={{ color: isUser ? "inherit" : "text.primary" }}
+                >
+                  <strong>{bold}</strong>
+                  {rest}
+                </Typography>
+              );
+            }
+            return (
+              <Typography
+                key={i}
+                component="div"
+                variant="body2"
+                sx={{ fontWeight: 600, color: isUser ? "inherit" : "text.primary" }}
+              >
+                {line}
+              </Typography>
+            );
+          }
+
+          return (
+            <Typography key={i} component="div" variant="body2">
+              {line}
+            </Typography>
+          );
+        })}
+      </Box>
+    );
+  }
+
   if (showConsultantPicker) {
     return (
       <Box
@@ -382,9 +429,9 @@ const Chat: React.FC = () => {
         bgcolor: "background.default",
       }}
     >
-      {/* Header */}
+      {/* Header Premium */}
       <Paper
-        elevation={1}
+        elevation={0}
         sx={{
           position: "sticky",
           top: 0,
@@ -395,24 +442,65 @@ const Chat: React.FC = () => {
           px: 2,
           py: 1.5,
           borderRadius: 0,
+          background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+          color: "white",
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Avatar sx={{ bgcolor: "primary.main", fontWeight: 700 }}>N</Avatar>
+          <Avatar
+            sx={{
+              bgcolor: "rgba(255,255,255,0.2)",
+              fontWeight: 700,
+              border: "2px solid rgba(255,255,255,0.3)",
+            }}
+          >
+            N
+          </Avatar>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
               Assistente NutriCRM
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {loading ? "digitando..." : consultantName ? `online · ${consultantName}` : "online"}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  bgcolor: loading ? "#fbbf24" : "#4ade80",
+                  animation: loading ? "pulse 1.5s infinite" : "none",
+                  "@keyframes pulse": {
+                    "0%, 100%": { opacity: 1 },
+                    "50%": { opacity: 0.5 },
+                  },
+                }}
+              />
+              <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                {loading ? "digitando..." : consultantName ? `online · ${consultantName}` : "online"}
+              </Typography>
+            </Box>
           </Box>
         </Box>
-        <Box>
-          <IconButton size="small" onClick={() => setShowHelp(true)}>
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <IconButton
+            size="small"
+            onClick={() => setShowHelp(true)}
+            sx={{
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
+          >
             <HelpIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" onClick={() => setShowConsultantPicker(true)}>
+          <IconButton
+            size="small"
+            onClick={() => setShowConsultantPicker(true)}
+            sx={{
+              color: "white",
+              bgcolor: "rgba(255,255,255,0.1)",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
+          >
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -451,11 +539,7 @@ const Chat: React.FC = () => {
                   ))}
                 </Box>
               )}
-              {msg.text && (
-                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                  {msg.text}
-                </Typography>
-              )}
+              {msg.text && renderFormattedText(msg.text, msg.role === "user")}
               {msg.pdfItems &&
                 msg.pdfItems.map((item, i) => (
                   <Box key={i} sx={{ mt: 1, p: 1, bgcolor: "background.paper", borderRadius: 1 }}>
@@ -546,9 +630,9 @@ const Chat: React.FC = () => {
         </Box>
       )}
 
-      {/* Input bar */}
+      {/* Input bar Premium */}
       <Paper
-        elevation={2}
+        elevation={0}
         sx={{
           display: "flex",
           alignItems: "flex-end",
@@ -557,6 +641,7 @@ const Chat: React.FC = () => {
           borderRadius: 0,
           borderTop: 1,
           borderColor: "divider",
+          bgcolor: "background.paper",
         }}
       >
         <input
@@ -568,7 +653,19 @@ const Chat: React.FC = () => {
           onChange={handleFileInput}
         />
 
-        <IconButton onClick={() => setShowPhotoSheet(true)} disabled={loading || recording}>
+        <IconButton
+          onClick={() => setShowPhotoSheet(true)}
+          disabled={loading || recording}
+          sx={{
+            width: 44,
+            height: 44,
+            bgcolor: "action.hover",
+            borderRadius: 3,
+            color: "primary.main",
+            "&:hover": { bgcolor: "primary.light", color: "white" },
+            "&.Mui-disabled": { bgcolor: "action.disabledBackground" },
+          }}
+        >
           <CameraIcon />
         </IconButton>
 
@@ -586,6 +683,13 @@ const Chat: React.FC = () => {
           sx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: 3,
+              bgcolor: "action.hover",
+              "&:hover": {
+                bgcolor: "action.selected",
+              },
+              "&.Mui-focused": {
+                bgcolor: "background.paper",
+              },
             },
           }}
         />
@@ -593,20 +697,29 @@ const Chat: React.FC = () => {
         <IconButton
           onClick={handleMicStart}
           disabled={loading}
-          sx={recording ? { color: "error.main" } : {}}
+          sx={{
+            width: 44,
+            height: 44,
+            bgcolor: recording ? "error.main" : "action.hover",
+            borderRadius: 3,
+            color: recording ? "white" : "text.secondary",
+            "&:hover": { bgcolor: recording ? "error.dark" : "action.selected" },
+          }}
         >
           {recording ? <MicOffIcon /> : <MicIcon />}
         </IconButton>
 
         <IconButton
-          color="primary"
           onClick={() => sendMessage(input)}
           disabled={loading || recording || (!input.trim() && pendingPhotos.length === 0)}
           sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 3,
             bgcolor: "primary.main",
-            color: "primary.contrastText",
+            color: "white",
             "&:hover": { bgcolor: "primary.dark" },
-            "&.Mui-disabled": { bgcolor: "action.disabledBackground" },
+            "&.Mui-disabled": { bgcolor: "action.disabledBackground", color: "text.disabled" },
           }}
         >
           {loading ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
