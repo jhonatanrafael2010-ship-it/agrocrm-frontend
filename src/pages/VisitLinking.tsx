@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  Autocomplete,
 } from "@mui/material";
 import {
   Person as PersonIcon,
@@ -521,29 +522,35 @@ const VisitLinking: React.FC = () => {
 
         {/* Filters */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
-          <TextField
-            select
-            label="Cliente"
-            value={selectedClient}
-            onChange={(e) => {
-              setSelectedClient(e.target.value);
+          <Autocomplete
+            options={clients.slice().sort((a, b) => a.name.localeCompare(b.name))}
+            getOptionLabel={(option) => option.name}
+            value={clients.find((c) => String(c.id) === selectedClient) || null}
+            onChange={(_, newValue) => {
+              setSelectedClient(newValue ? String(newValue.id) : "");
               setSelectedCulture("");
             }}
-            size="small"
-            sx={{ minWidth: 250 }}
-            required
-          >
-            <MenuItem value="">Selecione um cliente</MenuItem>
-            {clients
-              .slice()
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>
-                  <PersonIcon sx={{ fontSize: 18, mr: 1, color: "primary.main" }} />
-                  {c.name}
-                </MenuItem>
-              ))}
-          </TextField>
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Cliente"
+                placeholder="Digite para pesquisar..."
+                size="small"
+                required
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option.id}>
+                <PersonIcon sx={{ fontSize: 18, mr: 1, color: "primary.main" }} />
+                {option.name}
+              </li>
+            )}
+            sx={{ minWidth: 300 }}
+            noOptionsText="Nenhum cliente encontrado"
+            clearText="Limpar"
+            openText="Abrir"
+            closeText="Fechar"
+          />
 
           {selectedClient && cultures.length > 0 && (
             <TextField
