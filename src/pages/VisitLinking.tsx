@@ -18,6 +18,9 @@ import {
   DialogActions,
   Divider,
   Autocomplete,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Person as PersonIcon,
@@ -80,6 +83,10 @@ const VisitLinking: React.FC = () => {
     planting_date: "",
     plot_id: "",
   });
+  const [detailVisit, setDetailVisit] = useState<Visit | null>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   // Load data
   useEffect(() => {
@@ -276,98 +283,146 @@ const VisitLinking: React.FC = () => {
     return `${d}/${m}/${y}`;
   }
 
+  // Build visit tooltip content
+  function buildVisitTooltip(visit: Visit) {
+    const propName = getPropertyName(visit.property_id);
+    const plotName = getPlotName(visit.plot_id);
+    const clientName = getClientName(visit.client_id);
+
+    return (
+      <Box sx={{ p: 1, maxWidth: 300 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+          Detalhes da Visita #{visit.id}
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Typography variant="caption"><strong>Data:</strong> {formatDate(visit.date) || "Sem data"}</Typography>
+          <Typography variant="caption"><strong>Cliente:</strong> {clientName}</Typography>
+          {propName && <Typography variant="caption"><strong>Fazenda:</strong> {propName}</Typography>}
+          {plotName && <Typography variant="caption"><strong>Talhão:</strong> {plotName}</Typography>}
+          {visit.culture && <Typography variant="caption"><strong>Cultura:</strong> {visit.culture}</Typography>}
+          {visit.variety && <Typography variant="caption"><strong>Variedade:</strong> {visit.variety}</Typography>}
+          {visit.fenologia_real && <Typography variant="caption"><strong>Fenologia:</strong> {visit.fenologia_real}</Typography>}
+          <Typography variant="caption"><strong>Status:</strong> {visit.status === "done" ? "Concluída" : "Planejada"}</Typography>
+          {visit.recommendation && (
+            <Typography variant="caption" sx={{ mt: 0.5 }}>
+              <strong>Observação:</strong> {visit.recommendation.length > 100 ? visit.recommendation.slice(0, 100) + "..." : visit.recommendation}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
   // Render visit card
   function renderVisitCard(visit: Visit, index: number) {
     const propName = getPropertyName(visit.property_id);
     const plotName = getPlotName(visit.plot_id);
 
+    const cardContent = (
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+        <Box sx={{ cursor: "grab", color: "text.secondary", mt: 0.5 }}>
+          <DragIcon fontSize="small" />
+        </Box>
+
+        <Box
+          sx={{ flex: 1, minWidth: 0, cursor: isMobile ? "pointer" : "default" }}
+          onClick={isMobile ? () => setDetailVisit(visit) : undefined}
+        >
+          {/* Date & Status */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <DateIcon sx={{ fontSize: 16, color: "primary.main" }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              {formatDate(visit.date) || "Sem data"}
+            </Typography>
+            {visit.status === "done" && (
+              <Chip
+                icon={<CheckIcon sx={{ fontSize: 14 }} />}
+                label="Concluída"
+                size="small"
+                color="success"
+                sx={{ height: 20, fontSize: "0.7rem" }}
+              />
+            )}
+          </Box>
+
+          {/* Culture & Variety */}
+          {(visit.culture || visit.variety) && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+              <CultureIcon sx={{ fontSize: 14, color: "success.main" }} />
+              <Typography variant="caption" sx={{ fontWeight: 600, color: "success.main" }}>
+                {visit.culture}
+                {visit.variety && ` - ${visit.variety}`}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Fenologia */}
+          {visit.fenologia_real && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              {visit.fenologia_real}
+            </Typography>
+          )}
+
+          {/* Property & Plot */}
+          {(propName || plotName) && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
+              {propName && (
+                <Chip
+                  icon={<PropertyIcon sx={{ fontSize: 12 }} />}
+                  label={propName}
+                  size="small"
+                  variant="outlined"
+                  sx={{ height: 18, fontSize: "0.65rem" }}
+                />
+              )}
+              {plotName && (
+                <Chip
+                  icon={<PlotIcon sx={{ fontSize: 12 }} />}
+                  label={plotName}
+                  size="small"
+                  variant="outlined"
+                  sx={{ height: 18, fontSize: "0.65rem" }}
+                />
+              )}
+            </Box>
+          )}
+        </Box>
+      </Box>
+    );
+
     return (
       <Draggable key={visit.id} draggableId={`visit-${visit.id}`} index={index}>
         {(provided, snapshot) => (
-          <Paper
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            elevation={snapshot.isDragging ? 8 : 1}
-            sx={{
-              p: 1.5,
-              mb: 1,
-              borderRadius: 2,
-              borderLeft: 4,
-              borderColor: visit.status === "done" ? "success.main" : "warning.main",
-              bgcolor: snapshot.isDragging ? "action.selected" : "background.paper",
-              transition: "all 0.2s",
-              "&:hover": {
-                boxShadow: 3,
-              },
-            }}
+          <Tooltip
+            title={!isMobile ? buildVisitTooltip(visit) : ""}
+            placement="right"
+            arrow
+            enterDelay={300}
+            disableHoverListener={isMobile}
+            disableFocusListener={isMobile}
+            disableTouchListener
           >
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-              <Box {...provided.dragHandleProps} sx={{ cursor: "grab", color: "text.secondary", mt: 0.5 }}>
-                <DragIcon fontSize="small" />
-              </Box>
-
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                {/* Date & Status */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                  <DateIcon sx={{ fontSize: 16, color: "primary.main" }} />
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {formatDate(visit.date) || "Sem data"}
-                  </Typography>
-                  {visit.status === "done" && (
-                    <Chip
-                      icon={<CheckIcon sx={{ fontSize: 14 }} />}
-                      label="Concluída"
-                      size="small"
-                      color="success"
-                      sx={{ height: 20, fontSize: "0.7rem" }}
-                    />
-                  )}
-                </Box>
-
-                {/* Culture & Variety */}
-                {(visit.culture || visit.variety) && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                    <CultureIcon sx={{ fontSize: 14, color: "success.main" }} />
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: "success.main" }}>
-                      {visit.culture}
-                      {visit.variety && ` - ${visit.variety}`}
-                    </Typography>
-                  </Box>
-                )}
-
-                {/* Fenologia */}
-                {visit.fenologia_real && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                    {visit.fenologia_real}
-                  </Typography>
-                )}
-
-                {/* Property & Plot */}
-                {(propName || plotName) && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
-                    {propName && (
-                      <Chip
-                        icon={<PropertyIcon sx={{ fontSize: 12 }} />}
-                        label={propName}
-                        size="small"
-                        variant="outlined"
-                        sx={{ height: 18, fontSize: "0.65rem" }}
-                      />
-                    )}
-                    {plotName && (
-                      <Chip
-                        icon={<PlotIcon sx={{ fontSize: 12 }} />}
-                        label={plotName}
-                        size="small"
-                        variant="outlined"
-                        sx={{ height: 18, fontSize: "0.65rem" }}
-                      />
-                    )}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          </Paper>
+            <Paper
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              elevation={snapshot.isDragging ? 8 : 1}
+              sx={{
+                p: 1.5,
+                mb: 1,
+                borderRadius: 2,
+                borderLeft: 4,
+                borderColor: visit.status === "done" ? "success.main" : "warning.main",
+                bgcolor: snapshot.isDragging ? "action.selected" : "background.paper",
+                transition: "all 0.2s",
+                "&:hover": {
+                  boxShadow: 3,
+                },
+              }}
+            >
+              {cardContent}
+            </Paper>
+          </Tooltip>
         )}
       </Draggable>
     );
@@ -823,6 +878,99 @@ const VisitLinking: React.FC = () => {
             {saving ? "Criando..." : "Criar Ciclo"}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Visit Detail Dialog (Mobile) */}
+      <Dialog
+        open={!!detailVisit}
+        onClose={() => setDetailVisit(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        {detailVisit && (
+          <>
+            <DialogTitle sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+              <DateIcon color="primary" />
+              Visita #{detailVisit.id}
+            </DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Chip
+                    label={detailVisit.status === "done" ? "Concluída" : "Planejada"}
+                    color={detailVisit.status === "done" ? "success" : "warning"}
+                    size="small"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    {formatDate(detailVisit.date) || "Sem data"}
+                  </Typography>
+                </Box>
+
+                <Divider />
+
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Cliente</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    <PersonIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
+                    {getClientName(detailVisit.client_id)}
+                  </Typography>
+                </Box>
+
+                {getPropertyName(detailVisit.property_id) && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Fazenda</Typography>
+                    <Typography variant="body1">
+                      <PropertyIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
+                      {getPropertyName(detailVisit.property_id)}
+                    </Typography>
+                  </Box>
+                )}
+
+                {getPlotName(detailVisit.plot_id) && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Talhão</Typography>
+                    <Typography variant="body1">
+                      <PlotIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
+                      {getPlotName(detailVisit.plot_id)}
+                    </Typography>
+                  </Box>
+                )}
+
+                {(detailVisit.culture || detailVisit.variety) && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Cultura / Variedade</Typography>
+                    <Typography variant="body1" sx={{ color: "success.main", fontWeight: 600 }}>
+                      <CultureIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
+                      {detailVisit.culture}
+                      {detailVisit.variety && ` - ${detailVisit.variety}`}
+                    </Typography>
+                  </Box>
+                )}
+
+                {detailVisit.fenologia_real && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Fenologia</Typography>
+                    <Typography variant="body1">{detailVisit.fenologia_real}</Typography>
+                  </Box>
+                )}
+
+                {detailVisit.recommendation && (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Observação</Typography>
+                    <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                      {detailVisit.recommendation}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={() => setDetailVisit(null)} variant="contained">
+                Fechar
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </Box>
   );

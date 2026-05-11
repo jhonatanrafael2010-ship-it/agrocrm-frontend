@@ -39,6 +39,42 @@ import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
 import PhotoCarousel from "../components/PhotoCarousel";
 import "../styles/acompanhamento.css";
 
+// Ícone de cultura baseado no tipo
+function CultureIcon({ culture, size = 20 }: { culture?: string; size?: number }) {
+  const cultureNorm = (culture || "").toLowerCase().trim();
+
+  const iconStyle: React.CSSProperties = {
+    fontSize: size,
+    lineHeight: 1,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  if (cultureNorm.includes("milho")) {
+    return <span style={iconStyle} role="img" aria-label="Milho">🌽</span>;
+  }
+  if (cultureNorm.includes("soja")) {
+    return <span style={iconStyle} role="img" aria-label="Soja">🫛</span>;
+  }
+  if (cultureNorm.includes("algod")) {
+    return <span style={iconStyle} role="img" aria-label="Algodão">☁️</span>;
+  }
+  if (cultureNorm.includes("feij")) {
+    return <span style={iconStyle} role="img" aria-label="Feijão">🫘</span>;
+  }
+  if (cultureNorm.includes("trigo")) {
+    return <span style={iconStyle} role="img" aria-label="Trigo">🌾</span>;
+  }
+  if (cultureNorm.includes("café") || cultureNorm.includes("cafe")) {
+    return <span style={iconStyle} role="img" aria-label="Café">☕</span>;
+  }
+  if (cultureNorm.includes("cana")) {
+    return <span style={iconStyle} role="img" aria-label="Cana">🎋</span>;
+  }
+  // Fallback para outras culturas
+  return <AgricultureIcon sx={{ fontSize: size }} />;
+}
 
 // Tipos
 type Visit = {
@@ -592,7 +628,7 @@ const Visits: React.FC = () => {
                       {first.culture && (
                         <Chip
                           size="small"
-                          icon={<AgricultureIcon />}
+                          icon={<CultureIcon culture={first.culture} size={18} />}
                           label={first.culture}
                           color="primary"
                           variant="outlined"
