@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import { getDB } from './db'
 
@@ -22,6 +23,18 @@ import "./styles/theme-premium.css"
 // 🚀 Inicialização do app
 // ============================================================
 getDB().then(() => console.log('✅ IndexedDB pronta'))
+
+// PWA Service Worker registration
+registerSW({
+  onNeedRefresh() {
+    if (confirm('Nova versão disponível! Atualizar agora?')) {
+      location.reload()
+    }
+  },
+  onOfflineReady() {
+    console.log('✅ App pronto para uso offline')
+  },
+})
 
 // 📱 Detecta automaticamente se é APK ou desktop
 if (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
