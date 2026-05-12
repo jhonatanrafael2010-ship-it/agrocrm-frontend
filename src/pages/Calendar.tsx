@@ -1293,42 +1293,42 @@ const handleEditSavedPhoto = async (
   };
 
   // ============================================================
-  // 📍 GPS
+  // 📍 GPS - Funciona online E offline (GPS não precisa de internet!)
   // ============================================================
   const handleGetLocation = async () => {
     try {
-      const isReallyOffline =
-        !navigator.onLine ||
-        ((window as any).Capacitor?.isNativePlatform && !(await hasInternet()));
-
-      if (isReallyOffline) {
-
-        const cached = localStorage.getItem("lastLocation");
-        if (cached) {
-          const { latitude, longitude } = JSON.parse(cached);
-          setForm((f) => ({ ...f, latitude, longitude }));
-          notify.success(`Localização recuperada: ${latitude}, ${longitude}`);
-        } else {
-          notify.warning("Sem conexão — localização anterior não encontrada");
-        }
-        return;
-      }
-
+      // Tenta capturar GPS (funciona offline - GPS usa satélite, não internet)
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
+        timeout: 15000,
       });
       const { latitude, longitude } = position.coords;
       setForm((f) => ({ ...f, latitude, longitude }));
 
+      // Salva no cache para fallback futuro
       localStorage.setItem(
         "lastLocation",
         JSON.stringify({ latitude, longitude })
       );
 
-      notify.success(`Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      notify.success(`Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
-      console.error("Erro ao obter localização:", err);
-      notify.error("Falha ao capturar localização");
+      console.error("Erro ao obter localização GPS:", err);
+
+      // Fallback: tenta recuperar última localização do cache
+      const cached = localStorage.getItem("lastLocation");
+      if (cached) {
+        try {
+          const { latitude, longitude } = JSON.parse(cached);
+          setForm((f) => ({ ...f, latitude, longitude }));
+          notify.warning(`GPS indisponível — usando última localização conhecida`);
+          return;
+        } catch (e) {
+          // cache corrompido
+        }
+      }
+
+      notify.error("Não foi possível capturar localização. Verifique as permissões de GPS.");
     }
   };
 

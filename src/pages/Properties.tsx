@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { Geolocation } from "@capacitor/geolocation";
 import {
   Box,
   Typography,
@@ -138,25 +139,49 @@ const Properties: React.FC = () => {
   }, [clients, clientSearch]);
 
   async function fillCurrentLocation() {
-    if (!navigator.geolocation) {
-      notify.warning("Geolocalização não suportada neste dispositivo");
-      return;
+    try {
+      // GPS funciona offline (usa satélite, não internet)
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+      });
+
+      const { latitude, longitude } = position.coords;
+      setPropForm((f) => ({
+        ...f,
+        latitude: String(latitude),
+        longitude: String(longitude),
+      }));
+
+      // Salva no cache para fallback
+      localStorage.setItem(
+        "lastLocation",
+        JSON.stringify({ latitude, longitude })
+      );
+
+      notify.success(`Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+    } catch (err) {
+      console.error("Erro ao obter localização GPS:", err);
+
+      // Fallback: última localização conhecida
+      const cached = localStorage.getItem("lastLocation");
+      if (cached) {
+        try {
+          const { latitude, longitude } = JSON.parse(cached);
+          setPropForm((f) => ({
+            ...f,
+            latitude: String(latitude),
+            longitude: String(longitude),
+          }));
+          notify.warning("GPS indisponível — usando última localização conhecida");
+          return;
+        } catch (e) {
+          // cache corrompido
+        }
+      }
+
+      notify.error("Não foi possível capturar localização. Verifique as permissões de GPS.");
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPropForm((f) => ({
-          ...f,
-          latitude: String(pos.coords.latitude),
-          longitude: String(pos.coords.longitude),
-        }));
-        notify.success("Localização capturada");
-      },
-      (err) => {
-        console.error(err);
-        notify.error("Não consegui obter a localização atual");
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
   }
 
   async function saveProperty() {

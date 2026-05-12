@@ -138,8 +138,10 @@ const VisitFormModal: React.FC<Props> = ({
 
   const handleGetLocation = async () => {
     try {
+      // GPS funciona offline (usa satélite, não internet)
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
+        timeout: 15000,
       });
 
       const { latitude, longitude } = position.coords;
@@ -150,12 +152,32 @@ const VisitFormModal: React.FC<Props> = ({
         longitude,
       }));
 
+      // Salva no cache para fallback
+      localStorage.setItem(
+        "lastLocation",
+        JSON.stringify({ latitude, longitude })
+      );
+
       alert(
-        `📍 Localização salva: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+        `📍 Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
       );
     } catch (err) {
-      console.error("Erro ao obter localização:", err);
-      alert("⚠️ Falha ao capturar localização.");
+      console.error("Erro ao obter localização GPS:", err);
+
+      // Fallback: última localização conhecida
+      const cached = localStorage.getItem("lastLocation");
+      if (cached) {
+        try {
+          const { latitude, longitude } = JSON.parse(cached);
+          setForm((f) => ({ ...f, latitude, longitude }));
+          alert(`⚠️ GPS indisponível — usando última localização conhecida`);
+          return;
+        } catch (e) {
+          // cache corrompido
+        }
+      }
+
+      alert("⚠️ Não foi possível capturar localização. Verifique as permissões de GPS.");
     }
   };
 
