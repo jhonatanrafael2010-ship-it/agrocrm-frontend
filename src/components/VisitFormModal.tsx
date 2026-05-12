@@ -1,4 +1,27 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  MenuItem,
+  Box,
+  Typography,
+  IconButton,
+  Tabs,
+  Tab,
+  Stack,
+  Paper,
+} from "@mui/material";
+import {
+  Close as CloseIcon,
+  MyLocation as LocationIcon,
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Today as TodayIcon,
+} from "@mui/icons-material";
 import { Geolocation } from "@capacitor/geolocation";
 
 type Product = {
@@ -64,7 +87,6 @@ const VisitFormModal: React.FC<Props> = ({
   open,
   onClose,
   onSave,
-  theme = "light",
   title = "Nova Visita",
   clients,
   properties,
@@ -74,7 +96,7 @@ const VisitFormModal: React.FC<Props> = ({
   consultants,
   initialData,
 }) => {
-  const [tab, setTab] = useState<"dados" | "produtos">("dados");
+  const [tab, setTab] = useState(0);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<VisitFormModalData>(buildEmptyForm());
 
@@ -105,7 +127,7 @@ const VisitFormModal: React.FC<Props> = ({
       products: initialData?.products || [],
     });
 
-    setTab("dados");
+    setTab(0);
   }, [open, initialData]);
 
   const filteredProperties = useMemo(() => {
@@ -129,16 +151,12 @@ const VisitFormModal: React.FC<Props> = ({
     );
   }, [varieties, form.culture]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleChange = (name: string, value: string) => {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
   const handleGetLocation = async () => {
     try {
-      // GPS funciona offline (usa satélite, não internet)
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 15000,
@@ -146,25 +164,17 @@ const VisitFormModal: React.FC<Props> = ({
 
       const { latitude, longitude } = position.coords;
 
-      setForm((f) => ({
-        ...f,
-        latitude,
-        longitude,
-      }));
+      setForm((f) => ({ ...f, latitude, longitude }));
 
-      // Salva no cache para fallback
       localStorage.setItem(
         "lastLocation",
         JSON.stringify({ latitude, longitude })
       );
 
-      alert(
-        `📍 Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-      );
+      alert(`📍 Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
       console.error("Erro ao obter localização GPS:", err);
 
-      // Fallback: última localização conhecida
       const cached = localStorage.getItem("lastLocation");
       if (cached) {
         try {
@@ -172,7 +182,7 @@ const VisitFormModal: React.FC<Props> = ({
           setForm((f) => ({ ...f, latitude, longitude }));
           alert(`⚠️ GPS indisponível — usando última localização conhecida`);
           return;
-        } catch (e) {
+        } catch {
           // cache corrompido
         }
       }
@@ -200,376 +210,279 @@ const VisitFormModal: React.FC<Props> = ({
     }
   };
 
-  if (!open) return null;
+  const setToday = () => {
+    const now = new Date();
+    const tStr =
+      String(now.getDate()).padStart(2, "0") +
+      "/" +
+      String(now.getMonth() + 1).padStart(2, "0") +
+      "/" +
+      now.getFullYear();
+    setForm((f) => ({ ...f, date: tStr }));
+  };
+
+  const updateProduct = (index: number, field: keyof Product, value: string) => {
+    const updated = [...form.products];
+    updated[index] = { ...updated[index], [field]: value };
+    setForm((f) => ({ ...f, products: updated }));
+  };
+
+  const removeProduct = (index: number) => {
+    setForm((f) => ({
+      ...f,
+      products: f.products.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const addProduct = () => {
+    setForm((f) => ({
+      ...f,
+      products: [
+        ...f.products,
+        { product_name: "", dose: "", unit: "", application_date: null },
+      ],
+    }));
+  };
 
   return (
-    <div
-      className="modal fade show d-block"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
-    >
-      <div
-        className="modal-dialog modal-dialog-centered"
-        role="document"
-        style={{
-          maxWidth: "1000px",
-          width: "96%",
-        }}
-      >
-        <div
-          className="modal-content border-0 shadow-lg"
-          style={{
-            background: theme === "dark" ? "var(--panel)" : "#fff",
-            color: theme === "dark" ? "var(--text)" : "#111",
-            maxHeight: "90vh",
-            overflowY: "auto",
-            borderRadius: "14px",
-            paddingBottom: "10px",
-          }}
-        >
-          <div className="modal-header border-0">
-            <h5 className="modal-title">{title}</h5>
-            <button
-              type="button"
-              className="btn-close"
-              aria-label="Fechar"
-              onClick={onClose}
-            ></button>
-          </div>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
-          <div
-            style={{
-              display: "flex",
-              borderBottom: "1px solid rgba(0,0,0,0.1)",
-              marginBottom: "15px",
-            }}
-          >
-            <button
-              onClick={() => setTab("dados")}
-              className="btn btn-link"
-              style={{
-                fontWeight: tab === "dados" ? 700 : 500,
-                textDecoration: "none",
-              }}
-            >
-              📝 Dados da Visita
-            </button>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+          <Tab label="📝 Dados da Visita" />
+          <Tab label="🧪 Produtos Aplicados" />
+        </Tabs>
+      </Box>
 
-            <button
-              onClick={() => setTab("produtos")}
-              className="btn btn-link"
-              style={{
-                fontWeight: tab === "produtos" ? 700 : 500,
-                textDecoration: "none",
-              }}
-            >
-              🧪 Produtos Aplicados
-            </button>
-          </div>
+      <DialogContent>
+        {tab === 0 && (
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Data</Typography>
+                  <Button size="small" startIcon={<TodayIcon />} onClick={setToday}>
+                    Hoje
+                  </Button>
+                </Box>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="date"
+                  value={form.date}
+                  onChange={(e) => handleChange("date", e.target.value)}
+                  placeholder="dd/mm/aaaa"
+                />
+              </Box>
 
-          <div className="modal-body">
-            {tab === "dados" && (
-              <div className="row g-3">
-                <div className="col-md-4">
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <label className="form-label fw-semibold">Data</label>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date();
-                        const tStr =
-                          String(now.getDate()).padStart(2, "0") +
-                          "/" +
-                          String(now.getMonth() + 1).padStart(2, "0") +
-                          "/" +
-                          now.getFullYear();
-
-                        setForm((f) => ({ ...f, date: tStr }));
-                      }}
-                      className="btn btn-success btn-sm"
-                    >
-                      Hoje
-                    </button>
-                  </div>
-
-                  <input
-                    name="date"
-                    value={form.date}
-                    onChange={handleChange}
-                    placeholder="dd/mm/aaaa"
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Cliente</label>
-                  <select
-                    name="client_id"
-                    value={form.client_id}
-                    onChange={handleChange}
-                    className="form-select"
-                  >
-                    <option value="">Selecione</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Propriedade</label>
-                  <select
-                    name="property_id"
-                    value={form.property_id}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        property_id: e.target.value,
-                        plot_id: "",
-                      }))
-                    }
-                    className="form-select"
-                  >
-                    <option value="">Selecione</option>
-                    {filteredProperties.map((p) => (
-                      <option key={p.id} value={String(p.id)}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Talhão</label>
-                  <select
-                    name="plot_id"
-                    value={form.plot_id}
-                    onChange={handleChange}
-                    className="form-select"
-                  >
-                    <option value="">Selecione</option>
-                    {filteredPlots.map((pl) => (
-                      <option key={pl.id} value={String(pl.id)}>
-                        {pl.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Cultura</label>
-                  <select
-                    name="culture"
-                    value={form.culture}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        culture: e.target.value,
-                        variety: "",
-                      }))
-                    }
-                    className="form-select"
-                  >
-                    <option value="">Selecione</option>
-                    {cultures.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Variedade</label>
-                  <select
-                    name="variety"
-                    value={form.variety}
-                    onChange={handleChange}
-                    className="form-select"
-                    disabled={!form.culture}
-                  >
-                    <option value="">Selecione</option>
-                    {filteredVarieties.map((v) => (
-                      <option key={v.id} value={v.name}>
-                        {v.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label fw-semibold">Consultor</label>
-                  <select
-                    name="consultant_id"
-                    value={form.consultant_id}
-                    onChange={handleChange}
-                    className="form-select"
-                  >
-                    <option value="">Selecione</option>
-                    {consultants.map((c) => (
-                      <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-12 mt-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline-info btn-sm"
-                    onClick={handleGetLocation}
-                  >
-                    📍 Capturar Localização
-                  </button>
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label fw-semibold">Fenologia Observada</label>
-                  <input
-                    type="text"
-                    name="fenologia_real"
-                    value={form.fenologia_real}
-                    onChange={handleChange}
-                    placeholder="Ex: V6, R1, 6 folhas..."
-                    className="form-control"
-                  />
-                </div>
-
-                <div className="col-12">
-                  <label className="form-label fw-semibold">Observações</label>
-                  <textarea
-                    name="recommendation"
-                    value={form.recommendation}
-                    onChange={handleChange}
-                    placeholder="Descreva observações..."
-                    className="form-control"
-                  />
-                </div>
-              </div>
-            )}
-
-            {tab === "produtos" && (
-              <div>
-                <h6 className="mb-3">Produtos Aplicados</h6>
-
-                {form.products.map((p, i) => (
-                  <div className="row g-2 mb-2" key={i}>
-                    <div className="col-md-4">
-                      <input
-                        className="form-control"
-                        placeholder="Produto"
-                        value={p.product_name}
-                        onChange={(e) => {
-                          const updated = [...form.products];
-                          updated[i].product_name = e.target.value;
-                          setForm((f) => ({ ...f, products: updated }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-md-2">
-                      <input
-                        className="form-control"
-                        placeholder="Dose"
-                        value={p.dose}
-                        onChange={(e) => {
-                          const updated = [...form.products];
-                          updated[i].dose = e.target.value;
-                          setForm((f) => ({ ...f, products: updated }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-md-2">
-                      <input
-                        className="form-control"
-                        placeholder="Unidade"
-                        value={p.unit}
-                        onChange={(e) => {
-                          const updated = [...form.products];
-                          updated[i].unit = e.target.value;
-                          setForm((f) => ({ ...f, products: updated }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-md-3">
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={p.application_date || ""}
-                        onChange={(e) => {
-                          const updated = [...form.products];
-                          updated[i].application_date = e.target.value;
-                          setForm((f) => ({ ...f, products: updated }));
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-md-1">
-                      <button
-                        className="btn btn-danger w-100"
-                        onClick={() =>
-                          setForm((f) => ({
-                            ...f,
-                            products: f.products.filter((_, idx) => idx !== i),
-                          }))
-                        }
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  </div>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Cliente"
+                value={form.client_id}
+                onChange={(e) => handleChange("client_id", e.target.value)}
+                sx={{ flex: 2 }}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {clients.map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>{c.name}</MenuItem>
                 ))}
+              </TextField>
+            </Stack>
 
-                <button
-                  className="btn btn-primary btn-sm mt-2"
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      products: [
-                        ...f.products,
-                        {
-                          product_name: "",
-                          dose: "",
-                          unit: "",
-                          application_date: null,
-                        },
-                      ],
-                    }))
-                  }
-                >
-                  ➕ Adicionar Produto
-                </button>
-              </div>
-            )}
-          </div>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Propriedade"
+                value={form.property_id}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, property_id: e.target.value, plot_id: "" }));
+                }}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {filteredProperties.map((p) => (
+                  <MenuItem key={p.id} value={String(p.id)}>{p.name}</MenuItem>
+                ))}
+              </TextField>
 
-          <div className="modal-footer border-0">
-            <button className="btn btn-secondary" onClick={onClose}>
-              Cancelar
-            </button>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Talhão"
+                value={form.plot_id}
+                onChange={(e) => handleChange("plot_id", e.target.value)}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {filteredPlots.map((pl) => (
+                  <MenuItem key={pl.id} value={String(pl.id)}>{pl.name}</MenuItem>
+                ))}
+              </TextField>
+            </Stack>
 
-            <button
-              className="btn btn-success"
-              onClick={handleSave}
-              disabled={saving}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Cultura"
+                value={form.culture}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, culture: e.target.value, variety: "" }));
+                }}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {cultures.map((c) => (
+                  <MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Variedade"
+                value={form.variety}
+                onChange={(e) => handleChange("variety", e.target.value)}
+                disabled={!form.culture}
+              >
+                <MenuItem value="">Selecione</MenuItem>
+                {filteredVarieties.map((v) => (
+                  <MenuItem key={v.id} value={v.name}>{v.name}</MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Consultor"
+              value={form.consultant_id}
+              onChange={(e) => handleChange("consultant_id", e.target.value)}
             >
-              {saving ? "Salvando..." : "💾 Salvar"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+              <MenuItem value="">Selecione</MenuItem>
+              {consultants.map((c) => (
+                <MenuItem key={c.id} value={String(c.id)}>{c.name}</MenuItem>
+              ))}
+            </TextField>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<LocationIcon />}
+              onClick={handleGetLocation}
+              sx={{ alignSelf: "flex-start" }}
+            >
+              Capturar Localização
+            </Button>
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Fenologia Observada"
+              value={form.fenologia_real}
+              onChange={(e) => handleChange("fenologia_real", e.target.value)}
+              placeholder="Ex: V6, R1, 6 folhas..."
+            />
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Observações"
+              value={form.recommendation}
+              onChange={(e) => handleChange("recommendation", e.target.value)}
+              placeholder="Descreva observações..."
+              multiline
+              rows={3}
+            />
+          </Stack>
+        )}
+
+        {tab === 1 && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+              Produtos Aplicados
+            </Typography>
+
+            <Stack spacing={2}>
+              {form.products.map((p, i) => (
+                <Paper key={i} variant="outlined" sx={{ p: 2 }}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: "center" }}>
+                    <TextField
+                      size="small"
+                      placeholder="Produto"
+                      value={p.product_name}
+                      onChange={(e) => updateProduct(i, "product_name", e.target.value)}
+                      sx={{ flex: 2 }}
+                    />
+                    <TextField
+                      size="small"
+                      placeholder="Dose"
+                      value={p.dose}
+                      onChange={(e) => updateProduct(i, "dose", e.target.value)}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      placeholder="Unidade"
+                      value={p.unit}
+                      onChange={(e) => updateProduct(i, "unit", e.target.value)}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      type="date"
+                      value={p.application_date || ""}
+                      onChange={(e) => updateProduct(i, "application_date", e.target.value)}
+                      sx={{ flex: 1 }}
+                    />
+                    <IconButton color="error" onClick={() => removeProduct(i)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={addProduct}
+              sx={{ mt: 2 }}
+            >
+              Adicionar Produto
+            </Button>
+          </Box>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} color="inherit">
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? "Salvando..." : "Salvar"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

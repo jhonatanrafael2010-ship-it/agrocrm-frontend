@@ -5,11 +5,6 @@ const config: CapacitorConfig = {
   appName: 'NutriCRM',
   webDir: 'dist',
   bundledWebRuntime: false,
-  server: {
-    // APK carrega diretamente da versão deployada — sempre atualizado sem rebuild
-    url: 'https://agrocrm-frontend.onrender.com',
-    cleartext: false,
-  },
   plugins: {
     Camera: {
       allowEditing: false,

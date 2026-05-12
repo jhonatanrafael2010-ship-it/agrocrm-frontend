@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Box, IconButton, Typography } from "@mui/material";
+import { Close as CloseIcon, ChevronLeft, ChevronRight } from "@mui/icons-material";
 
 interface PhotoItem {
   id: number;
@@ -167,41 +169,51 @@ const PhotoCarousel: React.FC<Props> = ({ photos, onClose }) => {
   }
 
   return (
-    <div
-      className="position-fixed top-0 start-0 w-100 h-100"
-      style={{
-        background: "rgba(0,0,0,0.9)",
+    <Box
+      onClick={onClose}
+      sx={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        bgcolor: "rgba(0,0,0,0.95)",
         zIndex: 99999,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
       }}
-      onClick={onClose}
     >
       {/* CONTAINER INTERNO */}
-      <div
-        className="d-flex flex-column justify-content-center align-items-center"
-        style={{ maxWidth: "100vw", maxHeight: "100vh" }}
+      <Box
         onClick={(e) => e.stopPropagation()}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          maxWidth: "100vw",
+          maxHeight: "100vh",
+        }}
       >
         {/* BOTÃO FECHAR */}
-        <button
+        <IconButton
           onClick={onClose}
-          className="btn btn-light position-absolute"
-          style={{
-            top: 20,
-            right: 20,
-            padding: "6px 10px",
-            fontWeight: "bold",
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            bgcolor: "white",
+            "&:hover": { bgcolor: "grey.200" },
             zIndex: 100000,
           }}
         >
-          ✕
-        </button>
+          <CloseIcon />
+        </IconButton>
 
         {/* ÁREA DA IMAGEM */}
-        <div
-          style={{
+        <Box
+          sx={{
             maxWidth: "95vw",
             maxHeight: "80vh",
             overflow: "hidden",
@@ -222,109 +234,118 @@ const PhotoCarousel: React.FC<Props> = ({ photos, onClose }) => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         >
-          <img
+          <Box
+            component="img"
             src={imageSrc}
             alt=""
             draggable={false}
-            style={{
-                width: "auto",
-                height: "auto",
-
-                maxWidth: "95vw",
-                maxHeight: "75vh",
-
-                // 🔥 Regras especiais para LANDSCAPE
-                // evita estourar horizontalmente
-                ...(window.innerWidth > window.innerHeight && {
+            sx={{
+              width: "auto",
+              height: "auto",
+              maxWidth: "95vw",
+              maxHeight: "75vh",
+              ...(window.innerWidth > window.innerHeight && {
                 maxHeight: "70vh",
                 maxWidth: "90vw",
-                }),
-
-                objectFit: "contain",
-
-                transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-                transition: isDragging.current ? "none" : "transform 0.2s ease-out",
-                borderRadius: 8,
-                userSelect: "none",
+              }),
+              objectFit: "contain",
+              transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+              transition: isDragging.current ? "none" : "transform 0.2s ease-out",
+              borderRadius: 2,
+              userSelect: "none",
             }}
-            />
-        </div>
+          />
+        </Box>
 
         {/* LEGENDA */}
         {current.caption && (
-          <div
-            className="text-white mt-3 px-3 py-2"
-            style={{
-              background: "rgba(0,0,0,0.55)",
-              borderRadius: 6,
+          <Typography
+            sx={{
+              color: "white",
+              mt: 2,
+              px: 2,
+              py: 1,
+              bgcolor: "rgba(0,0,0,0.55)",
+              borderRadius: 1,
               maxWidth: "90%",
               textAlign: "center",
-              fontSize: "1rem",
-              lineHeight: "1.2",
             }}
           >
             {current.caption}
-          </div>
+          </Typography>
         )}
 
-
         {/* MINIATURAS (THUMBNAILS) */}
-        <div
-        style={{
+        <Box
+          sx={{
             width: "100%",
             overflowX: "auto",
             whiteSpace: "nowrap",
-            padding: "10px 0",
+            py: 1.5,
             display: "flex",
             justifyContent: "center",
-            gap: "10px",
-        }}
+            gap: 1,
+          }}
         >
-        {photos.map((p, i) => {
+          {photos.map((p, i) => {
             const thumbSrc = p.url || p.dataUrl;
-
             return (
-            <div
+              <Box
                 key={p.id}
                 onClick={() => {
-                setScale(1);
-                setTranslate({ x: 0, y: 0 });
-                setIndex(i);
+                  setScale(1);
+                  setTranslate({ x: 0, y: 0 });
+                  setIndex(i);
                 }}
-                style={{
-                display: "inline-block",
-                border: i === index ? "3px solid #28a745" : "2px solid #666",
-                borderRadius: 6,
-                cursor: "pointer",
-                overflow: "hidden",
+                sx={{
+                  display: "inline-block",
+                  border: i === index ? "3px solid" : "2px solid",
+                  borderColor: i === index ? "success.main" : "grey.600",
+                  borderRadius: 1,
+                  cursor: "pointer",
+                  overflow: "hidden",
                 }}
-            >
-                <img
-                src={thumbSrc}
-                style={{
+              >
+                <Box
+                  component="img"
+                  src={thumbSrc}
+                  sx={{
                     width: 60,
                     height: 60,
                     objectFit: "cover",
                     display: "block",
-                }}
+                  }}
                 />
-            </div>
+              </Box>
             );
-        })}
-        </div>
-
+          })}
+        </Box>
 
         {/* CONTROLES */}
-        <div className="d-flex gap-4 mt-4">
-          <button className="btn btn-outline-light" style={{ padding: "8px 16px", fontSize: "1.2rem" }} onClick={prev}>
-            ◀
-          </button>
-          <button className="btn btn-outline-light" style={{ padding: "8px 16px", fontSize: "1.2rem" }} onClick={next}>
-            ▶
-          </button>
-        </div>
-      </div>
-    </div>
+        <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+          <IconButton
+            onClick={prev}
+            sx={{
+              bgcolor: "rgba(255,255,255,0.1)",
+              color: "white",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
+          >
+            <ChevronLeft fontSize="large" />
+          </IconButton>
+          <IconButton
+            onClick={next}
+            sx={{
+              bgcolor: "rgba(255,255,255,0.1)",
+              color: "white",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
+          >
+            <ChevronRight fontSize="large" />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

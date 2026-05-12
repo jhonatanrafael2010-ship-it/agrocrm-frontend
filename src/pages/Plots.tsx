@@ -1,7 +1,33 @@
 import React, { useEffect, useState } from "react";
-import DarkSelect from "../components/DarkSelect";
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  IconButton,
+  Chip,
+} from "@mui/material";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Grass as GrassIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import { API_BASE } from "../config";
-
 
 type Property = { id: number; name: string };
 type Plot = {
@@ -11,8 +37,6 @@ type Plot = {
   area_ha?: number;
   irrigated?: boolean;
 };
-
-
 
 const Plots: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -25,8 +49,6 @@ const Plots: React.FC = () => {
     irrigated: false,
   });
   const [submitting, setSubmitting] = useState(false);
-
-  const theme = document.body.getAttribute("data-theme") || "light";
 
   useEffect(() => {
     let mounted = true;
@@ -45,18 +67,16 @@ const Plots: React.FC = () => {
     };
   }, []);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    const { name, value, type } = e.target as HTMLInputElement;
-    if (type === "checkbox") {
-      setForm((f) => ({ ...f, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setForm((f) => ({ ...f, [name]: value }));
-    }
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value, type, checked } = e.target;
+    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   }
 
   async function createPlot() {
-    if (!form.property_id || !form.name)
-      return alert("Propriedade e nome são obrigatórios");
+    if (!form.property_id || !form.name) {
+      alert("Propriedade e nome são obrigatórios");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}plots`, {
@@ -98,144 +118,152 @@ const Plots: React.FC = () => {
   }
 
   return (
-    <div className={`container-fluid py-4 ${theme === "dark" ? "text-light" : "text-dark"}`}>
-      <div className="row mb-3">
-        <div className="col-12 col-lg-10 mx-auto d-flex justify-content-between align-items-center">
-          <h2 className="fw-bold">🌾 Talhões</h2>
-          <button className="btn btn-success btn-sm" onClick={() => setOpen(true)}>
-            + Novo Talhão
-          </button>
-        </div>
-      </div>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+            <GrassIcon color="primary" />
+            Talhões
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Gerencie os talhões das propriedades
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<AddIcon />}
+          onClick={() => setOpen(true)}
+        >
+          Novo Talhão
+        </Button>
+      </Box>
 
-      <div className="col-12 col-lg-10 mx-auto">
-        <div className={`card border-0 shadow-sm ${theme === "dark" ? "bg-dark" : "bg-white"}`}>
-          <div className="card-body">
-            <div className="table-responsive">
-              <table
-                className={`table table-sm align-middle ${
-                  theme === "dark" ? "table-dark" : "table-striped"
-                }`}
-              >
-                <thead>
-                  <tr>
-                    <th>Fazenda</th>
-                    <th>Talhão</th>
-                    <th>Área (ha)</th>
-                    <th>Irrigado</th>
-                    <th className="text-end">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plots.map((pl) => (
-                    <tr key={pl.id}>
-                      <td>
-                        {properties.find((pp) => pp.id === pl.property_id)?.name ??
-                          pl.property_id}
-                      </td>
-                      <td>{pl.name}</td>
-                      <td>{pl.area_ha ?? "--"}</td>
-                      <td>{pl.irrigated ? "Sim" : "—"}</td>
-                      <td className="text-end">
-                        <button
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={() => deletePlot(pl.id)}
-                        >
-                          Excluir
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {plots.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="text-center text-secondary py-3">
-                        Nenhum talhão cadastrado
-                      </td>
-                    </tr>
+      {/* Tabela */}
+      <TableContainer component={Paper} elevation={0}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 600 }}>Fazenda</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Talhão</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Área (ha)</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Irrigado</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>Ações</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {plots.map((pl) => (
+              <TableRow key={pl.id} hover>
+                <TableCell>
+                  {properties.find((pp) => pp.id === pl.property_id)?.name ?? pl.property_id}
+                </TableCell>
+                <TableCell>{pl.name}</TableCell>
+                <TableCell>{pl.area_ha ?? "—"}</TableCell>
+                <TableCell>
+                  {pl.irrigated ? (
+                    <Chip label="Sim" color="info" size="small" />
+                  ) : (
+                    "—"
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+                </TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => deletePlot(pl.id)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {plots.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <Typography color="text.secondary">
+                    Nenhum talhão cadastrado
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* MODAL CADASTRO */}
-      {open && (
-        <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className={`modal-content ${theme === "dark" ? "bg-dark text-light" : ""}`}>
-              <div className="modal-header border-0">
-                <h5 className="modal-title">Novo Talhão</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setOpen(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Propriedade</label>
-                <DarkSelect
-                  name="property_id"
-                  value={form.property_id}
-                  placeholder="Selecione uma propriedade"
-                  options={[
-                    { value: "", label: "Selecione uma propriedade" },
-                    ...properties.map((p) => ({
-                      value: String(p.id),
-                      label: p.name,
-                    })),
-                  ]}
-                  onChange={handleChange as any}
-                />
+      {/* Modal de Cadastro */}
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Novo Talhão
+          </Typography>
+          <IconButton onClick={() => setOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            select
+            fullWidth
+            label="Propriedade"
+            name="property_id"
+            value={form.property_id}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="">Selecione uma propriedade</MenuItem>
+            {properties.map((p) => (
+              <MenuItem key={p.id} value={String(p.id)}>
+                {p.name}
+              </MenuItem>
+            ))}
+          </TextField>
 
-                <label className="form-label mt-3">Nome do Talhão</label>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="form-control"
-                />
+          <TextField
+            fullWidth
+            label="Nome do Talhão"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          />
 
-                <label className="form-label mt-3">Área (ha)</label>
-                <input
-                  name="area_ha"
-                  value={form.area_ha}
-                  onChange={handleChange}
-                  className="form-control"
-                />
+          <TextField
+            fullWidth
+            label="Área (ha)"
+            name="area_ha"
+            type="number"
+            value={form.area_ha}
+            onChange={handleChange}
+            sx={{ mb: 2 }}
+          />
 
-                <div className="form-check mt-3">
-                  <input
-                    type="checkbox"
-                    name="irrigated"
-                    checked={form.irrigated}
-                    onChange={handleChange as any}
-                    className="form-check-input"
-                    id="irrigatedCheck"
-                  />
-                  <label className="form-check-label" htmlFor="irrigatedCheck">
-                    Irrigado
-                  </label>
-                </div>
-              </div>
-              <div className="modal-footer border-0">
-                <button className="btn btn-secondary" onClick={() => setOpen(false)}>
-                  Cancelar
-                </button>
-                <button
-                  className="btn btn-success"
-                  onClick={createPlot}
-                  disabled={submitting}
-                >
-                  {submitting ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="irrigated"
+                checked={form.irrigated}
+                onChange={handleChange}
+              />
+            }
+            label="Irrigado"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpen(false)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={createPlot}
+            disabled={submitting}
+          >
+            {submitting ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

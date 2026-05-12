@@ -1,6 +1,23 @@
 // src/components/VisitPhotos.tsx
 
 import React, { useEffect, useState, useCallback } from "react";
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  IconButton,
+  Paper,
+  Stack,
+} from "@mui/material";
+import {
+  CameraAlt as CameraIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Save as SaveIcon,
+  SwapHoriz as SwapIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
 import { getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import EXIF from "exif-js";
@@ -423,205 +440,223 @@ const VisitPhotos: React.FC<Props> = ({
   // Render
   // ======================================================
   return (
-    <div className="col-12 mt-3">
-      <label className="form-label fw-semibold">📸 Fotos</label>
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+        📸 Fotos
+      </Typography>
 
       {isMobileApp ? (
-        <button className="btn btn-primary w-100" onClick={handleCameraCapture}>
-          📸 Tirar Foto
-        </button>
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<CameraIcon />}
+          onClick={handleCameraCapture}
+        >
+          Tirar Foto
+        </Button>
       ) : (
-        <input
+        <TextField
           type="file"
-          multiple
-          accept="image/*"
-          className="form-control"
+          fullWidth
+          size="small"
+          slotProps={{
+            htmlInput: { multiple: true, accept: "image/*" },
+          }}
           onChange={handleSelectFiles}
         />
       )}
 
       {/* Previews de novas fotos (ainda não salvas) */}
-{previews.length > 0 && (
-  <div className="mt-3">
-    <label className="form-label fw-semibold">
-      {savedPhotos.length > 0 ? "🆕 Novas fotos" : "📸 Fotos"}
-    </label>
+      {previews.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            {savedPhotos.length > 0 ? "🆕 Novas fotos" : "📸 Fotos"}
+          </Typography>
 
-    <div className="d-flex flex-wrap gap-3">
-      {previews.map((src, idx) => (
-        <div key={idx} style={{ width: 130 }}>
-          <img
-            src={src}
-            style={{
-              width: "130px",
-              height: "130px",
-              objectFit: "cover",
-              borderRadius: 10,
-            }}
-          />
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }} useFlexGap>
+            {previews.map((src, idx) => (
+              <Box key={idx} sx={{ width: 130 }}>
+                <Box
+                  component="img"
+                  src={src}
+                  sx={{
+                    width: 130,
+                    height: 130,
+                    objectFit: "cover",
+                    borderRadius: 2,
+                  }}
+                />
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="Legenda..."
+                  value={captions[idx] || ""}
+                  onChange={(e) => {
+                    const arr = [...captions];
+                    arr[idx] = e.target.value;
+                    setCaptions(arr);
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
 
-          <input
-            type="text"
-            placeholder="Legenda..."
-            className="form-control form-control-sm mt-1"
-            value={captions[idx] || ""}
-            onChange={(e) => {
-              const arr = [...captions];
-              arr[idx] = e.target.value;
-              setCaptions(arr);
-            }}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+      {/* Fotos salvas (online + offline) */}
+      {savedPhotos.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            {previews.length > 0 ? "📁 Fotos salvas" : "📸 Fotos"}
+          </Typography>
 
-{/* Fotos salvas (online + offline) */}
-{savedPhotos.length > 0 && (
-  <div className="mt-4">
-    <label className="form-label fw-semibold">
-      {previews.length > 0 ? "📁 Fotos" : "📸 Fotos"}
-    </label>
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }} useFlexGap>
+            {savedPhotos.map((p) => (
+              <Box key={p.id ?? p.url ?? p.dataUrl ?? Math.random()} sx={{ width: 130 }}>
+                <Box
+                  component="img"
+                  src={resolveSrc(p)}
+                  sx={{
+                    width: 130,
+                    height: 130,
+                    objectFit: "cover",
+                    borderRadius: 2,
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    mt: 0.5,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={p.caption || ""}
+                >
+                  {p.caption || <span style={{ opacity: 0.5 }}>Sem legenda</span>}
+                </Typography>
 
-    <div className="d-flex flex-wrap gap-3">
-      {savedPhotos.map((p) => (
-        <div key={p.id ?? p.url ?? p.dataUrl ?? Math.random()} style={{ width: 130 }}>
-          <img
-            src={resolveSrc(p)}
-            style={{
-              width: "130px",
-              height: "130px",
-              objectFit: "cover",
-              borderRadius: 10,
-            }}
-          />
-
-          <div className="small mt-1 text-truncate" title={p.caption || ""}>
-            {p.caption || <span className="text-muted">Sem legenda</span>}
-          </div>
-
-          <div className="d-flex gap-1 mt-1">
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light flex-grow-1"
-              onClick={() => openEditPanel(p)}
-            >
-              ✏️ Editar
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              title="Excluir"
-              onClick={() => {
-                toastConfirm("Deseja realmente excluir esta foto?", () => {
-                  setSavedPhotos((prev) => prev.filter((x) => x.id !== p.id));
-                  effectiveOnDelete?.(p);
-                  if (editingPhoto?.id === p.id) setEditingPhoto(null);
-                });
-              }}
-              disabled={!effectiveOnDelete}
-            >
-              🗑
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-
+                <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => openEditPanel(p)}
+                    sx={{ flex: 1, minWidth: 0 }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </Button>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      toastConfirm("Deseja realmente excluir esta foto?", () => {
+                        setSavedPhotos((prev) => prev.filter((x) => x.id !== p.id));
+                        effectiveOnDelete?.(p);
+                        if (editingPhoto?.id === p.id) setEditingPhoto(null);
+                      });
+                    }}
+                    disabled={!effectiveOnDelete}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
 
       {/* Painel de edição de foto salva */}
       {editingPhoto && (
-        <div
-          className="mt-4 p-3 rounded"
-          style={{
-            border: "1px solid var(--border, #444)",
-            background: "rgba(0,0,0,0.35)",
-          }}
+        <Paper
+          variant="outlined"
+          sx={{ mt: 3, p: 2 }}
         >
-          <h6 className="fw-semibold mb-3">Editar foto selecionada</h6>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+            Editar foto selecionada
+          </Typography>
 
-          <div className="d-flex flex-wrap gap-3 align-items-start">
-            <div>
-              <img
-                src={
-                  editPreview ||
-                  editingPhoto.dataUrl ||
-                  editingPhoto.url ||
-                  ""
-                }
-                style={{
-                  width: "180px",
-                  height: "180px",
-                  objectFit: "cover",
-                  borderRadius: 12,
-                }}
-              />
-            </div>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <Box
+              component="img"
+              src={editPreview || editingPhoto.dataUrl || editingPhoto.url || ""}
+              sx={{
+                width: 180,
+                height: 180,
+                objectFit: "cover",
+                borderRadius: 2,
+              }}
+            />
 
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <label className="form-label fw-semibold">Legenda</label>
-              <input
-                type="text"
-                className="form-control mb-2"
+            <Box sx={{ flex: 1, minWidth: 220 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Legenda"
                 value={editCaption}
                 onChange={(e) => setEditCaption(e.target.value)}
+                sx={{ mb: 2 }}
               />
 
-              <label className="form-label fw-semibold">
-                Substituir imagem (opcional)
-              </label>
-              <input
+              <TextField
+                fullWidth
+                size="small"
                 type="file"
-                accept="image/*"
-                className="form-control form-control-sm mb-3"
+                label="Substituir imagem (opcional)"
+                slotProps={{
+                  htmlInput: { accept: "image/*" },
+                  inputLabel: { shrink: true },
+                }}
                 onChange={handleEditFileChange}
+                sx={{ mb: 2 }}
               />
 
-              <div className="d-flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="btn btn-success btn-sm"
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }} useFlexGap>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="success"
+                  startIcon={<SaveIcon />}
                   onClick={handleSaveCaption}
                 >
-                  💾 Salvar legenda
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-warning btn-sm"
+                  Salvar
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="warning"
+                  startIcon={<SwapIcon />}
                   onClick={handleReplacePhoto}
                   disabled={!effectiveOnReplace}
                 >
-                  🔁 Substituir foto
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
+                  Substituir
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteIcon />}
                   onClick={handleDeletePhoto}
                   disabled={!effectiveOnDelete}
                 >
-                  🗑 Excluir foto
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
+                  Excluir
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<CloseIcon />}
                   onClick={() => setEditingPhoto(null)}
                 >
-                  ✕ Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                  Cancelar
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 };
 

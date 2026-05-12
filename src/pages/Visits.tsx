@@ -17,6 +17,10 @@ import {
   Paper,
   InputAdornment,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -132,8 +136,6 @@ const Visits: React.FC = () => {
 
   const [filterStart, setFilterStart] = useState("");
   const [filterEnd, setFilterEnd] = useState("");
-
-  const theme = document.body.getAttribute("data-theme") || "light";
 
   // Modal-resumo
   const [summary, setSummary] = useState<SummaryState>(null);
@@ -856,104 +858,78 @@ const Visits: React.FC = () => {
         })}
       </Stack>
 
-      {/* MODAL DE RESUMO */}
+      {/* MODAL DE RESUMO - MUI */}
       {summary?.open && (
-        <div
-          className="modal fade show d-block"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-          onClick={() => setSummary(null)}
+        <Dialog
+          open={summary.open}
+          onClose={() => setSummary(null)}
+          maxWidth="md"
+          fullWidth
         >
-          <div
-            className="modal-dialog modal-dialog-centered modal-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="modal-content"
-              style={{
-                background: theme === "dark" ? "var(--panel)" : "#fff",
-                color: "var(--text)",
-              }}
-            >
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  Resumo do Acompanhamento – {summary.header.clientName}
-                </h5>
-                <button
-                  className="btn-close"
-                  onClick={() => setSummary(null)}
-                />
-              </div>
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Resumo do Acompanhamento – {summary.header.clientName}
+            </Typography>
+            <IconButton onClick={() => setSummary(null)} size="small">
+              <ClearIcon />
+            </IconButton>
+          </DialogTitle>
 
-              <div className="modal-body">
-                <div className="mb-3" style={{ fontSize: "0.9rem" }}>
-                  <div>
-                    <strong>Fazenda:</strong> {summary.header.propertyName}
-                  </div>
-                  <div>
-                    <strong>Talhão:</strong> {summary.header.plotName}
-                  </div>
-                  <div>
-                    <strong>Cultura / Variedade:</strong>{" "}
-                    {summary.header.culture} {summary.header.variety}
-                  </div>
-                </div>
+          <DialogContent dividers>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2"><strong>Fazenda:</strong> {summary.header.propertyName}</Typography>
+              <Typography variant="body2"><strong>Talhão:</strong> {summary.header.plotName}</Typography>
+              <Typography variant="body2"><strong>Cultura / Variedade:</strong> {summary.header.culture} {summary.header.variety}</Typography>
+            </Box>
 
-                {summary.visits.map((v) => (
-                  <div
-                    key={v.id}
-                    className="p-3 mb-2 rounded shadow-sm"
-                    style={{
-                      background: "var(--input-bg)",
-                      borderLeft:
-                        (v.photos?.length ?? 0) > 0
-                          ? "4px solid #28a745"
-                          : "4px solid #ccc",
-                    }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center">
-                      <strong>{formatDateBR(v.date)}</strong>
-
-                      {(v.photos?.length ?? 0) > 0 && (
-                        <button
-                          className="btn btn-outline-success btn-sm"
-                          style={{ padding: "2px 8px", fontSize: "0.75rem" }}
-                          onClick={() => {
-                            setSummary(null); // fecha o modal
-                            setTimeout(() => {
-                              setCarousel({
-                                open: true,
-                                photos: v.photos || [],
-                              });
-                            }, 150);
-                          }}
-                        >
-                          Ver fotos
-                        </button>
-                      )}
-                    </div>
-
-                    <div>{v.recommendation}</div>
-
-                    {(v.photos?.length ?? 0) > 0 && (
-                      <div className="mt-1" style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-                        📸 {(v.photos?.length ?? 0)} fotos
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setSummary(null)}
+            <Stack spacing={1.5}>
+              {summary.visits.map((v) => (
+                <Paper
+                  key={v.id}
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    borderLeft: (v.photos?.length ?? 0) > 0 ? "4px solid" : "4px solid",
+                    borderLeftColor: (v.photos?.length ?? 0) > 0 ? "success.main" : "grey.300",
+                  }}
                 >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {formatDateBR(v.date)}
+                    </Typography>
+                    {(v.photos?.length ?? 0) > 0 && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        onClick={() => {
+                          setSummary(null);
+                          setTimeout(() => {
+                            setCarousel({ open: true, photos: v.photos || [] });
+                          }, 150);
+                        }}
+                      >
+                        Ver fotos
+                      </Button>
+                    )}
+                  </Box>
+                  <Typography variant="body2">{v.recommendation}</Typography>
+                  {(v.photos?.length ?? 0) > 0 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                      📸 {v.photos?.length} fotos
+                    </Typography>
+                  )}
+                </Paper>
+              ))}
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => setSummary(null)} color="inherit">
+              Fechar
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
 
       {/* CARROSSEL DE FOTOS (STORIES) */}
