@@ -34,8 +34,10 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   MyLocation as LocationIcon,
+  Map as MapIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
+import LocationPicker from "../components/LocationPicker";
 import { fetchWithCache } from "../utils/offlineSync";
 import { notify, confirm as toastConfirm } from "../utils/toast";
 
@@ -73,6 +75,7 @@ const Properties: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [openProp, setOpenProp] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [openPlot, setOpenPlot] = useState(false);
   const [openPlanting, setOpenPlanting] = useState(false);
   const [editingProp, setEditingProp] = useState<Property | null>(null);
@@ -693,14 +696,23 @@ const Properties: React.FC = () => {
                 />
               </Grid>
             </Grid>
-            <Button
-              variant="outlined"
-              startIcon={<LocationIcon />}
-              onClick={fillCurrentLocation}
-              sx={{ alignSelf: "flex-start" }}
-            >
-              Usar localização atual
-            </Button>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                startIcon={<LocationIcon />}
+                onClick={fillCurrentLocation}
+              >
+                GPS Atual
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<MapIcon />}
+                onClick={() => setMapPickerOpen(true)}
+              >
+                Selecionar no Mapa
+              </Button>
+            </Box>
             <TextField
               label="Área (ha)"
               value={propForm.area_ha}
@@ -842,6 +854,24 @@ const Properties: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Location Picker Map */}
+      <LocationPicker
+        open={mapPickerOpen}
+        onClose={() => setMapPickerOpen(false)}
+        onSelect={(lat, lng) => {
+          setPropForm((f) => ({
+            ...f,
+            latitude: String(lat),
+            longitude: String(lng),
+          }));
+          localStorage.setItem("lastLocation", JSON.stringify({ latitude: lat, longitude: lng }));
+          notify.success(`Localização selecionada: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }}
+        initialLat={propForm.latitude ? parseFloat(propForm.latitude) : undefined}
+        initialLng={propForm.longitude ? parseFloat(propForm.longitude) : undefined}
+        title="Selecionar Localização da Propriedade"
+      />
     </Box>
   );
 };

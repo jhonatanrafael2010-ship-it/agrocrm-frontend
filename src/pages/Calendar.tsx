@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
   MyLocation as LocationIcon,
+  Map as MapIcon,
   Sync as SyncIcon,
   Delete as DeleteIcon,
   CheckCircle as CheckIcon,
@@ -48,6 +49,7 @@ import {
 // import { FileOpener } from '@awesome-cordova-plugins/file-opener';
 // import { Capacitor } from '@capacitor/core';
 import VisitPhotos from "../components/VisitPhotos";
+import LocationPicker from "../components/LocationPicker";
 import {
   fetchWithCache,
   createVisitWithSync,
@@ -342,6 +344,7 @@ const CalendarPage: React.FC = () => {
 
   // modal
   const [open, setOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [form, setForm] = useState({
     id: null as number | null,
     date: "",
@@ -2647,22 +2650,31 @@ useEffect(() => {
 
               {/* Localização */}
               <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" } }}>
-                <Button
-                  variant="outlined"
-                  color="info"
-                  startIcon={<LocationIcon />}
-                  onClick={handleGetLocation}
-                >
-                  Capturar Localização
-                </Button>
-                {form.latitude && form.longitude && (
-                  <Chip
-                    label={`${form.latitude.toFixed(5)}, ${form.longitude.toFixed(5)}`}
-                    size="small"
-                    color="success"
-                    sx={{ ml: 1 }}
-                  />
-                )}
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+                  <Button
+                    variant="outlined"
+                    color="info"
+                    startIcon={<LocationIcon />}
+                    onClick={handleGetLocation}
+                  >
+                    GPS Atual
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<MapIcon />}
+                    onClick={() => setMapPickerOpen(true)}
+                  >
+                    Selecionar no Mapa
+                  </Button>
+                  {form.latitude && form.longitude && (
+                    <Chip
+                      label={`${form.latitude.toFixed(5)}, ${form.longitude.toFixed(5)}`}
+                      size="small"
+                      color="success"
+                    />
+                  )}
+                </Box>
               </Box>
 
               {/* Fenologia */}
@@ -2870,6 +2882,20 @@ useEffect(() => {
           </IconButton>
         </Box>
       </Dialog>
+
+      {/* Location Picker Map */}
+      <LocationPicker
+        open={mapPickerOpen}
+        onClose={() => setMapPickerOpen(false)}
+        onSelect={(lat, lng) => {
+          setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
+          localStorage.setItem("lastLocation", JSON.stringify({ latitude: lat, longitude: lng }));
+          notify.success(`Localização selecionada: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }}
+        initialLat={form.latitude || undefined}
+        initialLng={form.longitude || undefined}
+        title="Selecionar Localização da Visita"
+      />
     </Box>
   );
 };
