@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Card,
@@ -275,10 +275,10 @@ const Visits: React.FC = () => {
   }
 
   // ============================================================
-  // 🧩 AGRUPAMENTO — COM TIPAGEM CORRETA
+  // 🧩 AGRUPAMENTO — COM MEMOIZAÇÃO PARA PERFORMANCE
   // ============================================================
-  function buildGroups(): Record<string, Visit[]> {
-    const groups: Record<string, Visit[]> = {};
+  const groups = useMemo(() => {
+    const result: Record<string, Visit[]> = {};
 
     visits
       ?.filter((v) => {
@@ -330,12 +330,12 @@ const Visits: React.FC = () => {
           ? `plant-${v.planting_id}`
           : `${v.client_id}-${v.property_id}-${v.plot_id}-${v.variety || ""}`;
 
-        if (!groups[groupId]) groups[groupId] = [];
-        groups[groupId].push(v);
+        if (!result[groupId]) result[groupId] = [];
+        result[groupId].push(v);
       });
 
     // Ordenar cada grupo por data
-    Object.values(groups).forEach((arr) => {
+    Object.values(result).forEach((arr) => {
       arr.sort(
         (a, b) =>
           new Date(a.date || "1900-01-01").getTime() -
@@ -343,10 +343,15 @@ const Visits: React.FC = () => {
       );
     });
 
-    return groups;
-  }
+    return result;
+  }, [visits, filterClient, filterStart, filterEnd, selectedConsultant, selectedCulture, selectedVariety, consultants]);
 
-  const groups = buildGroups();
+  // Lista de clientes filtrada (memoizada)
+  const filteredClients = useMemo(() => {
+    if (!clientSearch) return [];
+    const search = clientSearch.toLowerCase();
+    return clients.filter((c) => c.name.toLowerCase().includes(search)).slice(0, 10);
+  }, [clients, clientSearch]);
 
   function toggleGroup(id: string) {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -541,7 +546,7 @@ const Visits: React.FC = () => {
         </Stack>
 
         {/* Autocomplete dropdown para cliente */}
-        {clientSearch && (
+        {filteredClients.length > 0 && (
           <Paper
             sx={{
               position: "absolute",
@@ -552,20 +557,17 @@ const Visits: React.FC = () => {
               width: 200,
             }}
           >
-            {clients
-              .filter((c) => c.name.toLowerCase().includes(clientSearch.toLowerCase()))
-              .slice(0, 10)
-              .map((c) => (
-                <MenuItem
-                  key={c.id}
-                  onClick={() => {
-                    setFilterClient(String(c.id));
-                    setClientSearch(c.name);
-                  }}
-                >
-                  {c.name}
-                </MenuItem>
-              ))}
+            {filteredClients.map((c) => (
+              <MenuItem
+                key={c.id}
+                onClick={() => {
+                  setFilterClient(String(c.id));
+                  setClientSearch(c.name);
+                }}
+              >
+                {c.name}
+              </MenuItem>
+            ))}
           </Paper>
         )}
       </Paper>
