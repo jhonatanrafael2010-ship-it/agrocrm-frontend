@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Card,
@@ -9,19 +9,19 @@ import {
   Button,
   TextField,
   MenuItem,
-  MenuList,
   Collapse,
   Stack,
   Divider,
   Avatar,
   LinearProgress,
   Paper,
-  InputAdornment,
   Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Autocomplete,
+  createFilterOptions,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -37,7 +37,6 @@ import {
   Place as PlaceIcon,
   Person as PersonIcon,
   PhotoCamera as PhotoIcon,
-  Search as SearchIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
@@ -100,6 +99,12 @@ type Visit = {
 };
 
 type Client = { id: number; name: string };
+
+const clientFilterOptions = createFilterOptions<Client>({
+  matchFrom: "any",
+  limit: 10,
+});
+
 type Property = { id: number; name: string };
 type Plot = { id: number; name: string };
 type Consultant = { id: number; name: string };
@@ -132,19 +137,7 @@ const Visits: React.FC = () => {
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedCulture, setSelectedCulture] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
-  const [clientSearchInput, setClientSearchInput] = useState("");
-  const [clientSearch, setClientSearch] = useState("");
-  const [filterClient, setFilterClient] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClientSearchChange = useCallback((value: string) => {
-    setClientSearchInput(value);
-    setFilterClient("");
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setClientSearch(value);
-    }, 300);
-  }, []);
+  const [filterClient, setFilterClient] = useState<Client | null>(null);
 
   const [filterStart, setFilterStart] = useState("");
   const [filterEnd, setFilterEnd] = useState("");
@@ -297,7 +290,7 @@ const Visits: React.FC = () => {
         if (!v) return false;
 
         // Cliente
-        if (filterClient && String(v.client_id) !== filterClient) return false;
+        if (filterClient && v.client_id !== filterClient.id) return false;
 
         // Datas
         const dateClean = v.date ? v.date.split("T")[0] : null;
@@ -357,13 +350,6 @@ const Visits: React.FC = () => {
 
     return result;
   }, [visits, filterClient, filterStart, filterEnd, selectedConsultant, selectedCulture, selectedVariety, consultants]);
-
-  // Lista de clientes filtrada (memoizada)
-  const filteredClients = useMemo(() => {
-    if (!clientSearch) return [];
-    const search = clientSearch.toLowerCase();
-    return clients.filter((c) => c.name.toLowerCase().includes(search)).slice(0, 10);
-  }, [clients, clientSearch]);
 
   function toggleGroup(id: string) {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -483,22 +469,17 @@ const Visits: React.FC = () => {
             slotProps={{ inputLabel: { shrink: true } }}
             sx={{ minWidth: 140 }}
           />
-          <TextField
-            label="Cliente"
+          <Autocomplete
             size="small"
-            value={clientSearchInput}
-            onChange={(e) => handleClientSearchChange(e.target.value)}
-            placeholder="Buscar cliente..."
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ minWidth: 180 }}
+            options={clients}
+            filterOptions={clientFilterOptions}
+            getOptionLabel={(option) => option.name}
+            value={filterClient}
+            onChange={(_, newValue) => setFilterClient(newValue)}
+            sx={{ minWidth: 200 }}
+            renderInput={(params) => (
+              <TextField {...params} label="Cliente" placeholder="Buscar cliente..." />
+            )}
           />
           <TextField
             select
@@ -547,9 +528,7 @@ const Visits: React.FC = () => {
               setSelectedConsultant("");
               setSelectedCulture("");
               setSelectedVariety("");
-              setClientSearchInput("");
-              setClientSearch("");
-              setFilterClient("");
+              setFilterClient(null);
               setFilterStart("");
               setFilterEnd("");
             }}
@@ -557,35 +536,6 @@ const Visits: React.FC = () => {
             Limpar
           </Button>
         </Stack>
-
-        {/* Autocomplete dropdown para cliente */}
-        {filteredClients.length > 0 && !filterClient && (
-          <Paper
-            sx={{
-              position: "absolute",
-              zIndex: 10,
-              mt: 1,
-              maxHeight: 200,
-              overflow: "auto",
-              width: 200,
-            }}
-          >
-            <MenuList>
-              {filteredClients.map((c) => (
-                <MenuItem
-                  key={c.id}
-                  onClick={() => {
-                    setFilterClient(String(c.id));
-                    setClientSearchInput(c.name);
-                    setClientSearch(c.name);
-                  }}
-                >
-                  {c.name}
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Paper>
-        )}
       </Paper>
 
       {/* Loading */}
