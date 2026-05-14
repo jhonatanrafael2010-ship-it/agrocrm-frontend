@@ -18,6 +18,7 @@ import {
   DialogActions,
   Divider,
   Autocomplete,
+  createFilterOptions,
   Tooltip,
   useMediaQuery,
   useTheme,
@@ -42,6 +43,12 @@ import { fetchWithCache } from "../utils/offlineSync";
 import { notify } from "../utils/toast";
 
 type Client = { id: number; name: string };
+
+const clientFilterOptions = createFilterOptions<Client>({
+  matchFrom: "any",
+  limit: 15,
+});
+
 type Property = { id: number; name: string; client_id: number };
 type Plot = { id: number; name: string; property_id: number };
 type Planting = {
@@ -630,6 +637,7 @@ const VisitLinking: React.FC = () => {
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
           <Autocomplete
             options={clients.slice().sort((a, b) => a.name.localeCompare(b.name))}
+            filterOptions={clientFilterOptions}
             getOptionLabel={(option) => option.name}
             value={clients.find((c) => String(c.id) === selectedClient) || null}
             onChange={(_, newValue) => {

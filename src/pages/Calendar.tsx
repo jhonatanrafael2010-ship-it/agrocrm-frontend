@@ -31,6 +31,7 @@ import {
   TableRow,
   Fab,
   Autocomplete,
+  createFilterOptions,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -156,6 +157,11 @@ type Plot = { id: number; property_id: number; name: string };
 type Culture = { id: number; name: string };
 type Variety = { id: number; name: string; culture: string };
 type Consultant = { id: number; name: string };
+
+const clientFilterOptions = createFilterOptions<Client>({
+  matchFrom: "any",
+  limit: 15,
+});
 
 type Photo = {
   id: number;
@@ -2151,6 +2157,7 @@ useEffect(() => {
           <Autocomplete
             size="small"
             options={clients}
+            filterOptions={clientFilterOptions}
             getOptionLabel={(option) => option.name}
             value={clients.find((c) => String(c.id) === selectedClient) || null}
             onChange={(_, newValue) => {
@@ -2517,6 +2524,7 @@ useEffect(() => {
                 <Autocomplete
                   size="small"
                   options={clients}
+                  filterOptions={clientFilterOptions}
                   getOptionLabel={(option) => option.name}
                   value={clients.find((c) => String(c.id) === form.client_id) || null}
                   onChange={(_, newValue) => {
