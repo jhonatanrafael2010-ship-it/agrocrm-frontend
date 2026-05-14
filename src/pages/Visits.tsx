@@ -139,6 +139,7 @@ const Visits: React.FC = () => {
 
   const handleClientSearchChange = useCallback((value: string) => {
     setClientSearchInput(value);
+    setFilterClient("");
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setClientSearch(value);
@@ -558,7 +559,7 @@ const Visits: React.FC = () => {
         </Stack>
 
         {/* Autocomplete dropdown para cliente */}
-        {filteredClients.length > 0 && (
+        {filteredClients.length > 0 && !filterClient && (
           <Paper
             sx={{
               position: "absolute",
