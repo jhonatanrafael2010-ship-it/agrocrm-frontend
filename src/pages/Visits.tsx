@@ -9,6 +9,7 @@ import {
   Button,
   TextField,
   MenuItem,
+  MenuList,
   Collapse,
   Stack,
   Divider,
@@ -568,18 +569,20 @@ const Visits: React.FC = () => {
               width: 200,
             }}
           >
-            {filteredClients.map((c) => (
-              <MenuItem
-                key={c.id}
-                onClick={() => {
-                  setFilterClient(String(c.id));
-                  setClientSearchInput(c.name);
-                  setClientSearch(c.name);
-                }}
-              >
-                {c.name}
-              </MenuItem>
-            ))}
+            <MenuList>
+              {filteredClients.map((c) => (
+                <MenuItem
+                  key={c.id}
+                  onClick={() => {
+                    setFilterClient(String(c.id));
+                    setClientSearchInput(c.name);
+                    setClientSearch(c.name);
+                  }}
+                >
+                  {c.name}
+                </MenuItem>
+              ))}
+            </MenuList>
           </Paper>
         )}
       </Paper>
