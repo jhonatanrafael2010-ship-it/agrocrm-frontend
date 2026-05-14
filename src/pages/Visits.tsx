@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import {
   Box,
   Card,
@@ -131,8 +131,18 @@ const Visits: React.FC = () => {
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedCulture, setSelectedCulture] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
+  const [clientSearchInput, setClientSearchInput] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const [filterClient, setFilterClient] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClientSearchChange = useCallback((value: string) => {
+    setClientSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setClientSearch(value);
+    }, 300);
+  }, []);
 
   const [filterStart, setFilterStart] = useState("");
   const [filterEnd, setFilterEnd] = useState("");
@@ -474,8 +484,8 @@ const Visits: React.FC = () => {
           <TextField
             label="Cliente"
             size="small"
-            value={clientSearch}
-            onChange={(e) => setClientSearch(e.target.value)}
+            value={clientSearchInput}
+            onChange={(e) => handleClientSearchChange(e.target.value)}
             placeholder="Buscar cliente..."
             slotProps={{
               input: {
@@ -535,6 +545,7 @@ const Visits: React.FC = () => {
               setSelectedConsultant("");
               setSelectedCulture("");
               setSelectedVariety("");
+              setClientSearchInput("");
               setClientSearch("");
               setFilterClient("");
               setFilterStart("");
@@ -562,6 +573,7 @@ const Visits: React.FC = () => {
                 key={c.id}
                 onClick={() => {
                   setFilterClient(String(c.id));
+                  setClientSearchInput(c.name);
                   setClientSearch(c.name);
                 }}
               >
