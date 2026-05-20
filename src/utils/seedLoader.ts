@@ -4,7 +4,8 @@
 // Isso permite o app funcionar 100% offline desde a primeira abertura
 // ============================================================
 
-import { getAllFromStore, putManyInStore, StoreName } from "./indexedDB";
+import type { StoreName } from "./indexedDB";
+import { getAllFromStore, putManyInStore } from "./indexedDB";
 
 const SEED_URL = "/seed/data.json";
 const SEED_LOADED_KEY = "agrocrm_seed_loaded";
