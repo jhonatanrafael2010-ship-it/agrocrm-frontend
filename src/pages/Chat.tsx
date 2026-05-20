@@ -672,9 +672,10 @@ const Chat: React.FC = () => {
         <TextField
           inputRef={textareaRef}
           multiline
-          maxRows={4}
+          minRows={1}
+          maxRows={6}
           fullWidth
-          placeholder="Digite uma mensagem..."
+          placeholder={isNativeApp() ? "Digite a visita..." : "Digite... (Shift+Enter = nova linha)"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -690,6 +691,9 @@ const Chat: React.FC = () => {
               "&.Mui-focused": {
                 bgcolor: "background.paper",
               },
+            },
+            "& textarea": {
+              lineHeight: 1.4,
             },
           }}
         />
@@ -732,7 +736,8 @@ const Chat: React.FC = () => {
         <DialogContent>
           <List disablePadding>
             {[
-              { label: "Lançar visita", example: '"Cliente João Silva" e siga o fluxo guiado' },
+              { label: "Lançar visita completa", example: "Nome do cliente, cultura, fenologia, data e observações (uma por linha)" },
+              { label: "Lançar visita simples", example: '"Cliente João Silva" e siga o fluxo guiado' },
               { label: "Agenda da semana", example: '"Agenda da semana" · "visitas da semana"' },
               { label: "Rotina do dia", example: '"Meu dia" · "agenda de hoje"' },
               { label: "Visitas do mês", example: '"Visitas do mês"' },
@@ -751,6 +756,12 @@ const Chat: React.FC = () => {
               </Box>
             ))}
           </List>
+          <Box sx={{ mt: 2, p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
+            <Typography variant="caption" color="text.secondary" component="div">
+              <strong>Dica de formatação:</strong> Use uma linha para cada informação.
+              {!isNativeApp() && " Shift+Enter adiciona nova linha."}
+            </Typography>
+          </Box>
           <Button fullWidth variant="outlined" onClick={() => setShowHelp(false)} sx={{ mt: 2 }}>
             Fechar
           </Button>
