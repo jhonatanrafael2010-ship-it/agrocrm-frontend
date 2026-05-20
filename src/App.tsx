@@ -21,6 +21,7 @@ import {
   syncPendingPhotos,
   preloadOfflineData,
 } from "./utils/offlineSync";
+import { loadSeedIfNeeded } from "./utils/seedLoader";
 
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
@@ -107,10 +108,23 @@ function App() {
   }, [offline]);
 
   // ============================================================
-  // ⚡ Pré-carregar cache offline
+  // ⚡ Carregar seed (se IndexedDB vazio) + pré-carregar cache
   // ============================================================
   useEffect(() => {
-    preloadOfflineData(API_BASE);
+    async function initOfflineData() {
+      // 1. Se IndexedDB vazio, carrega dados seed embutidos no APK
+      const seedLoaded = await loadSeedIfNeeded();
+      if (seedLoaded) {
+        console.log("📦 Dados seed carregados - app pronto para uso offline!");
+      }
+
+      // 2. Se online, atualiza com dados frescos da API
+      if (navigator.onLine) {
+        await preloadOfflineData(API_BASE);
+      }
+    }
+
+    initOfflineData();
   }, []);
 
   // ============================================================

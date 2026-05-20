@@ -1,0 +1,29 @@
+{
+  "version": "20260520_1500",
+  "generated_at": "2026-05-20T15:00:00",
+  "consultants": [
+    {"id": 1, "name": "Jhonatan"},
+    {"id": 2, "name": "Felipe"},
+    {"id": 3, "name": "Everton"},
+    {"id": 4, "name": "Pedro"},
+    {"id": 5, "name": "Alexandre"}
+  ],
+  "clients": [],
+  "properties": [],
+  "plots": [],
+  "cultures": [
+    {"id": 1, "name": "Soja"},
+    {"id": 2, "name": "Milho"},
+    {"id": 3, "name": "Algodão"}
+  ],
+  "varieties": [],
+  "_stats": {
+    "consultants": 5,
+    "clients": 0,
+    "properties": 0,
+    "plots": 0,
+    "cultures": 3,
+    "varieties": 0
+  },
+  "_note": "Este é um seed inicial. Execute GET /api/admin/generate-seed para gerar com dados completos do banco."
+}
