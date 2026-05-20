@@ -642,6 +642,53 @@ const CalendarPage: React.FC = () => {
     sessionStorage.removeItem("edit_visit_id");
   }, [events]);
 
+  // Verifica se deve abrir modal de nova visita com dados pré-preenchidos (vindo de Acompanhamentos)
+  useEffect(() => {
+    const shouldOpen = sessionStorage.getItem("open_new_visit_modal");
+    const prefillRaw = sessionStorage.getItem("prefill_visit");
+
+    if (shouldOpen && prefillRaw) {
+      try {
+        const prefill = JSON.parse(prefillRaw);
+        const today = new Date();
+        const todayStr = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
+
+        setForm({
+          id: null,
+          date: todayStr,
+          originalDate: "",
+          dateBackup: todayStr,
+          client_id: String(prefill.client_id || ""),
+          property_id: String(prefill.property_id || ""),
+          plot_id: String(prefill.plot_id || ""),
+          consultant_id: String(prefill.consultant_id || ""),
+          culture: prefill.culture || "",
+          variety: prefill.variety || "",
+          fenologia_real: "",
+          genPheno: false,
+          savedPhotos: [],
+          clientSearch: "",
+          latitude: null,
+          longitude: null,
+          status: "planned",
+          recommendation: "",
+          products: [],
+        });
+
+        setSelectedFiles([]);
+        setSelectedCaptions([]);
+        setTab("dados");
+        setOpen(true);
+      } catch (e) {
+        console.error("Erro ao parsear prefill_visit:", e);
+      }
+
+      sessionStorage.removeItem("open_new_visit_modal");
+      sessionStorage.removeItem("prefill_visit");
+      sessionStorage.removeItem("open_section");
+    }
+  }, []);
+
   // Reagir a "visits-synced" (quando voltar internet)
   useEffect(() => {
     const handleSync = async () => {

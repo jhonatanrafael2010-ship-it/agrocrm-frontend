@@ -143,6 +143,18 @@ const Chat: React.FC = () => {
     };
   }, []);
 
+  // Verifica se há mensagem pré-preenchida (vindo de Acompanhamentos)
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("prefill_chat_message");
+    if (prefill) {
+      setInput(prefill);
+      sessionStorage.removeItem("prefill_chat_message");
+      sessionStorage.removeItem("open_section");
+      // Foca no input após preencher
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
+  }, []);
+
   const consultantName = consultantOptions.find((c) => String(c.id) === consultantId)?.name || "";
 
   function showToast(msg: string) {

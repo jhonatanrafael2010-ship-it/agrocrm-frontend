@@ -9,6 +9,9 @@ import {
   Button,
   TextField,
   MenuItem,
+  Menu,
+  ListItemIcon,
+  ListItemText,
   Collapse,
   Stack,
   Divider,
@@ -37,6 +40,8 @@ import {
   Place as PlaceIcon,
   Person as PersonIcon,
   PhotoCamera as PhotoIcon,
+  OpenInNew as OpenInNewIcon,
+  Chat as ChatIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
@@ -154,6 +159,22 @@ const Visits: React.FC = () => {
     photos: [],
   });
 
+  // Menu "Adicionar visita a este ciclo"
+  const [addCycleMenu, setAddCycleMenu] = useState<{
+    anchorEl: HTMLElement | null;
+    cycleData: {
+      client_id: number;
+      client_name: string;
+      property_id?: number;
+      property_name?: string;
+      plot_id?: number;
+      plot_name?: string;
+      culture?: string;
+      variety?: string;
+      consultant_id?: number;
+    } | null;
+  }>({ anchorEl: null, cycleData: null });
+
 
 
   // ============================================================
@@ -243,7 +264,43 @@ const Visits: React.FC = () => {
 
     window.location.href = "/";
   }
-  
+
+  function handleAddToCycleModal() {
+    const data = addCycleMenu.cycleData;
+    if (!data) return;
+
+    // Salva dados para pré-preencher o modal de nova visita
+    sessionStorage.setItem("prefill_visit", JSON.stringify({
+      client_id: data.client_id,
+      property_id: data.property_id,
+      plot_id: data.plot_id,
+      culture: data.culture,
+      variety: data.variety,
+      consultant_id: data.consultant_id,
+    }));
+    sessionStorage.setItem("open_section", "calendar");
+    sessionStorage.setItem("open_new_visit_modal", "true");
+
+    setAddCycleMenu({ anchorEl: null, cycleData: null });
+    window.location.href = "/";
+  }
+
+  function handleAddToCycleAssistant() {
+    const data = addCycleMenu.cycleData;
+    if (!data) return;
+
+    // Monta mensagem inicial para o assistente
+    const parts = [data.client_name];
+    if (data.property_name) parts.push(`Faz. ${data.property_name}`);
+    if (data.culture) parts.push(data.culture);
+    if (data.variety) parts.push(data.variety);
+
+    sessionStorage.setItem("prefill_chat_message", parts.join("\n"));
+    sessionStorage.setItem("open_section", "chat");
+
+    setAddCycleMenu({ anchorEl: null, cycleData: null });
+    window.location.href = "/";
+  }
 
   async function handleDelete(id?: number) {
     if (!id) return;
@@ -812,9 +869,21 @@ const Visits: React.FC = () => {
                       color: "text.secondary",
                       "&:hover": { borderColor: "primary.main", color: "primary.main" },
                     }}
-                    onClick={() => {
-                      // TODO: Abrir modal ou ir para assistente com contexto
-                      alert("Em breve: adicionar visita a este ciclo");
+                    onClick={(e) => {
+                      setAddCycleMenu({
+                        anchorEl: e.currentTarget,
+                        cycleData: {
+                          client_id: first.client_id,
+                          client_name: clientName,
+                          property_id: first.property_id,
+                          property_name: propertyName,
+                          plot_id: first.plot_id,
+                          plot_name: plotName,
+                          culture: first.culture,
+                          variety: first.variety,
+                          consultant_id: first.consultant_id,
+                        },
+                      });
                     }}
                   >
                     Adicionar visita a este ciclo
@@ -907,6 +976,28 @@ const Visits: React.FC = () => {
           onClose={() => setCarousel({ open: false, photos: [] })}
         />
       )}
+
+      {/* MENU: Adicionar visita a este ciclo */}
+      <Menu
+        anchorEl={addCycleMenu.anchorEl}
+        open={Boolean(addCycleMenu.anchorEl)}
+        onClose={() => setAddCycleMenu({ anchorEl: null, cycleData: null })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <MenuItem onClick={handleAddToCycleModal}>
+          <ListItemIcon>
+            <OpenInNewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Abrir no modal</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleAddToCycleAssistant}>
+          <ListItemIcon>
+            <ChatIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Abrir no assistente</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

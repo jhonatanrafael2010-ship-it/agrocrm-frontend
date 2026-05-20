@@ -50,6 +50,10 @@ function App() {
       return "Oportunidades";
     }
 
+    if (openSection === "chat") {
+      return "Assistente";
+    }
+
     return "Dashboard";
   });
   const [isMobileApp, setIsMobileApp] = useState(false);
