@@ -129,6 +129,8 @@ type SummaryState = {
   };
 } | null;
 
+const PAGE_SIZE = 50;
+
 const Visits: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -138,6 +140,12 @@ const Visits: React.FC = () => {
   const [cultures, setCultures] = useState<Culture[]>([]);
   const [varieties, setVarieties] = useState<Variety[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalVisits, setTotalVisits] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [selectedConsultant, setSelectedConsultant] = useState("");
   const [selectedCulture, setSelectedCulture] = useState("");
@@ -184,12 +192,16 @@ const Visits: React.FC = () => {
     setLoading(true);
 
     try {
-      let vs: Visit[] = [];
+      // Load first page with pagination
+      let visitsData: { items: Visit[]; total: number; has_next: boolean; page: number } | null = null;
 
       try {
-        vs = (await fetchWithCache(`${API_BASE}visits?scope=all`, "visits")) as Visit[];
+        const res = await fetch(`${API_BASE}visits?scope=all&page=1&limit=${PAGE_SIZE}`);
+        if (res.ok) {
+          visitsData = await res.json();
+        }
       } catch {
-        vs = [];
+        visitsData = null;
       }
 
       const [cs, ps, pls, cons, cul, vars] = await Promise.all([
@@ -201,7 +213,17 @@ const Visits: React.FC = () => {
         fetchWithCache(`${API_BASE}varieties`, "varieties"),
       ]);
 
-      setVisits(vs);
+      if (visitsData && visitsData.items) {
+        setVisits(visitsData.items);
+        setTotalVisits(visitsData.total);
+        setHasMore(visitsData.has_next);
+        setCurrentPage(1);
+      } else {
+        setVisits([]);
+        setTotalVisits(0);
+        setHasMore(false);
+      }
+
       setClients(cs);
       setProperties(ps);
       setPlots(pls);
@@ -210,6 +232,29 @@ const Visits: React.FC = () => {
       setVarieties(vars);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    try {
+      const res = await fetch(`${API_BASE}visits?scope=all&page=${nextPage}&limit=${PAGE_SIZE}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.items) {
+          setVisits((prev) => [...prev, ...data.items]);
+          setCurrentPage(nextPage);
+          setHasMore(data.has_next);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar mais visitas:", err);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -895,6 +940,27 @@ const Visits: React.FC = () => {
           );
         })}
       </Stack>
+
+      {/* Botão Carregar Mais */}
+      {hasMore && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3, mb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={loadMore}
+            disabled={loadingMore}
+            startIcon={loadingMore ? undefined : <ExpandMoreIcon />}
+            sx={{ minWidth: 200 }}
+          >
+            {loadingMore ? "Carregando..." : `Carregar mais (${visits.length} de ${totalVisits})`}
+          </Button>
+        </Box>
+      )}
+
+      {!hasMore && visits.length > 0 && (
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mt: 2, mb: 2 }}>
+          {totalVisits} visitas carregadas
+        </Typography>
+      )}
 
       {/* MODAL DE RESUMO - MUI */}
       {summary?.open && (
