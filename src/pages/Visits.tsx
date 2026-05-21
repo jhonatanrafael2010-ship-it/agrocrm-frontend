@@ -870,6 +870,7 @@ const Visits: React.FC = () => {
                       "&:hover": { borderColor: "primary.main", color: "primary.main" },
                     }}
                     onClick={(e) => {
+                      if (!first.client_id) return;
                       setAddCycleMenu({
                         anchorEl: e.currentTarget,
                         cycleData: {
