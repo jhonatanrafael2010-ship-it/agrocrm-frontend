@@ -81,13 +81,16 @@ type StaleClient = {
   days_since: number;
 };
 
-type UpcomingVisit = {
-  id: number;
-  date: string | null;
+type VisitSuggestion = {
   client_id: number;
   client_name: string;
   culture: string;
-  consultant_id: number;
+  current_stage: string;
+  next_stage: string;
+  days_since_visit: number;
+  days_until_next: number;
+  priority: "high" | "medium";
+  reason: "phenology" | "stale";
 };
 
 type VisitByMonth = {
@@ -105,8 +108,8 @@ type PhenologyStage = {
 type DashboardInsights = {
   stale_clients: StaleClient[];
   stale_clients_count: number;
-  upcoming_visits: UpcomingVisit[];
-  upcoming_visits_count: number;
+  visit_suggestions: VisitSuggestion[];
+  visit_suggestions_count: number;
   visits_by_month: VisitByMonth[];
   phenology_stages: PhenologyStage[];
 };
@@ -407,30 +410,58 @@ const Dashboard: React.FC = () => {
                 </Grid>
               )}
 
-              {/* Próximas visitas da semana */}
+              {/* Sugestões de visitas */}
               <Grid size={{ xs: 12, md: insights.stale_clients.length > 0 ? 6 : 12 }}>
                 <Card sx={{ height: "100%", borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
                   <CardContent>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                       <Calendar size={20} color="#3b82f6" />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Próximas visitas (7 dias)
+                        Sugestões de visitas
                       </Typography>
-                      <Chip label={insights.upcoming_visits.length} size="small" color="primary" />
+                      <Chip label={insights.visit_suggestions.length} size="small" color="primary" />
                     </Box>
-                    {insights.upcoming_visits.length > 0 ? (
+                    {insights.visit_suggestions.length > 0 ? (
                       <List dense disablePadding>
-                        {insights.upcoming_visits.slice(0, 5).map((visit, idx) => (
-                          <React.Fragment key={visit.id}>
+                        {insights.visit_suggestions.slice(0, 5).map((sug, idx) => (
+                          <React.Fragment key={`${sug.client_id}-${idx}`}>
                             {idx > 0 && <Divider />}
-                            <ListItem sx={{ px: 0 }}>
+                            <ListItem
+                              sx={{ px: 0, cursor: "pointer", "&:hover": { bgcolor: "action.hover" } }}
+                              onClick={() => {
+                                sessionStorage.setItem("prefill_visit", JSON.stringify({ client_id: sug.client_id }));
+                                sessionStorage.setItem("open_section", "calendar");
+                                sessionStorage.setItem("open_new_visit_modal", "true");
+                                window.location.href = "/";
+                              }}
+                            >
                               <ListItemIcon sx={{ minWidth: 36 }}>
-                                <CalendarIcon color="primary" fontSize="small" />
+                                <Avatar
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    bgcolor: sug.priority === "high" ? "error.light" : "primary.light",
+                                    fontSize: 11,
+                                  }}
+                                >
+                                  {sug.current_stage || "!"}
+                                </Avatar>
                               </ListItemIcon>
                               <ListItemText
-                                primary={visit.client_name}
-                                secondary={`${visit.date ? new Date(visit.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }) : "—"}${visit.culture ? ` • ${visit.culture}` : ""}`}
+                                primary={sug.client_name}
+                                secondary={
+                                  sug.reason === "phenology"
+                                    ? `${sug.culture} ${sug.current_stage} → ${sug.next_stage} (${sug.days_until_next === 0 ? "agora" : `em ~${sug.days_until_next}d`})`
+                                    : `Sem visita há ${sug.days_since_visit} dias`
+                                }
                                 slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+                              />
+                              <Chip
+                                label="Visitar"
+                                size="small"
+                                variant="outlined"
+                                color={sug.priority === "high" ? "error" : "primary"}
+                                sx={{ fontSize: 11 }}
                               />
                             </ListItem>
                           </React.Fragment>
@@ -438,7 +469,7 @@ const Dashboard: React.FC = () => {
                       </List>
                     ) : (
                       <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
-                        Nenhuma visita planejada para os próximos 7 dias
+                        Nenhuma sugestão no momento
                       </Typography>
                     )}
                   </CardContent>
