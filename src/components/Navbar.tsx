@@ -26,6 +26,7 @@ import {
   Link as LinkIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
+import SyncStatus from "./SyncStatus";
 
 type Props = {
   activeItem?: string;
@@ -221,6 +222,7 @@ const Navbar: React.FC<Props> = ({
               {userRole}
             </Typography>
           </Box>
+          <SyncStatus />
           <Tooltip title="Configurações">
             <IconButton
               size="small"
