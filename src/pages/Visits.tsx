@@ -129,7 +129,7 @@ type SummaryState = {
   };
 } | null;
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 200;
 
 const Visits: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
