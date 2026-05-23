@@ -129,7 +129,7 @@ type SummaryState = {
   };
 } | null;
 
-const PAGE_SIZE = 200;
+const GROUPS_PER_PAGE = 20;
 
 const Visits: React.FC = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -141,10 +141,11 @@ const Visits: React.FC = () => {
   const [varieties, setVarieties] = useState<Variety[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination state
+  // Pagination state (por grupos)
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [totalVisits, setTotalVisits] = useState(0);
+  const [totalGroups, setTotalGroups] = useState(0);
+  const [loadedGroups, setLoadedGroups] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const [selectedConsultant, setSelectedConsultant] = useState("");
@@ -193,7 +194,7 @@ const Visits: React.FC = () => {
     const params = new URLSearchParams();
     params.set("scope", "all");
     params.set("page", String(page));
-    params.set("limit", String(PAGE_SIZE));
+    params.set("limit", String(GROUPS_PER_PAGE));
     if (filterClient) params.set("client_id", String(filterClient.id));
     if (selectedConsultant) params.set("consultant_id", selectedConsultant);
     if (selectedCulture) params.set("culture", selectedCulture);
@@ -214,10 +215,12 @@ const Visits: React.FC = () => {
         if (data && data.items) {
           if (append) {
             setVisits((prev) => [...prev, ...data.items]);
+            setLoadedGroups((prev) => prev + (data.groups_in_page || 0));
           } else {
             setVisits(data.items);
+            setLoadedGroups(data.groups_in_page || 0);
           }
-          setTotalVisits(data.total);
+          setTotalGroups(data.total_groups || 0);
           setHasMore(data.has_next);
           setCurrentPage(page);
         }
@@ -915,14 +918,14 @@ const Visits: React.FC = () => {
             startIcon={loadingMore ? undefined : <ExpandMoreIcon />}
             sx={{ minWidth: 200 }}
           >
-            {loadingMore ? "Carregando..." : `Carregar mais (${visits.length} de ${totalVisits})`}
+            {loadingMore ? "Carregando..." : `Carregar mais (${loadedGroups} de ${totalGroups} ciclos)`}
           </Button>
         </Box>
       )}
 
       {!hasMore && visits.length > 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mt: 2, mb: 2 }}>
-          {totalVisits} visitas carregadas
+          {Object.keys(groups).length} ciclos carregados ({visits.length} visitas)
         </Typography>
       )}
 
