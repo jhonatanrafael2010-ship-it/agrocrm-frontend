@@ -1,5 +1,5 @@
 // src/components/SyncStatus.tsx
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Badge,
   IconButton,
@@ -33,9 +33,8 @@ import { API_BASE } from "../config";
 import {
   getAllPendingVisits,
   getAllPendingPhotos,
-  PendingVisit,
-  PendingPhoto,
 } from "../utils/indexedDB";
+import type { PendingVisit, PendingPhoto } from "../utils/indexedDB";
 import { syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
 
 type SyncState = "synced" | "pending" | "syncing" | "offline" | "error";
