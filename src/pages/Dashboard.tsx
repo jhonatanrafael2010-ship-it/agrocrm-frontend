@@ -20,12 +20,19 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemIcon,
   Divider,
+  Alert,
+  AlertTitle,
+  Stack,
+  Avatar,
+  LinearProgress,
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
+  CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
-import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, Loader2 } from "lucide-react";
+import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, Loader2, AlertTriangle, Calendar, BarChart3, Leaf } from "lucide-react";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import KPICard from "../components/KPICard";
@@ -69,6 +76,43 @@ type Opportunity = {
   estimated_value?: number;
   created_at?: string;
   client_id?: number;
+};
+
+type StaleClient = {
+  id: number;
+  name: string;
+  last_visit: string | null;
+  days_since: number;
+};
+
+type UpcomingVisit = {
+  id: number;
+  date: string | null;
+  client_id: number;
+  client_name: string;
+  culture: string;
+  consultant_id: number;
+};
+
+type VisitByMonth = {
+  year: number;
+  month: number;
+  label: string;
+  count: number;
+};
+
+type PhenologyStage = {
+  stage: string;
+  count: number;
+};
+
+type DashboardInsights = {
+  stale_clients: StaleClient[];
+  stale_clients_count: number;
+  upcoming_visits: UpcomingVisit[];
+  upcoming_visits_count: number;
+  visits_by_month: VisitByMonth[];
+  phenology_stages: PhenologyStage[];
 };
 
 function formatDate(d: Date) {
@@ -120,6 +164,7 @@ const Dashboard: React.FC = () => {
   const [plantings, setPlantings] = useState<Planting[]>([]);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [opps, setOpps] = useState<Opportunity[]>([]);
+  const [insights, setInsights] = useState<DashboardInsights | null>(null);
 
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -158,8 +203,9 @@ const Dashboard: React.FC = () => {
       fetchWithCache(`${API_BASE}plantings`, "plantings"),
       fetchWithCache(`${API_BASE}visits?scope=all`, "visits"),
       fetchWithCache(`${API_BASE}opportunities`, "opportunities"),
+      fetch(`${API_BASE}dashboard/insights`).then(r => r.ok ? r.json() : null).catch(() => null),
     ])
-      .then(([cs, ps, pls, pts, vs, os]) => {
+      .then(([cs, ps, pls, pts, vs, os, ins]) => {
         if (!mounted) return;
 
         setClients(cs || []);
@@ -168,6 +214,7 @@ const Dashboard: React.FC = () => {
         setPlantings(pts || []);
         setVisits(vs || []);
         setOpps(os || []);
+        if (ins?.ok) setInsights(ins);
 
         const cMap: Record<number, string> = {};
         (cs || []).forEach((c: any) => (cMap[c.id] = c.name));
@@ -309,6 +356,181 @@ const Dashboard: React.FC = () => {
               <KPICard icon={Briefcase} label="Oportunidades" value={opps.length} variant="rose" subtitle="Pipeline ativo" />
             </Grid>
           </Grid>
+
+          {/* Insights Section */}
+          {insights && (
+            <Grid container spacing={2} sx={{ mb: 4 }}>
+              {/* Clientes sem visita há 30+ dias */}
+              {insights.stale_clients.length > 0 && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Card sx={{ height: "100%", borderLeft: "4px solid", borderLeftColor: "warning.main" }}>
+                    <CardContent>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                        <AlertTriangle size={20} color="#f59e0b" />
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Clientes sem visita há 30+ dias
+                        </Typography>
+                        <Chip label={insights.stale_clients.length} size="small" color="warning" />
+                      </Box>
+                      <List dense disablePadding>
+                        {insights.stale_clients.slice(0, 5).map((client, idx) => (
+                          <React.Fragment key={client.id}>
+                            {idx > 0 && <Divider />}
+                            <ListItem
+                              sx={{ px: 0, cursor: "pointer", "&:hover": { bgcolor: "action.hover" } }}
+                              onClick={() => {
+                                sessionStorage.setItem("prefill_visit", JSON.stringify({ client_id: client.id }));
+                                sessionStorage.setItem("open_section", "calendar");
+                                sessionStorage.setItem("open_new_visit_modal", "true");
+                                window.location.href = "/";
+                              }}
+                            >
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                <Avatar sx={{ width: 28, height: 28, bgcolor: "warning.light", fontSize: 12 }}>
+                                  {client.name.charAt(0)}
+                                </Avatar>
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={client.name}
+                                secondary={`${client.days_since} dias sem visita`}
+                                slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+                              />
+                              <Chip
+                                label="Agendar"
+                                size="small"
+                                variant="outlined"
+                                color="warning"
+                                sx={{ fontSize: 11 }}
+                              />
+                            </ListItem>
+                          </React.Fragment>
+                        ))}
+                      </List>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
+
+              {/* Próximas visitas da semana */}
+              <Grid size={{ xs: 12, md: insights.stale_clients.length > 0 ? 6 : 12 }}>
+                <Card sx={{ height: "100%", borderLeft: "4px solid", borderLeftColor: "primary.main" }}>
+                  <CardContent>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                      <Calendar size={20} color="#3b82f6" />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Próximas visitas (7 dias)
+                      </Typography>
+                      <Chip label={insights.upcoming_visits.length} size="small" color="primary" />
+                    </Box>
+                    {insights.upcoming_visits.length > 0 ? (
+                      <List dense disablePadding>
+                        {insights.upcoming_visits.slice(0, 5).map((visit, idx) => (
+                          <React.Fragment key={visit.id}>
+                            {idx > 0 && <Divider />}
+                            <ListItem sx={{ px: 0 }}>
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                <CalendarIcon color="primary" fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={visit.client_name}
+                                secondary={`${visit.date ? new Date(visit.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }) : "—"}${visit.culture ? ` • ${visit.culture}` : ""}`}
+                                slotProps={{ primary: { sx: { fontWeight: 500 } } }}
+                              />
+                            </ListItem>
+                          </React.Fragment>
+                        ))}
+                      </List>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
+                        Nenhuma visita planejada para os próximos 7 dias
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Gráfico de visitas por mês */}
+              {insights.visits_by_month.length > 0 && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Card>
+                    <CardContent>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                        <BarChart3 size={20} color="#8b5cf6" />
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Visitas por mês
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, height: 120 }}>
+                        {insights.visits_by_month.map((m) => {
+                          const maxCount = Math.max(...insights.visits_by_month.map(x => x.count), 1);
+                          const heightPercent = (m.count / maxCount) * 100;
+                          return (
+                            <Box
+                              key={m.label}
+                              sx={{
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                {m.count}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  width: "100%",
+                                  height: `${heightPercent}%`,
+                                  minHeight: 4,
+                                  bgcolor: "primary.main",
+                                  borderRadius: 1,
+                                  transition: "height 0.3s",
+                                }}
+                              />
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+                                {m.label.split("/")[0]}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
+
+              {/* Estágios fenológicos */}
+              {insights.phenology_stages.length > 0 && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Card>
+                    <CardContent>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                        <Leaf size={20} color="#22c55e" />
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Fenologia atual (30 dias)
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        {insights.phenology_stages.map((stage) => (
+                          <Chip
+                            key={stage.stage}
+                            label={`${stage.stage}: ${stage.count}`}
+                            size="small"
+                            sx={{
+                              bgcolor: stage.stage.startsWith("R") ? "success.light" : "info.light",
+                              color: stage.stage.startsWith("R") ? "success.dark" : "info.dark",
+                              fontWeight: 600,
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
+            </Grid>
+          )}
 
           {/* Filters Card */}
           <Card sx={{ mb: 4 }}>
