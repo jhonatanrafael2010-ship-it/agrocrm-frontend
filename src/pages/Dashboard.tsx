@@ -26,7 +26,6 @@ import {
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
-  CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
 import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, Loader2, AlertTriangle, Calendar, BarChart3, Leaf } from "lucide-react";
 import { API_BASE } from "../config";
