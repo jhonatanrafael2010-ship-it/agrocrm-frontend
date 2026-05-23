@@ -188,22 +188,52 @@ const Visits: React.FC = () => {
   // ============================================================
   // 🔁 Carregar dados
   // ============================================================
+
+  function buildVisitsUrl(page: number) {
+    const params = new URLSearchParams();
+    params.set("scope", "all");
+    params.set("page", String(page));
+    params.set("limit", String(PAGE_SIZE));
+    if (filterClient) params.set("client_id", String(filterClient.id));
+    if (selectedConsultant) params.set("consultant_id", selectedConsultant);
+    if (selectedCulture) params.set("culture", selectedCulture);
+    if (selectedVariety) params.set("variety", selectedVariety);
+    if (filterStart) params.set("date_start", filterStart);
+    if (filterEnd) params.set("date_end", filterEnd);
+    return `${API_BASE}visits?${params.toString()}`;
+  }
+
+  async function loadVisits(page: number = 1, append: boolean = false) {
+    if (!append) setLoading(true);
+    else setLoadingMore(true);
+
+    try {
+      const res = await fetch(buildVisitsUrl(page));
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.items) {
+          if (append) {
+            setVisits((prev) => [...prev, ...data.items]);
+          } else {
+            setVisits(data.items);
+          }
+          setTotalVisits(data.total);
+          setHasMore(data.has_next);
+          setCurrentPage(page);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar visitas:", err);
+    } finally {
+      if (!append) setLoading(false);
+      else setLoadingMore(false);
+    }
+  }
+
   async function loadData() {
     setLoading(true);
 
     try {
-      // Load first page with pagination
-      let visitsData: { items: Visit[]; total: number; has_next: boolean; page: number } | null = null;
-
-      try {
-        const res = await fetch(`${API_BASE}visits?scope=all&page=1&limit=${PAGE_SIZE}`);
-        if (res.ok) {
-          visitsData = await res.json();
-        }
-      } catch {
-        visitsData = null;
-      }
-
       const [cs, ps, pls, cons, cul, vars] = await Promise.all([
         fetchWithCache(`${API_BASE}clients`, "clients"),
         fetchWithCache(`${API_BASE}properties`, "properties"),
@@ -213,23 +243,14 @@ const Visits: React.FC = () => {
         fetchWithCache(`${API_BASE}varieties`, "varieties"),
       ]);
 
-      if (visitsData && visitsData.items) {
-        setVisits(visitsData.items);
-        setTotalVisits(visitsData.total);
-        setHasMore(visitsData.has_next);
-        setCurrentPage(1);
-      } else {
-        setVisits([]);
-        setTotalVisits(0);
-        setHasMore(false);
-      }
-
       setClients(cs);
       setProperties(ps);
       setPlots(pls);
       setConsultants(cons);
       setCultures(cul);
       setVarieties(vars);
+
+      await loadVisits(1, false);
     } finally {
       setLoading(false);
     }
@@ -237,30 +258,17 @@ const Visits: React.FC = () => {
 
   async function loadMore() {
     if (loadingMore || !hasMore) return;
-
-    setLoadingMore(true);
-    const nextPage = currentPage + 1;
-
-    try {
-      const res = await fetch(`${API_BASE}visits?scope=all&page=${nextPage}&limit=${PAGE_SIZE}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.items) {
-          setVisits((prev) => [...prev, ...data.items]);
-          setCurrentPage(nextPage);
-          setHasMore(data.has_next);
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao carregar mais visitas:", err);
-    } finally {
-      setLoadingMore(false);
-    }
+    await loadVisits(currentPage + 1, true);
   }
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (clients.length === 0) return;
+    loadVisits(1, false);
+  }, [filterClient, selectedConsultant, selectedCulture, selectedVariety, filterStart, filterEnd]);
 
   // ============================================================
   // 🔧 Utilitários
@@ -388,50 +396,7 @@ const Visits: React.FC = () => {
     const result: Record<string, Visit[]> = {};
 
     visits
-      ?.filter((v) => {
-        if (!v) return false;
-
-        // Cliente
-        if (filterClient && v.client_id !== filterClient.id) return false;
-
-        // Datas
-        const dateClean = v.date ? v.date.split("T")[0] : null;
-        const d = dateClean ? new Date(dateClean) : null;
-
-        if (filterStart) {
-          const fs = new Date(filterStart);
-          if (d && d < fs) return false;
-        }
-
-        if (filterEnd) {
-          const fe = new Date(filterEnd);
-          if (d && d > fe) return false;
-        }
-
-        // Consultor
-        if (selectedConsultant) {
-          const consultantById = String(v.consultant_id || "") === selectedConsultant;
-
-          const selectedConsultantName =
-            consultants.find((c) => String(c.id) === selectedConsultant)?.name || "";
-
-          const consultantByName =
-            selectedConsultantName &&
-            String(v.consultant_name || "").trim().toLowerCase() ===
-              selectedConsultantName.trim().toLowerCase();
-
-          if (!consultantById && !consultantByName) return false;
-        }
-
-        // Cultura / Variedade
-        if (selectedCulture && (v.culture || "").trim() !== selectedCulture)
-          return false;
-
-        if (selectedVariety && (v.variety || "").trim() !== selectedVariety)
-          return false;
-
-        return true;
-      })
+      ?.filter((v) => !!v)
       .forEach((v) => {
         const groupId = v.planting_id
           ? `plant-${v.planting_id}`
@@ -441,7 +406,6 @@ const Visits: React.FC = () => {
         result[groupId].push(v);
       });
 
-    // Ordenar cada grupo por data
     Object.values(result).forEach((arr) => {
       arr.sort(
         (a, b) =>
@@ -451,7 +415,7 @@ const Visits: React.FC = () => {
     });
 
     return result;
-  }, [visits, filterClient, filterStart, filterEnd, selectedConsultant, selectedCulture, selectedVariety, consultants]);
+  }, [visits]);
 
   function toggleGroup(id: string) {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
