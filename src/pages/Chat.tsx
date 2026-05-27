@@ -31,7 +31,8 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
-import { fetchWithCache } from "../utils/offlineSync";
+import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+import { parseOfflineMessage, buildOfflineConfirmation } from "../utils/offlineParser";
 
 interface Message {
   id: number;
@@ -117,6 +118,7 @@ const Chat: React.FC = () => {
   const [recording, setRecording] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState("");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -140,6 +142,20 @@ const Chat: React.FC = () => {
   useEffect(() => {
     return () => {
       SpeechRecognition.stop().catch(() => {});
+    };
+  }, []);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
@@ -247,6 +263,39 @@ const Chat: React.FC = () => {
     e.target.value = "";
   }
 
+  async function sendMessageOffline(text: string) {
+    // Parser local para criar visita offline
+    try {
+      const parsed = await parseOfflineMessage(text);
+
+      if (!parsed.client_id && !parsed.client_name) {
+        return "Não consegui identificar o cliente. Por favor, digite o nome do cliente na primeira linha.";
+      }
+
+      // Cria a visita offline
+      const payload = {
+        client_id: parsed.client_id,
+        client_name: parsed.client_name,
+        property_id: parsed.property_id,
+        culture: parsed.culture,
+        variety: parsed.variety,
+        fenologia_real: parsed.fenologia_real,
+        date: parsed.date,
+        recommendation: parsed.recommendation,
+        consultant_id: parseInt(consultantId) || undefined,
+        status: "done",
+        source: "chatbot_offline",
+      };
+
+      await createVisitWithSync(API_BASE, payload);
+
+      return buildOfflineConfirmation(parsed);
+    } catch (err) {
+      console.error("Erro ao criar visita offline:", err);
+      return "Erro ao salvar visita localmente. Tente novamente.";
+    }
+  }
+
   async function sendMessage(text: string) {
     const hasText = text.trim().length > 0;
     const hasPhotos = pendingPhotos.length > 0;
@@ -265,6 +314,24 @@ const Chat: React.FC = () => {
     setPendingPhotos([]);
     setLoading(true);
 
+    // Modo offline: usa parser local
+    if (!navigator.onLine) {
+      const response = await sendMessageOffline(text.trim());
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: "bot",
+          text: response,
+          timestamp: new Date(),
+        },
+      ]);
+      setLoading(false);
+      textareaRef.current?.focus();
+      return;
+    }
+
+    // Modo online: usa API
     try {
       const res = await fetch(`${API_BASE}mobile/chat`, {
         method: "POST",
@@ -292,12 +359,14 @@ const Chat: React.FC = () => {
         },
       ]);
     } catch {
+      // Conexão falhou durante o envio - tenta modo offline
+      const response = await sendMessageOffline(text.trim());
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           role: "bot",
-          text: "Erro de conexão. Tente novamente.",
+          text: response,
           timestamp: new Date(),
         },
       ]);
@@ -478,7 +547,7 @@ const Chat: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  bgcolor: loading ? "#fbbf24" : "#4ade80",
+                  bgcolor: !isOnline ? "#ef4444" : loading ? "#fbbf24" : "#4ade80",
                   animation: loading ? "pulse 1.5s infinite" : "none",
                   "@keyframes pulse": {
                     "0%, 100%": { opacity: 1 },
@@ -487,7 +556,13 @@ const Chat: React.FC = () => {
                 }}
               />
               <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {loading ? "digitando..." : consultantName ? `online · ${consultantName}` : "online"}
+                {!isOnline
+                  ? "offline (texto apenas)"
+                  : loading
+                  ? "digitando..."
+                  : consultantName
+                  ? `online · ${consultantName}`
+                  : "online"}
               </Typography>
             </Box>
           </Box>
@@ -712,13 +787,14 @@ const Chat: React.FC = () => {
 
         <IconButton
           onClick={handleMicStart}
-          disabled={loading}
+          disabled={loading || !isOnline}
+          title={!isOnline ? "Microfone requer conexão" : ""}
           sx={{
             width: 44,
             height: 44,
-            bgcolor: recording ? "error.main" : "action.hover",
+            bgcolor: recording ? "error.main" : !isOnline ? "action.disabledBackground" : "action.hover",
             borderRadius: 3,
-            color: recording ? "white" : "text.secondary",
+            color: recording ? "white" : !isOnline ? "text.disabled" : "text.secondary",
             "&:hover": { bgcolor: recording ? "error.dark" : "action.selected" },
           }}
         >
