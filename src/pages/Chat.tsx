@@ -327,6 +327,15 @@ const Chat: React.FC = () => {
         return "Não consegui identificar o cliente. Por favor, digite o nome do cliente na primeira linha.";
       }
 
+      // Monta observações incluindo CV% se existir
+      let fullRecommendation = parsed.recommendation;
+      if (parsed.cv_percent) {
+        fullRecommendation = `[CV%: ${parsed.cv_percent}]\n${fullRecommendation}`.trim();
+      }
+      if (parsed.estagio) {
+        fullRecommendation = `[Estágio: ${parsed.estagio}]\n${fullRecommendation}`.trim();
+      }
+
       // Cria a visita offline
       const payload = {
         client_id: parsed.client_id,
@@ -335,8 +344,9 @@ const Chat: React.FC = () => {
         culture: parsed.culture,
         variety: parsed.variety,
         fenologia_real: parsed.fenologia_real,
+        visit_purpose: parsed.estagio || undefined,
         date: parsed.date,
-        recommendation: parsed.recommendation,
+        recommendation: fullRecommendation,
         consultant_id: consultantId || undefined,
         status: "done",
         source: "chatbot_offline",
