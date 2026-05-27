@@ -9,8 +9,6 @@ import {
   Typography,
   Divider,
   Avatar,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -21,7 +19,6 @@ import {
   BusinessCenter as BusinessIcon,
   SmartToy as AssistantIcon,
   Logout as LogoutIcon,
-  Settings as SettingsIcon,
   ChevronRight as ChevronRightIcon,
   Link as LinkIcon,
   AdminPanelSettings as AdminIcon,
@@ -240,14 +237,6 @@ const Navbar: React.FC<Props> = ({
             </Typography>
           </Box>
           <SyncStatus />
-          <Tooltip title="Configurações">
-            <IconButton
-              size="small"
-              onClick={() => onNavigate("Configurações")}
-            >
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
         </Box>
 
         <ListItemButton

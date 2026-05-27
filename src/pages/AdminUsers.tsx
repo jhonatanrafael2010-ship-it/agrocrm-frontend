@@ -36,6 +36,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
   Refresh as RefreshIcon,
+  Edit as EditIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { getToken } from "../services/auth";
@@ -65,6 +66,7 @@ const AdminUsers: React.FC = () => {
 
   // Dialog states
   const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState<User | null>(null);
   const [resetPasswordOpen, setResetPasswordOpen] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
 
@@ -164,6 +166,42 @@ const AdminUsers: React.FC = () => {
 
       notify.success("Usuário criado com sucesso");
       setCreateOpen(false);
+      resetForm();
+      loadData();
+    } catch (err) {
+      setFormError("Erro de conexão");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleEditUser() {
+    if (!editOpen) return;
+
+    setFormError("");
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}admin/users/${editOpen.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          consultant_id: formConsultantId ? parseInt(formConsultantId) : null,
+          is_admin: formIsAdmin,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFormError(data.error || "Erro ao editar usuário");
+        return;
+      }
+
+      notify.success(`Usuário ${editOpen.username} atualizado`);
+      setEditOpen(null);
       resetForm();
       loadData();
     } catch (err) {
@@ -366,6 +404,19 @@ const AdminUsers: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Editar">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          resetForm();
+                          setFormConsultantId(user.consultant_id ? String(user.consultant_id) : "");
+                          setFormIsAdmin(user.is_admin);
+                          setEditOpen(user);
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Resetar senha">
                       <IconButton
                         size="small"
@@ -484,6 +535,60 @@ const AdminUsers: React.FC = () => {
           </Button>
           <Button onClick={handleCreateUser} variant="contained" disabled={saving}>
             {saving ? "Criando..." : "Criar Usuário"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editOpen} onClose={() => setEditOpen(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          <EditIcon sx={{ mr: 1, verticalAlign: "middle" }} />
+          Editar Usuário: {editOpen?.username}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            {formError && (
+              <Alert severity="error">{formError}</Alert>
+            )}
+
+            <TextField
+              select
+              label="Vincular a consultor"
+              value={formConsultantId}
+              onChange={(e) => setFormConsultantId(e.target.value)}
+              helperText="O usuário só verá dados deste consultor"
+              fullWidth
+            >
+              <MenuItem value="">Nenhum (acesso geral)</MenuItem>
+              {consultants.map((c) => {
+                const isCurrentUserConsultant = editOpen?.consultant_id === c.id;
+                const isAvailable = !c.has_user || isCurrentUserConsultant;
+                return (
+                  <MenuItem key={c.id} value={String(c.id)} disabled={!isAvailable}>
+                    {c.name} {!isAvailable && "(já vinculado)"}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
+
+            <TextField
+              select
+              label="Tipo de usuário"
+              value={formIsAdmin ? "admin" : "user"}
+              onChange={(e) => setFormIsAdmin(e.target.value === "admin")}
+              fullWidth
+            >
+              <MenuItem value="user">Consultor (acesso limitado)</MenuItem>
+              <MenuItem value="admin">Administrador (acesso total)</MenuItem>
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setEditOpen(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleEditUser} variant="contained" disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
           </Button>
         </DialogActions>
       </Dialog>

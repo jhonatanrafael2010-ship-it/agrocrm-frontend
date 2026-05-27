@@ -15,6 +15,7 @@ import {
   updatePendingPhotosVisitId,
   deleteFromStore,
 } from "./indexedDB";
+import { getToken } from "../services/auth";
 
 const _memCache = new Map<string, { data: any[]; expiresAt: number }>();
 const MEM_TTL_MS = 2 * 60 * 1000; // 2 minutes
@@ -55,7 +56,13 @@ export async function fetchWithCache<T = any>(
   }
 
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, { cache: "no-store", headers });
     if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
 
     const data = await res.json();
@@ -74,9 +81,15 @@ export async function createVisitWithSync(apiBase: string, payload: any) {
   const base = normalizeBaseUrl(apiBase);
 
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${base}/visits`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
 
@@ -167,8 +180,15 @@ export async function syncPendingPhotos(
     }
 
     try {
+      const headers: Record<string, string> = {};
+      const token = getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${base}/visits/${p.visit_id}/photos`, {
         method: "POST",
+        headers,
         body: form,
       });
 
@@ -226,9 +246,15 @@ export async function syncPendingVisits(
         delete bodyToSend.__update;
         delete bodyToSend.visit_id;
 
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        const token = getToken();
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${base}/visits/${visitId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify(bodyToSend),
         });
 
@@ -259,9 +285,15 @@ export async function syncPendingVisits(
 
       if (offlineId) delete bodyToSend.idOffline;
 
+      const postHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      const postToken = getToken();
+      if (postToken) {
+        postHeaders["Authorization"] = `Bearer ${postToken}`;
+      }
+
       const res = await fetch(`${base}/visits`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: postHeaders,
         body: JSON.stringify(bodyToSend),
       });
 

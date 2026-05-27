@@ -30,6 +30,7 @@ import {
 import { Users, Map, Sprout, Wheat, ClipboardList, Briefcase, Loader2, AlertTriangle, Calendar, BarChart3, Leaf } from "lucide-react";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
+import { authFetch } from "../services/auth";
 import KPICard from "../components/KPICard";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -201,7 +202,7 @@ const Dashboard: React.FC = () => {
       fetchWithCache(`${API_BASE}plantings`, "plantings"),
       fetchWithCache(`${API_BASE}visits?scope=all`, "visits"),
       fetchWithCache(`${API_BASE}opportunities`, "opportunities"),
-      fetch(`${API_BASE}dashboard/insights`).then(r => r.ok ? r.json() : null).catch(() => null),
+      authFetch(`${API_BASE}dashboard/insights`).then(r => r.ok ? r.json() : null).catch(() => null),
     ])
       .then(([cs, ps, pls, pts, vs, os, ins]) => {
         if (!mounted) return;
