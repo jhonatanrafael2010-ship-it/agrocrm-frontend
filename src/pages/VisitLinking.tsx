@@ -41,6 +41,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
+import { authFetch } from "../services/auth";
 import { notify } from "../utils/toast";
 
 type Client = { id: number; name: string };
@@ -241,7 +242,7 @@ const VisitLinking: React.FC = () => {
     // Save to backend
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}visits/${visitId}`, {
+      const res = await authFetch(`${API_BASE}visits/${visitId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planting_id: newPlantingId }),
@@ -269,7 +270,7 @@ const VisitLinking: React.FC = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}plantings`, {
+      const res = await authFetch(`${API_BASE}plantings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -299,7 +300,7 @@ const VisitLinking: React.FC = () => {
     if (!deleteVisitConfirm) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}visits/${deleteVisitConfirm.id}`, {
+      const res = await authFetch(`${API_BASE}visits/${deleteVisitConfirm.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Falha ao excluir");
@@ -323,7 +324,7 @@ const VisitLinking: React.FC = () => {
     try {
       // First unlink all visits from this cycle
       for (const visit of cycleVisits) {
-        await fetch(`${API_BASE}visits/${visit.id}`, {
+        await authFetch(`${API_BASE}visits/${visit.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ planting_id: null }),
@@ -331,7 +332,7 @@ const VisitLinking: React.FC = () => {
       }
 
       // Then delete the cycle
-      const res = await fetch(`${API_BASE}plantings/${deleteCycleConfirm.id}`, {
+      const res = await authFetch(`${API_BASE}plantings/${deleteCycleConfirm.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Falha ao excluir ciclo");

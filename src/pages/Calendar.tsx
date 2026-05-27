@@ -58,6 +58,7 @@ import {
   syncPendingVisits,
   syncPendingPhotos,
 } from "../utils/offlineSync";
+import { authFetch } from "../services/auth";
 import { API_BASE } from "../config";
 import {
   savePendingPhoto,
@@ -928,7 +929,7 @@ const handleCreateOrUpdate = async () => {
     // 🔄 Recarrega a visita do backend para atualizar savedPhotos no modal
     if (navigator.onLine) {
       try {
-        const updated = await fetch(`${API_BASE}visits/${visitId}`);
+        const updated = await authFetch(`${API_BASE}visits/${visitId}`);
         if (updated.ok) {
           const data = await updated.json();
           setForm((f) => ({
@@ -1076,7 +1077,7 @@ const handleSavePhotos = async () => {
 
 // 🔄 Atualiza as fotos no modal imediatamente (sem depender do calendário)
 try {
-  const updated = await fetch(`${API_BASE}visits/${visitId}`);
+  const updated = await authFetch(`${API_BASE}visits/${visitId}`);
   if (updated.ok) {
     const data = await updated.json();
     setForm((f) => ({
@@ -1130,7 +1131,7 @@ const handleDeleteSavedPhoto = async (photo: any) => {
 
   // 🟢 ONLINE → API DELETE
   try {
-    const resp = await fetch(`${API_BASE}photos/${photo.id}`, {
+    const resp = await authFetch(`${API_BASE}photos/${photo.id}`, {
       method: "DELETE",
     });
 
@@ -1207,7 +1208,7 @@ const handleReplaceSavedPhoto = async (
   // 🟢 3) ONLINE → enviar nova foto ao backend
   const fd = new FormData();
 
-  const resp = await fetch(`${API_BASE}visits/${visitId}/photos`, {
+  const resp = await authFetch(`${API_BASE}visits/${visitId}/photos`, {
     method: "POST",
     body: fd,
   });
@@ -1218,7 +1219,7 @@ const handleReplaceSavedPhoto = async (
   }
 
   // 🔄 Recarrega visita
-  const updated = await fetch(`${API_BASE}visits/${visitId}`);
+  const updated = await authFetch(`${API_BASE}visits/${visitId}`);
   if (updated.ok) {
     const data = await updated.json();
     setForm((f) => ({
@@ -1259,7 +1260,7 @@ const handleEditSavedPhoto = async (
 
   // 2️⃣ ONLINE → enviar pro backend
   try {
-    const resp = await fetch(`${API_BASE}photos/${photo.id}`, {
+    const resp = await authFetch(`${API_BASE}photos/${photo.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ caption: newCaption }),
@@ -1276,7 +1277,7 @@ const handleEditSavedPhoto = async (
 
       // 🔥🔥🔥 TRECHO QUE FALTAVA: recarregar fotos do backend
       try {
-        const up = await fetch(`${API_BASE}visits/${visitId}`);
+        const up = await authFetch(`${API_BASE}visits/${visitId}`);
         if (up.ok) {
           const data = await up.json();
 
@@ -1328,7 +1329,7 @@ const handleEditSavedPhoto = async (
         // 1️⃣ Se estiver online, apaga do servidor
         if (navigator.onLine) {
           try {
-            await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
+            await authFetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
           } catch {
             console.warn("⚠️ Falha ao excluir no servidor (offline)");
           }

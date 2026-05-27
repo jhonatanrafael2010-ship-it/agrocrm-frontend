@@ -45,6 +45,7 @@ import {
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
+import { authFetch } from "../services/auth";
 import PhotoCarousel from "../components/PhotoCarousel";
 import "../styles/acompanhamento.css";
 
@@ -209,7 +210,7 @@ const Visits: React.FC = () => {
     else setLoadingMore(true);
 
     try {
-      const res = await fetch(buildVisitsUrl(page));
+      const res = await authFetch(buildVisitsUrl(page));
       if (res.ok) {
         const data = await res.json();
         if (data && data.items) {
@@ -362,7 +363,7 @@ const Visits: React.FC = () => {
     if (!id) return;
     if (!confirm("Deseja excluir esta visita?")) return;
 
-    const res = await fetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
+    const res = await authFetch(`${API_BASE}visits/${id}`, { method: "DELETE" });
 
     if (res.ok) {
       invalidateCache(`${API_BASE}visits?scope=all`);
@@ -373,7 +374,7 @@ const Visits: React.FC = () => {
   async function handleMarkDone(v: Visit) {
     if (!v.id) return;
     try {
-      const res = await fetch(`${API_BASE}visits/${v.id}`, {
+      const res = await authFetch(`${API_BASE}visits/${v.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "done" }),
