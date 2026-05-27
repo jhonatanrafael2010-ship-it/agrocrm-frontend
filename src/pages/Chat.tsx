@@ -34,7 +34,7 @@ import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
 import { fetchWithCache, createVisitWithSync, syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
-import { getAllPendingVisits } from "../utils/indexedDB";
+import { getAllPendingVisits, getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { parseOfflineMessage, buildOfflineConfirmation } from "../utils/offlineParser";
 
 interface Message {
@@ -150,11 +150,14 @@ const Chat: React.FC = () => {
     };
   }, []);
 
-  // Verifica pendentes periodicamente
+  // Verifica pendentes periodicamente (visitas + fotos)
   const checkPendingCount = async () => {
     try {
-      const pending = await getAllPendingVisits();
-      setPendingCount(pending.length);
+      const [visits, photos] = await Promise.all([
+        getAllPendingVisits(),
+        getAllPendingPhotos(),
+      ]);
+      setPendingCount(visits.length + photos.length);
     } catch {
       setPendingCount(0);
     }
@@ -322,7 +325,7 @@ const Chat: React.FC = () => {
     e.target.value = "";
   }
 
-  async function sendMessageOffline(text: string) {
+  async function sendMessageOffline(text: string, photos: PendingPhoto[]) {
     // Parser local para criar visita offline
     try {
       const parsed = await parseOfflineMessage(text);
@@ -346,9 +349,24 @@ const Chat: React.FC = () => {
         source: "chatbot_offline",
       };
 
-      await createVisitWithSync(API_BASE, payload);
+      const result = await createVisitWithSync(API_BASE, payload);
+      const visitId = result.id;
 
-      return buildOfflineConfirmation(parsed);
+      // Salva fotos para sincronização posterior
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        await savePendingPhoto({
+          visit_id: visitId,
+          fileName: `foto_offline_${Date.now()}_${i}.jpg`,
+          mime: "image/jpeg",
+          dataUrl: photo.dataUrl,
+          caption: "",
+          synced: false,
+        });
+      }
+
+      const photoMsg = photos.length > 0 ? `\n\n📷 ${photos.length} foto(s) salva(s) para envio.` : "";
+      return buildOfflineConfirmation(parsed) + photoMsg;
     } catch (err) {
       console.error("Erro ao criar visita offline:", err);
       return "Erro ao salvar visita localmente. Tente novamente.";
@@ -375,7 +393,7 @@ const Chat: React.FC = () => {
 
     // Modo offline: usa parser local
     if (!navigator.onLine) {
-      const response = await sendMessageOffline(text.trim());
+      const response = await sendMessageOffline(text.trim(), photosToSend);
       setMessages((prev) => [
         ...prev,
         {
@@ -386,6 +404,7 @@ const Chat: React.FC = () => {
         },
       ]);
       setLoading(false);
+      await checkPendingCount();
       textareaRef.current?.focus();
       return;
     }
@@ -419,7 +438,7 @@ const Chat: React.FC = () => {
       ]);
     } catch {
       // Conexão falhou durante o envio - tenta modo offline
-      const response = await sendMessageOffline(text.trim());
+      const response = await sendMessageOffline(text.trim(), photosToSend);
       setMessages((prev) => [
         ...prev,
         {
@@ -429,6 +448,7 @@ const Chat: React.FC = () => {
           timestamp: new Date(),
         },
       ]);
+      await checkPendingCount();
     } finally {
       setLoading(false);
       textareaRef.current?.focus();
