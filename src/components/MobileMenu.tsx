@@ -25,6 +25,7 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
   Link as LinkIcon,
+  AdminPanelSettings as AdminIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 
@@ -32,6 +33,7 @@ interface MobileMenuProps {
   onNavigate: (route: string) => void;
   activeItem?: string;
   userName?: string;
+  isAdmin?: boolean;
   onLogout?: () => void;
 }
 
@@ -53,7 +55,11 @@ const bottomNavItems = [
   { label: "Menu", icon: <MenuIcon />, route: "_menu", color: "#6b7280" },
 ];
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userName, onLogout }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userName, isAdmin, onLogout }) => {
+  // Adiciona item de Usuários se for admin
+  const allMenuItems = isAdmin
+    ? [...menuItems, { label: "Usuários", icon: <AdminIcon />, route: "Usuários", color: "#ef4444" }]
+    : menuItems;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleNavigate = (route: string) => {
@@ -131,7 +137,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userNam
 
         {/* Lista de navegação */}
         <List sx={{ flex: 1, py: 2, px: 1 }}>
-          {menuItems.map((item) => {
+          {allMenuItems.map((item) => {
             const active = activeItem === item.route;
             return (
               <ListItem key={item.route} disablePadding sx={{ mb: 0.5 }}>

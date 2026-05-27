@@ -24,6 +24,7 @@ import {
   Settings as SettingsIcon,
   ChevronRight as ChevronRightIcon,
   Link as LinkIcon,
+  AdminPanelSettings as AdminIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 import SyncStatus from "./SyncStatus";
@@ -33,6 +34,7 @@ type Props = {
   onNavigate?: (item: string) => void;
   userName?: string;
   userRole?: string;
+  isAdmin?: boolean;
   onLogout?: () => void;
 };
 
@@ -72,8 +74,21 @@ const Navbar: React.FC<Props> = ({
   onNavigate = () => {},
   userName = "Usuário",
   userRole = "Consultor",
+  isAdmin = false,
   onLogout,
 }) => {
+  // Adiciona item de Usuários se for admin
+  const allSections = isAdmin
+    ? [
+        ...sections,
+        {
+          title: "Admin",
+          items: [
+            { label: "Usuários", icon: <AdminIcon />, color: "#ef4444" },
+          ],
+        },
+      ]
+    : sections;
   return (
     <Box
       component="aside"
@@ -119,7 +134,7 @@ const Navbar: React.FC<Props> = ({
 
       {/* Navigation */}
       <Box sx={{ flex: 1, overflowY: "auto", py: 1 }}>
-        {sections.map((section, idx) => (
+        {allSections.map((section, idx) => (
           <Box key={section.title}>
             {idx > 0 && <Divider sx={{ my: 1 }} />}
             <Typography

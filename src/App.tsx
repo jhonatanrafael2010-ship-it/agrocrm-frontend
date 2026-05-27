@@ -11,6 +11,7 @@ import VisitsPage from "./pages/Visits";
 import ChatPage from "./pages/Chat";
 import VisitLinkingPage from "./pages/VisitLinking";
 import LoginPage from "./pages/Login";
+import AdminUsersPage from "./pages/AdminUsers";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -219,6 +220,7 @@ function App() {
               onNavigate={setRoute}
               userName={currentUser?.consultant_name || currentUser?.username || "Usuário"}
               userRole={currentUser?.is_admin ? "Administrador" : "Consultor"}
+              isAdmin={currentUser?.is_admin || false}
               onLogout={handleLogout}
             />
           </div>
@@ -250,6 +252,8 @@ function App() {
               <VisitLinkingPage />
             ) : route === "Assistente" ? (
               <ChatPage />
+            ) : route === "Usuários" && currentUser?.is_admin ? (
+              <AdminUsersPage />
             ) : (
               <Dashboard />
             )}
@@ -263,6 +267,7 @@ function App() {
           onNavigate={setRoute}
           activeItem={route}
           userName={currentUser?.consultant_name || currentUser?.username}
+          isAdmin={currentUser?.is_admin || false}
           onLogout={handleLogout}
         />
       )}
