@@ -36,6 +36,7 @@ import {
   CheckCircle as CheckIcon,
   DragIndicator as DragIcon,
   PhotoCamera as PhotoIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
@@ -98,6 +99,8 @@ const VisitLinking: React.FC = () => {
     plot_id: "",
   });
   const [detailVisit, setDetailVisit] = useState<Visit | null>(null);
+  const [deleteVisitConfirm, setDeleteVisitConfirm] = useState<Visit | null>(null);
+  const [deleteCycleConfirm, setDeleteCycleConfirm] = useState<Planting | null>(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -291,6 +294,64 @@ const VisitLinking: React.FC = () => {
     }
   }
 
+  // Delete visit
+  async function handleDeleteVisit() {
+    if (!deleteVisitConfirm) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}visits/${deleteVisitConfirm.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Falha ao excluir");
+      setVisits((prev) => prev.filter((v) => v.id !== deleteVisitConfirm.id));
+      notify.success("Visita excluída");
+      setDeleteVisitConfirm(null);
+      setDetailVisit(null);
+    } catch (err) {
+      notify.error("Erro ao excluir visita");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Delete cycle (planting)
+  async function handleDeleteCycle() {
+    if (!deleteCycleConfirm) return;
+    const cycleVisits = linkedVisitsByPlanting[deleteCycleConfirm.id] || [];
+
+    setSaving(true);
+    try {
+      // First unlink all visits from this cycle
+      for (const visit of cycleVisits) {
+        await fetch(`${API_BASE}visits/${visit.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planting_id: null }),
+        });
+      }
+
+      // Then delete the cycle
+      const res = await fetch(`${API_BASE}plantings/${deleteCycleConfirm.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Falha ao excluir ciclo");
+
+      // Update local state
+      setPlantings((prev) => prev.filter((p) => p.id !== deleteCycleConfirm.id));
+      setVisits((prev) =>
+        prev.map((v) =>
+          v.planting_id === deleteCycleConfirm.id ? { ...v, planting_id: null } : v
+        )
+      );
+      notify.success("Ciclo excluído");
+      setDeleteCycleConfirm(null);
+    } catch (err) {
+      notify.error("Erro ao excluir ciclo");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function formatDate(dateStr: string | null) {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split("-");
@@ -386,6 +447,7 @@ const VisitLinking: React.FC = () => {
           sx={{ flex: 1, minWidth: 0, cursor: isMobile ? "pointer" : "default" }}
           onClick={isMobile ? () => setDetailVisit(visit) : undefined}
         >
+
           {/* Date & Status */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
             <DateIcon sx={{ fontSize: 16, color: "primary.main" }} />
@@ -445,6 +507,26 @@ const VisitLinking: React.FC = () => {
             </Box>
           )}
         </Box>
+
+        {/* Delete button */}
+        <Tooltip title="Excluir visita" placement="top">
+          <Box
+            component="span"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteVisitConfirm(visit);
+            }}
+            sx={{
+              cursor: "pointer",
+              color: "text.disabled",
+              transition: "color 0.2s",
+              "&:hover": { color: "error.main" },
+              mt: 0.5,
+            }}
+          >
+            <DeleteIcon sx={{ fontSize: 18 }} />
+          </Box>
+        </Tooltip>
       </Box>
     );
 
@@ -511,6 +593,25 @@ const VisitLinking: React.FC = () => {
             color: "white",
             py: 1.5,
           }}
+          action={
+            <Tooltip title="Excluir ciclo">
+              <Box
+                component="span"
+                onClick={() => setDeleteCycleConfirm(planting)}
+                sx={{
+                  cursor: "pointer",
+                  color: "rgba(255,255,255,0.7)",
+                  transition: "color 0.2s",
+                  "&:hover": { color: "white" },
+                  display: "flex",
+                  alignItems: "center",
+                  p: 0.5,
+                }}
+              >
+                <DeleteIcon sx={{ fontSize: 20 }} />
+              </Box>
+            </Tooltip>
+          }
           title={
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
@@ -1057,13 +1158,120 @@ const VisitLinking: React.FC = () => {
                 )}
               </Box>
             </DialogContent>
-            <DialogActions sx={{ px: 3, pb: 2 }}>
+            <DialogActions sx={{ px: 3, pb: 2, justifyContent: "space-between" }}>
+              <Button
+                onClick={() => setDeleteVisitConfirm(detailVisit)}
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Excluir
+              </Button>
               <Button onClick={() => setDetailVisit(null)} variant="contained">
                 Fechar
               </Button>
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      {/* Delete Visit Confirmation Dialog */}
+      <Dialog
+        open={!!deleteVisitConfirm}
+        onClose={() => setDeleteVisitConfirm(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: "error.main", display: "flex", alignItems: "center", gap: 1 }}>
+          <DeleteIcon />
+          Excluir Visita
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja excluir esta visita?
+          </Typography>
+          {deleteVisitConfirm && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {formatDate(deleteVisitConfirm.date) || "Sem data"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {deleteVisitConfirm.culture}
+                {deleteVisitConfirm.variety && ` - ${deleteVisitConfirm.variety}`}
+              </Typography>
+            </Box>
+          )}
+          <Typography variant="caption" color="error" sx={{ display: "block", mt: 2 }}>
+            Esta ação não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeleteVisitConfirm(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteVisit}
+            variant="contained"
+            color="error"
+            disabled={saving}
+          >
+            {saving ? "Excluindo..." : "Excluir"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Cycle Confirmation Dialog */}
+      <Dialog
+        open={!!deleteCycleConfirm}
+        onClose={() => setDeleteCycleConfirm(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: "error.main", display: "flex", alignItems: "center", gap: 1 }}>
+          <DeleteIcon />
+          Excluir Ciclo
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Tem certeza que deseja excluir este ciclo?
+          </Typography>
+          {deleteCycleConfirm && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "success.main" }}>
+                {deleteCycleConfirm.culture || "Sem cultura"}
+                {deleteCycleConfirm.variety && ` - ${deleteCycleConfirm.variety}`}
+              </Typography>
+              {deleteCycleConfirm.planting_date && (
+                <Typography variant="caption" color="text.secondary">
+                  Plantio: {formatDate(deleteCycleConfirm.planting_date)}
+                </Typography>
+              )}
+              {(linkedVisitsByPlanting[deleteCycleConfirm.id]?.length || 0) > 0 && (
+                <Chip
+                  label={`${linkedVisitsByPlanting[deleteCycleConfirm.id].length} visita(s) vinculada(s)`}
+                  size="small"
+                  color="warning"
+                  sx={{ mt: 1 }}
+                />
+              )}
+            </Box>
+          )}
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
+            As visitas vinculadas serão desvinculadas, mas não excluídas.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeleteCycleConfirm(null)} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteCycle}
+            variant="contained"
+            color="error"
+            disabled={saving}
+          >
+            {saving ? "Excluindo..." : "Excluir Ciclo"}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
