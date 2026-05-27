@@ -25,7 +25,6 @@ import {
   Mic as MicIcon,
   MicOff as MicOffIcon,
   Help as HelpIcon,
-  Settings as SettingsIcon,
   Sync as SyncIcon,
 } from "@mui/icons-material";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
@@ -33,9 +32,10 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
-import { fetchWithCache, createVisitWithSync, syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
+import { createVisitWithSync, syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
 import { getAllPendingVisits, getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { parseOfflineMessage, buildOfflineConfirmation } from "../utils/offlineParser";
+import { getUser, getConsultantId as getAuthConsultantId } from "../services/auth";
 
 interface Message {
   id: number;
@@ -64,8 +64,12 @@ function getOrCreateSession(): string {
   return sid;
 }
 
-function getConsultantId(): string {
-  return localStorage.getItem("nutricrm_consultant_id") || "";
+function getConsultantId(): number | null {
+  // Primeiro tenta do login, depois fallback para localStorage antigo
+  const authId = getAuthConsultantId();
+  if (authId) return authId;
+  const legacy = localStorage.getItem("nutricrm_consultant_id");
+  return legacy ? parseInt(legacy) : null;
 }
 
 function loadHistory(): Message[] {
@@ -114,9 +118,11 @@ const Chat: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
-  const [consultantId, setConsultantId] = useState(getConsultantId);
-  const [showConsultantPicker, setShowConsultantPicker] = useState(!getConsultantId());
-  const [consultantOptions, setConsultantOptions] = useState<{ id: number; name: string }[]>([]);
+
+  // Consultant vem do login
+  const consultantId = getConsultantId();
+  const currentUser = getUser();
+  const consultantName = currentUser?.consultant_name || currentUser?.username || "";
 
   const [recording, setRecording] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -138,11 +144,6 @@ const Chat: React.FC = () => {
     saveHistory(messages);
   }, [messages]);
 
-  useEffect(() => {
-    fetchWithCache(`${API_BASE}consultants`, "consultants")
-      .then((data) => setConsultantOptions(data || []))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -233,8 +234,6 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  const consultantName = consultantOptions.find((c) => String(c.id) === consultantId)?.name || "";
-
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(""), 2500);
@@ -269,12 +268,6 @@ const Chat: React.FC = () => {
     } catch {
       showToast("Não foi possível compartilhar.");
     }
-  }
-
-  function saveConsultant(id: string) {
-    localStorage.setItem("nutricrm_consultant_id", id);
-    setConsultantId(id);
-    setShowConsultantPicker(false);
   }
 
   function addPhoto(dataUrl: string) {
@@ -344,7 +337,7 @@ const Chat: React.FC = () => {
         fenologia_real: parsed.fenologia_real,
         date: parsed.date,
         recommendation: parsed.recommendation,
-        consultant_id: parseInt(consultantId) || undefined,
+        consultant_id: consultantId || undefined,
         status: "done",
         source: "chatbot_offline",
       };
@@ -416,7 +409,7 @@ const Chat: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: getOrCreateSession(),
-          consultant_id: parseInt(consultantId) || undefined,
+          consultant_id: consultantId || undefined,
           message: text.trim() || "(foto)",
           photos: photosToSend.map((p, i) => ({
             dataUrl: p.dataUrl,
@@ -541,45 +534,6 @@ const Chat: React.FC = () => {
     );
   }
 
-  if (showConsultantPicker) {
-    return (
-      <Box
-        sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-        }}
-      >
-        <Paper sx={{ p: 4, maxWidth: 400, width: "100%", borderRadius: 3, textAlign: "center" }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-            Quem é você?
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Escolha seu nome para começar
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {consultantOptions.length === 0 ? (
-              <CircularProgress size={24} sx={{ mx: "auto" }} />
-            ) : (
-              consultantOptions.map((c) => (
-                <Button
-                  key={c.id}
-                  variant="outlined"
-                  onClick={() => saveConsultant(String(c.id))}
-                  sx={{ textTransform: "none", fontWeight: 600 }}
-                >
-                  {c.name}
-                </Button>
-              ))
-            )}
-          </Box>
-        </Paper>
-      </Box>
-    );
-  }
-
   return (
     <Box
       sx={{
@@ -679,17 +633,6 @@ const Chat: React.FC = () => {
             }}
           >
             <HelpIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => setShowConsultantPicker(true)}
-            sx={{
-              color: "white",
-              bgcolor: "rgba(255,255,255,0.1)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
-            }}
-          >
-            <SettingsIcon fontSize="small" />
           </IconButton>
         </Box>
       </Paper>

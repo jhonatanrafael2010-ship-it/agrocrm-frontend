@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { lightTheme, darkTheme } from "./theme/muiTheme";
 import Navbar from "./components/Navbar";
@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import VisitsPage from "./pages/Visits";
 import ChatPage from "./pages/Chat";
 import VisitLinkingPage from "./pages/VisitLinking";
+import LoginPage from "./pages/Login";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -25,8 +26,13 @@ import { loadSeedIfNeeded } from "./utils/seedLoader";
 
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
+import { isAuthenticated, getUser, logout } from "./services/auth";
 
 function App() {
+  // Estado de autenticação
+  const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
+  const [currentUser, setCurrentUser] = useState(() => getUser());
+
   const [route, setRoute] = useState<string>(() => {
     const openSection = sessionStorage.getItem("open_section");
 
@@ -65,6 +71,19 @@ function App() {
     if (saved) return saved === "dark";
     return document.body.getAttribute("data-theme") === "dark";
   });
+
+  // Callback de login bem-sucedido
+  const handleLoginSuccess = useCallback(() => {
+    setAuthenticated(true);
+    setCurrentUser(getUser());
+  }, []);
+
+  // Callback de logout
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setAuthenticated(false);
+    setCurrentUser(null);
+  }, []);
 
 
   useEffect(() => {
@@ -176,6 +195,16 @@ function App() {
   // ============================================================
   const muiTheme = isDarkMode ? darkTheme : lightTheme;
 
+  // Se não autenticado, mostra tela de login
+  if (!authenticated) {
+    return (
+      <ThemeProvider theme={muiTheme}>
+        <CssBaseline />
+        <LoginPage onSuccess={handleLoginSuccess} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={muiTheme}>
     <CssBaseline />
@@ -185,7 +214,13 @@ function App() {
         {/* Sidebar desktop */}
         {!isMobileApp && (
           <div className="d-none d-lg-block sidebar-wrapper">
-            <Navbar activeItem={route} onNavigate={setRoute} />
+            <Navbar
+              activeItem={route}
+              onNavigate={setRoute}
+              userName={currentUser?.consultant_name || currentUser?.username || "Usuário"}
+              userRole={currentUser?.is_admin ? "Administrador" : "Consultor"}
+              onLogout={handleLogout}
+            />
           </div>
         )}
 
@@ -224,7 +259,12 @@ function App() {
 
       {/* Mobile Menu (Drawer + BottomNavigation) */}
       {isMobileApp && (
-        <MobileMenu onNavigate={setRoute} activeItem={route} />
+        <MobileMenu
+          onNavigate={setRoute}
+          activeItem={route}
+          userName={currentUser?.consultant_name || currentUser?.username}
+          onLogout={handleLogout}
+        />
       )}
 
       <Toaster

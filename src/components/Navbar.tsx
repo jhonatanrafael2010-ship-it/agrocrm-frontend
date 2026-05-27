@@ -33,6 +33,7 @@ type Props = {
   onNavigate?: (item: string) => void;
   userName?: string;
   userRole?: string;
+  onLogout?: () => void;
 };
 
 const sections = [
@@ -71,6 +72,7 @@ const Navbar: React.FC<Props> = ({
   onNavigate = () => {},
   userName = "Usuário",
   userRole = "Consultor",
+  onLogout,
 }) => {
   return (
     <Box
@@ -234,7 +236,7 @@ const Navbar: React.FC<Props> = ({
         </Box>
 
         <ListItemButton
-          onClick={() => alert("Logout realizado!")}
+          onClick={onLogout}
           sx={{
             borderRadius: 2,
             color: "error.main",

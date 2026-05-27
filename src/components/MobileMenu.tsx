@@ -31,6 +31,8 @@ import logo from "../assets/nutricrm_logo.png";
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
   activeItem?: string;
+  userName?: string;
+  onLogout?: () => void;
 }
 
 const menuItems = [
@@ -51,7 +53,7 @@ const bottomNavItems = [
   { label: "Menu", icon: <MenuIcon />, route: "_menu", color: "#6b7280" },
 ];
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userName, onLogout }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleNavigate = (route: string) => {
@@ -186,10 +188,20 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem }) => {
 
         <Divider />
 
-        {/* Footer com logout */}
+        {/* Footer com usuário e logout */}
         <Box sx={{ p: 2 }}>
+          {userName && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, px: 1 }}>
+              <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36, fontSize: "1rem" }}>
+                {userName.charAt(0).toUpperCase()}
+              </Avatar>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {userName}
+              </Typography>
+            </Box>
+          )}
           <ListItemButton
-            onClick={() => alert("Logout realizado!")}
+            onClick={onLogout}
             sx={{
               borderRadius: 3,
               py: 1.5,
