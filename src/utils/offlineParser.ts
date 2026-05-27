@@ -101,7 +101,7 @@ function extractDate(text: string): string {
 
   // Padrões textuais
   const today = new Date();
-  const textLower = text.toLowerCase();
+  const textLower = normalize(text);
 
   if (textLower.includes("hoje")) {
     return today.toISOString().split("T")[0];
@@ -109,6 +109,42 @@ function extractDate(text: string): string {
   if (textLower.includes("ontem")) {
     today.setDate(today.getDate() - 1);
     return today.toISOString().split("T")[0];
+  }
+  if (textLower.includes("anteontem")) {
+    today.setDate(today.getDate() - 2);
+    return today.toISOString().split("T")[0];
+  }
+
+  // "X dias atrás" / "há X dias" / "X dias atras"
+  const diasAtrasMatch = textLower.match(/(\d+)\s*dias?\s*(atras|atrás|ha)/i) ||
+                         textLower.match(/(ha|há)\s*(\d+)\s*dias?/i);
+  if (diasAtrasMatch) {
+    const dias = parseInt(diasAtrasMatch[1]) || parseInt(diasAtrasMatch[2]);
+    if (dias > 0 && dias <= 365) {
+      today.setDate(today.getDate() - dias);
+      return today.toISOString().split("T")[0];
+    }
+  }
+
+  // Dias da semana (assume semana passada se já passou)
+  const diasSemana: Record<string, number> = {
+    domingo: 0, dom: 0,
+    segunda: 1, seg: 1,
+    terca: 2, ter: 2,
+    quarta: 3, qua: 3,
+    quinta: 4, qui: 4,
+    sexta: 5, sex: 5,
+    sabado: 6, sab: 6,
+  };
+
+  for (const [nome, diaSemana] of Object.entries(diasSemana)) {
+    if (textLower.includes(nome)) {
+      const todayDay = today.getDay();
+      let diff = diaSemana - todayDay;
+      if (diff >= 0) diff -= 7; // Sempre assume passado
+      today.setDate(today.getDate() + diff);
+      return today.toISOString().split("T")[0];
+    }
   }
 
   // Default: hoje
