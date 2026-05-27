@@ -15,6 +15,7 @@ import {
   Drawer,
   Chip,
   Divider,
+  Badge,
 } from "@mui/material";
 import {
   Send as SendIcon,
@@ -25,13 +26,15 @@ import {
   MicOff as MicOffIcon,
   Help as HelpIcon,
   Settings as SettingsIcon,
+  Sync as SyncIcon,
 } from "@mui/icons-material";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
-import { fetchWithCache, createVisitWithSync } from "../utils/offlineSync";
+import { fetchWithCache, createVisitWithSync, syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
+import { getAllPendingVisits } from "../utils/indexedDB";
 import { parseOfflineMessage, buildOfflineConfirmation } from "../utils/offlineParser";
 
 interface Message {
@@ -119,6 +122,8 @@ const Chat: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState("");
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -145,30 +150,56 @@ const Chat: React.FC = () => {
     };
   }, []);
 
+  // Verifica pendentes periodicamente
+  const checkPendingCount = async () => {
+    try {
+      const pending = await getAllPendingVisits();
+      setPendingCount(pending.length);
+    } catch {
+      setPendingCount(0);
+    }
+  };
+
+  // Sincronização manual
+  const handleManualSync = async () => {
+    if (syncing || !navigator.onLine) return;
+    setSyncing(true);
+    try {
+      const visitResult = await syncPendingVisits(API_BASE);
+      const photoResult = await syncPendingPhotos(API_BASE);
+      const total = visitResult.synced + photoResult.synced;
+      await checkPendingCount();
+      if (total > 0) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            role: "bot",
+            text: `${total} item(s) sincronizado(s) com sucesso!`,
+            timestamp: new Date(),
+          },
+        ]);
+      } else if (pendingCount === 0) {
+        showToast("Nada para sincronizar");
+      } else {
+        showToast("Falha na sincronização. Tente novamente.");
+      }
+    } catch (err) {
+      console.error("Erro ao sincronizar:", err);
+      showToast("Erro na sincronização");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // Monitor online/offline status + auto-sync
   useEffect(() => {
     const handleOnline = async () => {
       setIsOnline(true);
-      // Sincroniza automaticamente ao voltar online
-      try {
-        const { syncPendingVisits, syncPendingPhotos } = await import("../utils/offlineSync");
-        const visitResult = await syncPendingVisits(API_BASE);
-        const photoResult = await syncPendingPhotos(API_BASE);
-        const total = visitResult.synced + photoResult.synced;
-        if (total > 0) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              role: "bot",
-              text: `Conexão restaurada! ${total} item(s) sincronizado(s) com sucesso.`,
-              timestamp: new Date(),
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error("Erro ao sincronizar:", err);
-      }
+      // Aguarda um pouco para conexão estabilizar
+      setTimeout(async () => {
+        await handleManualSync();
+      }, 1500);
     };
 
     const handleOffline = () => setIsOnline(false);
@@ -176,9 +207,14 @@ const Chat: React.FC = () => {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
+    // Verifica pendentes ao montar e periodicamente
+    checkPendingCount();
+    const interval = setInterval(checkPendingCount, 10000);
+
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      clearInterval(interval);
     };
   }, []);
 
@@ -591,6 +627,28 @@ const Chat: React.FC = () => {
           </Box>
         </Box>
         <Box sx={{ display: "flex", gap: 0.5 }}>
+          {/* Botão de Sincronização */}
+          {pendingCount > 0 && (
+            <IconButton
+              size="small"
+              onClick={handleManualSync}
+              disabled={syncing || !isOnline}
+              sx={{
+                color: "white",
+                bgcolor: syncing ? "rgba(255,255,255,0.3)" : "rgba(239,68,68,0.8)",
+                "&:hover": { bgcolor: "rgba(239,68,68,1)" },
+                animation: syncing ? "spin 1s linear infinite" : "none",
+                "@keyframes spin": {
+                  "0%": { transform: "rotate(0deg)" },
+                  "100%": { transform: "rotate(360deg)" },
+                },
+              }}
+            >
+              <Badge badgeContent={pendingCount} color="error" max={9}>
+                <SyncIcon fontSize="small" />
+              </Badge>
+            </IconButton>
+          )}
           <IconButton
             size="small"
             onClick={() => setShowHelp(true)}
