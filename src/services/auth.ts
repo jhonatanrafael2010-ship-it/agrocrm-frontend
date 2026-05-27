@@ -2,6 +2,7 @@
 // Serviço de autenticação
 
 import { API_BASE } from "../config";
+import { invalidateAllCache } from "../utils/offlineSync";
 
 const TOKEN_KEY = "nutricrm_token";
 const USER_KEY = "nutricrm_user";
@@ -94,6 +95,8 @@ export async function login(username: string, password: string): Promise<LoginRe
   }
 
   saveAuth(data.token, data.user);
+  // Limpa cache para forçar reload com novos dados filtrados por consultor
+  invalidateAllCache();
   return { ok: true, token: data.token, user: data.user };
 }
 

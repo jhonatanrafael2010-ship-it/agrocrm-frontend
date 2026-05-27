@@ -24,6 +24,10 @@ export function invalidateCache(url: string) {
   _memCache.delete(url);
 }
 
+export function invalidateAllCache() {
+  _memCache.clear();
+}
+
 /**
  * Normaliza URL
  */
