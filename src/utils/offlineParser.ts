@@ -133,29 +133,35 @@ function extractPhenology(text: string): string {
   return "";
 }
 
-// Extrai cultura do texto
+// Extrai cultura do texto (prioriza variedade, que define a cultura)
 async function extractCulture(text: string): Promise<{ culture: string; variety: string }> {
   const cultures = await getAllFromStore<Culture>("cultures");
   const varieties = await getAllFromStore<{ name: string; culture: string }>("varieties");
 
   const textNorm = normalize(text);
+  const lines = text.split("\n").map(l => l.trim());
 
-  // Procura cultura
+  // Primeiro: procura variedade (variedade define a cultura automaticamente)
+  let foundVariety = "";
   let foundCulture = "";
-  for (const c of cultures) {
-    if (textNorm.includes(normalize(c.name))) {
-      foundCulture = c.name;
+
+  for (const v of varieties) {
+    const varietyNorm = normalize(v.name);
+    // Match exato ou parcial da variedade
+    if (textNorm.includes(varietyNorm) || lines.some(line => normalize(line) === varietyNorm)) {
+      foundVariety = v.name;
+      foundCulture = v.culture; // Cultura vem da variedade
       break;
     }
   }
 
-  // Procura variedade
-  let foundVariety = "";
-  for (const v of varieties) {
-    if (textNorm.includes(normalize(v.name))) {
-      foundVariety = v.name;
-      if (!foundCulture) foundCulture = v.culture;
-      break;
+  // Se não encontrou variedade, procura cultura diretamente
+  if (!foundCulture) {
+    for (const c of cultures) {
+      if (textNorm.includes(normalize(c.name))) {
+        foundCulture = c.name;
+        break;
+      }
     }
   }
 

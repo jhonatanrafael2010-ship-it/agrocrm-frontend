@@ -145,9 +145,32 @@ const Chat: React.FC = () => {
     };
   }, []);
 
-  // Monitor online/offline status
+  // Monitor online/offline status + auto-sync
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = async () => {
+      setIsOnline(true);
+      // Sincroniza automaticamente ao voltar online
+      try {
+        const { syncPendingVisits, syncPendingPhotos } = await import("../utils/offlineSync");
+        const visitResult = await syncPendingVisits(API_BASE);
+        const photoResult = await syncPendingPhotos(API_BASE);
+        const total = visitResult.synced + photoResult.synced;
+        if (total > 0) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now(),
+              role: "bot",
+              text: `Conexão restaurada! ${total} item(s) sincronizado(s) com sucesso.`,
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar:", err);
+      }
+    };
+
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener("online", handleOnline);
