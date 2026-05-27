@@ -221,6 +221,14 @@ const VisitLinking: React.FC = () => {
     return plots.filter((p) => propIds.includes(p.property_id));
   }, [plots, clientProperties]);
 
+  // Clientes que têm visitas (já filtradas pelo backend por consultor)
+  const clientsWithVisits = useMemo(() => {
+    const clientIdsWithVisits = new Set(visits.map((v) => v.client_id));
+    return clients
+      .filter((c) => clientIdsWithVisits.has(c.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [clients, visits]);
+
   // Drag & Drop
   async function onDragEnd(result: any) {
     const { source, destination, draggableId } = result;
@@ -739,7 +747,14 @@ const VisitLinking: React.FC = () => {
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
           <Autocomplete
             options={clients.slice().sort((a, b) => a.name.localeCompare(b.name))}
-            filterOptions={clientFilterOptions}
+            filterOptions={(options, state) => {
+              // Se não digitou nada, mostra apenas clientes com visitas
+              if (!state.inputValue) {
+                return clientsWithVisits;
+              }
+              // Se digitou, busca em todos os clientes
+              return clientFilterOptions(options, state);
+            }}
             getOptionLabel={(option) => option.name}
             value={clients.find((c) => String(c.id) === selectedClient) || null}
             onChange={(_, newValue) => {

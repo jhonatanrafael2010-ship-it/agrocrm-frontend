@@ -20,6 +20,7 @@ import {
   AdminPanelSettings as AdminIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
+import loginBg from "../assets/login_bg.png";
 import { login, saveAuth } from "../services/auth";
 import { API_BASE } from "../config";
 
@@ -113,7 +114,10 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #16a34a 0%, #15803d 50%, #166534 100%)",
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5)), url(${loginBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
         <CircularProgress sx={{ color: "white" }} />
@@ -128,7 +132,10 @@ const Login: React.FC<LoginProps> = ({ onSuccess }) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #16a34a 0%, #15803d 50%, #166534 100%)",
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.5)), url(${loginBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         p: 2,
       }}
     >
