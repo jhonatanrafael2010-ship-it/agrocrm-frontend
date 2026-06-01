@@ -944,21 +944,78 @@ const Chat: React.FC = () => {
 
       {/* Help Dialog */}
       <Dialog open={showHelp} onClose={() => setShowHelp(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>O que posso fazer</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ fontWeight: 600, borderBottom: 1, borderColor: "divider" }}>
+          O que posso fazer
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          {/* Seção Principal - Lançar Visitas */}
+          <Box sx={{ p: 2, bgcolor: "success.lighter" }}>
+            <Typography variant="overline" sx={{ fontWeight: 700, color: "success.main", letterSpacing: 1 }}>
+              Lançar Visitas (Principal)
+            </Typography>
+          </Box>
           <List disablePadding>
             {[
-              { label: "Lançar visita completa", example: "Nome do cliente, cultura, fenologia, data e observações (uma por linha)" },
-              { label: "Lançar visita simples", example: '"Cliente João Silva" e siga o fluxo guiado' },
-              { label: "Agenda da semana", example: '"Agenda da semana" · "visitas da semana"' },
-              { label: "Rotina do dia", example: '"Meu dia" · "agenda de hoje"' },
-              { label: "Visitas do mês", example: '"Visitas do mês"' },
-              { label: "Dias de plantado", example: '"Dias de plantado"' },
-              { label: "Clientes atrasados", example: '"Clientes atrasados"' },
-              { label: "Gerar PDF", example: '"PDF da última visita" · "PDF do cliente X"' },
-              { label: "Cancelar", example: '"Cancelar" a qualquer momento' },
+              {
+                label: "Lançar visita completa",
+                example: "Envie todas as informações de uma vez:",
+                detail: "Cliente: Fazenda Boa Vista\nCultura: Soja\nVariedade: TMG 2381\nFenologia: V6\nData: hoje\nObs: Boa sanidade, sem pragas",
+              },
+              {
+                label: "Lançar visita guiada",
+                example: 'Digite "visita" ou nome do cliente e siga o passo a passo',
+                detail: "O assistente vai perguntar cada informação: cliente, cultura, fenologia, etc.",
+              },
+              {
+                label: "Anexar fotos",
+                example: "Use o botão de câmera para tirar fotos ou selecionar da galeria",
+                detail: "Fotos são anexadas automaticamente à visita sendo criada.",
+              },
             ].map((item, i) => (
-              <Box key={i} sx={{ py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+              <Box key={i} sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "success.main" }}>
+                  {item.label}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {item.example}
+                </Typography>
+                {item.detail && (
+                  <Typography
+                    variant="caption"
+                    component="pre"
+                    sx={{
+                      mt: 1,
+                      p: 1,
+                      bgcolor: "action.hover",
+                      borderRadius: 1,
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                      whiteSpace: "pre-wrap",
+                      display: "block",
+                    }}
+                  >
+                    {item.detail}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </List>
+
+          {/* Seção - Consultas e Relatórios */}
+          <Box sx={{ p: 2, bgcolor: "action.hover", borderTop: 1, borderColor: "divider" }}>
+            <Typography variant="overline" sx={{ fontWeight: 700, color: "primary.main", letterSpacing: 1 }}>
+              Consultas e Relatórios
+            </Typography>
+          </Box>
+          <List disablePadding>
+            {[
+              { label: "Agenda da semana", example: '"Agenda da semana" ou "visitas da semana"' },
+              { label: "Rotina do dia", example: '"Meu dia", "agenda de hoje" ou "rotina"' },
+              { label: "Visitas do mês", example: '"Visitas do mês" ou "resumo mensal"' },
+              { label: "Dias de plantado", example: '"Dias de plantado" - calcula DAP de cada plantio' },
+              { label: "Clientes atrasados", example: '"Clientes atrasados" - sem visita há mais de 15 dias' },
+            ].map((item, i) => (
+              <Box key={i} sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   {item.label}
                 </Typography>
@@ -968,14 +1025,66 @@ const Chat: React.FC = () => {
               </Box>
             ))}
           </List>
-          <Box sx={{ mt: 2, p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary" component="div">
-              <strong>Dica de formatação:</strong> Use uma linha para cada informação.
-              {!isNativeApp() && " Shift+Enter adiciona nova linha."}
+
+          {/* Seção - PDFs */}
+          <Box sx={{ p: 2, bgcolor: "action.hover", borderTop: 1, borderColor: "divider" }}>
+            <Typography variant="overline" sx={{ fontWeight: 700, color: "info.main", letterSpacing: 1 }}>
+              Gerar PDFs
             </Typography>
           </Box>
-          <Button fullWidth variant="outlined" onClick={() => setShowHelp(false)} sx={{ mt: 2 }}>
-            Fechar
+          <List disablePadding>
+            {[
+              { label: "PDF da última visita", example: '"PDF da última visita" - gera relatório da visita mais recente' },
+              { label: "PDF de cliente específico", example: '"PDF do cliente [nome]" ou "relatório da Fazenda X"' },
+              { label: "PDF após lançar visita", example: "Após confirmar uma visita, o PDF é gerado automaticamente" },
+            ].map((item, i) => (
+              <Box key={i} sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {item.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {item.example}
+                </Typography>
+              </Box>
+            ))}
+          </List>
+
+          {/* Seção - Comandos Úteis */}
+          <Box sx={{ p: 2, bgcolor: "action.hover", borderTop: 1, borderColor: "divider" }}>
+            <Typography variant="overline" sx={{ fontWeight: 700, color: "text.secondary", letterSpacing: 1 }}>
+              Comandos Úteis
+            </Typography>
+          </Box>
+          <List disablePadding>
+            <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Cancelar operação
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Digite "cancelar" a qualquer momento para interromper o fluxo atual
+              </Typography>
+            </Box>
+            <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Confirmar
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                "Sim", "confirma", "ok" ou "pode salvar" para confirmar uma visita
+              </Typography>
+            </Box>
+          </List>
+
+          {/* Dica */}
+          <Box sx={{ m: 2, p: 1.5, bgcolor: "warning.lighter", borderRadius: 1, border: 1, borderColor: "warning.light" }}>
+            <Typography variant="caption" color="text.secondary" component="div">
+              <strong>Dica:</strong> Para lançar visitas mais rápido, envie todas as informações de uma vez,
+              cada dado em uma linha separada. O assistente identifica automaticamente cliente, cultura, fenologia, etc.
+              {!isNativeApp() && " Use Shift+Enter para adicionar nova linha."}
+            </Typography>
+          </Box>
+
+          <Button fullWidth variant="outlined" onClick={() => setShowHelp(false)} sx={{ m: 2, width: "calc(100% - 32px)" }}>
+            Entendi
           </Button>
         </DialogContent>
       </Dialog>
