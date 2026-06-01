@@ -43,6 +43,7 @@ interface Message {
   text: string;
   images?: string[];
   pdfItems?: { url: string; label: string; filename: string }[];
+  actions?: { type: string; visit_id?: number; label: string }[];
   timestamp: Date;
 }
 
@@ -243,6 +244,43 @@ const Chat: React.FC = () => {
     window.open(url, "_system");
   }
 
+  async function handleGeneratePdf(visitId: number) {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}visits/${visitId}/pdf`);
+      if (!res.ok) throw new Error("Falha ao gerar PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const filename = `visita_${visitId}.pdf`;
+
+      if (isNativeApp()) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string).split(",")[1]);
+          reader.readAsDataURL(blob);
+        });
+        const saved = await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Cache,
+        });
+        await Share.share({ title: `PDF Visita ${visitId}`, url: saved.uri, dialogTitle: "Compartilhar PDF" });
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      showToast("PDF gerado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+      showToast("Erro ao gerar PDF");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleSharePdf(label: string, r2url: string, filename: string) {
     const proxyUrl = `${API_BASE}mobile/pdf-proxy?url=${encodeURIComponent(r2url)}`;
     try {
@@ -436,6 +474,7 @@ const Chat: React.FC = () => {
           role: "bot",
           text: data.response || (data.ok === false ? data.error : "Sem resposta."),
           pdfItems: data.pdf_items?.length ? data.pdf_items : undefined,
+          actions: data.actions?.length ? data.actions : undefined,
           timestamp: new Date(),
         },
       ]);
@@ -699,6 +738,23 @@ const Chat: React.FC = () => {
                         Enviar
                       </Button>
                     </Box>
+                  </Box>
+                ))}
+              {msg.actions &&
+                msg.actions.map((action, i) => (
+                  <Box key={i} sx={{ mt: 1.5 }}>
+                    {action.type === "pdf" && action.visit_id && (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="primary"
+                        disabled={loading}
+                        onClick={() => handleGeneratePdf(action.visit_id!)}
+                        sx={{ textTransform: "none" }}
+                      >
+                        {action.label}
+                      </Button>
+                    )}
                   </Box>
                 ))}
               <Typography
