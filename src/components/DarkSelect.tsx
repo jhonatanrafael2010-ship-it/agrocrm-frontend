@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import "./DarkSelect.css";
+import React from "react";
+import { TextField, MenuItem } from "@mui/material";
 
 type Option = { value: string | number; label: string };
 
@@ -12,58 +12,27 @@ type Props = {
 };
 
 const DarkSelect: React.FC<Props> = ({ name, value, options, placeholder, onChange }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
-
-  const selected = options.find((o) => String(o.value) === String(value));
-
-  function select(v: string | number) {
-    onChange({ target: { name, value: String(v) } });
-    setOpen(false);
-  }
-
   return (
-    <div className="dark-select" ref={ref}>
-      <button
-        type="button"
-        className="ds-control"
-        onClick={() => setOpen((s) => !s)}
-      >
-        <span className="ds-value">
-          {selected ? selected.label : placeholder || "Selecione..."}
-        </span>
-        <span className="ds-arrow" aria-hidden>
-          ▾
-        </span>
-      </button>
-      {open && (
-        <div className="ds-menu" role="listbox">
-          {options.map((o) => (
-            <div
-              key={o.value}
-              role="option"
-              tabIndex={0}
-              className="ds-option"
-              onClick={() => select(o.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") select(o.value);
-              }}
-            >
-              {o.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <TextField
+      select
+      fullWidth
+      size="small"
+      name={name}
+      value={value}
+      onChange={(e) => onChange({ target: { name, value: e.target.value } })}
+      placeholder={placeholder}
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          borderRadius: 2,
+        },
+      }}
+    >
+      {options.map((o) => (
+        <MenuItem key={o.value} value={String(o.value)}>
+          {o.label}
+        </MenuItem>
+      ))}
+    </TextField>
   );
 };
 
