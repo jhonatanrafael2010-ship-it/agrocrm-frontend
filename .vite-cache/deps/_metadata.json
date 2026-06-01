@@ -1,190 +1,205 @@
 {
-  "hash": "ae14ba5e",
+  "hash": "e0be0a29",
   "configHash": "ddb8d1d9",
-  "lockfileHash": "fcfd2c85",
-  "browserHash": "b028d9c8",
+  "lockfileHash": "f73cf59e",
+  "browserHash": "e3be36f4",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "7eff5b76",
+      "fileHash": "c4adecf3",
       "needsInterop": true
     },
     "react-dom": {
       "src": "../../node_modules/react-dom/index.js",
       "file": "react-dom.js",
-      "fileHash": "2ce6ebcb",
+      "fileHash": "a87a9f85",
       "needsInterop": true
     },
     "react/jsx-dev-runtime": {
       "src": "../../node_modules/react/jsx-dev-runtime.js",
       "file": "react_jsx-dev-runtime.js",
-      "fileHash": "733fbd1b",
+      "fileHash": "634d1dd6",
       "needsInterop": true
     },
     "react/jsx-runtime": {
       "src": "../../node_modules/react/jsx-runtime.js",
       "file": "react_jsx-runtime.js",
-      "fileHash": "92563bbf",
+      "fileHash": "e4704c2c",
       "needsInterop": true
     },
     "@capacitor-community/speech-recognition": {
       "src": "../../node_modules/@capacitor-community/speech-recognition/dist/esm/index.js",
       "file": "@capacitor-community_speech-recognition.js",
-      "fileHash": "29890b29",
+      "fileHash": "7c2dfa34",
       "needsInterop": false
     },
     "@capacitor/camera": {
       "src": "../../node_modules/@capacitor/camera/dist/esm/index.js",
       "file": "@capacitor_camera.js",
-      "fileHash": "46205fe1",
+      "fileHash": "ab904f85",
       "needsInterop": false
     },
     "@capacitor/core": {
       "src": "../../node_modules/@capacitor/core/dist/index.js",
       "file": "@capacitor_core.js",
-      "fileHash": "101de144",
+      "fileHash": "671d7470",
       "needsInterop": false
     },
     "@capacitor/filesystem": {
       "src": "../../node_modules/@capacitor/filesystem/dist/esm/index.js",
       "file": "@capacitor_filesystem.js",
-      "fileHash": "555fa3e2",
+      "fileHash": "8f64b9f0",
       "needsInterop": false
     },
     "@capacitor/geolocation": {
       "src": "../../node_modules/@capacitor/geolocation/dist/esm/index.js",
       "file": "@capacitor_geolocation.js",
-      "fileHash": "94f44a45",
+      "fileHash": "f40121f5",
       "needsInterop": false
     },
     "@capacitor/share": {
       "src": "../../node_modules/@capacitor/share/dist/esm/index.js",
       "file": "@capacitor_share.js",
-      "fileHash": "09b90ae2",
+      "fileHash": "7d042c03",
       "needsInterop": false
     },
     "@fullcalendar/core/locales/pt-br": {
       "src": "../../node_modules/@fullcalendar/core/locales/pt-br.js",
       "file": "@fullcalendar_core_locales_pt-br.js",
-      "fileHash": "f6298f1e",
+      "fileHash": "465d1e18",
       "needsInterop": false
     },
     "@fullcalendar/daygrid": {
       "src": "../../node_modules/@fullcalendar/daygrid/index.js",
       "file": "@fullcalendar_daygrid.js",
-      "fileHash": "33fe0672",
+      "fileHash": "1b803e5a",
       "needsInterop": false
     },
     "@fullcalendar/interaction": {
       "src": "../../node_modules/@fullcalendar/interaction/index.js",
       "file": "@fullcalendar_interaction.js",
-      "fileHash": "d6156221",
+      "fileHash": "bec553dd",
       "needsInterop": false
     },
     "@fullcalendar/react": {
       "src": "../../node_modules/@fullcalendar/react/dist/index.js",
       "file": "@fullcalendar_react.js",
-      "fileHash": "1db8a935",
+      "fileHash": "edd1d1ec",
       "needsInterop": false
     },
     "@fullcalendar/timegrid": {
       "src": "../../node_modules/@fullcalendar/timegrid/index.js",
       "file": "@fullcalendar_timegrid.js",
-      "fileHash": "2e3ab92d",
+      "fileHash": "e1faca10",
       "needsInterop": false
     },
     "@hello-pangea/dnd": {
       "src": "../../node_modules/@hello-pangea/dnd/dist/dnd.esm.js",
       "file": "@hello-pangea_dnd.js",
-      "fileHash": "013af7c1",
+      "fileHash": "c0490372",
       "needsInterop": false
     },
     "@mui/icons-material": {
       "src": "../../node_modules/@mui/icons-material/index.mjs",
       "file": "@mui_icons-material.js",
-      "fileHash": "5f70129d",
+      "fileHash": "b5f656b8",
       "needsInterop": false
     },
     "@mui/material": {
       "src": "../../node_modules/@mui/material/index.mjs",
       "file": "@mui_material.js",
-      "fileHash": "546b70fb",
+      "fileHash": "1a935cb3",
       "needsInterop": false
     },
     "@mui/material/styles": {
       "src": "../../node_modules/@mui/material/styles/index.mjs",
       "file": "@mui_material_styles.js",
-      "fileHash": "82d69650",
+      "fileHash": "8eee550d",
       "needsInterop": false
     },
     "bootstrap/dist/js/bootstrap.bundle.min.js": {
       "src": "../../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
       "file": "bootstrap_dist_js_bootstrap__bundle__min__js.js",
-      "fileHash": "c7e7639e",
+      "fileHash": "b59aaf47",
       "needsInterop": true
     },
     "exif-js": {
       "src": "../../node_modules/exif-js/exif.js",
       "file": "exif-js.js",
-      "fileHash": "e69b19ef",
+      "fileHash": "fd4df9f9",
       "needsInterop": true
     },
     "idb": {
       "src": "../../node_modules/idb/build/index.js",
       "file": "idb.js",
-      "fileHash": "b5cbec2a",
+      "fileHash": "d970c941",
       "needsInterop": false
+    },
+    "leaflet": {
+      "src": "../../node_modules/leaflet/dist/leaflet-src.js",
+      "file": "leaflet.js",
+      "fileHash": "b50d72ed",
+      "needsInterop": true
     },
     "lucide-react": {
       "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
       "file": "lucide-react.js",
-      "fileHash": "7951712c",
+      "fileHash": "241f74a9",
       "needsInterop": false
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "c7522e35",
+      "fileHash": "cec5d227",
       "needsInterop": true
+    },
+    "react-leaflet": {
+      "src": "../../node_modules/react-leaflet/lib/index.js",
+      "file": "react-leaflet.js",
+      "fileHash": "6d2cd505",
+      "needsInterop": false
     },
     "sonner": {
       "src": "../../node_modules/sonner/dist/index.mjs",
       "file": "sonner.js",
-      "fileHash": "8d577613",
+      "fileHash": "eb80ade4",
       "needsInterop": false
     }
   },
   "chunks": {
+    "chunk-FTSH5SG5": {
+      "file": "chunk-FTSH5SG5.js"
+    },
     "web-VHARZ4GN": {
       "file": "web-VHARZ4GN.js"
-    },
-    "web-Y6CIO2WZ": {
-      "file": "web-Y6CIO2WZ.js"
     },
     "web-TGAZWE46": {
       "file": "web-TGAZWE46.js"
     },
+    "web-Y6CIO2WZ": {
+      "file": "web-Y6CIO2WZ.js"
+    },
     "web-2W2B7CIY": {
       "file": "web-2W2B7CIY.js"
     },
-    "chunk-EXYSIF43": {
-      "file": "chunk-EXYSIF43.js"
-    },
-    "chunk-6RNRW37G": {
-      "file": "chunk-6RNRW37G.js"
-    },
-    "chunk-IMYNP6W5": {
-      "file": "chunk-IMYNP6W5.js"
+    "chunk-YGWNQQU6": {
+      "file": "chunk-YGWNQQU6.js"
     },
     "chunk-FUPQPBBX": {
       "file": "chunk-FUPQPBBX.js"
     },
-    "chunk-O4N2BAMV": {
-      "file": "chunk-O4N2BAMV.js"
+    "chunk-KRBM7GOP": {
+      "file": "chunk-KRBM7GOP.js"
+    },
+    "chunk-SJIVKAB4": {
+      "file": "chunk-SJIVKAB4.js"
     },
     "chunk-HQ6ZTAWL": {
       "file": "chunk-HQ6ZTAWL.js"
+    },
+    "chunk-O4N2BAMV": {
+      "file": "chunk-O4N2BAMV.js"
     },
     "chunk-OUWKCDPP": {
       "file": "chunk-OUWKCDPP.js"
