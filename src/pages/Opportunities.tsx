@@ -12,7 +12,6 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  CircularProgress,
   Alert,
   IconButton,
   Paper,
