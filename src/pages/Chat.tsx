@@ -247,8 +247,17 @@ const Chat: React.FC = () => {
   async function handleGeneratePdf(visitId: number) {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}visits/${visitId}/pdf`);
-      if (!res.ok) throw new Error("Falha ao gerar PDF");
+      const pdfUrl = `${API_BASE}visits/${visitId}/pdf`;
+      console.log("Gerando PDF:", pdfUrl);
+
+      const res = await fetch(pdfUrl);
+      console.log("Resposta PDF:", res.status, res.statusText);
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${errorText || res.statusText}`);
+      }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const filename = `visita_${visitId}.pdf`;
@@ -273,9 +282,10 @@ const Chat: React.FC = () => {
         URL.revokeObjectURL(url);
       }
       showToast("PDF gerado com sucesso!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao gerar PDF:", err);
-      showToast("Erro ao gerar PDF");
+      const msg = err?.message || String(err);
+      showToast(msg.length > 50 ? "Erro ao gerar PDF" : msg);
     } finally {
       setLoading(false);
     }
@@ -749,7 +759,10 @@ const Chat: React.FC = () => {
                         variant="contained"
                         color="primary"
                         disabled={loading}
-                        onClick={() => handleGeneratePdf(action.visit_id!)}
+                        onClick={() => {
+                          console.log("Clique PDF, visit_id:", action.visit_id);
+                          handleGeneratePdf(action.visit_id!);
+                        }}
                         sx={{ textTransform: "none" }}
                       >
                         {action.label}
