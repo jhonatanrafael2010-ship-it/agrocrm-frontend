@@ -28,6 +28,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
+import { notify, confirm as toastConfirm } from "../utils/toast";
 
 type Property = { id: number; name: string };
 type Plot = {
@@ -74,7 +75,7 @@ const Plots: React.FC = () => {
 
   async function createPlot() {
     if (!form.property_id || !form.name) {
-      alert("Propriedade e nome são obrigatórios");
+      notify.warning("Propriedade e nome são obrigatórios");
       return;
     }
     setSubmitting(true);
@@ -96,25 +97,27 @@ const Plots: React.FC = () => {
       setOpen(false);
       setForm({ property_id: "", name: "", area_ha: "", irrigated: false });
     } catch (err: any) {
-      alert(err?.message || "Erro ao criar talhão");
+      notify.error(err?.message || "Erro ao criar talhão");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function deletePlot(id?: number) {
+  function deletePlot(id?: number) {
     if (!id) return;
-    if (!confirm("Deseja excluir este talhão?")) return;
-    try {
-      const res = await fetch(`${API_BASE}plots/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || `status ${res.status}`);
+    toastConfirm("Deseja excluir este talhão?", async () => {
+      try {
+        const res = await fetch(`${API_BASE}plots/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message || `status ${res.status}`);
+        }
+        setPlots((list) => list.filter((p) => p.id !== id));
+        notify.success("Talhão excluído");
+      } catch (err: any) {
+        notify.error(err?.message || "Erro ao excluir talhão");
       }
-      setPlots((list) => list.filter((p) => p.id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Erro ao excluir talhão");
-    }
+    });
   }
 
   return (

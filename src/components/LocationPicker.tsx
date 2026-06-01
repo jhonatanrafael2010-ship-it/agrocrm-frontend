@@ -19,6 +19,7 @@ import {
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { notify } from "../utils/toast";
 
 // Fix para ícone do marker no Leaflet
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -97,7 +98,7 @@ const LocationPicker: React.FC<Props> = ({
       setPosition([latitude, longitude]);
     } catch (err) {
       console.error("Erro ao obter localização:", err);
-      alert("Não foi possível obter sua localização atual");
+      notify.error("Não foi possível obter sua localização atual");
     }
   };
 
@@ -116,11 +117,11 @@ const LocationPicker: React.FC<Props> = ({
         const { lat, lon } = data[0];
         setPosition([parseFloat(lat), parseFloat(lon)]);
       } else {
-        alert("Localização não encontrada");
+        notify.warning("Localização não encontrada");
       }
     } catch (err) {
       console.error("Erro na busca:", err);
-      alert("Erro ao buscar localização");
+      notify.error("Erro ao buscar localização");
     } finally {
       setSearching(false);
     }

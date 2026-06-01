@@ -35,6 +35,7 @@ import KPICard from "../components/KPICard";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { notify } from "../utils/toast";
 
 type Client = { id: number; name: string };
 type Property = { id: number; name: string; client_id?: number };
@@ -140,7 +141,7 @@ async function downloadBlob(filename: string, blob: Blob) {
       return;
     } catch (err) {
       console.error("Erro ao salvar no dispositivo:", err);
-      alert("Erro: " + (err instanceof Error ? err.message : String(err)));
+      notify.error("Erro: " + (err instanceof Error ? err.message : String(err)));
       return;
     }
   }
@@ -281,7 +282,7 @@ const Dashboard: React.FC = () => {
 
   async function downloadExcel() {
     if (!startDate || !endDate) {
-      alert("Selecione um intervalo (De / Até) para gerar o relatório.");
+      notify.warning("Selecione um intervalo (De / Até) para gerar o relatório.");
       return;
     }
     setDownloadingExcel(true);
@@ -305,7 +306,7 @@ const Dashboard: React.FC = () => {
       await downloadBlob(`${parts.join("_")}.xlsx`, blob);
     } catch (err) {
       console.error(err);
-      alert("Não foi possível gerar o Excel. Veja o console/log do backend.");
+      notify.error("Não foi possível gerar o Excel. Veja o console/log do backend.");
     } finally {
       setDownloadingExcel(false);
     }

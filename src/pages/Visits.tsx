@@ -48,6 +48,7 @@ import { fetchWithCache, invalidateCache } from "../utils/offlineSync";
 import { authFetch } from "../services/auth";
 import PhotoCarousel from "../components/PhotoCarousel";
 import "../styles/acompanhamento.css";
+import { notify } from "../utils/toast";
 
 // Ícone de cultura baseado no tipo
 function CultureIcon({ culture, size = 20 }: { culture?: string; size?: number }) {
@@ -384,12 +385,13 @@ const Visits: React.FC = () => {
         setVisits((list) =>
           list.map((x) => (x.id === v.id ? { ...x, status: "done" } : x))
         );
+        notify.success("Visita marcada como concluída");
       } else {
-        alert("Não foi possível marcar como concluída.");
+        notify.error("Não foi possível marcar como concluída.");
       }
     } catch (e) {
       console.error(e);
-      alert("Erro ao marcar como concluída.");
+      notify.error("Erro ao marcar como concluída.");
     }
   }
 

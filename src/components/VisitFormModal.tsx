@@ -23,6 +23,7 @@ import {
   Today as TodayIcon,
 } from "@mui/icons-material";
 import { Geolocation } from "@capacitor/geolocation";
+import { notify } from "../utils/toast";
 
 type Product = {
   product_name: string;
@@ -171,7 +172,7 @@ const VisitFormModal: React.FC<Props> = ({
         JSON.stringify({ latitude, longitude })
       );
 
-      alert(`📍 Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      notify.success(`Localização capturada: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     } catch (err) {
       console.error("Erro ao obter localização GPS:", err);
 
@@ -180,25 +181,25 @@ const VisitFormModal: React.FC<Props> = ({
         try {
           const { latitude, longitude } = JSON.parse(cached);
           setForm((f) => ({ ...f, latitude, longitude }));
-          alert(`⚠️ GPS indisponível — usando última localização conhecida`);
+          notify.warning("GPS indisponível — usando última localização conhecida");
           return;
         } catch {
           // cache corrompido
         }
       }
 
-      alert("⚠️ Não foi possível capturar localização. Verifique as permissões de GPS.");
+      notify.error("Não foi possível capturar localização. Verifique as permissões de GPS.");
     }
   };
 
   const handleSave = async () => {
     if (!form.date) {
-      alert("Data é obrigatória.");
+      notify.warning("Data é obrigatória.");
       return;
     }
 
     if (!form.client_id) {
-      alert("Cliente é obrigatório.");
+      notify.warning("Cliente é obrigatório.");
       return;
     }
 

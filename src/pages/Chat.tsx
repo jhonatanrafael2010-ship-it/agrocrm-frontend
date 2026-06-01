@@ -32,6 +32,7 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { SpeechRecognition } from "@capacitor-community/speech-recognition";
 import { API_BASE } from "../config";
+import { notify } from "../utils/toast";
 import { createVisitWithSync, syncPendingVisits, syncPendingPhotos } from "../utils/offlineSync";
 import { getAllPendingVisits, getAllPendingPhotos, savePendingPhoto } from "../utils/indexedDB";
 import { parseOfflineMessage, buildOfflineConfirmation } from "../utils/offlineParser";
@@ -519,12 +520,12 @@ const Chat: React.FC = () => {
     try {
       const { available } = await SpeechRecognition.available();
       if (!available) {
-        alert("Reconhecimento de voz não disponível neste dispositivo.");
+        notify.warning("Reconhecimento de voz não disponível neste dispositivo.");
         return;
       }
       const perms = await SpeechRecognition.requestPermissions();
       if ((perms as any).speechRecognition !== "granted") {
-        alert("Permissão de microfone negada.");
+        notify.error("Permissão de microfone negada.");
         return;
       }
       setRecording(true);
