@@ -67,11 +67,32 @@ function App() {
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
-  const [isDarkMode, _setIsDarkMode] = useState(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
-    return document.body.getAttribute("data-theme") === "dark";
+    // Detecta preferência do sistema operacional
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+
+  // Escuta mudanças na preferência do sistema (quando usuário alterna modo no SO)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      // Só aplica se não tiver preferência salva manualmente
+      if (!localStorage.getItem("theme")) {
+        setIsDarkMode(e.matches);
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Sincroniza atributo data-theme no body (para CSS legado)
+  useEffect(() => {
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
   // Callback de login bem-sucedido
   const handleLoginSuccess = useCallback(() => {
