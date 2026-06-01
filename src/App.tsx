@@ -34,6 +34,15 @@ function App() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
   const [currentUser, setCurrentUser] = useState(() => getUser());
 
+  // Toggle de tema manual
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode((prev) => {
+      const newValue = !prev;
+      localStorage.setItem("theme", newValue ? "dark" : "light");
+      return newValue;
+    });
+  }, []);
+
   const [route, setRoute] = useState<string>(() => {
     const openSection = sessionStorage.getItem("open_section");
 
@@ -243,6 +252,8 @@ function App() {
               userRole={currentUser?.is_admin ? "Administrador" : "Consultor"}
               isAdmin={currentUser?.is_admin || false}
               onLogout={handleLogout}
+              isDarkMode={isDarkMode}
+              onToggleTheme={toggleTheme}
             />
           </div>
         )}
@@ -290,6 +301,8 @@ function App() {
           userName={currentUser?.consultant_name || currentUser?.username}
           isAdmin={currentUser?.is_admin || false}
           onLogout={handleLogout}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
         />
       )}
 

@@ -26,6 +26,8 @@ import {
   Close as CloseIcon,
   Link as LinkIcon,
   AdminPanelSettings as AdminIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 
@@ -35,6 +37,8 @@ interface MobileMenuProps {
   userName?: string;
   isAdmin?: boolean;
   onLogout?: () => void;
+  isDarkMode?: boolean;
+  onToggleTheme?: () => void;
 }
 
 const menuItems = [
@@ -55,7 +59,7 @@ const bottomNavItems = [
   { label: "Menu", icon: <MenuIcon />, route: "_menu", color: "#6b7280" },
 ];
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userName, isAdmin, onLogout }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userName, isAdmin, onLogout, isDarkMode, onToggleTheme }) => {
   // Adiciona item de Usuários se for admin
   const allMenuItems = isAdmin
     ? [...menuItems, { label: "Usuários", icon: <AdminIcon />, route: "Usuários", color: "#ef4444" }]
@@ -126,13 +130,26 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userNam
               </Typography>
             </Box>
           </Box>
-          <IconButton
-            onClick={() => setDrawerOpen(false)}
-            size="small"
-            sx={{ color: "white" }}
-          >
-            <CloseIcon />
-          </IconButton>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <IconButton
+              onClick={onToggleTheme}
+              size="small"
+              sx={{
+                color: "white",
+                bgcolor: "rgba(255,255,255,0.15)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+              }}
+            >
+              {isDarkMode ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+            </IconButton>
+            <IconButton
+              onClick={() => setDrawerOpen(false)}
+              size="small"
+              sx={{ color: "white" }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Lista de navegação */}

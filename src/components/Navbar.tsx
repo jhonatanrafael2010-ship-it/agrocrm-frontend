@@ -9,6 +9,8 @@ import {
   Typography,
   Divider,
   Avatar,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -22,6 +24,8 @@ import {
   ChevronRight as ChevronRightIcon,
   Link as LinkIcon,
   AdminPanelSettings as AdminIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 import SyncStatus from "./SyncStatus";
@@ -33,6 +37,8 @@ type Props = {
   userRole?: string;
   isAdmin?: boolean;
   onLogout?: () => void;
+  isDarkMode?: boolean;
+  onToggleTheme?: () => void;
 };
 
 const sections = [
@@ -73,6 +79,8 @@ const Navbar: React.FC<Props> = ({
   userRole = "Consultor",
   isAdmin = false,
   onLogout,
+  isDarkMode = false,
+  onToggleTheme,
 }) => {
   // Adiciona item de Usuários se for admin
   const allSections = isAdmin
@@ -236,6 +244,22 @@ const Navbar: React.FC<Props> = ({
               {userRole}
             </Typography>
           </Box>
+          <Tooltip title={isDarkMode ? "Modo claro" : "Modo escuro"}>
+            <IconButton
+              onClick={onToggleTheme}
+              size="small"
+              sx={{
+                bgcolor: "action.hover",
+                "&:hover": { bgcolor: "action.selected" },
+              }}
+            >
+              {isDarkMode ? (
+                <LightModeIcon fontSize="small" sx={{ color: "#fbbf24" }} />
+              ) : (
+                <DarkModeIcon fontSize="small" sx={{ color: "#6366f1" }} />
+              )}
+            </IconButton>
+          </Tooltip>
           <SyncStatus />
         </Box>
 
