@@ -18,17 +18,20 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  CircularProgress,
   Alert,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Grass as GrassIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
-import { notify, confirm as toastConfirm } from "../utils/toast";
+import { notify } from "../utils/toast";
+import TableSkeleton from "../components/TableSkeleton";
+import EmptyState from "../components/EmptyState";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type Plot = { id: number; name: string };
 type Variety = { id: number; culture: string; name: string };
@@ -58,6 +61,11 @@ const PlantingsPage: React.FC = () => {
     planting_date: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; loading: boolean }>({
+    open: false,
+    id: null,
+    loading: false,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -157,21 +165,27 @@ const PlantingsPage: React.FC = () => {
     }
   }
 
-  function deletePlanting(id?: number) {
+  function handleDeleteClick(id?: number) {
     if (!id) return;
-    toastConfirm("Deseja excluir este plantio?", async () => {
-      try {
-        const res = await fetch(`${API_BASE}plantings/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message || `status ${res.status}`);
-        }
-        setPlantings((list) => list.filter((p) => p.id !== id));
-        notify.success("Plantio excluído");
-      } catch (err: any) {
-        notify.error(err?.message || "Erro ao excluir plantio");
+    setDeleteDialog({ open: true, id, loading: false });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteDialog.id) return;
+    setDeleteDialog((d) => ({ ...d, loading: true }));
+    try {
+      const res = await fetch(`${API_BASE}plantings/${deleteDialog.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `status ${res.status}`);
       }
-    });
+      setPlantings((list) => list.filter((p) => p.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, id: null, loading: false });
+      notify.success("Plantio excluído");
+    } catch (err: any) {
+      notify.error(err?.message || "Erro ao excluir plantio");
+      setDeleteDialog((d) => ({ ...d, loading: false }));
+    }
   }
 
   return (
@@ -207,9 +221,23 @@ const PlantingsPage: React.FC = () => {
       )}
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
-        </Box>
+        <TableSkeleton
+          columns={5}
+          rows={5}
+          headers={["Talhão", "Cultura", "Variedade", "Data Plantio", ""]}
+        />
+      ) : plantings.length === 0 ? (
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={<GrassIcon />}
+              title="Nenhum plantio cadastrado"
+              description="Registre seus plantios para acompanhar o desenvolvimento das culturas."
+              actionLabel="Adicionar Plantio"
+              onAction={() => openPlantingModal()}
+            />
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardContent>
@@ -244,22 +272,13 @@ const PlantingsPage: React.FC = () => {
                         <IconButton
                           size="small"
                           color="error"
-                          onClick={() => deletePlanting(pt.id)}
+                          onClick={() => handleDeleteClick(pt.id)}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {plantings.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">
-                          Nenhum plantio cadastrado
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -350,6 +369,17 @@ const PlantingsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Excluir Plantio"
+        message="Tem certeza que deseja excluir este plantio? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        loading={deleteDialog.loading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
+      />
     </Box>
   );
 };

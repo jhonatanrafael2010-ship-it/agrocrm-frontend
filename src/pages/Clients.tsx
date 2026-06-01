@@ -18,17 +18,20 @@ import {
   TextField,
   MenuItem,
   Chip,
-  CircularProgress,
   Alert,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
-import { notify, confirm as toastConfirm } from "../utils/toast";
+import { notify } from "../utils/toast";
+import TableSkeleton from "../components/TableSkeleton";
+import EmptyState from "../components/EmptyState";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type Client = {
   id: number;
@@ -53,6 +56,11 @@ const Clients: React.FC = () => {
     segment: "",
     vendor: "",
     region: "",
+  });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; loading: boolean }>({
+    open: false,
+    id: null,
+    loading: false,
   });
 
   useEffect(() => {
@@ -120,19 +128,26 @@ const Clients: React.FC = () => {
     }
   }
 
-  function handleDelete(id?: number) {
+  function handleDeleteClick(id?: number) {
     if (!id) return;
-    toastConfirm("Tem certeza que deseja excluir este cliente?", async () => {
-      try {
-        const res = await fetch(`${API_BASE}clients/${id}`, {
-          method: "DELETE",
-        });
-        if (!res.ok) throw new Error(`Status ${res.status}`);
-        setClients((list) => list.filter((c) => c.id !== id));
-      } catch (err: any) {
-        notify.error(err?.message || "Erro ao excluir cliente");
-      }
-    });
+    setDeleteDialog({ open: true, id, loading: false });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteDialog.id) return;
+    setDeleteDialog((d) => ({ ...d, loading: true }));
+    try {
+      const res = await fetch(`${API_BASE}clients/${deleteDialog.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      setClients((list) => list.filter((c) => c.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, id: null, loading: false });
+      notify.success("Cliente excluído");
+    } catch (err: any) {
+      notify.error(err?.message || "Erro ao excluir cliente");
+      setDeleteDialog((d) => ({ ...d, loading: false }));
+    }
   }
 
   function openModal(client?: Client) {
@@ -178,11 +193,23 @@ const Clients: React.FC = () => {
 
       {/* Content */}
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
-        </Box>
+        <TableSkeleton
+          columns={6}
+          rows={5}
+          headers={["Nome", "Documento", "Segmento", "Vendedor", "Região", "Ações"]}
+        />
       ) : error ? (
         <Alert severity="error">{error}</Alert>
+      ) : clients.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<PeopleIcon />}
+            title="Nenhum cliente cadastrado"
+            description="Comece adicionando seu primeiro cliente para gerenciar propriedades e visitas."
+            actionLabel="Adicionar Cliente"
+            onAction={() => openModal()}
+          />
+        </Card>
       ) : (
         <Card>
           <TableContainer>
@@ -232,22 +259,13 @@ const Clients: React.FC = () => {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => handleDelete(c.id)}
+                        onClick={() => handleDeleteClick(c.id)}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
-                {clients.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                      <Typography color="text.secondary">
-                        Nenhum cliente cadastrado
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -332,6 +350,17 @@ const Clients: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Excluir Cliente"
+        message="Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        loading={deleteDialog.loading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
+      />
     </Box>
   );
 };

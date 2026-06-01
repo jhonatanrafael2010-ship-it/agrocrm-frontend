@@ -28,7 +28,10 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
-import { notify, confirm as toastConfirm } from "../utils/toast";
+import { notify } from "../utils/toast";
+import TableSkeleton from "../components/TableSkeleton";
+import EmptyState from "../components/EmptyState";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type Property = { id: number; name: string };
 type Plot = {
@@ -42,6 +45,7 @@ type Plot = {
 const Plots: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     property_id: "",
@@ -50,9 +54,15 @@ const Plots: React.FC = () => {
     irrigated: false,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; loading: boolean }>({
+    open: false,
+    id: null,
+    loading: false,
+  });
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     Promise.all([
       fetch(`${API_BASE}properties`).then((r) => (r.ok ? r.json() : [])),
       fetch(`${API_BASE}plots`).then((r) => (r.ok ? r.json() : [])),
@@ -62,7 +72,8 @@ const Plots: React.FC = () => {
         setProperties(ps || []);
         setPlots(pls || []);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoading(false));
     return () => {
       mounted = false;
     };
@@ -103,21 +114,27 @@ const Plots: React.FC = () => {
     }
   }
 
-  function deletePlot(id?: number) {
+  function handleDeleteClick(id?: number) {
     if (!id) return;
-    toastConfirm("Deseja excluir este talhão?", async () => {
-      try {
-        const res = await fetch(`${API_BASE}plots/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message || `status ${res.status}`);
-        }
-        setPlots((list) => list.filter((p) => p.id !== id));
-        notify.success("Talhão excluído");
-      } catch (err: any) {
-        notify.error(err?.message || "Erro ao excluir talhão");
+    setDeleteDialog({ open: true, id, loading: false });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteDialog.id) return;
+    setDeleteDialog((d) => ({ ...d, loading: true }));
+    try {
+      const res = await fetch(`${API_BASE}plots/${deleteDialog.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `status ${res.status}`);
       }
-    });
+      setPlots((list) => list.filter((p) => p.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, id: null, loading: false });
+      notify.success("Talhão excluído");
+    } catch (err: any) {
+      notify.error(err?.message || "Erro ao excluir talhão");
+      setDeleteDialog((d) => ({ ...d, loading: false }));
+    }
   }
 
   return (
@@ -144,55 +161,64 @@ const Plots: React.FC = () => {
       </Box>
 
       {/* Tabela */}
-      <TableContainer component={Paper} elevation={0}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Fazenda</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Talhão</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Área (ha)</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Irrigado</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {plots.map((pl) => (
-              <TableRow key={pl.id} hover>
-                <TableCell>
-                  {properties.find((pp) => pp.id === pl.property_id)?.name ?? pl.property_id}
-                </TableCell>
-                <TableCell>{pl.name}</TableCell>
-                <TableCell>{pl.area_ha ?? "—"}</TableCell>
-                <TableCell>
-                  {pl.irrigated ? (
-                    <Chip label="Sim" color="info" size="small" />
-                  ) : (
-                    "—"
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => deletePlot(pl.id)}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {plots.length === 0 && (
+      {loading ? (
+        <TableSkeleton
+          columns={5}
+          rows={5}
+          headers={["Fazenda", "Talhão", "Área (ha)", "Irrigado", "Ações"]}
+        />
+      ) : plots.length === 0 ? (
+        <Paper elevation={0}>
+          <EmptyState
+            icon={<GrassIcon />}
+            title="Nenhum talhão cadastrado"
+            description="Adicione talhões às suas propriedades para gerenciar plantios e visitas."
+            actionLabel="Adicionar Talhão"
+            onAction={() => setOpen(true)}
+          />
+        </Paper>
+      ) : (
+        <TableContainer component={Paper} elevation={0}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">
-                    Nenhum talhão cadastrado
-                  </Typography>
-                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Fazenda</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Talhão</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Área (ha)</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Irrigado</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 600 }}>Ações</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {plots.map((pl) => (
+                <TableRow key={pl.id} hover>
+                  <TableCell>
+                    {properties.find((pp) => pp.id === pl.property_id)?.name ?? pl.property_id}
+                  </TableCell>
+                  <TableCell>{pl.name}</TableCell>
+                  <TableCell>{pl.area_ha ?? "—"}</TableCell>
+                  <TableCell>
+                    {pl.irrigated ? (
+                      <Chip label="Sim" color="info" size="small" />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteClick(pl.id)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Modal de Cadastro */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
@@ -266,6 +292,17 @@ const Plots: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Excluir Talhão"
+        message="Tem certeza que deseja excluir este talhão? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        loading={deleteDialog.loading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
+      />
     </Box>
   );
 };

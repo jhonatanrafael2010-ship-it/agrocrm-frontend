@@ -16,6 +16,7 @@ import {
   Alert,
   IconButton,
   Paper,
+  Skeleton,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -26,7 +27,8 @@ import {
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
-import { notify, confirm as toastConfirm } from "../utils/toast";
+import { notify } from "../utils/toast";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type Opportunity = {
   id: number;
@@ -55,6 +57,11 @@ const Opportunities: React.FC = () => {
   const [form, setForm] = useState({ client_id: "", title: "", estimated_value: "" });
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; loading: boolean }>({
+    open: false,
+    id: null,
+    loading: false,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -143,20 +150,27 @@ const Opportunities: React.FC = () => {
     }
   }
 
-  function deleteOpportunity(id?: number) {
+  function handleDeleteClick(id?: number) {
     if (!id) return;
-    toastConfirm("Deseja excluir esta oportunidade?", async () => {
-      try {
-        const res = await fetch(`${API_BASE}opportunities/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.message || `status ${res.status}`);
-        }
-        setOpps((list) => list.filter((o) => o.id !== id));
-      } catch (err: any) {
-        notify.error(err?.message || "Erro ao excluir oportunidade");
+    setDeleteDialog({ open: true, id, loading: false });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteDialog.id) return;
+    setDeleteDialog((d) => ({ ...d, loading: true }));
+    try {
+      const res = await fetch(`${API_BASE}opportunities/${deleteDialog.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `status ${res.status}`);
       }
-    });
+      setOpps((list) => list.filter((o) => o.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, id: null, loading: false });
+      notify.success("Oportunidade excluída");
+    } catch (err: any) {
+      notify.error(err?.message || "Erro ao excluir oportunidade");
+      setDeleteDialog((d) => ({ ...d, loading: false }));
+    }
   }
 
   function openModal(op?: Opportunity) {
@@ -222,8 +236,36 @@ const Opportunities: React.FC = () => {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-          <CircularProgress />
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(5, 1fr)",
+            },
+            gap: 2,
+          }}
+        >
+          {STAGES.map((s) => (
+            <Card key={s.key} sx={{ minHeight: 400 }}>
+              <CardHeader
+                title={s.label}
+                slotProps={{ title: { sx: { fontSize: "0.95rem", fontWeight: 600 } } }}
+                sx={{ bgcolor: `${s.color}15`, borderBottom: `3px solid ${s.color}`, py: 1.5 }}
+              />
+              <CardContent sx={{ p: 1.5 }}>
+                {[1, 2, 3].map((i) => (
+                  <Paper key={i} sx={{ p: 1.5, mb: 1.5, borderRadius: 2 }}>
+                    <Skeleton variant="text" width="70%" />
+                    <Skeleton variant="text" width="50%" />
+                    <Skeleton variant="text" width="40%" />
+                  </Paper>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       ) : error ? (
         <Alert severity="error">{error}</Alert>
@@ -347,7 +389,7 @@ const Opportunities: React.FC = () => {
                                 <IconButton
                                   size="small"
                                   color="error"
-                                  onClick={() => deleteOpportunity(op.id)}
+                                  onClick={() => handleDeleteClick(op.id)}
                                 >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
@@ -423,6 +465,17 @@ const Opportunities: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        title="Excluir Oportunidade"
+        message="Tem certeza que deseja excluir esta oportunidade? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        loading={deleteDialog.loading}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
+      />
     </Box>
   );
 };
