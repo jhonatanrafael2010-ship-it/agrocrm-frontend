@@ -25,7 +25,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   People as PeopleIcon,
+  Search as SearchIcon,
+  FilterList as FilterListIcon,
+  Clear as ClearIcon,
 } from "@mui/icons-material";
+import InputAdornment from "@mui/material/InputAdornment";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 import { notify } from "../utils/toast";
@@ -42,9 +46,15 @@ type Client = {
   region?: string;
 };
 
+type Consultant = {
+  id: number;
+  name: string;
+};
+
 const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [regions, setRegions] = useState<string[]>([]);
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -63,22 +73,48 @@ const Clients: React.FC = () => {
     loading: false,
   });
 
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterVendor, setFilterVendor] = useState("");
+  const [filterRegion, setFilterRegion] = useState("");
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
       fetchWithCache(`${API_BASE}clients`, "clients"),
       fetchWithCache(`${API_BASE}regions`, "cultures"),
+      fetchWithCache(`${API_BASE}consultants`, "consultants"),
     ])
-      .then(([cs, rs]) => {
+      .then(([cs, rs, cons]) => {
         setClients(cs as any[]);
         setRegions(Array.isArray(rs) ? (rs as any[]) : []);
+        setConsultants(Array.isArray(cons) ? (cons as Consultant[]) : []);
       })
       .catch((err) => {
-        console.error("fetch clients/regions err", err);
+        console.error("fetch clients/regions/consultants err", err);
         setError("Erro ao carregar clientes");
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Filtragem de clientes
+  const filteredClients = clients.filter((c) => {
+    const matchesSearch =
+      !searchTerm ||
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.document && c.document.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesVendor = !filterVendor || c.vendor === filterVendor;
+    const matchesRegion = !filterRegion || c.region === filterRegion;
+    return matchesSearch && matchesVendor && matchesRegion;
+  });
+
+  const hasActiveFilters = searchTerm || filterVendor || filterRegion;
+
+  function clearFilters() {
+    setSearchTerm("");
+    setFilterVendor("");
+    setFilterRegion("");
+  }
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -176,6 +212,8 @@ const Clients: React.FC = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
@@ -191,6 +229,79 @@ const Clients: React.FC = () => {
         </Button>
       </Box>
 
+      {/* Barra de busca e filtros */}
+      <Card sx={{ mb: 3, p: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <TextField
+            placeholder="Buscar por nome ou documento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="small"
+            sx={{ minWidth: 250, flex: 1 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            select
+            label="Vendedor"
+            value={filterVendor}
+            onChange={(e) => setFilterVendor(e.target.value)}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {consultants.map((c) => (
+              <MenuItem key={c.id} value={c.name}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Região"
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {regions.map((r) => (
+              <MenuItem key={r} value={r}>
+                {r}
+              </MenuItem>
+            ))}
+          </TextField>
+          {hasActiveFilters && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ClearIcon />}
+              onClick={clearFilters}
+              sx={{ textTransform: "none" }}
+            >
+              Limpar
+            </Button>
+          )}
+        </Box>
+        {hasActiveFilters && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {filteredClients.length} de {clients.length} clientes
+          </Typography>
+        )}
+      </Card>
+
       {/* Content */}
       {loading ? (
         <TableSkeleton
@@ -200,7 +311,7 @@ const Clients: React.FC = () => {
         />
       ) : error ? (
         <Alert severity="error">{error}</Alert>
-      ) : clients.length === 0 ? (
+      ) : filteredClients.length === 0 && !hasActiveFilters ? (
         <Card>
           <EmptyState
             icon={<PeopleIcon />}
@@ -209,6 +320,19 @@ const Clients: React.FC = () => {
             actionLabel="Adicionar Cliente"
             onAction={() => openModal()}
           />
+        </Card>
+      ) : filteredClients.length === 0 && hasActiveFilters ? (
+        <Card sx={{ p: 4, textAlign: "center" }}>
+          <FilterListIcon sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Nenhum cliente encontrado
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Tente ajustar os filtros de busca
+          </Typography>
+          <Button variant="outlined" onClick={clearFilters}>
+            Limpar filtros
+          </Button>
         </Card>
       ) : (
         <Card>
@@ -227,7 +351,7 @@ const Clients: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {clients.map((c) => (
+                {filteredClients.map((c) => (
                   <TableRow key={c.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
                     <TableCell>{c.document || "--"}</TableCell>
