@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -91,17 +91,19 @@ type Consultant = {
   name: string;
 };
 
-function MapBoundsUpdater({ properties }: { properties: PropertyMapItem[] }) {
+function MapBoundsUpdater({ properties, hasInitialized }: { properties: PropertyMapItem[], hasInitialized: React.MutableRefObject<boolean> }) {
   const map = useMap();
 
   useEffect(() => {
-    if (properties.length > 0) {
+    // Só ajusta bounds uma vez, quando as propriedades são carregadas pela primeira vez
+    if (properties.length > 0 && !hasInitialized.current) {
       const bounds = L.latLngBounds(
         properties.map((p) => [p.latitude, p.longitude])
       );
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+      hasInitialized.current = true;
     }
-  }, [properties, map]);
+  }, [properties, map, hasInitialized]);
 
   return null;
 }
@@ -129,6 +131,7 @@ const PropertiesMap: React.FC = () => {
   const [filterConsultant, setFilterConsultant] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [currentZoom, setCurrentZoom] = useState(5);
+  const mapInitializedRef = useRef(false);
 
   const defaultCenter: [number, number] = [-14.235, -51.9253]; // Centro do Brasil
 
@@ -164,6 +167,8 @@ const PropertiesMap: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Reset map bounds quando filtros mudam
+    mapInitializedRef.current = false;
     loadData();
   }, [filterConsultant, filterRegion]);
 
@@ -416,7 +421,7 @@ const PropertiesMap: React.FC = () => {
               );
             })}
 
-            <MapBoundsUpdater properties={propertiesWithCoords} />
+            <MapBoundsUpdater properties={propertiesWithCoords} hasInitialized={mapInitializedRef} />
             <ZoomTracker onZoomChange={setCurrentZoom} />
           </MapContainer>
         )}
