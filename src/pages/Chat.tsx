@@ -26,6 +26,8 @@ import {
   MicOff as MicOffIcon,
   Help as HelpIcon,
   Sync as SyncIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Filesystem, Directory } from "@capacitor/filesystem";
@@ -132,6 +134,7 @@ const Chat: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -840,6 +843,56 @@ const Chat: React.FC = () => {
           ))}
         </Box>
       )}
+
+      {/* Quick Actions */}
+      <Box sx={{ borderTop: 1, borderColor: "divider", bgcolor: "background.paper" }}>
+        <Button
+          fullWidth
+          size="small"
+          onClick={() => setShowQuickActions(!showQuickActions)}
+          endIcon={showQuickActions ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          sx={{
+            py: 0.5,
+            textTransform: "none",
+            color: "text.secondary",
+            fontSize: "0.75rem",
+          }}
+        >
+          {showQuickActions ? "Ocultar ações rápidas" : "Ações rápidas"}
+        </Button>
+        {showQuickActions && (
+          <Box sx={{ px: 1.5, pb: 1.5, display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+            {[
+              { label: "Lançar visita", action: "Cliente:\nCultura:\nVariedade:\nFenologia:\nData: hoje\nObs:" },
+              { label: "Agenda da semana", action: "agenda da semana" },
+              { label: "Rotina do dia", action: "meu dia" },
+              { label: "Dias de plantado", action: "dias de plantado" },
+              { label: "Clientes atrasados", action: "clientes atrasados" },
+              { label: "PDF última visita", action: "PDF da última visita" },
+              { label: "Resumo semanal", action: "resumo da semana" },
+              { label: "Anotar perfil cliente", action: "anota nos dados de campo:\nCliente:\nCategoria: perfil_tecnico_cliente\nConteúdo:" },
+              { label: "Consultar perfil", action: "me mostra o perfil do cliente" },
+            ].map((item, i) => (
+              <Chip
+                key={i}
+                label={item.label}
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setInput(item.action);
+                  setShowQuickActions(false);
+                  textareaRef.current?.focus();
+                }}
+                sx={{
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  "&:hover": { bgcolor: "primary.lighter", borderColor: "primary.main" },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
 
       {/* Input bar Premium */}
       <Paper
