@@ -870,8 +870,8 @@ const Chat: React.FC = () => {
               { label: "Clientes atrasados", action: "clientes atrasados" },
               { label: "PDF última visita", action: "PDF da última visita" },
               { label: "Resumo semanal", action: "resumo da semana" },
-              { label: "Anotar perfil cliente", action: "anota nos dados de campo:\nCliente:\nCategoria: perfil_tecnico_cliente\nConteúdo:" },
-              { label: "Consultar perfil", action: "me mostra o perfil do cliente" },
+              { label: "Anotações sobre o cliente", action: "anota nos dados de campo: Cliente: " },
+              { label: "Consultar anotações sobre cliente", action: "me mostra o perfil do cliente" },
             ].map((item, i) => (
               <Chip
                 key={i}
