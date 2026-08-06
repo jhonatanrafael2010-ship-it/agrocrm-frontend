@@ -290,7 +290,7 @@ function App() {
             ) : route === "Usuários" && currentUser?.is_admin ? (
               <AdminUsersPage />
             ) : (
-              <Dashboard />
+              <Dashboard onNavigate={setRoute} />
             )}
           </div>
         </main>

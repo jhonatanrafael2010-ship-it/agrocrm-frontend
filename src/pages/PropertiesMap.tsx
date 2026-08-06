@@ -155,6 +155,8 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
   return null;
 }
 
+type MapFilter = "all" | "recent" | "attention" | "late" | "critical" | "no_visit";
+
 const PropertiesMap: React.FC = () => {
   const [properties, setProperties] = useState<PropertyMapItem[]>([]);
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -162,6 +164,11 @@ const PropertiesMap: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [mapType, setMapType] = useState<"street" | "satellite">("satellite");
   const [filterConsultant, setFilterConsultant] = useState("");
+  const [filterStatus, setFilterStatus] = useState<MapFilter>(() => {
+    const saved = sessionStorage.getItem("map_filter_status");
+    sessionStorage.removeItem("map_filter_status");
+    return (saved as MapFilter) || "all";
+  });
   const [filterRegion, setFilterRegion] = useState("");
   const [currentZoom, setCurrentZoom] = useState(5);
   const mapInitializedRef = useRef(false);
@@ -211,9 +218,29 @@ const PropertiesMap: React.FC = () => {
     return d.toLocaleDateString("pt-BR");
   };
 
-  const propertiesWithCoords = properties.filter(
-    (p) => p.latitude && p.longitude
-  );
+  // Filtra propriedades por status de visita
+  const filterByStatus = (prop: PropertyMapItem): boolean => {
+    const daysAgo = prop.last_visit?.days_ago ?? null;
+
+    switch (filterStatus) {
+      case "recent":
+        return daysAgo !== null && daysAgo <= 7;
+      case "attention":
+        return daysAgo !== null && daysAgo > 7 && daysAgo <= 15;
+      case "late":
+        return daysAgo !== null && daysAgo > 15 && daysAgo <= 30;
+      case "critical":
+        return daysAgo !== null && daysAgo > 30;
+      case "no_visit":
+        return daysAgo === null;
+      default:
+        return true;
+    }
+  };
+
+  const propertiesWithCoords = properties
+    .filter((p) => p.latitude && p.longitude)
+    .filter(filterByStatus);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, height: "calc(100vh - 100px)" }}>
@@ -271,6 +298,24 @@ const PropertiesMap: React.FC = () => {
                 {r}
               </MenuItem>
             ))}
+          </TextField>
+          <TextField
+            select
+            label="Status"
+            value={filterStatus}
+            onChange={(e) => {
+              setFilterStatus(e.target.value as MapFilter);
+              mapInitializedRef.current = false;
+            }}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            <MenuItem value="recent">Recentes (&lt; 7 dias)</MenuItem>
+            <MenuItem value="attention">Atenção (8-15 dias)</MenuItem>
+            <MenuItem value="late">Atrasados (16-30 dias)</MenuItem>
+            <MenuItem value="critical">Críticos (&gt; 30 dias)</MenuItem>
+            <MenuItem value="no_visit">Sem visita</MenuItem>
           </TextField>
 
           <Box sx={{ flex: 1 }} />
@@ -357,7 +402,7 @@ const PropertiesMap: React.FC = () => {
                 <Marker
                   key={`${prop.id}-${showLabel}`}
                   position={[prop.latitude, prop.longitude]}
-                  icon={createColoredIcon(markerColor, showLabel ? prop.client_name : undefined)}
+                  icon={createColoredIcon(markerColor, showLabel && prop.client_name ? prop.client_name : undefined)}
                   eventHandlers={{
                     mouseover: (e) => {
                       e.target.openPopup();

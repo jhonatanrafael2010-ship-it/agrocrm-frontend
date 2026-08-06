@@ -155,7 +155,17 @@ async function downloadBlob(filename: string, blob: Blob) {
   URL.revokeObjectURL(url);
 }
 
-const Dashboard: React.FC = () => {
+type DashboardProps = {
+  onNavigate?: (route: string) => void;
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  const navigateToMap = (filter?: string) => {
+    if (filter) {
+      sessionStorage.setItem("map_filter_status", filter);
+    }
+    onNavigate?.("Mapa");
+  };
   const [loading, setLoading] = useState(true);
 
   const [clients, setClients] = useState<Client[]>([]);
@@ -338,10 +348,10 @@ const Dashboard: React.FC = () => {
           {/* KPI Cards */}
           <Grid container spacing={2} sx={{ mb: 4 }}>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-              <KPICard icon={Users} label="Clientes" value={clients.length} variant="blue" subtitle="Carteira ativa" />
+              <KPICard icon={Users} label="Clientes" value={clients.length} variant="blue" subtitle="Carteira ativa" onClick={() => onNavigate?.("Clientes")} />
             </Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-              <KPICard icon={Map} label="Propriedades" value={properties.length} variant="emerald" subtitle="Fazendas cadastradas" />
+              <KPICard icon={Map} label="Propriedades" value={properties.length} variant="emerald" subtitle="Clique para ver no mapa" onClick={() => navigateToMap("all")} />
             </Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}>
               <KPICard icon={Sprout} label="Talhões" value={plots.length} variant="teal" subtitle="Áreas produtivas" />
@@ -350,10 +360,10 @@ const Dashboard: React.FC = () => {
               <KPICard icon={Wheat} label="Plantios" value={plantings.length} variant="amber" subtitle="Safras em campo" />
             </Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-              <KPICard icon={ClipboardList} label="Acompanhamentos" value={visits.filter(v => (v.photos?.length ?? 0) > 0).length} variant="violet" subtitle="Lançamentos com foto" />
+              <KPICard icon={ClipboardList} label="Acompanhamentos" value={visits.filter(v => (v.photos?.length ?? 0) > 0).length} variant="violet" subtitle="Lançamentos com foto" onClick={() => onNavigate?.("Acompanhamentos")} />
             </Grid>
             <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-              <KPICard icon={Briefcase} label="Oportunidades" value={opps.length} variant="rose" subtitle="Pipeline ativo" />
+              <KPICard icon={Briefcase} label="Oportunidades" value={opps.length} variant="rose" subtitle="Pipeline ativo" onClick={() => onNavigate?.("Oportunidades")} />
             </Grid>
           </Grid>
 
