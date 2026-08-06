@@ -44,7 +44,40 @@ const getMarkerColor = (daysAgo: number | null): string => {
   return "#ef4444"; // Vermelho - muito atrasado
 };
 
-const createColoredIcon = (color: string) => {
+const createColoredIcon = (color: string, label?: string) => {
+  if (label) {
+    return L.divIcon({
+      className: "custom-marker-with-label",
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <div style="
+            background-color: ${color};
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          "></div>
+          <div style="
+            background: rgba(255,255,255,0.95);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            margin-top: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          ">${label}</div>
+        </div>
+      `,
+      iconSize: [24, 50],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
+    });
+  }
   return L.divIcon({
     className: "custom-marker",
     html: `
@@ -317,54 +350,25 @@ const PropertiesMap: React.FC = () => {
             )}
 
             {propertiesWithCoords.map((prop) => {
-              const tooltipContent = `
-                <div style="min-width: 180px;">
-                  <strong style="font-size: 13px;">${prop.client_name}</strong><br/>
-                  <span style="color: #666; font-size: 11px;">${prop.name}</span>
-                  ${prop.city_state ? `<br/><span style="color: #888; font-size: 10px;">${prop.city_state}</span>` : ""}
-                  ${prop.area_ha ? `<br/><span style="font-size: 11px;">Área: ${prop.area_ha} ha</span>` : ""}
-                  <hr style="margin: 6px 0; border: none; border-top: 1px solid #ddd;"/>
-                  ${prop.last_visit ? `
-                    <span style="font-size: 11px; font-weight: 600;">Última visita: ${formatDate(prop.last_visit.date)}</span>
-                    ${prop.last_visit.days_ago !== null ? `<br/><span style="color: #888; font-size: 10px;">(${prop.last_visit.days_ago} dias atrás)</span>` : ""}
-                    ${prop.last_visit.culture ? `<br/><span style="font-size: 11px;">${prop.last_visit.culture}${prop.last_visit.variety ? ` - ${prop.last_visit.variety}` : ""}${prop.last_visit.fenologia ? ` (${prop.last_visit.fenologia})` : ""}</span>` : ""}
-                  ` : `<span style="color: #888; font-size: 11px;">Sem visitas registradas</span>`}
-                </div>
-              `;
+              const showLabel = currentZoom >= 10;
+              const markerColor = getMarkerColor(prop.last_visit?.days_ago ?? null);
 
               return (
                 <Marker
-                  key={prop.id}
+                  key={`${prop.id}-${showLabel}`}
                   position={[prop.latitude, prop.longitude]}
-                  icon={createColoredIcon(
-                    getMarkerColor(prop.last_visit?.days_ago ?? null)
-                  )}
+                  icon={createColoredIcon(markerColor, showLabel ? prop.client_name : undefined)}
+                  eventHandlers={{
+                    mouseover: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseout: (e) => {
+                      e.target.closePopup();
+                    },
+                  }}
                 >
-                  {/* Tooltip no hover (desktop) */}
-                  <Tooltip
-                    direction="top"
-                    offset={[0, -10]}
-                    opacity={1}
-                  >
-                    <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
-                  </Tooltip>
 
-                  {/* Label permanente com nome do cliente (aparece com zoom >= 10) */}
-                  {currentZoom >= 10 && (
-                    <Tooltip
-                      direction="bottom"
-                      offset={[0, 10]}
-                      permanent
-                      className="client-label"
-                    >
-                      <span style={{ fontWeight: 600, fontSize: "11px" }}>
-                        {prop.client_name}
-                      </span>
-                    </Tooltip>
-                  )}
-
-                  {/* Popup ao clicar (mobile) */}
-                  <Popup>
+                  <Popup autoPan={false}>
                     <Box sx={{ minWidth: 200 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                         {prop.client_name}
