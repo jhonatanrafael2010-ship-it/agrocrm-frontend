@@ -276,11 +276,19 @@ const PropertiesMap: React.FC = () => {
             style={{ height: "100%", width: "100%" }}
           >
             {mapType === "satellite" ? (
-              <TileLayer
-                attribution="&copy; Esri, Maxar, Earthstar Geographics"
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                maxZoom={19}
-              />
+              <>
+                {/* Camada de satélite */}
+                <TileLayer
+                  attribution="&copy; Esri, Maxar, Earthstar Geographics"
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  maxZoom={19}
+                />
+                {/* Camada de labels (cidades, estradas, etc) sobre o satélite */}
+                <TileLayer
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                  maxZoom={19}
+                />
+              </>
             ) : (
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
