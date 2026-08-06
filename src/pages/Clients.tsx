@@ -245,12 +245,14 @@ const Clients: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             size="small"
             sx={{ minWidth: 250, flex: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon color="action" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
           <TextField
