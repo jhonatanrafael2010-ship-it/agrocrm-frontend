@@ -15,6 +15,8 @@ import {
   MyLocation as MyLocationIcon,
   Close as CloseIcon,
   Search as SearchIcon,
+  Map as MapIcon,
+  Satellite as SatelliteIcon,
 } from "@mui/icons-material";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -76,6 +78,7 @@ const LocationPicker: React.FC<Props> = ({
   );
   const [searchText, setSearchText] = useState("");
   const [searching, setSearching] = useState(false);
+  const [mapType, setMapType] = useState<"street" | "satellite">("satellite");
 
   useEffect(() => {
     if (initialLat && initialLng) {
@@ -176,16 +179,24 @@ const LocationPicker: React.FC<Props> = ({
         </Box>
 
         {/* Mapa */}
-        <Box sx={{ height: 400 }}>
+        <Box sx={{ height: 400, position: "relative" }}>
           <MapContainer
             center={position}
-            zoom={13}
+            zoom={15}
             style={{ height: "100%", width: "100%" }}
           >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            {mapType === "satellite" ? (
+              <TileLayer
+                attribution='&copy; Esri, Maxar, Earthstar Geographics'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={19}
+              />
+            ) : (
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            )}
             <Marker
               position={position}
               draggable
@@ -200,6 +211,50 @@ const LocationPicker: React.FC<Props> = ({
             <MapClickHandler onLocationSelect={handleLocationSelect} />
             <MapCenterUpdater center={position} />
           </MapContainer>
+
+          {/* Toggle Mapa/Satélite */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              zIndex: 1000,
+              display: "flex",
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              boxShadow: 2,
+              overflow: "hidden",
+            }}
+          >
+            <Button
+              size="small"
+              variant={mapType === "street" ? "contained" : "text"}
+              onClick={() => setMapType("street")}
+              sx={{
+                minWidth: 40,
+                px: 1.5,
+                borderRadius: 0,
+                color: mapType === "street" ? "white" : "text.primary",
+              }}
+              startIcon={<MapIcon fontSize="small" />}
+            >
+              Mapa
+            </Button>
+            <Button
+              size="small"
+              variant={mapType === "satellite" ? "contained" : "text"}
+              onClick={() => setMapType("satellite")}
+              sx={{
+                minWidth: 40,
+                px: 1.5,
+                borderRadius: 0,
+                color: mapType === "satellite" ? "white" : "text.primary",
+              }}
+              startIcon={<SatelliteIcon fontSize="small" />}
+            >
+              Satélite
+            </Button>
+          </Box>
         </Box>
 
         {/* Coordenadas selecionadas */}
