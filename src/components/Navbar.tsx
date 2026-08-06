@@ -16,6 +16,7 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Map as MapIcon,
+  Satellite as SatelliteIcon,
   CalendarMonth as CalendarIcon,
   Assignment as AssignmentIcon,
   BusinessCenter as BusinessIcon,
@@ -53,6 +54,7 @@ const sections = [
     items: [
       { label: "Clientes", icon: <PeopleIcon />, color: "#3b82f6" },
       { label: "Propriedades", icon: <MapIcon />, color: "#10b981" },
+      { label: "Mapa", icon: <SatelliteIcon />, color: "#059669" },
       { label: "Oportunidades", icon: <BusinessIcon />, color: "#f59e0b" },
     ],
   },

@@ -4,6 +4,7 @@ import { lightTheme, darkTheme } from "./theme/muiTheme";
 import Navbar from "./components/Navbar";
 import Clients from "./pages/Clients";
 import PropertiesPage from "./pages/Properties";
+import PropertiesMapPage from "./pages/PropertiesMap";
 import CalendarPage from "./pages/Calendar";
 import OpportunitiesPage from "./pages/Opportunities";
 import Dashboard from "./pages/Dashboard";
@@ -274,6 +275,8 @@ function App() {
               <Clients />
             ) : route === "Propriedades" ? (
               <PropertiesPage />
+            ) : route === "Mapa" ? (
+              <PropertiesMapPage />
             ) : route === "Calendário" ? (
               <CalendarPage />
             ) : route === "Oportunidades" ? (
