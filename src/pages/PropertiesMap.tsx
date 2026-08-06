@@ -320,32 +320,82 @@ const PropertiesMap: React.FC = () => {
 
           <Box sx={{ flex: 1 }} />
 
-          {/* Legenda */}
+          {/* Legenda clicável */}
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             <Chip
               size="small"
               label="< 7 dias"
-              sx={{ bgcolor: "#22c55e", color: "white" }}
+              onClick={() => {
+                setFilterStatus(filterStatus === "recent" ? "all" : "recent");
+                mapInitializedRef.current = false;
+              }}
+              sx={{
+                bgcolor: "#22c55e",
+                color: "white",
+                cursor: "pointer",
+                border: filterStatus === "recent" ? "2px solid #000" : "none",
+                "&:hover": { opacity: 0.85 },
+              }}
             />
             <Chip
               size="small"
               label="8-15 dias"
-              sx={{ bgcolor: "#eab308", color: "white" }}
+              onClick={() => {
+                setFilterStatus(filterStatus === "attention" ? "all" : "attention");
+                mapInitializedRef.current = false;
+              }}
+              sx={{
+                bgcolor: "#eab308",
+                color: "white",
+                cursor: "pointer",
+                border: filterStatus === "attention" ? "2px solid #000" : "none",
+                "&:hover": { opacity: 0.85 },
+              }}
             />
             <Chip
               size="small"
               label="16-30 dias"
-              sx={{ bgcolor: "#f97316", color: "white" }}
+              onClick={() => {
+                setFilterStatus(filterStatus === "late" ? "all" : "late");
+                mapInitializedRef.current = false;
+              }}
+              sx={{
+                bgcolor: "#f97316",
+                color: "white",
+                cursor: "pointer",
+                border: filterStatus === "late" ? "2px solid #000" : "none",
+                "&:hover": { opacity: 0.85 },
+              }}
             />
             <Chip
               size="small"
               label="> 30 dias"
-              sx={{ bgcolor: "#ef4444", color: "white" }}
+              onClick={() => {
+                setFilterStatus(filterStatus === "critical" ? "all" : "critical");
+                mapInitializedRef.current = false;
+              }}
+              sx={{
+                bgcolor: "#ef4444",
+                color: "white",
+                cursor: "pointer",
+                border: filterStatus === "critical" ? "2px solid #000" : "none",
+                "&:hover": { opacity: 0.85 },
+              }}
             />
             <Chip
               size="small"
               label="Sem visita"
-              sx={{ bgcolor: "#6b7280", color: "white" }}
+              onClick={() => {
+                setFilterStatus(filterStatus === "no_visit" ? "all" : "no_visit");
+                mapInitializedRef.current = false;
+              }}
+              sx={{
+                bgcolor: "#6b7280",
+                color: "white",
+                cursor: "pointer",
+                border: filterStatus === "no_visit" ? "2px solid #000" : "none",
+                "&:hover": { opacity: 0.85 },
+              }}
             />
           </Box>
         </Box>
