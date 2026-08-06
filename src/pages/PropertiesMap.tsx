@@ -45,7 +45,13 @@ const getMarkerColor = (daysAgo: number | null): string => {
 };
 
 const createColoredIcon = (color: string, label?: string) => {
-  if (label) {
+  const trimmedLabel = label?.trim();
+  if (trimmedLabel && trimmedLabel.length > 0) {
+    const escapedLabel = trimmedLabel
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
     return L.divIcon({
       className: "custom-marker-with-label",
       html: `
@@ -64,13 +70,14 @@ const createColoredIcon = (color: string, label?: string) => {
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
+            color: #333;
             white-space: nowrap;
             margin-top: 4px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.2);
             max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
-          ">${label}</div>
+          ">${escapedLabel}</div>
         </div>
       `,
       iconSize: [24, 50],
