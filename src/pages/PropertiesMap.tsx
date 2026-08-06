@@ -16,7 +16,7 @@ import {
   Refresh as RefreshIcon,
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { API_BASE } from "../config";
@@ -106,6 +106,20 @@ function MapBoundsUpdater({ properties }: { properties: PropertyMapItem[] }) {
   return null;
 }
 
+function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => {
+      onZoomChange(map.getZoom());
+    },
+  });
+
+  useEffect(() => {
+    onZoomChange(map.getZoom());
+  }, []);
+
+  return null;
+}
+
 const PropertiesMap: React.FC = () => {
   const [properties, setProperties] = useState<PropertyMapItem[]>([]);
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -114,6 +128,7 @@ const PropertiesMap: React.FC = () => {
   const [mapType, setMapType] = useState<"street" | "satellite">("satellite");
   const [filterConsultant, setFilterConsultant] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
+  const [currentZoom, setCurrentZoom] = useState(5);
 
   const defaultCenter: [number, number] = [-14.235, -51.9253]; // Centro do Brasil
 
@@ -296,71 +311,113 @@ const PropertiesMap: React.FC = () => {
               />
             )}
 
-            {propertiesWithCoords.map((prop) => (
-              <Marker
-                key={prop.id}
-                position={[prop.latitude, prop.longitude]}
-                icon={createColoredIcon(
-                  getMarkerColor(prop.last_visit?.days_ago ?? null)
-                )}
-              >
-                <Popup>
-                  <Box sx={{ minWidth: 200 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      {prop.client_name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {prop.name}
-                    </Typography>
-                    {prop.city_state && (
-                      <Typography variant="caption" color="text.secondary">
-                        {prop.city_state}
-                      </Typography>
-                    )}
-                    {prop.area_ha && (
-                      <Typography variant="body2">
-                        Área: {prop.area_ha} ha
-                      </Typography>
-                    )}
+            {propertiesWithCoords.map((prop) => {
+              const tooltipContent = `
+                <div style="min-width: 180px;">
+                  <strong style="font-size: 13px;">${prop.client_name}</strong><br/>
+                  <span style="color: #666; font-size: 11px;">${prop.name}</span>
+                  ${prop.city_state ? `<br/><span style="color: #888; font-size: 10px;">${prop.city_state}</span>` : ""}
+                  ${prop.area_ha ? `<br/><span style="font-size: 11px;">Área: ${prop.area_ha} ha</span>` : ""}
+                  <hr style="margin: 6px 0; border: none; border-top: 1px solid #ddd;"/>
+                  ${prop.last_visit ? `
+                    <span style="font-size: 11px; font-weight: 600;">Última visita: ${formatDate(prop.last_visit.date)}</span>
+                    ${prop.last_visit.days_ago !== null ? `<br/><span style="color: #888; font-size: 10px;">(${prop.last_visit.days_ago} dias atrás)</span>` : ""}
+                    ${prop.last_visit.culture ? `<br/><span style="font-size: 11px;">${prop.last_visit.culture}${prop.last_visit.variety ? ` - ${prop.last_visit.variety}` : ""}${prop.last_visit.fenologia ? ` (${prop.last_visit.fenologia})` : ""}</span>` : ""}
+                  ` : `<span style="color: #888; font-size: 11px;">Sem visitas registradas</span>`}
+                </div>
+              `;
 
-                    <Box
-                      sx={{
-                        mt: 1,
-                        pt: 1,
-                        borderTop: 1,
-                        borderColor: "divider",
-                      }}
+              return (
+                <Marker
+                  key={prop.id}
+                  position={[prop.latitude, prop.longitude]}
+                  icon={createColoredIcon(
+                    getMarkerColor(prop.last_visit?.days_ago ?? null)
+                  )}
+                >
+                  {/* Tooltip no hover (desktop) */}
+                  <Tooltip
+                    direction="top"
+                    offset={[0, -10]}
+                    opacity={1}
+                  >
+                    <div dangerouslySetInnerHTML={{ __html: tooltipContent }} />
+                  </Tooltip>
+
+                  {/* Label permanente com nome do cliente (aparece com zoom >= 10) */}
+                  {currentZoom >= 10 && (
+                    <Tooltip
+                      direction="bottom"
+                      offset={[0, 10]}
+                      permanent
+                      className="client-label"
                     >
-                      {prop.last_visit ? (
-                        <>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            Última visita: {formatDate(prop.last_visit.date)}
-                          </Typography>
-                          {prop.last_visit.days_ago !== null && (
-                            <Typography variant="caption" color="text.secondary">
-                              ({prop.last_visit.days_ago} dias atrás)
-                            </Typography>
-                          )}
-                          {prop.last_visit.culture && (
-                            <Typography variant="body2">
-                              {prop.last_visit.culture}
-                              {prop.last_visit.variety && ` - ${prop.last_visit.variety}`}
-                              {prop.last_visit.fenologia && ` (${prop.last_visit.fenologia})`}
-                            </Typography>
-                          )}
-                        </>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          Sem visitas registradas
+                      <span style={{ fontWeight: 600, fontSize: "11px" }}>
+                        {prop.client_name}
+                      </span>
+                    </Tooltip>
+                  )}
+
+                  {/* Popup ao clicar (mobile) */}
+                  <Popup>
+                    <Box sx={{ minWidth: 200 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {prop.client_name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {prop.name}
+                      </Typography>
+                      {prop.city_state && (
+                        <Typography variant="caption" color="text.secondary">
+                          {prop.city_state}
                         </Typography>
                       )}
+                      {prop.area_ha && (
+                        <Typography variant="body2">
+                          Área: {prop.area_ha} ha
+                        </Typography>
+                      )}
+
+                      <Box
+                        sx={{
+                          mt: 1,
+                          pt: 1,
+                          borderTop: 1,
+                          borderColor: "divider",
+                        }}
+                      >
+                        {prop.last_visit ? (
+                          <>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              Última visita: {formatDate(prop.last_visit.date)}
+                            </Typography>
+                            {prop.last_visit.days_ago !== null && (
+                              <Typography variant="caption" color="text.secondary">
+                                ({prop.last_visit.days_ago} dias atrás)
+                              </Typography>
+                            )}
+                            {prop.last_visit.culture && (
+                              <Typography variant="body2">
+                                {prop.last_visit.culture}
+                                {prop.last_visit.variety && ` - ${prop.last_visit.variety}`}
+                                {prop.last_visit.fenologia && ` (${prop.last_visit.fenologia})`}
+                              </Typography>
+                            )}
+                          </>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Sem visitas registradas
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                </Popup>
-              </Marker>
-            ))}
+                  </Popup>
+                </Marker>
+              );
+            })}
 
             <MapBoundsUpdater properties={propertiesWithCoords} />
+            <ZoomTracker onZoomChange={setCurrentZoom} />
           </MapContainer>
         )}
 
