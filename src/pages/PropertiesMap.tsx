@@ -139,7 +139,7 @@ const PropertiesMap: React.FC = () => {
     // Carrega consultores e regiões para filtros
     Promise.all([
       fetchWithCache(`${API_BASE}consultants`, "consultants"),
-      fetchWithCache(`${API_BASE}regions`, "regions"),
+      fetch(`${API_BASE}regions`).then((r) => r.json()).catch(() => []),
     ]).then(([cons, regs]) => {
       setConsultants(Array.isArray(cons) ? cons : []);
       setRegions(Array.isArray(regs) ? regs : []);
