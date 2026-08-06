@@ -871,7 +871,7 @@ const Chat: React.FC = () => {
               { label: "PDF última visita", action: "PDF da última visita" },
               { label: "Resumo semanal", action: "resumo da semana" },
               { label: "Anotações sobre o cliente", action: "anota nos dados de campo: Cliente: " },
-              { label: "Consultar anotações sobre cliente", action: "me mostra o perfil do cliente" },
+              { label: "Consultar anotações sobre cliente", action: "consultar anotações do cliente " },
             ].map((item, i) => (
               <Chip
                 key={i}
