@@ -250,7 +250,7 @@ const PropertiesMap: React.FC = () => {
     .filter(filterByStatus);
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, height: "calc(100vh - 100px)" }}>
+    <Box sx={{ p: { xs: 1, md: 3 }, minHeight: "100vh", height: "auto" }}>
       {/* Header */}
       <Box
         sx={{
@@ -412,7 +412,7 @@ const PropertiesMap: React.FC = () => {
       </Card>
 
       {/* Mapa */}
-      <Card sx={{ height: "calc(100% - 180px)", position: "relative" }}>
+      <Card sx={{ height: { xs: "60vh", md: "calc(100vh - 280px)" }, minHeight: 400, position: "relative" }}>
         {loading ? (
           <Box
             sx={{

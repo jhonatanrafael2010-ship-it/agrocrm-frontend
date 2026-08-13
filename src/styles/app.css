@@ -386,3 +386,23 @@ body.app-updating .offcanvas-backdrop {
   background: transparent !important;
   border: none !important;
 }
+
+/* Fix: Leaflet map container no mobile */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 300px;
+  z-index: 1;
+}
+
+/* Garante que o mapa seja visível em mobile */
+@media (max-width: 768px) {
+  .leaflet-container {
+    min-height: 50vh;
+  }
+  
+  .leaflet-control-zoom {
+    margin-top: 10px !important;
+    margin-right: 10px !important;
+  }
+}
