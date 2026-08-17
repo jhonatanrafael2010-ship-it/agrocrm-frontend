@@ -326,10 +326,24 @@ const Properties: React.FC = () => {
     });
   }
 
-  function openPropertyModal(prop?: Property) {
+  async function refreshClients(): Promise<Client[]> {
+    try {
+      const res = await fetch(`${API_BASE}clients`);
+      const data = await res.json();
+      setClients(data || []);
+      return data || [];
+    } catch (err) {
+      console.error("Erro ao atualizar clientes:", err);
+      return clients;
+    }
+  }
+
+  async function openPropertyModal(prop?: Property) {
+    const freshClients = await refreshClients();
+
     if (prop) {
       setEditingProp(prop);
-      const clientName = clients.find((c) => c.id === prop.client_id)?.name || "";
+      const clientName = freshClients.find((c) => c.id === prop.client_id)?.name || "";
       setPropForm({
         client_id: String(prop.client_id),
         name: prop.name || "",

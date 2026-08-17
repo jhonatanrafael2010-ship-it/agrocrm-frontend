@@ -432,16 +432,16 @@ const PropertiesMap: React.FC = () => {
           >
             {mapType === "satellite" ? (
               <>
-                {/* Camada de satélite */}
+                {/* Camada de satélite Google */}
                 <TileLayer
-                  attribution="&copy; Esri, Maxar, Earthstar Geographics"
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  maxZoom={19}
+                  attribution="&copy; Google Maps"
+                  url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                  maxZoom={20}
                 />
                 {/* Camada de labels (cidades, estradas, etc) sobre o satélite */}
                 <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-                  maxZoom={19}
+                  url="https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}"
+                  maxZoom={20}
                 />
               </>
             ) : (

@@ -188,13 +188,13 @@ const LocationPicker: React.FC<Props> = ({
             {mapType === "satellite" ? (
               <>
                 <TileLayer
-                  attribution='&copy; Esri, Maxar, Earthstar Geographics'
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                  maxZoom={19}
+                  attribution='&copy; Google Maps'
+                  url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                  maxZoom={20}
                 />
                 <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-                  maxZoom={19}
+                  url="https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}"
+                  maxZoom={20}
                 />
               </>
             ) : (
