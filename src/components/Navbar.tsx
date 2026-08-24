@@ -27,6 +27,7 @@ import {
   AdminPanelSettings as AdminIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
+  AttachMoney as SalesIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 import SyncStatus from "./SyncStatus";
@@ -56,6 +57,7 @@ const sections = [
       { label: "Propriedades", icon: <MapIcon />, color: "#10b981" },
       { label: "Mapa", icon: <SatelliteIcon />, color: "#059669" },
       { label: "Oportunidades", icon: <BusinessIcon />, color: "#f59e0b" },
+      { label: "Vendas", icon: <SalesIcon />, color: "#22c55e" },
     ],
   },
   {

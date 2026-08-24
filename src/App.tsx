@@ -13,6 +13,7 @@ import ChatPage from "./pages/Chat";
 import VisitLinkingPage from "./pages/VisitLinking";
 import LoginPage from "./pages/Login";
 import AdminUsersPage from "./pages/AdminUsers";
+import SalesPage from "./pages/Sales";
 import "./styles/app.css";
 import { Toaster } from "sonner";
 
@@ -289,6 +290,8 @@ function App() {
               <ChatPage />
             ) : route === "Usuários" && currentUser?.is_admin ? (
               <AdminUsersPage />
+            ) : route === "Vendas" ? (
+              <SalesPage />
             ) : (
               <Dashboard onNavigate={setRoute} />
             )}

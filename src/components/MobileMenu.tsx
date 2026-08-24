@@ -29,6 +29,7 @@ import {
   AdminPanelSettings as AdminIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
+  AttachMoney as SalesIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 
@@ -52,6 +53,7 @@ const menuItems = [
   { label: "Acompanhamentos", icon: <AssignmentIcon />, route: "Acompanhamentos", color: "#8b5cf6" },
   { label: "Vincular Visitas", icon: <LinkIcon />, route: "Vincular Visitas", color: "#0ea5e9" },
   { label: "Oportunidades", icon: <BusinessIcon />, route: "Oportunidades", color: "#f59e0b" },
+  { label: "Vendas", icon: <SalesIcon />, route: "Vendas", color: "#22c55e" },
 ];
 
 const bottomNavItems = [
