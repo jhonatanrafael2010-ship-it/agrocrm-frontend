@@ -1119,8 +1119,10 @@ const Sales: React.FC = () => {
               value={saleForm.value}
               onChange={(e) => setSaleForm((f) => ({ ...f, value: e.target.value }))}
               fullWidth
-              InputProps={{
-                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                },
               }}
             />
 
