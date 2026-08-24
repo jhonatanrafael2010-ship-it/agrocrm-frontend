@@ -798,13 +798,13 @@ const Sales: React.FC = () => {
   }
 
   // Build tabs dynamically
-  const tabs = [
+  const tabs: { key: string; label: string; icon: React.ReactElement }[] = [
     { key: "vendas", label: "Vendas", icon: <MoneyIcon /> },
     { key: "visao-geral", label: "Visão Geral", icon: <OverviewIcon /> },
     ...categoriesWithSales.map((cat) => ({
       key: cat,
       label: cat,
-      icon: CATEGORY_CONFIG[cat]?.icon || <InventoryIcon />,
+      icon: (CATEGORY_CONFIG[cat]?.icon as React.ReactElement) || <InventoryIcon />,
     })),
     { key: "produtos", label: "Produtos", icon: <InventoryIcon /> },
   ];
