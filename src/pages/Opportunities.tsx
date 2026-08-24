@@ -1,480 +1,513 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Typography,
-  Button,
   Card,
   CardContent,
-  CardHeader,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
+  Alert,
   TextField,
   MenuItem,
-  Alert,
-  IconButton,
-  Paper,
-  Skeleton,
+  Chip,
+  LinearProgress,
+  Grid,
+  TableSortLabel,
 } from "@mui/material";
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Check as CheckIcon,
+  TrendingUp as TrendingUpIcon,
+  Grass as SeedIcon,
+  Landscape as AreaIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API_BASE } from "../config";
-import { fetchWithCache } from "../utils/offlineSync";
-import { notify } from "../utils/toast";
-import ConfirmDialog from "../components/ConfirmDialog";
 
-type Opportunity = {
+type Property = {
   id: number;
-  client_id?: number;
-  title?: string;
-  estimated_value?: number;
-  stage?: string;
+  client_id: number;
+  name: string;
+  area_ha: number | null;
 };
 
-type Client = { id: number; name: string };
+type Sale = {
+  id: number;
+  client_id: number;
+  client_name: string;
+  client_region: string | null;
+  product_id: number;
+  product_name: string;
+  product_category: string;
+  quantity: number;
+  unit: string;
+  value: number | null;
+  period_type: string;
+  period_year: string;
+};
 
-const STAGES = [
-  { key: "prospecção", label: "Prospecção", color: "#6366f1" },
-  { key: "cotação", label: "Cotação", color: "#3b82f6" },
-  { key: "negociação", label: "Negociação", color: "#f59e0b" },
-  { key: "fechadas", label: "Fechadas", color: "#10b981" },
-  { key: "perdidas", label: "Perdidas", color: "#ef4444" },
-];
+type Client = {
+  id: number;
+  name: string;
+  region: string | null;
+};
+
+type Period = { type: string; year: string; label: string };
+
+type ClientOpportunity = {
+  client_id: number;
+  client_name: string;
+  region: string | null;
+  total_area_ha: number;
+  seed_potential_scs: number;
+  seed_sold_scs: number;
+  seed_opportunity_scs: number;
+  opportunity_percentage: number;
+  coverage_percentage: number;
+};
+
+type SortField = "total_area_ha" | "seed_potential_scs" | "seed_sold_scs" | "seed_opportunity_scs" | "coverage_percentage";
+type SortDirection = "asc" | "desc";
+
+const SEEDS_PER_HA = 1.1;
 
 const Opportunities: React.FC = () => {
-  const [opps, setOpps] = useState<Opportunity[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ client_id: "", title: "", estimated_value: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; loading: boolean }>({
-    open: false,
-    id: null,
-    loading: false,
-  });
+
+  const [clients, setClients] = useState<Client[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [periods, setPeriods] = useState<Period[]>([]);
+
+  const [filterPeriodType, setFilterPeriodType] = useState("");
+  const [filterPeriodYear, setFilterPeriodYear] = useState("");
+  const [filterRegion, setFilterRegion] = useState("");
+
+  const [sortField, setSortField] = useState<SortField>("seed_opportunity_scs");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
+
+  const regions = useMemo(() => {
+    const uniqueRegions = new Set(clients.map((c) => c.region).filter(Boolean));
+    return Array.from(uniqueRegions) as string[];
+  }, [clients]);
 
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    Promise.all([
-      fetchWithCache(`${API_BASE}opportunities`, "opportunities"),
-      fetchWithCache(`${API_BASE}clients`, "clients"),
-    ])
-      .then(([ops, cs]) => {
-        if (!mounted) return;
-        setOpps(ops || []);
-        setClients(cs || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError("Erro ao carregar oportunidades");
-      })
-      .finally(() => setLoading(false));
-    return () => {
-      mounted = false;
-    };
+    loadData();
   }, []);
 
-  function clientName(id?: number) {
-    return clients.find((c) => c.id === id)?.name ?? "--";
-  }
-
-  async function changeStageRemote(opId: number, newStage: string) {
+  async function loadData() {
+    setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}opportunities/${opId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: newStage }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-      const updated = body.opportunity || body;
-      setOpps((list) => list.map((it) => (it.id === updated.id ? updated : it)));
-    } catch (err: any) {
-      notify.error(err?.message || "Erro ao atualizar oportunidade");
-    }
-  }
+      const [clientsRes, propertiesRes, salesRes, periodsRes] = await Promise.all([
+        fetch(`${API_BASE}clients`),
+        fetch(`${API_BASE}properties`),
+        fetch(`${API_BASE}sales`),
+        fetch(`${API_BASE}sales/periods`),
+      ]);
 
-  async function handleSave() {
-    if (!form.client_id || !form.title) {
-      notify.warning("Cliente e título são obrigatórios");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      let res, body;
-      if (editing) {
-        res = await fetch(`${API_BASE}opportunities/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            client_id: Number(form.client_id),
-            title: form.title,
-            estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined,
-          }),
-        });
-        body = await res.json();
-        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-        const updated = body.opportunity || body;
-        setOpps((o) => o.map((op) => (op.id === updated.id ? updated : op)));
-      } else {
-        res = await fetch(`${API_BASE}opportunities`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            client_id: Number(form.client_id),
-            title: form.title,
-            estimated_value: form.estimated_value ? Number(form.estimated_value) : undefined,
-          }),
-        });
-        body = await res.json();
-        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
-        const created = body.opportunity || body;
-        setOpps((o) => [created, ...o]);
-      }
-      closeModal();
-    } catch (err: any) {
-      notify.error(err?.message || "Erro ao salvar oportunidade");
+      setClients(await clientsRes.json());
+      setProperties(await propertiesRes.json());
+      setSales(await salesRes.json());
+      setPeriods(await periodsRes.json());
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao carregar dados");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   }
 
-  function handleDeleteClick(id?: number) {
-    if (!id) return;
-    setDeleteDialog({ open: true, id, loading: false });
-  }
+  const opportunities = useMemo(() => {
+    const clientMap: Record<number, ClientOpportunity> = {};
 
-  async function handleDeleteConfirm() {
-    if (!deleteDialog.id) return;
-    setDeleteDialog((d) => ({ ...d, loading: true }));
-    try {
-      const res = await fetch(`${API_BASE}opportunities/${deleteDialog.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.message || `status ${res.status}`);
-      }
-      setOpps((list) => list.filter((o) => o.id !== deleteDialog.id));
-      setDeleteDialog({ open: false, id: null, loading: false });
-      notify.success("Oportunidade excluída");
-    } catch (err: any) {
-      notify.error(err?.message || "Erro ao excluir oportunidade");
-      setDeleteDialog((d) => ({ ...d, loading: false }));
-    }
-  }
+    for (const client of clients) {
+      if (filterRegion && client.region !== filterRegion) continue;
 
-  function openModal(op?: Opportunity) {
-    setOpen(true);
-    if (op) {
-      setEditing(op);
-      setForm({
-        client_id: op.client_id ? String(op.client_id) : "",
-        title: op.title || "",
-        estimated_value: op.estimated_value ? String(op.estimated_value) : "",
+      const clientProperties = properties.filter((p) => p.client_id === client.id);
+      const totalArea = clientProperties.reduce((sum, p) => sum + (p.area_ha || 0), 0);
+
+      if (totalArea === 0) continue;
+
+      const seedPotential = totalArea * SEEDS_PER_HA;
+
+      const clientSeedSales = sales.filter((s) => {
+        if (s.client_id !== client.id) return false;
+        if (s.product_category !== "Semente") return false;
+        if (filterPeriodType && s.period_type !== filterPeriodType) return false;
+        if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
+        return true;
       });
+
+      const seedSold = clientSeedSales
+        .filter((s) => s.unit === "Sacas")
+        .reduce((sum, s) => sum + s.quantity, 0);
+
+      const seedOpportunity = Math.max(0, seedPotential - seedSold);
+      const coveragePercentage = seedPotential > 0 ? (seedSold / seedPotential) * 100 : 0;
+      const opportunityPercentage = seedPotential > 0 ? (seedOpportunity / seedPotential) * 100 : 0;
+
+      clientMap[client.id] = {
+        client_id: client.id,
+        client_name: client.name,
+        region: client.region,
+        total_area_ha: totalArea,
+        seed_potential_scs: seedPotential,
+        seed_sold_scs: seedSold,
+        seed_opportunity_scs: seedOpportunity,
+        coverage_percentage: coveragePercentage,
+        opportunity_percentage: opportunityPercentage,
+      };
+    }
+
+    return Object.values(clientMap);
+  }, [clients, properties, sales, filterPeriodType, filterPeriodYear, filterRegion]);
+
+  const sortedOpportunities = useMemo(() => {
+    return [...opportunities].sort((a, b) => {
+      const aVal = a[sortField];
+      const bVal = b[sortField];
+      return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+    });
+  }, [opportunities, sortField, sortDir]);
+
+  const totals = useMemo(() => {
+    return {
+      totalArea: opportunities.reduce((sum, o) => sum + o.total_area_ha, 0),
+      totalPotential: opportunities.reduce((sum, o) => sum + o.seed_potential_scs, 0),
+      totalSold: opportunities.reduce((sum, o) => sum + o.seed_sold_scs, 0),
+      totalOpportunity: opportunities.reduce((sum, o) => sum + o.seed_opportunity_scs, 0),
+      clientsCount: opportunities.length,
+    };
+  }, [opportunities]);
+
+  const overallCoverage = totals.totalPotential > 0
+    ? (totals.totalSold / totals.totalPotential) * 100
+    : 0;
+
+  function formatNumber(value: number): string {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(value);
+  }
+
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
-      setEditing(null);
-      setForm({ client_id: "", title: "", estimated_value: "" });
+      setSortField(field);
+      setSortDir("desc");
     }
   }
 
-  function closeModal() {
-    setOpen(false);
-    setEditing(null);
-    setForm({ client_id: "", title: "", estimated_value: "" });
+  function getCoverageColor(percentage: number): "success" | "warning" | "error" | "info" {
+    if (percentage >= 80) return "success";
+    if (percentage >= 50) return "info";
+    if (percentage >= 20) return "warning";
+    return "error";
   }
 
-  const grouped = STAGES.reduce((acc: Record<string, Opportunity[]>, s) => {
-    acc[s.key] = opps.filter((o) => (o.stage || "prospecção").toLowerCase() === s.key);
-    return acc;
-  }, {} as Record<string, Opportunity[]>);
-
-  function onDragEnd(result: any) {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    const fromStage = source.droppableId;
-    const toStage = destination.droppableId;
-    if (fromStage === toStage) return;
-
-    const opId = Number(draggableId);
-    setOpps((list) => list.map((it) => (it.id === opId ? { ...it, stage: toStage } : it)));
-    changeStageRemote(opId, toStage);
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1600, mx: "auto" }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Oportunidades
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => openModal()}
-          sx={{ textTransform: "none", fontWeight: 600 }}
-        >
-          Nova Oportunidade
-        </Button>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Potencial de crescimento em sementes por cliente (1 ha = {SEEDS_PER_HA} scs)
+        </Typography>
       </Box>
 
-      {loading ? (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(5, 1fr)",
-            },
-            gap: 2,
-          }}
-        >
-          {STAGES.map((s) => (
-            <Card key={s.key} sx={{ minHeight: 400 }}>
-              <CardHeader
-                title={s.label}
-                slotProps={{ title: { sx: { fontSize: "0.95rem", fontWeight: 600 } } }}
-                sx={{ bgcolor: `${s.color}15`, borderBottom: `3px solid ${s.color}`, py: 1.5 }}
-              />
-              <CardContent sx={{ p: 1.5 }}>
-                {[1, 2, 3].map((i) => (
-                  <Paper key={i} sx={{ p: 1.5, mb: 1.5, borderRadius: 2 }}>
-                    <Skeleton variant="text" width="70%" />
-                    <Skeleton variant="text" width="50%" />
-                    <Skeleton variant="text" width="40%" />
-                  </Paper>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(5, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            {STAGES.map((s) => (
-              <Card
-                key={s.key}
-                sx={{
-                  minHeight: 400,
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <CardHeader
-                  title={s.label}
-                  slotProps={{
-                    title: {
-                      sx: {
-                        fontSize: "0.95rem",
-                        fontWeight: 600,
-                        textTransform: "capitalize",
-                      },
-                    },
-                  }}
-                  sx={{
-                    bgcolor: `${s.color}15`,
-                    borderBottom: `3px solid ${s.color}`,
-                    py: 1.5,
-                  }}
-                />
-                <Droppable droppableId={s.key}>
-                  {(provided) => (
-                    <CardContent
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{
-                        flex: 1,
-                        p: 1.5,
-                        bgcolor: "action.hover",
-                        minHeight: 200,
-                      }}
-                    >
-                      {(grouped[s.key] || []).map((op, idx) => (
-                        <Draggable key={op.id} draggableId={`${op.id}`} index={idx}>
-                          {(prov) => (
-                            <Paper
-                              ref={prov.innerRef}
-                              {...prov.draggableProps}
-                              {...prov.dragHandleProps}
-                              elevation={1}
-                              sx={{
-                                p: 1.5,
-                                mb: 1.5,
-                                borderRadius: 2,
-                                borderLeft: `3px solid ${s.color}`,
-                                transition: "box-shadow 0.2s",
-                                "&:hover": {
-                                  boxShadow: 4,
-                                },
-                              }}
-                            >
-                              <Typography
-                                variant="subtitle2"
-                                sx={{ fontWeight: 600, mb: 0.5 }}
-                              >
-                                {op.title}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: "block", mb: 0.5 }}
-                              >
-                                {clientName(op.client_id)}
-                              </Typography>
-                              {op.estimated_value && (
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 700, color: "success.main" }}
-                                >
-                                  R$ {op.estimated_value.toLocaleString("pt-BR")}
-                                </Typography>
-                              )}
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "flex-end",
-                                  gap: 0.5,
-                                  mt: 1,
-                                }}
-                              >
-                                {s.key !== "fechadas" && (
-                                  <IconButton
-                                    size="small"
-                                    color="success"
-                                    onClick={() => changeStageRemote(op.id, "fechadas")}
-                                    title="Marcar como fechada"
-                                  >
-                                    <CheckIcon fontSize="small" />
-                                  </IconButton>
-                                )}
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => openModal(op)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleDeleteClick(op.id)}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Box>
-                            </Paper>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </CardContent>
-                  )}
-                </Droppable>
-              </Card>
-            ))}
-          </Box>
-        </DragDropContext>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
       )}
 
-      {/* Modal */}
-      <Dialog
-        open={open}
-        onClose={closeModal}
-        maxWidth="sm"
-        fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          {editing ? "Editar Oportunidade" : "Nova Oportunidade"}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
-            <TextField
-              select
-              label="Cliente"
-              value={form.client_id}
-              onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
-              fullWidth
-              required
-            >
-              <MenuItem value="">Selecione cliente</MenuItem>
-              {clients
-                .slice()
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((c) => (
-                  <MenuItem key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </MenuItem>
-                ))}
-            </TextField>
-            <TextField
-              label="Título"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              fullWidth
-              required
-            />
-            <TextField
-              label="Valor estimado"
-              value={form.estimated_value}
-              onChange={(e) => setForm((f) => ({ ...f, estimated_value: e.target.value }))}
-              placeholder="0"
-              fullWidth
-              type="number"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={closeModal} color="inherit">
-            Cancelar
-          </Button>
-          <Button variant="contained" onClick={handleSave} disabled={submitting}>
-            {submitting ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Filtros */}
+      <Card sx={{ mb: 3, p: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <TextField
+            select
+            label="Período"
+            value={
+              filterPeriodType && filterPeriodYear
+                ? `${filterPeriodType} ${filterPeriodYear}`
+                : ""
+            }
+            onChange={(e) => {
+              const period = periods.find((p) => p.label === e.target.value);
+              if (period) {
+                setFilterPeriodType(period.type);
+                setFilterPeriodYear(period.year);
+              } else {
+                setFilterPeriodType("");
+                setFilterPeriodYear("");
+              }
+            }}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {periods.map((p) => (
+              <MenuItem key={p.label} value={p.label}>
+                {p.label}
+              </MenuItem>
+            ))}
+          </TextField>
 
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        open={deleteDialog.open}
-        title="Excluir Oportunidade"
-        message="Tem certeza que deseja excluir esta oportunidade? Esta ação não pode ser desfeita."
-        confirmLabel="Excluir"
-        loading={deleteDialog.loading}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeleteDialog({ open: false, id: null, loading: false })}
-      />
+          <TextField
+            select
+            label="Região"
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {regions.map((r) => (
+              <MenuItem key={r} value={r}>
+                {r}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      </Card>
+
+      {/* Cards de Resumo */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <Card sx={{ bgcolor: "primary.main", color: "white" }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <PeopleIcon fontSize="small" />
+                <Typography variant="caption">Clientes</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                {totals.clientsCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <Card sx={{ bgcolor: "info.main", color: "white" }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <AreaIcon fontSize="small" />
+                <Typography variant="caption">Área Total</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                {formatNumber(totals.totalArea)} ha
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <Card sx={{ bgcolor: "secondary.main", color: "white" }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <SeedIcon fontSize="small" />
+                <Typography variant="caption">Potencial</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                {formatNumber(totals.totalPotential)} scs
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <Card sx={{ bgcolor: "success.main", color: "white" }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <SeedIcon fontSize="small" />
+                <Typography variant="caption">Vendido</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                {formatNumber(totals.totalSold)} scs
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 6, md: 2.4 }}>
+          <Card sx={{ bgcolor: "warning.main", color: "white" }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TrendingUpIcon fontSize="small" />
+                <Typography variant="caption">Oportunidade</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                {formatNumber(totals.totalOpportunity)} scs
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Barra de Cobertura Geral */}
+      <Card sx={{ mb: 3, p: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            Cobertura Geral
+          </Typography>
+          <Chip
+            label={`${formatNumber(overallCoverage)}%`}
+            size="small"
+            color={getCoverageColor(overallCoverage)}
+          />
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={Math.min(100, overallCoverage)}
+          sx={{
+            height: 12,
+            borderRadius: 2,
+            bgcolor: "action.hover",
+            "& .MuiLinearProgress-bar": {
+              borderRadius: 2,
+            },
+          }}
+          color={getCoverageColor(overallCoverage)}
+        />
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            {formatNumber(totals.totalSold)} scs vendidos
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {formatNumber(totals.totalPotential)} scs potencial
+          </Typography>
+        </Box>
+      </Card>
+
+      {/* Tabela de Oportunidades por Cliente */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Oportunidades por Cliente
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "total_area_ha"}
+                      direction={sortField === "total_area_ha" ? sortDir : "desc"}
+                      onClick={() => handleSort("total_area_ha")}
+                    >
+                      Área (ha)
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "seed_potential_scs"}
+                      direction={sortField === "seed_potential_scs" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_potential_scs")}
+                    >
+                      Potencial (scs)
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "seed_sold_scs"}
+                      direction={sortField === "seed_sold_scs" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_sold_scs")}
+                    >
+                      Vendido (scs)
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "seed_opportunity_scs"}
+                      direction={sortField === "seed_opportunity_scs" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_opportunity_scs")}
+                    >
+                      Oportunidade (scs)
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="center">
+                    <TableSortLabel
+                      active={sortField === "coverage_percentage"}
+                      direction={sortField === "coverage_percentage" ? sortDir : "desc"}
+                      onClick={() => handleSort("coverage_percentage")}
+                    >
+                      Cobertura
+                    </TableSortLabel>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedOpportunities.map((o, idx) => (
+                  <TableRow key={o.client_id} hover>
+                    <TableCell>
+                      <Chip
+                        label={`#${idx + 1}`}
+                        size="small"
+                        color={o.seed_opportunity_scs > 0 ? "warning" : "success"}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>{o.client_name}</TableCell>
+                    <TableCell>{o.region || "-"}</TableCell>
+                    <TableCell align="right">{formatNumber(o.total_area_ha)}</TableCell>
+                    <TableCell align="right">{formatNumber(o.seed_potential_scs)}</TableCell>
+                    <TableCell align="right">{formatNumber(o.seed_sold_scs)}</TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 600,
+                          color: o.seed_opportunity_scs > 0 ? "warning.main" : "success.main",
+                        }}
+                      >
+                        {formatNumber(o.seed_opportunity_scs)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(100, o.coverage_percentage)}
+                          sx={{
+                            width: 60,
+                            height: 8,
+                            borderRadius: 1,
+                            bgcolor: "action.hover",
+                          }}
+                          color={getCoverageColor(o.coverage_percentage)}
+                        />
+                        <Typography variant="caption" sx={{ minWidth: 40 }}>
+                          {formatNumber(o.coverage_percentage)}%
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {sortedOpportunities.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary">
+                        Nenhum cliente com área cadastrada
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
