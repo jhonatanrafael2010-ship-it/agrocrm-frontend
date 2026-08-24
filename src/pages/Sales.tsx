@@ -29,6 +29,8 @@ import {
   ListItemButton,
   ListItemText,
   InputAdornment,
+  Collapse,
+  TableSortLabel,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -39,6 +41,8 @@ import {
   AttachMoney as MoneyIcon,
   People as PeopleIcon,
   BarChart as BarChartIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { notify, confirm as toastConfirm } from "../utils/toast";
@@ -108,6 +112,9 @@ type ClientReport = {
   total_quantity: number;
 };
 
+type SortDirection = "asc" | "desc";
+type SortField = "sales_count" | "total_value" | "total_quantity" | "avg_value";
+
 const Sales: React.FC = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -127,12 +134,24 @@ const Sales: React.FC = () => {
   const [filterPeriodYear, setFilterPeriodYear] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [reportFilterCategory, setReportFilterCategory] = useState("");
 
   // Relatórios
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [regionReport, setRegionReport] = useState<RegionReport[]>([]);
   const [categoryReport, setCategoryReport] = useState<CategoryReport[]>([]);
   const [clientReport, setClientReport] = useState<ClientReport[]>([]);
+
+  // Ordenação
+  const [regionSortField, setRegionSortField] = useState<SortField>("total_value");
+  const [regionSortDir, setRegionSortDir] = useState<SortDirection>("desc");
+  const [categorySortField, setCategorySortField] = useState<SortField>("total_value");
+  const [categorySortDir, setCategorySortDir] = useState<SortDirection>("desc");
+  const [clientSortField, setClientSortField] = useState<SortField>("total_value");
+  const [clientSortDir, setClientSortDir] = useState<SortDirection>("desc");
+
+  // Expansão de clientes
+  const [expandedClients, setExpandedClients] = useState<Set<number>>(new Set());
 
   // Modal de venda
   const [openSale, setOpenSale] = useState(false);
@@ -188,7 +207,7 @@ const Sales: React.FC = () => {
     if (tabIndex === 1) {
       loadReports();
     }
-  }, [tabIndex, filterPeriodType, filterPeriodYear, filterRegion]);
+  }, [tabIndex, filterPeriodType, filterPeriodYear, filterRegion, reportFilterCategory]);
 
   async function loadData() {
     setLoading(true);
@@ -225,6 +244,7 @@ const Sales: React.FC = () => {
       if (filterPeriodType) params.append("period_type", filterPeriodType);
       if (filterPeriodYear) params.append("period_year", filterPeriodYear);
       if (filterRegion) params.append("region", filterRegion);
+      if (reportFilterCategory) params.append("category", reportFilterCategory);
 
       const queryStr = params.toString() ? `?${params}` : "";
 
@@ -266,6 +286,107 @@ const Sales: React.FC = () => {
       return true;
     });
   }, [sales, filterPeriodType, filterPeriodYear, filterRegion, filterCategory]);
+
+  // Ordenação de relatórios
+  function sortData<T extends { sales_count: number; total_value: number; total_quantity: number }>(
+    data: T[],
+    field: SortField,
+    direction: SortDirection
+  ): T[] {
+    return [...data].sort((a, b) => {
+      let aVal: number, bVal: number;
+      if (field === "avg_value") {
+        aVal = a.sales_count > 0 ? a.total_value / a.sales_count : 0;
+        bVal = b.sales_count > 0 ? b.total_value / b.sales_count : 0;
+      } else {
+        aVal = a[field];
+        bVal = b[field];
+      }
+      return direction === "asc" ? aVal - bVal : bVal - aVal;
+    });
+  }
+
+  const sortedRegionReport = useMemo(
+    () => sortData(regionReport, regionSortField, regionSortDir),
+    [regionReport, regionSortField, regionSortDir]
+  );
+
+  const sortedCategoryReport = useMemo(
+    () => sortData(categoryReport, categorySortField, categorySortDir),
+    [categoryReport, categorySortField, categorySortDir]
+  );
+
+  const sortedClientReport = useMemo(
+    () => sortData(clientReport, clientSortField, clientSortDir),
+    [clientReport, clientSortField, clientSortDir]
+  );
+
+  // Vendas agrupadas por cliente e produto
+  const clientProductBreakdown = useMemo(() => {
+    const breakdown: Record<number, { product_name: string; product_category: string; total_value: number; quantity: number; unit: string }[]> = {};
+
+    // Filtra vendas pelo filtro de categoria do relatório
+    const relevantSales = reportFilterCategory
+      ? sales.filter(s => s.product_category === reportFilterCategory)
+      : sales;
+
+    // Também aplica filtros de período e região
+    const filteredReportSales = relevantSales.filter(s => {
+      if (filterPeriodType && s.period_type !== filterPeriodType) return false;
+      if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
+      if (filterRegion && s.client_region !== filterRegion) return false;
+      return true;
+    });
+
+    for (const sale of filteredReportSales) {
+      if (!breakdown[sale.client_id]) {
+        breakdown[sale.client_id] = [];
+      }
+      const existing = breakdown[sale.client_id].find(
+        (p) => p.product_name === sale.product_name
+      );
+      if (existing) {
+        existing.total_value += sale.value || 0;
+        existing.quantity += sale.quantity;
+      } else {
+        breakdown[sale.client_id].push({
+          product_name: sale.product_name,
+          product_category: sale.product_category,
+          total_value: sale.value || 0,
+          quantity: sale.quantity,
+          unit: sale.unit,
+        });
+      }
+    }
+    return breakdown;
+  }, [sales, reportFilterCategory, filterPeriodType, filterPeriodYear, filterRegion]);
+
+  function toggleClientExpand(clientId: number) {
+    setExpandedClients((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientId)) {
+        newSet.delete(clientId);
+      } else {
+        newSet.add(clientId);
+      }
+      return newSet;
+    });
+  }
+
+  function handleSort(
+    currentField: SortField,
+    currentDir: SortDirection,
+    newField: SortField,
+    setField: (f: SortField) => void,
+    setDir: (d: SortDirection) => void
+  ) {
+    if (currentField === newField) {
+      setDir(currentDir === "asc" ? "desc" : "asc");
+    } else {
+      setField(newField);
+      setDir("desc");
+    }
+  }
 
   // ============================================================
   // CRUD Vendas
@@ -376,8 +497,9 @@ const Sales: React.FC = () => {
       notify.success(editingSale ? "Venda atualizada" : "Venda registrada");
       closeSaleModal();
       loadData();
-    } catch (err: any) {
-      notify.error(err?.message || "Erro ao salvar venda");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao salvar venda";
+      notify.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -390,8 +512,9 @@ const Sales: React.FC = () => {
         if (!res.ok) throw new Error(`status ${res.status}`);
         setSales((list) => list.filter((s) => s.id !== id));
         notify.success("Venda excluída");
-      } catch (err: any) {
-        notify.error(err?.message || "Erro ao excluir");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Erro ao excluir";
+        notify.error(message);
       }
     });
   }
@@ -424,8 +547,9 @@ const Sales: React.FC = () => {
       notify.success("Produto cadastrado");
       setOpenProduct(false);
       loadData();
-    } catch (err: any) {
-      notify.error(err?.message || "Erro ao cadastrar produto");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao cadastrar produto";
+      notify.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -454,6 +578,11 @@ const Sales: React.FC = () => {
       }));
     }
   }
+
+  // Valor médio
+  const avgValue = summary && summary.total_sales > 0
+    ? summary.total_value / summary.total_sales
+    : 0;
 
   // ============================================================
   // RENDER
@@ -710,59 +839,88 @@ const Sales: React.FC = () => {
                   </MenuItem>
                 ))}
               </TextField>
+
+              <TextField
+                select
+                label="Categoria"
+                value={reportFilterCategory}
+                onChange={(e) => setReportFilterCategory(e.target.value)}
+                size="small"
+                sx={{ minWidth: 180 }}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {categories.map((c) => (
+                  <MenuItem key={c} value={c}>
+                    {c}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Box>
           </Card>
 
           {/* Cards de Resumo */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid size={{ xs: 6, md: 2.4 }}>
               <Card sx={{ bgcolor: "primary.main", color: "white" }}>
-                <CardContent>
+                <CardContent sx={{ py: 2 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <MoneyIcon />
-                    <Typography variant="subtitle2">Faturamento</Typography>
+                    <MoneyIcon fontSize="small" />
+                    <Typography variant="caption">Faturamento</Typography>
                   </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatCurrency(summary?.total_value || 0)}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid size={{ xs: 6, md: 2.4 }}>
               <Card sx={{ bgcolor: "success.main", color: "white" }}>
-                <CardContent>
+                <CardContent sx={{ py: 2 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <TrendingUpIcon />
-                    <Typography variant="subtitle2">Vendas</Typography>
+                    <TrendingUpIcon fontSize="small" />
+                    <Typography variant="caption">Vendas</Typography>
                   </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {summary?.total_sales || 0}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid size={{ xs: 6, md: 2.4 }}>
               <Card sx={{ bgcolor: "warning.main", color: "white" }}>
-                <CardContent>
+                <CardContent sx={{ py: 2 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <InventoryIcon />
-                    <Typography variant="subtitle2">Volume</Typography>
+                    <InventoryIcon fontSize="small" />
+                    <Typography variant="caption">Volume</Typography>
                   </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatNumber(summary?.total_quantity || 0)}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid size={{ xs: 6, md: 3 }}>
+            <Grid size={{ xs: 6, md: 2.4 }}>
               <Card sx={{ bgcolor: "info.main", color: "white" }}>
-                <CardContent>
+                <CardContent sx={{ py: 2 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PeopleIcon />
-                    <Typography variant="subtitle2">Clientes</Typography>
+                    <PeopleIcon fontSize="small" />
+                    <Typography variant="caption">Clientes</Typography>
                   </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {summary?.unique_clients || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 6, md: 2.4 }}>
+              <Card sx={{ bgcolor: "secondary.main", color: "white" }}>
+                <CardContent sx={{ py: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <BarChartIcon fontSize="small" />
+                    <Typography variant="caption">Ticket Médio</Typography>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {formatCurrency(avgValue)}
                   </Typography>
                 </CardContent>
               </Card>
@@ -783,28 +941,48 @@ const Sales: React.FC = () => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Vendas
+                            <TableSortLabel
+                              active={regionSortField === "sales_count"}
+                              direction={regionSortField === "sales_count" ? regionSortDir : "desc"}
+                              onClick={() => handleSort(regionSortField, regionSortDir, "sales_count", setRegionSortField, setRegionSortDir)}
+                            >
+                              Vendas
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Faturamento
+                            <TableSortLabel
+                              active={regionSortField === "total_value"}
+                              direction={regionSortField === "total_value" ? regionSortDir : "desc"}
+                              onClick={() => handleSort(regionSortField, regionSortDir, "total_value", setRegionSortField, setRegionSortDir)}
+                            >
+                              Faturamento
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Clientes
+                            <TableSortLabel
+                              active={regionSortField === "avg_value"}
+                              direction={regionSortField === "avg_value" ? regionSortDir : "desc"}
+                              onClick={() => handleSort(regionSortField, regionSortDir, "avg_value", setRegionSortField, setRegionSortDir)}
+                            >
+                              Ticket Médio
+                            </TableSortLabel>
                           </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {regionReport.map((r) => (
+                        {sortedRegionReport.map((r) => (
                           <TableRow key={r.region} hover>
                             <TableCell sx={{ fontWeight: 500 }}>{r.region}</TableCell>
                             <TableCell align="right">{r.sales_count}</TableCell>
                             <TableCell align="right">
                               {formatCurrency(r.total_value)}
                             </TableCell>
-                            <TableCell align="right">{r.clients_count}</TableCell>
+                            <TableCell align="right">
+                              {formatCurrency(r.sales_count > 0 ? r.total_value / r.sales_count : 0)}
+                            </TableCell>
                           </TableRow>
                         ))}
-                        {regionReport.length === 0 && (
+                        {sortedRegionReport.length === 0 && (
                           <TableRow>
                             <TableCell colSpan={4} align="center">
                               <Typography color="text.secondary" variant="body2">
@@ -833,10 +1011,22 @@ const Sales: React.FC = () => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Vendas
+                            <TableSortLabel
+                              active={categorySortField === "sales_count"}
+                              direction={categorySortField === "sales_count" ? categorySortDir : "desc"}
+                              onClick={() => handleSort(categorySortField, categorySortDir, "sales_count", setCategorySortField, setCategorySortDir)}
+                            >
+                              Vendas
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Faturamento
+                            <TableSortLabel
+                              active={categorySortField === "total_value"}
+                              direction={categorySortField === "total_value" ? categorySortDir : "desc"}
+                              onClick={() => handleSort(categorySortField, categorySortDir, "total_value", setCategorySortField, setCategorySortDir)}
+                            >
+                              Faturamento
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
                             %
@@ -844,7 +1034,7 @@ const Sales: React.FC = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {categoryReport.map((c) => (
+                        {sortedCategoryReport.map((c) => (
                           <TableRow key={c.category} hover>
                             <TableCell sx={{ fontWeight: 500 }}>{c.category}</TableCell>
                             <TableCell align="right">{c.sales_count}</TableCell>
@@ -854,7 +1044,7 @@ const Sales: React.FC = () => {
                             <TableCell align="right">{c.percentage}%</TableCell>
                           </TableRow>
                         ))}
-                        {categoryReport.length === 0 && (
+                        {sortedCategoryReport.length === 0 && (
                           <TableRow>
                             <TableCell colSpan={4} align="center">
                               <Typography color="text.secondary" variant="body2">
@@ -887,40 +1077,115 @@ const Sales: React.FC = () => {
                           <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Vendas
+                            <TableSortLabel
+                              active={clientSortField === "sales_count"}
+                              direction={clientSortField === "sales_count" ? clientSortDir : "desc"}
+                              onClick={() => handleSort(clientSortField, clientSortDir, "sales_count", setClientSortField, setClientSortDir)}
+                            >
+                              Vendas
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Faturamento
+                            <TableSortLabel
+                              active={clientSortField === "total_value"}
+                              direction={clientSortField === "total_value" ? clientSortDir : "desc"}
+                              onClick={() => handleSort(clientSortField, clientSortDir, "total_value", setClientSortField, setClientSortDir)}
+                            >
+                              Faturamento
+                            </TableSortLabel>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }} align="right">
-                            Volume
+                            <TableSortLabel
+                              active={clientSortField === "avg_value"}
+                              direction={clientSortField === "avg_value" ? clientSortDir : "desc"}
+                              onClick={() => handleSort(clientSortField, clientSortDir, "avg_value", setClientSortField, setClientSortDir)}
+                            >
+                              Ticket Médio
+                            </TableSortLabel>
                           </TableCell>
+                          <TableCell width={50}></TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {clientReport.map((c) => (
-                          <TableRow key={c.client_id} hover>
-                            <TableCell>
-                              <Chip
-                                label={`#${c.rank}`}
-                                size="small"
-                                color={c.rank <= 3 ? "primary" : "default"}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 500 }}>{c.client_name}</TableCell>
-                            <TableCell>{c.region || "-"}</TableCell>
-                            <TableCell align="right">{c.sales_count}</TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(c.total_value)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatNumber(c.total_quantity)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {clientReport.length === 0 && (
+                        {sortedClientReport.map((c, idx) => {
+                          const isExpanded = expandedClients.has(c.client_id);
+                          const breakdown = clientProductBreakdown[c.client_id] || [];
+                          return (
+                            <React.Fragment key={c.client_id}>
+                              <TableRow
+                                hover
+                                onClick={() => breakdown.length > 0 && toggleClientExpand(c.client_id)}
+                                sx={{ cursor: breakdown.length > 0 ? "pointer" : "default" }}
+                              >
+                                <TableCell>
+                                  <Chip
+                                    label={`#${idx + 1}`}
+                                    size="small"
+                                    color={idx < 3 ? "primary" : "default"}
+                                  />
+                                </TableCell>
+                                <TableCell sx={{ fontWeight: 500 }}>{c.client_name}</TableCell>
+                                <TableCell>{c.region || "-"}</TableCell>
+                                <TableCell align="right">{c.sales_count}</TableCell>
+                                <TableCell align="right">
+                                  {formatCurrency(c.total_value)}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {formatCurrency(c.sales_count > 0 ? c.total_value / c.sales_count : 0)}
+                                </TableCell>
+                                <TableCell>
+                                  {breakdown.length > 0 && (
+                                    <IconButton size="small">
+                                      {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                    </IconButton>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              {breakdown.length > 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={7} sx={{ py: 0, borderBottom: isExpanded ? 1 : 0, borderColor: "divider" }}>
+                                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                      <Box sx={{ py: 2, pl: 6, pr: 2, bgcolor: "action.hover", borderRadius: 1, my: 1 }}>
+                                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                          Detalhamento por Produto
+                                        </Typography>
+                                        <Table size="small">
+                                          <TableHead>
+                                            <TableRow>
+                                              <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }} align="right">Quantidade</TableCell>
+                                              <TableCell sx={{ fontWeight: 600 }} align="right">Valor</TableCell>
+                                            </TableRow>
+                                          </TableHead>
+                                          <TableBody>
+                                            {breakdown.map((p, i) => (
+                                              <TableRow key={i}>
+                                                <TableCell>{p.product_name}</TableCell>
+                                                <TableCell>
+                                                  <Chip label={p.product_category} size="small" />
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                  {formatNumber(p.quantity)} {p.unit}
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                  {formatCurrency(p.total_value)}
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </Box>
+                                    </Collapse>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                        {sortedClientReport.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={6} align="center">
+                            <TableCell colSpan={7} align="center">
                               <Typography color="text.secondary" variant="body2">
                                 Sem dados
                               </Typography>
@@ -1112,9 +1377,9 @@ const Sales: React.FC = () => {
               </Grid>
             </Grid>
 
-            {/* Valor */}
+            {/* Valor Total */}
             <TextField
-              label="Valor (R$)"
+              label="Valor Total (R$)"
               type="number"
               value={saleForm.value}
               onChange={(e) => setSaleForm((f) => ({ ...f, value: e.target.value }))}
