@@ -43,6 +43,11 @@ import {
   BarChart as BarChartIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  Grass as SeedIcon,
+  Science as FertilizerIcon,
+  Spa as BiologicalIcon,
+  WaterDrop as NutritionIcon,
+  Dashboard as OverviewIcon,
 } from "@mui/icons-material";
 import { API_BASE } from "../config";
 import { notify, confirm as toastConfirm } from "../utils/toast";
@@ -79,44 +84,19 @@ type Client = { id: number; name: string; region: string | null };
 type Consultant = { id: number; name: string };
 type Period = { type: string; year: string; label: string };
 
-type ReportSummary = {
-  total_sales: number;
-  total_value: number;
-  total_quantity: number;
-  unique_clients: number;
-};
-
-type RegionReport = {
-  region: string;
-  sales_count: number;
-  total_value: number;
-  total_quantity: number;
-  clients_count: number;
-};
-
-type CategoryReport = {
-  category: string;
-  sales_count: number;
-  total_value: number;
-  total_quantity: number;
-  percentage: number;
-};
-
-type ClientReport = {
-  rank: number;
-  client_id: number;
-  client_name: string;
-  region: string | null;
-  sales_count: number;
-  total_value: number;
-  total_quantity: number;
-};
-
 type SortDirection = "asc" | "desc";
 type SortField = "sales_count" | "total_value" | "total_quantity" | "avg_value";
 
+const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; color: string; unit: string }> = {
+  "Semente": { icon: <SeedIcon />, color: "#22c55e", unit: "Sacas" },
+  "Fertilizante": { icon: <FertilizerIcon />, color: "#3b82f6", unit: "Ton" },
+  "Biológico": { icon: <BiologicalIcon />, color: "#8b5cf6", unit: "L/Kg" },
+  "Nutrição Foliar": { icon: <NutritionIcon />, color: "#f59e0b", unit: "L/Kg" },
+  "Defensivo": { icon: <InventoryIcon />, color: "#ef4444", unit: "L/Kg" },
+};
+
 const Sales: React.FC = () => {
-  const [tabIndex, setTabIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState("vendas");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,21 +114,10 @@ const Sales: React.FC = () => {
   const [filterPeriodYear, setFilterPeriodYear] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
-  const [reportFilterCategory, setReportFilterCategory] = useState("");
-
-  // Relatórios
-  const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [regionReport, setRegionReport] = useState<RegionReport[]>([]);
-  const [categoryReport, setCategoryReport] = useState<CategoryReport[]>([]);
-  const [clientReport, setClientReport] = useState<ClientReport[]>([]);
 
   // Ordenação
-  const [regionSortField, setRegionSortField] = useState<SortField>("total_value");
-  const [regionSortDir, setRegionSortDir] = useState<SortDirection>("desc");
-  const [categorySortField, setCategorySortField] = useState<SortField>("total_value");
-  const [categorySortDir, setCategorySortDir] = useState<SortDirection>("desc");
-  const [clientSortField, setClientSortField] = useState<SortField>("total_value");
-  const [clientSortDir, setClientSortDir] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("total_value");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
   // Expansão de clientes
   const [expandedClients, setExpandedClients] = useState<Set<number>>(new Set());
@@ -189,6 +158,12 @@ const Sales: React.FC = () => {
     return Array.from(uniqueRegions) as string[];
   }, [clients]);
 
+  // Categorias que possuem vendas
+  const categoriesWithSales = useMemo(() => {
+    const cats = new Set(sales.map((s) => s.product_category));
+    return Array.from(cats);
+  }, [sales]);
+
   // Clientes filtrados para autocomplete
   const filteredClients = useMemo(() => {
     const q = clientSearch.trim().toLowerCase();
@@ -201,13 +176,6 @@ const Sales: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  // Recarregar relatórios quando filtros mudam
-  useEffect(() => {
-    if (tabIndex === 1) {
-      loadReports();
-    }
-  }, [tabIndex, filterPeriodType, filterPeriodYear, filterRegion, reportFilterCategory]);
 
   async function loadData() {
     setLoading(true);
@@ -238,32 +206,6 @@ const Sales: React.FC = () => {
     }
   }
 
-  async function loadReports() {
-    try {
-      const params = new URLSearchParams();
-      if (filterPeriodType) params.append("period_type", filterPeriodType);
-      if (filterPeriodYear) params.append("period_year", filterPeriodYear);
-      if (filterRegion) params.append("region", filterRegion);
-      if (reportFilterCategory) params.append("category", reportFilterCategory);
-
-      const queryStr = params.toString() ? `?${params}` : "";
-
-      const [summaryRes, regionRes, categoryRes, clientRes] = await Promise.all([
-        fetch(`${API_BASE}sales/report/summary${queryStr}`),
-        fetch(`${API_BASE}sales/report/by-region${queryStr}`),
-        fetch(`${API_BASE}sales/report/by-category${queryStr}`),
-        fetch(`${API_BASE}sales/report/by-client${queryStr}`),
-      ]);
-
-      setSummary(await summaryRes.json());
-      setRegionReport(await regionRes.json());
-      setCategoryReport(await categoryRes.json());
-      setClientReport(await clientRes.json());
-    } catch (err) {
-      console.error("Erro ao carregar relatórios:", err);
-    }
-  }
-
   function formatCurrency(value: number | null): string {
     if (value === null || value === undefined) return "-";
     return new Intl.NumberFormat("pt-BR", {
@@ -276,7 +218,7 @@ const Sales: React.FC = () => {
     return new Intl.NumberFormat("pt-BR").format(value);
   }
 
-  // Vendas filtradas
+  // Vendas filtradas (para tab Vendas)
   const filteredSales = useMemo(() => {
     return sales.filter((s) => {
       if (filterPeriodType && s.period_type !== filterPeriodType) return false;
@@ -287,79 +229,122 @@ const Sales: React.FC = () => {
     });
   }, [sales, filterPeriodType, filterPeriodYear, filterRegion, filterCategory]);
 
-  // Ordenação de relatórios
-  function sortData<T extends { sales_count: number; total_value: number; total_quantity: number }>(
-    data: T[],
-    field: SortField,
-    direction: SortDirection
-  ): T[] {
-    return [...data].sort((a, b) => {
-      let aVal: number, bVal: number;
-      if (field === "avg_value") {
-        aVal = a.sales_count > 0 ? a.total_value / a.sales_count : 0;
-        bVal = b.sales_count > 0 ? b.total_value / b.sales_count : 0;
-      } else {
-        aVal = a[field];
-        bVal = b[field];
-      }
-      return direction === "asc" ? aVal - bVal : bVal - aVal;
-    });
-  }
+  // Dados para uma categoria específica ou visão geral
+  function getCategoryData(category: string | null) {
+    let relevantSales = sales;
 
-  const sortedRegionReport = useMemo(
-    () => sortData(regionReport, regionSortField, regionSortDir),
-    [regionReport, regionSortField, regionSortDir]
-  );
-
-  const sortedCategoryReport = useMemo(
-    () => sortData(categoryReport, categorySortField, categorySortDir),
-    [categoryReport, categorySortField, categorySortDir]
-  );
-
-  const sortedClientReport = useMemo(
-    () => sortData(clientReport, clientSortField, clientSortDir),
-    [clientReport, clientSortField, clientSortDir]
-  );
-
-  // Vendas agrupadas por cliente e produto
-  const clientProductBreakdown = useMemo(() => {
-    const breakdown: Record<number, { product_name: string; product_category: string; total_value: number; quantity: number; unit: string }[]> = {};
-
-    // Filtra vendas pelo filtro de categoria do relatório
-    const relevantSales = reportFilterCategory
-      ? sales.filter(s => s.product_category === reportFilterCategory)
-      : sales;
-
-    // Também aplica filtros de período e região
-    const filteredReportSales = relevantSales.filter(s => {
+    // Aplica filtros de período e região
+    relevantSales = relevantSales.filter((s) => {
       if (filterPeriodType && s.period_type !== filterPeriodType) return false;
       if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
       if (filterRegion && s.client_region !== filterRegion) return false;
+      if (category && s.product_category !== category) return false;
       return true;
     });
 
-    for (const sale of filteredReportSales) {
-      if (!breakdown[sale.client_id]) {
-        breakdown[sale.client_id] = [];
+    const totalValue = relevantSales.reduce((sum, s) => sum + (s.value || 0), 0);
+    const totalQuantity = relevantSales.reduce((sum, s) => sum + s.quantity, 0);
+    const totalSales = relevantSales.length;
+    const uniqueClients = new Set(relevantSales.map((s) => s.client_id)).size;
+    const avgValue = totalSales > 0 ? totalValue / totalSales : 0;
+
+    // Agrupar por cliente
+    const clientMap: Record<number, {
+      client_id: number;
+      client_name: string;
+      region: string | null;
+      sales_count: number;
+      total_value: number;
+      total_quantity: number;
+      products: { product_name: string; product_category: string; quantity: number; unit: string; value: number }[];
+    }> = {};
+
+    for (const sale of relevantSales) {
+      if (!clientMap[sale.client_id]) {
+        clientMap[sale.client_id] = {
+          client_id: sale.client_id,
+          client_name: sale.client_name,
+          region: sale.client_region,
+          sales_count: 0,
+          total_value: 0,
+          total_quantity: 0,
+          products: [],
+        };
       }
-      const existing = breakdown[sale.client_id].find(
+      clientMap[sale.client_id].sales_count += 1;
+      clientMap[sale.client_id].total_value += sale.value || 0;
+      clientMap[sale.client_id].total_quantity += sale.quantity;
+
+      // Agrupar produtos
+      const existingProduct = clientMap[sale.client_id].products.find(
         (p) => p.product_name === sale.product_name
       );
-      if (existing) {
-        existing.total_value += sale.value || 0;
-        existing.quantity += sale.quantity;
+      if (existingProduct) {
+        existingProduct.quantity += sale.quantity;
+        existingProduct.value += sale.value || 0;
       } else {
-        breakdown[sale.client_id].push({
+        clientMap[sale.client_id].products.push({
           product_name: sale.product_name,
           product_category: sale.product_category,
-          total_value: sale.value || 0,
           quantity: sale.quantity,
           unit: sale.unit,
+          value: sale.value || 0,
         });
       }
     }
-    return breakdown;
-  }, [sales, reportFilterCategory, filterPeriodType, filterPeriodYear, filterRegion]);
+
+    const clientRanking = Object.values(clientMap).sort((a, b) => b.total_value - a.total_value);
+
+    // Mix de categorias (só para visão geral)
+    const categoryMix: { category: string; total_value: number; sales_count: number; percentage: number }[] = [];
+    if (!category) {
+      const catMap: Record<string, { total_value: number; sales_count: number }> = {};
+      for (const sale of relevantSales) {
+        if (!catMap[sale.product_category]) {
+          catMap[sale.product_category] = { total_value: 0, sales_count: 0 };
+        }
+        catMap[sale.product_category].total_value += sale.value || 0;
+        catMap[sale.product_category].sales_count += 1;
+      }
+      for (const [cat, data] of Object.entries(catMap)) {
+        categoryMix.push({
+          category: cat,
+          total_value: data.total_value,
+          sales_count: data.sales_count,
+          percentage: totalValue > 0 ? Math.round((data.total_value / totalValue) * 1000) / 10 : 0,
+        });
+      }
+      categoryMix.sort((a, b) => b.total_value - a.total_value);
+    }
+
+    // Ranking de produtos (só para categoria específica)
+    const productRanking: { product_name: string; total_value: number; total_quantity: number; unit: string }[] = [];
+    if (category) {
+      const prodMap: Record<string, { total_value: number; total_quantity: number; unit: string }> = {};
+      for (const sale of relevantSales) {
+        if (!prodMap[sale.product_name]) {
+          prodMap[sale.product_name] = { total_value: 0, total_quantity: 0, unit: sale.unit };
+        }
+        prodMap[sale.product_name].total_value += sale.value || 0;
+        prodMap[sale.product_name].total_quantity += sale.quantity;
+      }
+      for (const [name, data] of Object.entries(prodMap)) {
+        productRanking.push({ product_name: name, ...data });
+      }
+      productRanking.sort((a, b) => b.total_value - a.total_value);
+    }
+
+    return {
+      totalValue,
+      totalQuantity,
+      totalSales,
+      uniqueClients,
+      avgValue,
+      clientRanking,
+      categoryMix,
+      productRanking,
+    };
+  }
 
   function toggleClientExpand(clientId: number) {
     setExpandedClients((prev) => {
@@ -373,19 +358,29 @@ const Sales: React.FC = () => {
     });
   }
 
-  function handleSort(
-    currentField: SortField,
-    currentDir: SortDirection,
-    newField: SortField,
-    setField: (f: SortField) => void,
-    setDir: (d: SortDirection) => void
-  ) {
-    if (currentField === newField) {
-      setDir(currentDir === "asc" ? "desc" : "asc");
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
-      setField(newField);
-      setDir("desc");
+      setSortField(field);
+      setSortDir("desc");
     }
+  }
+
+  function sortClientRanking<T extends { sales_count: number; total_value: number; total_quantity: number }>(
+    data: T[]
+  ): T[] {
+    return [...data].sort((a, b) => {
+      let aVal: number, bVal: number;
+      if (sortField === "avg_value") {
+        aVal = a.sales_count > 0 ? a.total_value / a.sales_count : 0;
+        bVal = b.sales_count > 0 ? b.total_value / b.sales_count : 0;
+      } else {
+        aVal = a[sortField];
+        bVal = b[sortField];
+      }
+      return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+    });
   }
 
   // ============================================================
@@ -555,7 +550,6 @@ const Sales: React.FC = () => {
     }
   }
 
-  // Handler para quando produto é selecionado
   function handleProductChange(productId: string) {
     setSaleForm((f) => {
       const product = products.find((p) => p.id === Number(productId));
@@ -567,7 +561,6 @@ const Sales: React.FC = () => {
     });
   }
 
-  // Handler para quando período é selecionado
   function handlePeriodChange(periodLabel: string) {
     const period = periods.find((p) => p.label === periodLabel);
     if (period) {
@@ -579,10 +572,218 @@ const Sales: React.FC = () => {
     }
   }
 
-  // Valor médio
-  const avgValue = summary && summary.total_sales > 0
-    ? summary.total_value / summary.total_sales
-    : 0;
+  // ============================================================
+  // RENDER HELPERS
+  // ============================================================
+
+  function renderFilters() {
+    return (
+      <Card sx={{ mb: 3, p: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <TextField
+            select
+            label="Período"
+            value={
+              filterPeriodType && filterPeriodYear
+                ? `${filterPeriodType} ${filterPeriodYear}`
+                : ""
+            }
+            onChange={(e) => {
+              const period = periods.find((p) => p.label === e.target.value);
+              if (period) {
+                setFilterPeriodType(period.type);
+                setFilterPeriodYear(period.year);
+              } else {
+                setFilterPeriodType("");
+                setFilterPeriodYear("");
+              }
+            }}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {periods.map((p) => (
+              <MenuItem key={p.label} value={p.label}>
+                {p.label}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            select
+            label="Região"
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {regions.map((r) => (
+              <MenuItem key={r} value={r}>
+                {r}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      </Card>
+    );
+  }
+
+  function renderClientRanking(
+    clientRanking: ReturnType<typeof getCategoryData>["clientRanking"],
+    showQuantity: boolean,
+    unit?: string
+  ) {
+    const sorted = sortClientRanking(clientRanking);
+
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Ranking de Clientes
+          </Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }} width={50}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "sales_count"}
+                      direction={sortField === "sales_count" ? sortDir : "desc"}
+                      onClick={() => handleSort("sales_count")}
+                    >
+                      Vendas
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "total_value"}
+                      direction={sortField === "total_value" ? sortDir : "desc"}
+                      onClick={() => handleSort("total_value")}
+                    >
+                      Faturamento
+                    </TableSortLabel>
+                  </TableCell>
+                  {showQuantity && (
+                    <TableCell sx={{ fontWeight: 600 }} align="right">
+                      <TableSortLabel
+                        active={sortField === "total_quantity"}
+                        direction={sortField === "total_quantity" ? sortDir : "desc"}
+                        onClick={() => handleSort("total_quantity")}
+                      >
+                        Volume ({unit})
+                      </TableSortLabel>
+                    </TableCell>
+                  )}
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    <TableSortLabel
+                      active={sortField === "avg_value"}
+                      direction={sortField === "avg_value" ? sortDir : "desc"}
+                      onClick={() => handleSort("avg_value")}
+                    >
+                      Ticket Médio
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell width={50}></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sorted.map((c, idx) => {
+                  const isExpanded = expandedClients.has(c.client_id);
+                  return (
+                    <React.Fragment key={c.client_id}>
+                      <TableRow
+                        hover
+                        onClick={() => c.products.length > 0 && toggleClientExpand(c.client_id)}
+                        sx={{ cursor: c.products.length > 0 ? "pointer" : "default" }}
+                      >
+                        <TableCell>
+                          <Chip
+                            label={`#${idx + 1}`}
+                            size="small"
+                            color={idx < 3 ? "primary" : "default"}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 500 }}>{c.client_name}</TableCell>
+                        <TableCell>{c.region || "-"}</TableCell>
+                        <TableCell align="right">{c.sales_count}</TableCell>
+                        <TableCell align="right">{formatCurrency(c.total_value)}</TableCell>
+                        {showQuantity && (
+                          <TableCell align="right">{formatNumber(c.total_quantity)}</TableCell>
+                        )}
+                        <TableCell align="right">
+                          {formatCurrency(c.sales_count > 0 ? c.total_value / c.sales_count : 0)}
+                        </TableCell>
+                        <TableCell>
+                          {c.products.length > 0 && (
+                            <IconButton size="small">
+                              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            </IconButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {c.products.length > 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={showQuantity ? 8 : 7}
+                            sx={{ py: 0, borderBottom: isExpanded ? 1 : 0, borderColor: "divider" }}
+                          >
+                            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                              <Box sx={{ py: 2, pl: 6, pr: 2, bgcolor: "action.hover", borderRadius: 1, my: 1 }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                  Detalhamento por Produto
+                                </Typography>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
+                                      <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
+                                      <TableCell sx={{ fontWeight: 600 }} align="right">Quantidade</TableCell>
+                                      <TableCell sx={{ fontWeight: 600 }} align="right">Valor</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {c.products.map((p, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell>{p.product_name}</TableCell>
+                                        <TableCell>
+                                          <Chip label={p.product_category} size="small" />
+                                        </TableCell>
+                                        <TableCell align="right">
+                                          {formatNumber(p.quantity)} {p.unit}
+                                        </TableCell>
+                                        <TableCell align="right">{formatCurrency(p.value)}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+                {sorted.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={showQuantity ? 8 : 7} align="center">
+                      <Typography color="text.secondary" variant="body2">
+                        Sem dados
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // ============================================================
   // RENDER
@@ -595,6 +796,18 @@ const Sales: React.FC = () => {
       </Box>
     );
   }
+
+  // Build tabs dynamically
+  const tabs = [
+    { key: "vendas", label: "Vendas", icon: <MoneyIcon /> },
+    { key: "visao-geral", label: "Visão Geral", icon: <OverviewIcon /> },
+    ...categoriesWithSales.map((cat) => ({
+      key: cat,
+      label: cat,
+      icon: CATEGORY_CONFIG[cat]?.icon || <InventoryIcon />,
+    })),
+    { key: "produtos", label: "Produtos", icon: <InventoryIcon /> },
+  ];
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, mx: "auto" }}>
@@ -640,19 +853,35 @@ const Sales: React.FC = () => {
 
       {/* Tabs */}
       <Tabs
-        value={tabIndex}
-        onChange={(_, v) => setTabIndex(v)}
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
         sx={{ mb: 3 }}
+        variant="scrollable"
+        scrollButtons="auto"
       >
-        <Tab label="Vendas" icon={<MoneyIcon />} iconPosition="start" />
-        <Tab label="Relatórios" icon={<BarChartIcon />} iconPosition="start" />
-        <Tab label="Produtos" icon={<InventoryIcon />} iconPosition="start" />
+        {tabs.map((tab) => (
+          <Tab
+            key={tab.key}
+            value={tab.key}
+            label={tab.label}
+            icon={tab.icon}
+            iconPosition="start"
+            sx={{
+              textTransform: "none",
+              minHeight: 48,
+              ...(CATEGORY_CONFIG[tab.key] && {
+                "&.Mui-selected": {
+                  color: CATEGORY_CONFIG[tab.key].color,
+                },
+              }),
+            }}
+          />
+        ))}
       </Tabs>
 
       {/* Tab: Vendas */}
-      {tabIndex === 0 && (
+      {activeTab === "vendas" && (
         <>
-          {/* Filtros */}
           <Card sx={{ mb: 3, p: 2 }}>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <TextField
@@ -718,7 +947,6 @@ const Sales: React.FC = () => {
             </Box>
           </Card>
 
-          {/* Tabela de Vendas */}
           <Card>
             <CardContent>
               <TableContainer>
@@ -755,18 +983,10 @@ const Sales: React.FC = () => {
                         <TableCell>{s.period_label}</TableCell>
                         <TableCell>{s.client_region || "-"}</TableCell>
                         <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => openSaleModal(s)}
-                          >
+                          <IconButton size="small" color="primary" onClick={() => openSaleModal(s)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => deleteSale(s.id)}
-                          >
+                          <IconButton size="small" color="error" onClick={() => deleteSale(s.id)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
@@ -775,9 +995,7 @@ const Sales: React.FC = () => {
                     {filteredSales.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                          <Typography color="text.secondary">
-                            Nenhuma venda registrada
-                          </Typography>
+                          <Typography color="text.secondary">Nenhuma venda registrada</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -789,421 +1007,234 @@ const Sales: React.FC = () => {
         </>
       )}
 
-      {/* Tab: Relatórios */}
-      {tabIndex === 1 && (
-        <>
-          {/* Filtros de Relatório */}
-          <Card sx={{ mb: 3, p: 2 }}>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <TextField
-                select
-                label="Período"
-                value={
-                  filterPeriodType && filterPeriodYear
-                    ? `${filterPeriodType} ${filterPeriodYear}`
-                    : ""
-                }
-                onChange={(e) => {
-                  const period = periods.find((p) => p.label === e.target.value);
-                  if (period) {
-                    setFilterPeriodType(period.type);
-                    setFilterPeriodYear(period.year);
-                  } else {
-                    setFilterPeriodType("");
-                    setFilterPeriodYear("");
-                  }
-                }}
-                size="small"
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {periods.map((p) => (
-                  <MenuItem key={p.label} value={p.label}>
-                    {p.label}
-                  </MenuItem>
-                ))}
-              </TextField>
+      {/* Tab: Visão Geral */}
+      {activeTab === "visao-geral" && (() => {
+        const data = getCategoryData(null);
+        return (
+          <>
+            {renderFilters()}
 
-              <TextField
-                select
-                label="Região"
-                value={filterRegion}
-                onChange={(e) => setFilterRegion(e.target.value)}
-                size="small"
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {regions.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                select
-                label="Categoria"
-                value={reportFilterCategory}
-                onChange={(e) => setReportFilterCategory(e.target.value)}
-                size="small"
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {categories.map((c) => (
-                  <MenuItem key={c} value={c}>
-                    {c}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-          </Card>
-
-          {/* Cards de Resumo */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid size={{ xs: 6, md: 2.4 }}>
-              <Card sx={{ bgcolor: "primary.main", color: "white" }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <MoneyIcon fontSize="small" />
-                    <Typography variant="caption">Faturamento</Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatCurrency(summary?.total_value || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2.4 }}>
-              <Card sx={{ bgcolor: "success.main", color: "white" }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <TrendingUpIcon fontSize="small" />
-                    <Typography variant="caption">Vendas</Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {summary?.total_sales || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2.4 }}>
-              <Card sx={{ bgcolor: "warning.main", color: "white" }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <InventoryIcon fontSize="small" />
-                    <Typography variant="caption">Volume</Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatNumber(summary?.total_quantity || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2.4 }}>
-              <Card sx={{ bgcolor: "info.main", color: "white" }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PeopleIcon fontSize="small" />
-                    <Typography variant="caption">Clientes</Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {summary?.unique_clients || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2.4 }}>
-              <Card sx={{ bgcolor: "secondary.main", color: "white" }}>
-                <CardContent sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <BarChartIcon fontSize="small" />
-                    <Typography variant="caption">Ticket Médio</Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatCurrency(avgValue)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={3}>
-            {/* Por Região */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Por Região
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={regionSortField === "sales_count"}
-                              direction={regionSortField === "sales_count" ? regionSortDir : "desc"}
-                              onClick={() => handleSort(regionSortField, regionSortDir, "sales_count", setRegionSortField, setRegionSortDir)}
-                            >
-                              Vendas
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={regionSortField === "total_value"}
-                              direction={regionSortField === "total_value" ? regionSortDir : "desc"}
-                              onClick={() => handleSort(regionSortField, regionSortDir, "total_value", setRegionSortField, setRegionSortDir)}
-                            >
-                              Faturamento
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={regionSortField === "avg_value"}
-                              direction={regionSortField === "avg_value" ? regionSortDir : "desc"}
-                              onClick={() => handleSort(regionSortField, regionSortDir, "avg_value", setRegionSortField, setRegionSortDir)}
-                            >
-                              Ticket Médio
-                            </TableSortLabel>
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {sortedRegionReport.map((r) => (
-                          <TableRow key={r.region} hover>
-                            <TableCell sx={{ fontWeight: 500 }}>{r.region}</TableCell>
-                            <TableCell align="right">{r.sales_count}</TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(r.total_value)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(r.sales_count > 0 ? r.total_value / r.sales_count : 0)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {sortedRegionReport.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              <Typography color="text.secondary" variant="body2">
-                                Sem dados
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
+            {/* Cards de Resumo (sem volume) */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "primary.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <MoneyIcon fontSize="small" />
+                      <Typography variant="caption">Faturamento</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {formatCurrency(data.totalValue)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "success.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <TrendingUpIcon fontSize="small" />
+                      <Typography variant="caption">Vendas</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {data.totalSales}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "info.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <PeopleIcon fontSize="small" />
+                      <Typography variant="caption">Clientes</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {data.uniqueClients}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "secondary.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <BarChartIcon fontSize="small" />
+                      <Typography variant="caption">Ticket Médio</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {formatCurrency(data.avgValue)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
 
-            {/* Por Categoria */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Mix de Produtos
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={categorySortField === "sales_count"}
-                              direction={categorySortField === "sales_count" ? categorySortDir : "desc"}
-                              onClick={() => handleSort(categorySortField, categorySortDir, "sales_count", setCategorySortField, setCategorySortDir)}
-                            >
-                              Vendas
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={categorySortField === "total_value"}
-                              direction={categorySortField === "total_value" ? categorySortDir : "desc"}
-                              onClick={() => handleSort(categorySortField, categorySortDir, "total_value", setCategorySortField, setCategorySortDir)}
-                            >
-                              Faturamento
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            %
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {sortedCategoryReport.map((c) => (
-                          <TableRow key={c.category} hover>
-                            <TableCell sx={{ fontWeight: 500 }}>{c.category}</TableCell>
-                            <TableCell align="right">{c.sales_count}</TableCell>
-                            <TableCell align="right">
-                              {formatCurrency(c.total_value)}
-                            </TableCell>
-                            <TableCell align="right">{c.percentage}%</TableCell>
-                          </TableRow>
-                        ))}
-                        {sortedCategoryReport.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} align="center">
-                              <Typography color="text.secondary" variant="body2">
-                                Sem dados
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Grid>
+            {/* Mix de Categorias */}
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Mix de Produtos
+                </Typography>
+                <Grid container spacing={2}>
+                  {data.categoryMix.map((cat) => {
+                    const config = CATEGORY_CONFIG[cat.category];
+                    return (
+                      <Grid key={cat.category} size={{ xs: 6, sm: 4, md: 2.4 }}>
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            textAlign: "center",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              borderColor: config?.color || "primary.main",
+                              transform: "translateY(-2px)",
+                            },
+                          }}
+                          onClick={() => setActiveTab(cat.category)}
+                        >
+                          <Box sx={{ color: config?.color || "primary.main", mb: 1 }}>
+                            {config?.icon || <InventoryIcon />}
+                          </Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                            {cat.category}
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: config?.color }}>
+                            {cat.percentage}%
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatCurrency(cat.total_value)}
+                          </Typography>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </CardContent>
+            </Card>
 
             {/* Ranking de Clientes */}
-            <Grid size={{ xs: 12 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Ranking de Clientes
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }} width={50}>
-                            #
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Cliente</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>Região</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={clientSortField === "sales_count"}
-                              direction={clientSortField === "sales_count" ? clientSortDir : "desc"}
-                              onClick={() => handleSort(clientSortField, clientSortDir, "sales_count", setClientSortField, setClientSortDir)}
-                            >
-                              Vendas
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={clientSortField === "total_value"}
-                              direction={clientSortField === "total_value" ? clientSortDir : "desc"}
-                              onClick={() => handleSort(clientSortField, clientSortDir, "total_value", setClientSortField, setClientSortDir)}
-                            >
-                              Faturamento
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }} align="right">
-                            <TableSortLabel
-                              active={clientSortField === "avg_value"}
-                              direction={clientSortField === "avg_value" ? clientSortDir : "desc"}
-                              onClick={() => handleSort(clientSortField, clientSortDir, "avg_value", setClientSortField, setClientSortDir)}
-                            >
-                              Ticket Médio
-                            </TableSortLabel>
-                          </TableCell>
-                          <TableCell width={50}></TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {sortedClientReport.map((c, idx) => {
-                          const isExpanded = expandedClients.has(c.client_id);
-                          const breakdown = clientProductBreakdown[c.client_id] || [];
-                          return (
-                            <React.Fragment key={c.client_id}>
-                              <TableRow
-                                hover
-                                onClick={() => breakdown.length > 0 && toggleClientExpand(c.client_id)}
-                                sx={{ cursor: breakdown.length > 0 ? "pointer" : "default" }}
-                              >
-                                <TableCell>
-                                  <Chip
-                                    label={`#${idx + 1}`}
-                                    size="small"
-                                    color={idx < 3 ? "primary" : "default"}
-                                  />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 500 }}>{c.client_name}</TableCell>
-                                <TableCell>{c.region || "-"}</TableCell>
-                                <TableCell align="right">{c.sales_count}</TableCell>
-                                <TableCell align="right">
-                                  {formatCurrency(c.total_value)}
-                                </TableCell>
-                                <TableCell align="right">
-                                  {formatCurrency(c.sales_count > 0 ? c.total_value / c.sales_count : 0)}
-                                </TableCell>
-                                <TableCell>
-                                  {breakdown.length > 0 && (
-                                    <IconButton size="small">
-                                      {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                    </IconButton>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                              {breakdown.length > 0 && (
-                                <TableRow>
-                                  <TableCell colSpan={7} sx={{ py: 0, borderBottom: isExpanded ? 1 : 0, borderColor: "divider" }}>
-                                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                                      <Box sx={{ py: 2, pl: 6, pr: 2, bgcolor: "action.hover", borderRadius: 1, my: 1 }}>
-                                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                                          Detalhamento por Produto
-                                        </Typography>
-                                        <Table size="small">
-                                          <TableHead>
-                                            <TableRow>
-                                              <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
-                                              <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
-                                              <TableCell sx={{ fontWeight: 600 }} align="right">Quantidade</TableCell>
-                                              <TableCell sx={{ fontWeight: 600 }} align="right">Valor</TableCell>
-                                            </TableRow>
-                                          </TableHead>
-                                          <TableBody>
-                                            {breakdown.map((p, i) => (
-                                              <TableRow key={i}>
-                                                <TableCell>{p.product_name}</TableCell>
-                                                <TableCell>
-                                                  <Chip label={p.product_category} size="small" />
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                  {formatNumber(p.quantity)} {p.unit}
-                                                </TableCell>
-                                                <TableCell align="right">
-                                                  {formatCurrency(p.total_value)}
-                                                </TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
-                                        </Table>
-                                      </Box>
-                                    </Collapse>
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                            </React.Fragment>
-                          );
-                        })}
-                        {sortedClientReport.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={7} align="center">
-                              <Typography color="text.secondary" variant="body2">
-                                Sem dados
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
+            {renderClientRanking(data.clientRanking, false)}
+          </>
+        );
+      })()}
+
+      {/* Tab: Categoria específica */}
+      {categoriesWithSales.includes(activeTab) && (() => {
+        const data = getCategoryData(activeTab);
+        const config = CATEGORY_CONFIG[activeTab];
+        const unit = config?.unit || "un";
+
+        return (
+          <>
+            {renderFilters()}
+
+            {/* Cards de Resumo (com volume) */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: config?.color || "primary.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <MoneyIcon fontSize="small" />
+                      <Typography variant="caption">Faturamento</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {formatCurrency(data.totalValue)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "success.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <TrendingUpIcon fontSize="small" />
+                      <Typography variant="caption">Vendas</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {data.totalSales}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "warning.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <InventoryIcon fontSize="small" />
+                      <Typography variant="caption">Volume ({unit})</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {formatNumber(data.totalQuantity)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 6, md: 3 }}>
+                <Card sx={{ bgcolor: "secondary.main", color: "white" }}>
+                  <CardContent sx={{ py: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <BarChartIcon fontSize="small" />
+                      <Typography variant="caption">Ticket Médio</Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {formatCurrency(data.avgValue)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-          </Grid>
-        </>
-      )}
+
+            {/* Produtos mais vendidos */}
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Produtos Mais Vendidos
+                </Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">Volume ({unit})</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }} align="right">Faturamento</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.productRanking.map((p, idx) => (
+                        <TableRow key={p.product_name} hover>
+                          <TableCell>
+                            <Chip label={`#${idx + 1}`} size="small" color={idx < 3 ? "primary" : "default"} />
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{p.product_name}</TableCell>
+                          <TableCell align="right">{formatNumber(p.total_quantity)}</TableCell>
+                          <TableCell align="right">{formatCurrency(p.total_value)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {data.productRanking.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center">
+                            <Typography color="text.secondary" variant="body2">Sem dados</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+
+            {/* Ranking de Clientes */}
+            {renderClientRanking(data.clientRanking, true, unit)}
+          </>
+        );
+      })()}
 
       {/* Tab: Produtos */}
-      {tabIndex === 2 && (
+      {activeTab === "produtos" && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -1239,9 +1270,7 @@ const Sales: React.FC = () => {
                   {products.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">
-                          Nenhum produto cadastrado
-                        </Typography>
+                        <Typography color="text.secondary">Nenhum produto cadastrado</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -1265,7 +1294,6 @@ const Sales: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
-            {/* Cliente com autocomplete */}
             <Box sx={{ position: "relative" }}>
               <TextField
                 label="Cliente"
@@ -1311,10 +1339,7 @@ const Sales: React.FC = () => {
                             setShowClientSuggestions(false);
                           }}
                         >
-                          <ListItemText
-                            primary={c.name}
-                            secondary={c.region || "Sem região"}
-                          />
+                          <ListItemText primary={c.name} secondary={c.region || "Sem região"} />
                         </ListItemButton>
                       ))
                     ) : (
@@ -1327,7 +1352,6 @@ const Sales: React.FC = () => {
               )}
             </Box>
 
-            {/* Produto */}
             <TextField
               select
               label="Produto"
@@ -1347,7 +1371,6 @@ const Sales: React.FC = () => {
                 ))}
             </TextField>
 
-            {/* Quantidade e Unidade */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
                 <TextField
@@ -1377,7 +1400,6 @@ const Sales: React.FC = () => {
               </Grid>
             </Grid>
 
-            {/* Valor Total */}
             <TextField
               label="Valor Total (R$)"
               type="number"
@@ -1391,7 +1413,6 @@ const Sales: React.FC = () => {
               }}
             />
 
-            {/* Período */}
             <TextField
               select
               label="Período"
@@ -1412,7 +1433,6 @@ const Sales: React.FC = () => {
               ))}
             </TextField>
 
-            {/* Data e Consultor */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
                 <TextField
@@ -1429,9 +1449,7 @@ const Sales: React.FC = () => {
                   select
                   label="Consultor"
                   value={saleForm.consultant_id}
-                  onChange={(e) =>
-                    setSaleForm((f) => ({ ...f, consultant_id: e.target.value }))
-                  }
+                  onChange={(e) => setSaleForm((f) => ({ ...f, consultant_id: e.target.value }))}
                   fullWidth
                 >
                   <MenuItem value="">Nenhum</MenuItem>
@@ -1444,7 +1462,6 @@ const Sales: React.FC = () => {
               </Grid>
             </Grid>
 
-            {/* Observações */}
             <TextField
               label="Observações"
               value={saleForm.notes}
@@ -1501,9 +1518,7 @@ const Sales: React.FC = () => {
               select
               label="Unidade Padrão"
               value={productForm.default_unit}
-              onChange={(e) =>
-                setProductForm((f) => ({ ...f, default_unit: e.target.value }))
-              }
+              onChange={(e) => setProductForm((f) => ({ ...f, default_unit: e.target.value }))}
               fullWidth
               required
             >
