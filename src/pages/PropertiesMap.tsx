@@ -1,20 +1,32 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   Box,
   Typography,
   Card,
+  CardContent,
   CircularProgress,
   Button,
   TextField,
   MenuItem,
   Chip,
   IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
+  Divider,
+  Badge,
+  Collapse,
 } from "@mui/material";
 import {
   Satellite as SatelliteIcon,
   Map as MapIcon,
   Refresh as RefreshIcon,
   FilterList as FilterListIcon,
+  LocationCity as CityIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Place as PlaceIcon,
 } from "@mui/icons-material";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -22,7 +34,6 @@ import "leaflet/dist/leaflet.css";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
 
-// Fix para ícone do marker no Leaflet
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -35,13 +46,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Cores para marcadores baseado em dias desde última visita
 const getMarkerColor = (daysAgo: number | null): string => {
-  if (daysAgo === null) return "#6b7280"; // Cinza - sem visita
-  if (daysAgo <= 7) return "#22c55e"; // Verde - recente
-  if (daysAgo <= 15) return "#eab308"; // Amarelo - atenção
-  if (daysAgo <= 30) return "#f97316"; // Laranja - atrasado
-  return "#ef4444"; // Vermelho - muito atrasado
+  if (daysAgo === null) return "#6b7280";
+  if (daysAgo <= 7) return "#22c55e";
+  if (daysAgo <= 15) return "#eab308";
+  if (daysAgo <= 30) return "#f97316";
+  return "#ef4444";
 };
 
 const createColoredIcon = (color: string, label?: string) => {
@@ -131,11 +141,18 @@ type Consultant = {
   name: string;
 };
 
+type CityStats = {
+  city: string;
+  count: number;
+  properties: PropertyMapItem[];
+  avgLat: number;
+  avgLng: number;
+};
+
 function MapBoundsUpdater({ properties, hasInitialized }: { properties: PropertyMapItem[], hasInitialized: React.MutableRefObject<boolean> }) {
   const map = useMap();
 
   useEffect(() => {
-    // Só ajusta bounds uma vez, quando as propriedades são carregadas pela primeira vez
     if (properties.length > 0 && !hasInitialized.current) {
       const bounds = L.latLngBounds(
         properties.map((p) => [p.latitude, p.longitude])
@@ -144,6 +161,18 @@ function MapBoundsUpdater({ properties, hasInitialized }: { properties: Property
       hasInitialized.current = true;
     }
   }, [properties, map, hasInitialized]);
+
+  return null;
+}
+
+function MapCenterOnCity({ lat, lng, trigger }: { lat: number; lng: number; trigger: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (trigger > 0) {
+      map.setView([lat, lng], 11, { animate: true });
+    }
+  }, [trigger, lat, lng, map]);
 
   return null;
 }
@@ -177,10 +206,14 @@ const PropertiesMap: React.FC = () => {
     return (saved as MapFilter) || "all";
   });
   const [filterRegion, setFilterRegion] = useState("");
+  const [filterCity, setFilterCity] = useState("");
   const [currentZoom, setCurrentZoom] = useState(5);
+  const [showCityPanel, setShowCityPanel] = useState(true);
+  const [centerTrigger, setCenterTrigger] = useState(0);
+  const [centerCoords, setCenterCoords] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const mapInitializedRef = useRef(false);
 
-  const defaultCenter: [number, number] = [-14.235, -51.9253]; // Centro do Brasil
+  const defaultCenter: [number, number] = [-14.235, -51.9253];
 
   const loadData = async () => {
     setLoading(true);
@@ -201,7 +234,6 @@ const PropertiesMap: React.FC = () => {
   };
 
   useEffect(() => {
-    // Carrega consultores e regiões para filtros
     Promise.all([
       fetchWithCache(`${API_BASE}consultants`, "consultants"),
       fetch(`${API_BASE}regions`).then((r) => r.json()).catch(() => []),
@@ -214,10 +246,57 @@ const PropertiesMap: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Reset map bounds quando filtros mudam
     mapInitializedRef.current = false;
     loadData();
   }, [filterConsultant, filterRegion]);
+
+  // Extrair município do city_state (formato: "Cidade - UF" ou "Cidade/UF" ou apenas "Cidade")
+  const extractCity = (cityState: string | null): string => {
+    if (!cityState) return "Sem município";
+    const cleaned = cityState.trim();
+    // Remove sufixo de estado (- MT, /MT, MT, etc)
+    const match = cleaned.match(/^(.+?)(?:\s*[-\/]\s*[A-Z]{2})?$/i);
+    return match ? match[1].trim() : cleaned;
+  };
+
+  // Agrupar propriedades por município
+  const cityStats = useMemo(() => {
+    const cityMap: Record<string, CityStats> = {};
+
+    for (const prop of properties) {
+      if (!prop.latitude || !prop.longitude) continue;
+
+      const city = extractCity(prop.city_state);
+
+      if (!cityMap[city]) {
+        cityMap[city] = {
+          city,
+          count: 0,
+          properties: [],
+          avgLat: 0,
+          avgLng: 0,
+        };
+      }
+
+      cityMap[city].count += 1;
+      cityMap[city].properties.push(prop);
+    }
+
+    // Calcular centróide de cada município
+    for (const stats of Object.values(cityMap)) {
+      const sumLat = stats.properties.reduce((sum, p) => sum + p.latitude, 0);
+      const sumLng = stats.properties.reduce((sum, p) => sum + p.longitude, 0);
+      stats.avgLat = sumLat / stats.properties.length;
+      stats.avgLng = sumLng / stats.properties.length;
+    }
+
+    return Object.values(cityMap).sort((a, b) => b.count - a.count);
+  }, [properties]);
+
+  // Lista de municípios únicos para o dropdown
+  const cities = useMemo(() => {
+    return cityStats.map((c) => c.city);
+  }, [cityStats]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
@@ -225,7 +304,6 @@ const PropertiesMap: React.FC = () => {
     return d.toLocaleDateString("pt-BR");
   };
 
-  // Filtra propriedades por status de visita
   const filterByStatus = (prop: PropertyMapItem): boolean => {
     const daysAgo = prop.last_visit?.days_ago ?? null;
 
@@ -245,9 +323,27 @@ const PropertiesMap: React.FC = () => {
     }
   };
 
+  const filterByCity = (prop: PropertyMapItem): boolean => {
+    if (!filterCity) return true;
+    return extractCity(prop.city_state) === filterCity;
+  };
+
   const propertiesWithCoords = properties
     .filter((p) => p.latitude && p.longitude)
-    .filter(filterByStatus);
+    .filter(filterByStatus)
+    .filter(filterByCity);
+
+  const handleCityClick = (stats: CityStats) => {
+    setFilterCity(stats.city);
+    setCenterCoords({ lat: stats.avgLat, lng: stats.avgLng });
+    setCenterTrigger((t) => t + 1);
+    mapInitializedRef.current = true; // Evita re-fit automático
+  };
+
+  const handleClearCityFilter = () => {
+    setFilterCity("");
+    mapInitializedRef.current = false;
+  };
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 }, minHeight: "100vh", height: "auto" }}>
@@ -282,7 +378,7 @@ const PropertiesMap: React.FC = () => {
             value={filterConsultant}
             onChange={(e) => setFilterConsultant(e.target.value)}
             size="small"
-            sx={{ minWidth: 180 }}
+            sx={{ minWidth: 150 }}
           >
             <MenuItem value="">Todos</MenuItem>
             {consultants.map((c) => (
@@ -297,12 +393,37 @@ const PropertiesMap: React.FC = () => {
             value={filterRegion}
             onChange={(e) => setFilterRegion(e.target.value)}
             size="small"
-            sx={{ minWidth: 180 }}
+            sx={{ minWidth: 150 }}
           >
             <MenuItem value="">Todas</MenuItem>
             {regions.map((r) => (
               <MenuItem key={r} value={r}>
                 {r}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Município"
+            value={filterCity}
+            onChange={(e) => {
+              const city = e.target.value;
+              if (city) {
+                const stats = cityStats.find((c) => c.city === city);
+                if (stats) {
+                  handleCityClick(stats);
+                }
+              } else {
+                handleClearCityFilter();
+              }
+            }}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Todos</MenuItem>
+            {cities.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c} ({cityStats.find((s) => s.city === c)?.count || 0})
               </MenuItem>
             ))}
           </TextField>
@@ -408,174 +529,269 @@ const PropertiesMap: React.FC = () => {
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {propertiesWithCoords.length} propriedades com localização
+          {filterCity && (
+            <Chip
+              label={`Município: ${filterCity}`}
+              size="small"
+              onDelete={handleClearCityFilter}
+              sx={{ ml: 1 }}
+            />
+          )}
         </Typography>
       </Card>
 
-      {/* Mapa */}
-      <Card sx={{ height: { xs: "60vh", md: "calc(100vh - 280px)" }, minHeight: 400, position: "relative" }}>
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        ) : (
-          <MapContainer
-            center={defaultCenter}
-            zoom={5}
-            style={{ height: "100%", width: "100%" }}
-          >
-            {mapType === "satellite" ? (
-              <>
-                {/* Camada de satélite Google */}
-                <TileLayer
-                  attribution="&copy; Google Maps"
-                  url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-                  maxZoom={20}
-                />
-                {/* Camada de labels (cidades, estradas, etc) sobre o satélite */}
-                <TileLayer
-                  url="https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}"
-                  maxZoom={20}
-                />
-              </>
-            ) : (
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-            )}
-
-            {propertiesWithCoords.map((prop) => {
-              const showLabel = currentZoom >= 10;
-              const markerColor = getMarkerColor(prop.last_visit?.days_ago ?? null);
-
-              return (
-                <Marker
-                  key={`${prop.id}-${showLabel}`}
-                  position={[prop.latitude, prop.longitude]}
-                  icon={createColoredIcon(markerColor, showLabel && prop.client_name ? prop.client_name : undefined)}
-                  eventHandlers={{
-                    mouseover: (e) => {
-                      e.target.openPopup();
-                    },
-                    mouseout: (e) => {
-                      e.target.closePopup();
-                    },
-                  }}
-                >
-
-                  <Popup autoPan={false}>
-                    <Box sx={{ minWidth: 200 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                        {prop.client_name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {prop.name}
-                      </Typography>
-                      {prop.city_state && (
-                        <Typography variant="caption" color="text.secondary">
-                          {prop.city_state}
-                        </Typography>
-                      )}
-                      {prop.area_ha && (
-                        <Typography variant="body2">
-                          Área: {prop.area_ha} ha
-                        </Typography>
-                      )}
-
-                      <Box
-                        sx={{
-                          mt: 1,
-                          pt: 1,
-                          borderTop: 1,
-                          borderColor: "divider",
-                        }}
-                      >
-                        {prop.last_visit ? (
-                          <>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              Última visita: {formatDate(prop.last_visit.date)}
-                            </Typography>
-                            {prop.last_visit.days_ago !== null && (
-                              <Typography variant="caption" color="text.secondary">
-                                ({prop.last_visit.days_ago} dias atrás)
-                              </Typography>
-                            )}
-                            {prop.last_visit.culture && (
-                              <Typography variant="body2">
-                                {prop.last_visit.culture}
-                                {prop.last_visit.variety && ` - ${prop.last_visit.variety}`}
-                                {prop.last_visit.fenologia && ` (${prop.last_visit.fenologia})`}
-                              </Typography>
-                            )}
-                          </>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Sem visitas registradas
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </Popup>
-                </Marker>
-              );
-            })}
-
-            <MapBoundsUpdater properties={propertiesWithCoords} hasInitialized={mapInitializedRef} />
-            <ZoomTracker onZoomChange={setCurrentZoom} />
-          </MapContainer>
-        )}
-
-        {/* Toggle Mapa/Satélite */}
-        <Box
+      {/* Layout: Painel lateral + Mapa */}
+      <Box sx={{ display: "flex", gap: 2, height: { xs: "auto", md: "calc(100vh - 320px)" }, minHeight: 400 }}>
+        {/* Painel de Municípios */}
+        <Card
           sx={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            zIndex: 1000,
-            display: "flex",
-            bgcolor: "background.paper",
-            borderRadius: 1,
-            boxShadow: 2,
+            width: { xs: "100%", md: 280 },
+            flexShrink: 0,
+            display: { xs: showCityPanel ? "block" : "none", md: "block" },
             overflow: "hidden",
           }}
         >
+          <CardContent sx={{ p: 0, height: "100%", display: "flex", flexDirection: "column" }}>
+            <Box
+              sx={{
+                p: 2,
+                borderBottom: 1,
+                borderColor: "divider",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CityIcon color="primary" />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Municípios
+                </Typography>
+              </Box>
+              <Chip label={cityStats.length} size="small" color="primary" />
+            </Box>
+
+            <List sx={{ flex: 1, overflow: "auto", py: 0 }}>
+              {cityStats.map((stats) => (
+                <ListItemButton
+                  key={stats.city}
+                  selected={filterCity === stats.city}
+                  onClick={() => handleCityClick(stats)}
+                  sx={{
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    "&.Mui-selected": {
+                      bgcolor: "primary.lighter",
+                      borderLeft: 3,
+                      borderLeftColor: "primary.main",
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Badge
+                      badgeContent={stats.count}
+                      color="primary"
+                      max={99}
+                    >
+                      <PlaceIcon color="action" />
+                    </Badge>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={stats.city}
+                    secondary={`${stats.count} propriedade${stats.count > 1 ? "s" : ""}`}
+                    slotProps={{
+                      primary: { sx: { fontWeight: filterCity === stats.city ? 600 : 400 } },
+                      secondary: { sx: { fontSize: "0.75rem" } },
+                    }}
+                  />
+                </ListItemButton>
+              ))}
+              {cityStats.length === 0 && (
+                <Box sx={{ p: 3, textAlign: "center" }}>
+                  <Typography color="text.secondary" variant="body2">
+                    Nenhum município encontrado
+                  </Typography>
+                </Box>
+              )}
+            </List>
+          </CardContent>
+        </Card>
+
+        {/* Toggle painel mobile */}
+        <Box sx={{ display: { xs: "block", md: "none" }, mb: 1 }}>
           <Button
             size="small"
-            variant={mapType === "street" ? "contained" : "text"}
-            onClick={() => setMapType("street")}
-            sx={{
-              minWidth: 40,
-              px: 1.5,
-              borderRadius: 0,
-              color: mapType === "street" ? "white" : "text.primary",
-            }}
-            startIcon={<MapIcon fontSize="small" />}
+            startIcon={showCityPanel ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            onClick={() => setShowCityPanel(!showCityPanel)}
           >
-            Mapa
-          </Button>
-          <Button
-            size="small"
-            variant={mapType === "satellite" ? "contained" : "text"}
-            onClick={() => setMapType("satellite")}
-            sx={{
-              minWidth: 40,
-              px: 1.5,
-              borderRadius: 0,
-              color: mapType === "satellite" ? "white" : "text.primary",
-            }}
-            startIcon={<SatelliteIcon fontSize="small" />}
-          >
-            Satélite
+            {showCityPanel ? "Ocultar municípios" : "Mostrar municípios"}
           </Button>
         </Box>
-      </Card>
+
+        {/* Mapa */}
+        <Card sx={{ flex: 1, position: "relative", minHeight: 400 }}>
+          {loading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            <MapContainer
+              center={defaultCenter}
+              zoom={5}
+              style={{ height: "100%", width: "100%" }}
+            >
+              {mapType === "satellite" ? (
+                <>
+                  <TileLayer
+                    attribution="&copy; Google Maps"
+                    url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+                    maxZoom={20}
+                  />
+                  <TileLayer
+                    url="https://mt1.google.com/vt/lyrs=h&x={x}&y={y}&z={z}"
+                    maxZoom={20}
+                  />
+                </>
+              ) : (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              )}
+
+              {propertiesWithCoords.map((prop) => {
+                const showLabel = currentZoom >= 10;
+                const markerColor = getMarkerColor(prop.last_visit?.days_ago ?? null);
+
+                return (
+                  <Marker
+                    key={`${prop.id}-${showLabel}`}
+                    position={[prop.latitude, prop.longitude]}
+                    icon={createColoredIcon(markerColor, showLabel && prop.client_name ? prop.client_name : undefined)}
+                    eventHandlers={{
+                      mouseover: (e) => {
+                        e.target.openPopup();
+                      },
+                      mouseout: (e) => {
+                        e.target.closePopup();
+                      },
+                    }}
+                  >
+                    <Popup autoPan={false}>
+                      <Box sx={{ minWidth: 200 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                          {prop.client_name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {prop.name}
+                        </Typography>
+                        {prop.city_state && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                            {prop.city_state}
+                          </Typography>
+                        )}
+                        {prop.area_ha && (
+                          <Typography variant="body2">
+                            Área: {prop.area_ha} ha
+                          </Typography>
+                        )}
+
+                        <Box
+                          sx={{
+                            mt: 1,
+                            pt: 1,
+                            borderTop: 1,
+                            borderColor: "divider",
+                          }}
+                        >
+                          {prop.last_visit ? (
+                            <>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                Última visita: {formatDate(prop.last_visit.date)}
+                              </Typography>
+                              {prop.last_visit.days_ago !== null && (
+                                <Typography variant="caption" color="text.secondary">
+                                  ({prop.last_visit.days_ago} dias atrás)
+                                </Typography>
+                              )}
+                              {prop.last_visit.culture && (
+                                <Typography variant="body2">
+                                  {prop.last_visit.culture}
+                                  {prop.last_visit.variety && ` - ${prop.last_visit.variety}`}
+                                  {prop.last_visit.fenologia && ` (${prop.last_visit.fenologia})`}
+                                </Typography>
+                              )}
+                            </>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              Sem visitas registradas
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+
+              <MapBoundsUpdater properties={propertiesWithCoords} hasInitialized={mapInitializedRef} />
+              <MapCenterOnCity lat={centerCoords.lat} lng={centerCoords.lng} trigger={centerTrigger} />
+              <ZoomTracker onZoomChange={setCurrentZoom} />
+            </MapContainer>
+          )}
+
+          {/* Toggle Mapa/Satélite */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              zIndex: 1000,
+              display: "flex",
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              boxShadow: 2,
+              overflow: "hidden",
+            }}
+          >
+            <Button
+              size="small"
+              variant={mapType === "street" ? "contained" : "text"}
+              onClick={() => setMapType("street")}
+              sx={{
+                minWidth: 40,
+                px: 1.5,
+                borderRadius: 0,
+                color: mapType === "street" ? "white" : "text.primary",
+              }}
+              startIcon={<MapIcon fontSize="small" />}
+            >
+              Mapa
+            </Button>
+            <Button
+              size="small"
+              variant={mapType === "satellite" ? "contained" : "text"}
+              onClick={() => setMapType("satellite")}
+              sx={{
+                minWidth: 40,
+                px: 1.5,
+                borderRadius: 0,
+                color: mapType === "satellite" ? "white" : "text.primary",
+              }}
+              startIcon={<SatelliteIcon fontSize="small" />}
+            >
+              Satélite
+            </Button>
+          </Box>
+        </Card>
+      </Box>
     </Box>
   );
 };
