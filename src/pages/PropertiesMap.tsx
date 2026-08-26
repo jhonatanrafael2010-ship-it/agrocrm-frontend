@@ -252,9 +252,18 @@ const PropertiesMap: React.FC = () => {
   const extractCity = (cityState: string | null): string => {
     if (!cityState) return "Sem município";
     const cleaned = cityState.trim();
-    // Remove sufixo de estado (- MT, /MT, MT, etc)
+
+    // Se for apenas sigla de estado (2 letras), retorna "Sem município"
+    if (/^[A-Z]{2}$/i.test(cleaned)) return "Sem município";
+
+    // Remove sufixo de estado (- MT, /MT, etc)
     const match = cleaned.match(/^(.+?)(?:\s*[-\/]\s*[A-Z]{2})?$/i);
-    return match ? match[1].trim() : cleaned;
+    const city = match ? match[1].trim() : cleaned;
+
+    // Se após remover o estado ficou vazio ou é só sigla, retorna "Sem município"
+    if (!city || /^[A-Z]{2}$/i.test(city)) return "Sem município";
+
+    return city;
   };
 
   // Agrupar propriedades por município
@@ -543,7 +552,7 @@ const PropertiesMap: React.FC = () => {
         {/* Painel de Municípios */}
         <Card
           sx={{
-            width: { xs: "100%", md: 280 },
+            width: { xs: "100%", md: showCityPanel ? 280 : "auto" },
             flexShrink: 0,
             display: { xs: showCityPanel ? "block" : "none", md: "block" },
             overflow: "hidden",
@@ -552,8 +561,8 @@ const PropertiesMap: React.FC = () => {
           <CardContent sx={{ p: 0, height: "100%", display: "flex", flexDirection: "column" }}>
             <Box
               sx={{
-                p: 2,
-                borderBottom: 1,
+                p: showCityPanel ? 2 : 1,
+                borderBottom: showCityPanel ? 1 : 0,
                 borderColor: "divider",
                 display: "flex",
                 alignItems: "center",
@@ -561,57 +570,74 @@ const PropertiesMap: React.FC = () => {
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CityIcon color="primary" />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Municípios
-                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setShowCityPanel(!showCityPanel)}
+                  sx={{ display: { xs: "none", md: "flex" } }}
+                  title={showCityPanel ? "Esconder municípios" : "Mostrar municípios"}
+                >
+                  {showCityPanel ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+                {showCityPanel && (
+                  <>
+                    <CityIcon color="primary" />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      Municípios
+                    </Typography>
+                  </>
+                )}
+                {!showCityPanel && (
+                  <CityIcon color="primary" sx={{ display: { xs: "none", md: "block" } }} />
+                )}
               </Box>
-              <Chip label={cityStats.length} size="small" color="primary" />
+              {showCityPanel && <Chip label={cityStats.length} size="small" color="primary" />}
             </Box>
 
-            <List sx={{ flex: 1, overflow: "auto", py: 0 }}>
-              {cityStats.map((stats) => (
-                <ListItemButton
-                  key={stats.city}
-                  selected={filterCity === stats.city}
-                  onClick={() => handleCityClick(stats)}
-                  sx={{
-                    borderBottom: 1,
-                    borderColor: "divider",
-                    "&.Mui-selected": {
-                      bgcolor: "primary.lighter",
-                      borderLeft: 3,
-                      borderLeftColor: "primary.main",
-                    },
-                  }}
-                >
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Badge
-                      badgeContent={stats.count}
-                      color="primary"
-                      max={99}
-                    >
-                      <PlaceIcon color="action" />
-                    </Badge>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={stats.city}
-                    secondary={`${stats.count} propriedade${stats.count > 1 ? "s" : ""}`}
-                    slotProps={{
-                      primary: { sx: { fontWeight: filterCity === stats.city ? 600 : 400 } },
-                      secondary: { sx: { fontSize: "0.75rem" } },
+            {showCityPanel && (
+              <List sx={{ flex: 1, overflow: "auto", py: 0 }}>
+                {cityStats.map((stats) => (
+                  <ListItemButton
+                    key={stats.city}
+                    selected={filterCity === stats.city}
+                    onClick={() => handleCityClick(stats)}
+                    sx={{
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      "&.Mui-selected": {
+                        bgcolor: "primary.lighter",
+                        borderLeft: 3,
+                        borderLeftColor: "primary.main",
+                      },
                     }}
-                  />
-                </ListItemButton>
-              ))}
-              {cityStats.length === 0 && (
-                <Box sx={{ p: 3, textAlign: "center" }}>
-                  <Typography color="text.secondary" variant="body2">
-                    Nenhum município encontrado
-                  </Typography>
-                </Box>
-              )}
-            </List>
+                  >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Badge
+                        badgeContent={stats.count}
+                        color="primary"
+                        max={99}
+                      >
+                        <PlaceIcon color="action" />
+                      </Badge>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={stats.city}
+                      secondary={`${stats.count} propriedade${stats.count > 1 ? "s" : ""}`}
+                      slotProps={{
+                        primary: { sx: { fontWeight: filterCity === stats.city ? 600 : 400 } },
+                        secondary: { sx: { fontSize: "0.75rem" } },
+                      }}
+                    />
+                  </ListItemButton>
+                ))}
+                {cityStats.length === 0 && (
+                  <Box sx={{ p: 3, textAlign: "center" }}>
+                    <Typography color="text.secondary" variant="body2">
+                      Nenhum município encontrado
+                    </Typography>
+                  </Box>
+                )}
+              </List>
+            )}
           </CardContent>
         </Card>
 
