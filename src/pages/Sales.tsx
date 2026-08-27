@@ -76,6 +76,7 @@ type Sale = {
   period_type: string;
   period_year: string;
   period_label: string;
+  culture: string | null;
   sale_date: string | null;
   notes: string | null;
 };
@@ -108,6 +109,7 @@ const Sales: React.FC = () => {
   const [periods, setPeriods] = useState<Period[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [units, setUnits] = useState<string[]>([]);
+  const [cultures, setCultures] = useState<string[]>([]);
 
   // Filtros
   const [filterPeriodType, setFilterPeriodType] = useState("");
@@ -134,6 +136,7 @@ const Sales: React.FC = () => {
     value: "",
     period_type: "",
     period_year: "",
+    culture: "",
     sale_date: new Date().toISOString().split("T")[0],
     notes: "",
   });
@@ -180,7 +183,7 @@ const Sales: React.FC = () => {
   async function loadData() {
     setLoading(true);
     try {
-      const [salesRes, productsRes, clientsRes, consultantsRes, periodsRes, categoriesRes, unitsRes] =
+      const [salesRes, productsRes, clientsRes, consultantsRes, periodsRes, categoriesRes, unitsRes, culturesRes] =
         await Promise.all([
           fetch(`${API_BASE}sales`),
           fetch(`${API_BASE}products`),
@@ -189,6 +192,7 @@ const Sales: React.FC = () => {
           fetch(`${API_BASE}sales/periods`),
           fetch(`${API_BASE}products/categories`),
           fetch(`${API_BASE}products/units`),
+          fetch(`${API_BASE}sales/cultures`),
         ]);
 
       setSales(await salesRes.json());
@@ -198,6 +202,7 @@ const Sales: React.FC = () => {
       setPeriods(await periodsRes.json());
       setCategories(await categoriesRes.json());
       setUnits(await unitsRes.json());
+      setCultures(await culturesRes.json());
     } catch (err) {
       console.error(err);
       setError("Erro ao carregar dados");
@@ -334,6 +339,13 @@ const Sales: React.FC = () => {
       productRanking.sort((a, b) => b.total_value - a.total_value);
     }
 
+    // Detectar unidade predominante das vendas filtradas
+    const unitCounts: Record<string, number> = {};
+    for (const sale of relevantSales) {
+      unitCounts[sale.unit] = (unitCounts[sale.unit] || 0) + sale.quantity;
+    }
+    const predominantUnit = Object.entries(unitCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+
     return {
       totalValue,
       totalQuantity,
@@ -343,6 +355,7 @@ const Sales: React.FC = () => {
       clientRanking,
       categoryMix,
       productRanking,
+      predominantUnit,
     };
   }
 
@@ -401,6 +414,7 @@ const Sales: React.FC = () => {
         value: sale.value ? String(sale.value) : "",
         period_type: sale.period_type,
         period_year: sale.period_year,
+        culture: sale.culture || "",
         sale_date: sale.sale_date || "",
         notes: sale.notes || "",
       });
@@ -416,6 +430,7 @@ const Sales: React.FC = () => {
         value: "",
         period_type: "",
         period_year: "",
+        culture: "",
         sale_date: new Date().toISOString().split("T")[0],
         notes: "",
       });
@@ -467,6 +482,7 @@ const Sales: React.FC = () => {
         value: saleForm.value ? Number(saleForm.value) : null,
         period_type: saleForm.period_type,
         period_year: saleForm.period_year,
+        culture: saleForm.culture || null,
         sale_date: saleForm.sale_date || null,
         notes: saleForm.notes || null,
       };
@@ -1127,7 +1143,7 @@ const Sales: React.FC = () => {
       {categoriesWithSales.includes(activeTab) && (() => {
         const data = getCategoryData(activeTab);
         const config = CATEGORY_CONFIG[activeTab];
-        const unit = config?.unit || "un";
+        const unit = data.predominantUnit || config?.unit || "un";
 
         return (
           <>
@@ -1415,25 +1431,45 @@ const Sales: React.FC = () => {
               }}
             />
 
-            <TextField
-              select
-              label="Período"
-              value={
-                saleForm.period_type && saleForm.period_year
-                  ? `${saleForm.period_type} ${saleForm.period_year}`
-                  : ""
-              }
-              onChange={(e) => handlePeriodChange(e.target.value)}
-              fullWidth
-              required
-            >
-              <MenuItem value="">Selecione o período</MenuItem>
-              {periods.map((p) => (
-                <MenuItem key={p.label} value={p.label}>
-                  {p.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  select
+                  label="Período"
+                  value={
+                    saleForm.period_type && saleForm.period_year
+                      ? `${saleForm.period_type} ${saleForm.period_year}`
+                      : ""
+                  }
+                  onChange={(e) => handlePeriodChange(e.target.value)}
+                  fullWidth
+                  required
+                >
+                  <MenuItem value="">Selecione o período</MenuItem>
+                  {periods.map((p) => (
+                    <MenuItem key={p.label} value={p.label}>
+                      {p.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  select
+                  label="Cultura"
+                  value={saleForm.culture}
+                  onChange={(e) => setSaleForm((f) => ({ ...f, culture: e.target.value }))}
+                  fullWidth
+                >
+                  <MenuItem value="">Nenhuma</MenuItem>
+                  {cultures.map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
