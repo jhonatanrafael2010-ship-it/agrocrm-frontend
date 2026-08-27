@@ -72,7 +72,7 @@ type ClientOpportunity = {
 type SortField = "total_area_ha" | "seed_potential_scs" | "seed_sold_scs" | "seed_opportunity_scs" | "coverage_percentage";
 type SortDirection = "asc" | "desc";
 
-const SEEDS_PER_HA = 1.1;
+const SEEDS_PER_HA = 1.067;
 
 const Opportunities: React.FC = () => {
   const [loading, setLoading] = useState(true);
