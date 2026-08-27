@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Box,
   List,
@@ -31,6 +32,7 @@ import {
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
 import SyncStatus from "./SyncStatus";
+import { ROUTE_PATHS } from "../routes";
 
 type Props = {
   activeItem?: string;
@@ -163,15 +165,19 @@ const Navbar: React.FC<Props> = ({
             <List disablePadding>
               {section.items.map((item) => {
                 const isActive = activeItem === item.label;
+                const path = ROUTE_PATHS[item.label] || "/";
                 return (
                   <ListItem key={item.label} disablePadding sx={{ px: 1 }}>
                     <ListItemButton
+                      component={Link}
+                      to={path}
                       selected={isActive}
                       onClick={() => onNavigate(item.label)}
                       sx={{
                         borderRadius: 2,
                         mb: 0.5,
                         py: 1,
+                        textDecoration: "none",
                         "&.Mui-selected": {
                           bgcolor: `${item.color}15`,
                           "&:hover": {

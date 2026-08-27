@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Drawer,
   Box,
@@ -32,6 +33,7 @@ import {
   AttachMoney as SalesIcon,
 } from "@mui/icons-material";
 import logo from "../assets/nutricrm_logo.png";
+import { ROUTE_PATHS } from "../routes";
 
 interface MobileMenuProps {
   onNavigate: (route: string) => void;
@@ -160,14 +162,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onNavigate, activeItem, userNam
         <List sx={{ flex: 1, py: 2, px: 1 }}>
           {allMenuItems.map((item) => {
             const active = activeItem === item.route;
+            const path = ROUTE_PATHS[item.route] || "/";
             return (
               <ListItem key={item.route} disablePadding sx={{ mb: 0.5 }}>
                 <ListItemButton
+                  component={Link}
+                  to={path}
                   selected={active}
                   onClick={() => handleNavigate(item.route)}
                   sx={{
                     borderRadius: 3,
                     py: 1.5,
+                    textDecoration: "none",
                     transition: "all 0.2s ease",
                     "&.Mui-selected": {
                       bgcolor: `${item.color}15`,

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { lightTheme, darkTheme } from "./theme/muiTheme";
 import Navbar from "./components/Navbar";
@@ -30,8 +31,12 @@ import { loadSeedIfNeeded } from "./utils/seedLoader";
 import MobileMenu from "./components/MobileMenu";
 import { API_BASE } from "./config";
 import { isAuthenticated, getUser, logout } from "./services/auth";
+import { ROUTE_PATHS, PATH_TO_LABEL } from "./routes";
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Estado de autenticação
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
   const [currentUser, setCurrentUser] = useState(() => getUser());
@@ -45,35 +50,15 @@ function App() {
     });
   }, []);
 
-  const [route, setRoute] = useState<string>(() => {
-    const openSection = sessionStorage.getItem("open_section");
+  // Deriva a rota atual do pathname
+  const currentRoute = PATH_TO_LABEL[location.pathname] || "Dashboard";
 
-    if (openSection === "calendar") {
-      return "Calendário";
-    }
+  // Função de navegação que converte label -> path
+  const handleNavigate = useCallback((label: string) => {
+    const path = ROUTE_PATHS[label] || "/";
+    navigate(path);
+  }, [navigate]);
 
-    if (openSection === "visits") {
-      return "Acompanhamentos";
-    }
-
-    if (openSection === "clients") {
-      return "Clientes";
-    }
-
-    if (openSection === "properties") {
-      return "Propriedades";
-    }
-
-    if (openSection === "opportunities") {
-      return "Oportunidades";
-    }
-
-    if (openSection === "chat") {
-      return "Assistente";
-    }
-
-    return "Dashboard";
-  });
   const [isMobileApp, setIsMobileApp] = useState(false);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncing, setSyncing] = useState(false);
@@ -81,16 +66,14 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
-    // Detecta preferência do sistema operacional
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
-  // Escuta mudanças na preferência do sistema (quando usuário alterna modo no SO)
+  // Escuta mudanças na preferência do sistema
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = (e: MediaQueryListEvent) => {
-      // Só aplica se não tiver preferência salva manualmente
       if (!localStorage.getItem("theme")) {
         setIsDarkMode(e.matches);
       }
@@ -100,7 +83,7 @@ function App() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Sincroniza atributo data-theme no body (para CSS legado)
+  // Sincroniza atributo data-theme no body
   useEffect(() => {
     document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
@@ -132,7 +115,27 @@ function App() {
     };
   }, []);
 
+  // Redireciona baseado em open_section do sessionStorage
+  useEffect(() => {
+    const openSection = sessionStorage.getItem("open_section");
+    if (!openSection) return;
 
+    sessionStorage.removeItem("open_section");
+
+    const sectionMap: Record<string, string> = {
+      calendar: "/calendario",
+      visits: "/acompanhamentos",
+      clients: "/clientes",
+      properties: "/propriedades",
+      opportunities: "/oportunidades",
+      chat: "/assistente",
+    };
+
+    const targetPath = sectionMap[openSection];
+    if (targetPath && location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  }, [navigate, location.pathname]);
 
   // ============================================================
   // 🔄 Sincronização automática
@@ -168,13 +171,11 @@ function App() {
   // ============================================================
   useEffect(() => {
     async function initOfflineData() {
-      // 1. Se IndexedDB vazio, carrega dados seed embutidos no APK
       const seedLoaded = await loadSeedIfNeeded();
       if (seedLoaded) {
         console.log("📦 Dados seed carregados - app pronto para uso offline!");
       }
 
-      // 2. Se online, atualiza com dados frescos da API
       if (navigator.onLine) {
         await preloadOfflineData(API_BASE);
       }
@@ -211,17 +212,10 @@ function App() {
   useEffect(() => {
     const offcanvasEl = document.getElementById("mobileMenu");
     if (offcanvasEl) {
-      const bsOffcanvas = (window as any).bootstrap?.Offcanvas.getInstance(offcanvasEl);
+      const bsOffcanvas = (window as unknown as { bootstrap?: { Offcanvas: { getInstance: (el: HTMLElement) => { hide: () => void } | null } } }).bootstrap?.Offcanvas.getInstance(offcanvasEl);
       bsOffcanvas?.hide();
     }
-  }, [route]);
-
-  useEffect(() => {
-    const openSection = sessionStorage.getItem("open_section");
-    if (!openSection) return;
-
-    sessionStorage.removeItem("open_section");
-  }, []);
+  }, [location.pathname]);
 
   // ============================================================
   // RENDER
@@ -248,8 +242,8 @@ function App() {
         {!isMobileApp && (
           <div className="d-none d-lg-block sidebar-wrapper">
             <Navbar
-              activeItem={route}
-              onNavigate={setRoute}
+              activeItem={currentRoute}
+              onNavigate={handleNavigate}
               userName={currentUser?.consultant_name || currentUser?.username || "Usuário"}
               userRole={currentUser?.is_admin ? "Administrador" : "Consultor"}
               isAdmin={currentUser?.is_admin || false}
@@ -264,37 +258,30 @@ function App() {
           {/* Topbar apenas no desktop */}
           {!isMobileApp && (
             <Topbar
-              activeItem={route}
+              activeItem={currentRoute}
               lastSync={lastSync}
               syncing={syncing}
               offline={offline}
-              onNavigate={setRoute}
+              onNavigate={handleNavigate}
             />
           )}
           <div className="page-content flex-grow-1" style={{ paddingBottom: isMobileApp ? 80 : 0 }}>
-            {route === "Clientes" ? (
-              <Clients />
-            ) : route === "Propriedades" ? (
-              <PropertiesPage />
-            ) : route === "Mapa" ? (
-              <PropertiesMapPage />
-            ) : route === "Calendário" ? (
-              <CalendarPage />
-            ) : route === "Oportunidades" ? (
-              <OpportunitiesPage />
-            ) : route === "Acompanhamentos" ? (
-              <VisitsPage />
-            ) : route === "Vincular Visitas" ? (
-              <VisitLinkingPage />
-            ) : route === "Assistente" ? (
-              <ChatPage />
-            ) : route === "Usuários" && currentUser?.is_admin ? (
-              <AdminUsersPage />
-            ) : route === "Vendas" ? (
-              <SalesPage />
-            ) : (
-              <Dashboard onNavigate={setRoute} />
-            )}
+            <Routes>
+              <Route path="/" element={<Dashboard onNavigate={handleNavigate} />} />
+              <Route path="/assistente" element={<ChatPage />} />
+              <Route path="/clientes" element={<Clients />} />
+              <Route path="/propriedades" element={<PropertiesPage />} />
+              <Route path="/mapa" element={<PropertiesMapPage />} />
+              <Route path="/calendario" element={<CalendarPage />} />
+              <Route path="/acompanhamentos" element={<VisitsPage />} />
+              <Route path="/vincular-visitas" element={<VisitLinkingPage />} />
+              <Route path="/oportunidades" element={<OpportunitiesPage />} />
+              <Route path="/vendas" element={<SalesPage />} />
+              {currentUser?.is_admin && (
+                <Route path="/usuarios" element={<AdminUsersPage />} />
+              )}
+              <Route path="*" element={<Dashboard onNavigate={handleNavigate} />} />
+            </Routes>
           </div>
         </main>
       </div>
@@ -302,8 +289,8 @@ function App() {
       {/* Mobile Menu (Drawer + BottomNavigation) */}
       {isMobileApp && (
         <MobileMenu
-          onNavigate={setRoute}
-          activeItem={route}
+          onNavigate={handleNavigate}
+          activeItem={currentRoute}
           userName={currentUser?.consultant_name || currentUser?.username}
           isAdmin={currentUser?.is_admin || false}
           onLogout={handleLogout}
@@ -327,6 +314,14 @@ function App() {
       />
     </div>
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 
