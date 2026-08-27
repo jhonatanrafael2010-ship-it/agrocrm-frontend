@@ -116,6 +116,8 @@ const Sales: React.FC = () => {
   const [filterPeriodYear, setFilterPeriodYear] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterDateStart, setFilterDateStart] = useState("");
+  const [filterDateEnd, setFilterDateEnd] = useState("");
 
   // Ordenação
   const [sortField, setSortField] = useState<SortField>("total_value");
@@ -230,20 +232,24 @@ const Sales: React.FC = () => {
       if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
       if (filterRegion && s.client_region !== filterRegion) return false;
       if (filterCategory && s.product_category !== filterCategory) return false;
+      if (filterDateStart && s.sale_date && s.sale_date < filterDateStart) return false;
+      if (filterDateEnd && s.sale_date && s.sale_date > filterDateEnd) return false;
       return true;
     });
-  }, [sales, filterPeriodType, filterPeriodYear, filterRegion, filterCategory]);
+  }, [sales, filterPeriodType, filterPeriodYear, filterRegion, filterCategory, filterDateStart, filterDateEnd]);
 
   // Dados para uma categoria específica ou visão geral
   function getCategoryData(category: string | null) {
     let relevantSales = sales;
 
-    // Aplica filtros de período e região
+    // Aplica filtros de período, região e data
     relevantSales = relevantSales.filter((s) => {
       if (filterPeriodType && s.period_type !== filterPeriodType) return false;
       if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
       if (filterRegion && s.client_region !== filterRegion) return false;
       if (category && s.product_category !== category) return false;
+      if (filterDateStart && s.sale_date && s.sale_date < filterDateStart) return false;
+      if (filterDateEnd && s.sale_date && s.sale_date > filterDateEnd) return false;
       return true;
     });
 
@@ -640,6 +646,26 @@ const Sales: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
+
+          <TextField
+            type="date"
+            label="Data Início"
+            value={filterDateStart}
+            onChange={(e) => setFilterDateStart(e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+
+          <TextField
+            type="date"
+            label="Data Fim"
+            value={filterDateEnd}
+            onChange={(e) => setFilterDateEnd(e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
         </Box>
       </Card>
     );

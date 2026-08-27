@@ -92,6 +92,9 @@ const Properties: React.FC = () => {
   const [clientSearch, setClientSearch] = useState("");
   const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
+  // Filtro de busca de cliente
+  const [filterClientSearch, setFilterClientSearch] = useState("");
+
   const [plotForm, setPlotForm] = useState({
     property_id: "",
     name: "",
@@ -140,6 +143,16 @@ const Properties: React.FC = () => {
     if (!q) return sorted.slice(0, 12);
     return sorted.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 12);
   }, [clients, clientSearch]);
+
+  // Propriedades filtradas por busca de cliente
+  const filteredProperties = useMemo(() => {
+    const q = filterClientSearch.trim().toLowerCase();
+    if (!q) return properties;
+    return properties.filter((p) => {
+      const client = clients.find((c) => c.id === p.client_id);
+      return client?.name.toLowerCase().includes(q);
+    });
+  }, [properties, clients, filterClientSearch]);
 
   async function fillCurrentLocation() {
     try {
@@ -422,9 +435,18 @@ const Properties: React.FC = () => {
             <Grid size={{ xs: 12, lg: 6 }}>
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    Propriedades
-                  </Typography>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Propriedades
+                    </Typography>
+                    <TextField
+                      placeholder="Buscar cliente..."
+                      value={filterClientSearch}
+                      onChange={(e) => setFilterClientSearch(e.target.value)}
+                      size="small"
+                      sx={{ width: 200 }}
+                    />
+                  </Box>
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
@@ -437,7 +459,7 @@ const Properties: React.FC = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {properties.map((p) => (
+                        {filteredProperties.map((p) => (
                           <TableRow key={p.id} hover>
                             <TableCell>
                               {clients.find((c) => c.id === p.client_id)?.name ?? p.client_id}
