@@ -742,7 +742,7 @@ const Sales: React.FC = () => {
                                       <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
                                       <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
                                       <TableCell sx={{ fontWeight: 600 }} align="right">Quantidade</TableCell>
-                                      <TableCell sx={{ fontWeight: 600 }} align="right">Valor</TableCell>
+                                      <TableCell sx={{ fontWeight: 600 }} align="right">Valor Unitário</TableCell>
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
@@ -755,7 +755,9 @@ const Sales: React.FC = () => {
                                         <TableCell align="right">
                                           {formatNumber(p.quantity)} {p.unit}
                                         </TableCell>
-                                        <TableCell align="right">{formatCurrency(p.value)}</TableCell>
+                                        <TableCell align="right">
+                                          {formatCurrency(p.quantity > 0 ? p.value / p.quantity : 0)}/{p.unit}
+                                        </TableCell>
                                       </TableRow>
                                     ))}
                                   </TableBody>
