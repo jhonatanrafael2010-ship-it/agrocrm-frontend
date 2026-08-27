@@ -85,7 +85,7 @@ type Consultant = { id: number; name: string };
 type Period = { type: string; year: string; label: string };
 
 type SortDirection = "asc" | "desc";
-type SortField = "sales_count" | "total_value" | "total_quantity" | "avg_value";
+type SortField = "sales_count" | "total_value" | "total_quantity" | "unit_value";
 
 const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; color: string; unit: string }> = {
   "Semente": { icon: <SeedIcon />, color: "#22c55e", unit: "Sacas" },
@@ -246,7 +246,7 @@ const Sales: React.FC = () => {
     const totalQuantity = relevantSales.reduce((sum, s) => sum + s.quantity, 0);
     const totalSales = relevantSales.length;
     const uniqueClients = new Set(relevantSales.map((s) => s.client_id)).size;
-    const avgValue = totalSales > 0 ? totalValue / totalSales : 0;
+    const unitValue = totalQuantity > 0 ? totalValue / totalQuantity : 0;
 
     // Agrupar por cliente
     const clientMap: Record<number, {
@@ -339,7 +339,7 @@ const Sales: React.FC = () => {
       totalQuantity,
       totalSales,
       uniqueClients,
-      avgValue,
+      unitValue,
       clientRanking,
       categoryMix,
       productRanking,
@@ -372,9 +372,9 @@ const Sales: React.FC = () => {
   ): T[] {
     return [...data].sort((a, b) => {
       let aVal: number, bVal: number;
-      if (sortField === "avg_value") {
-        aVal = a.sales_count > 0 ? a.total_value / a.sales_count : 0;
-        bVal = b.sales_count > 0 ? b.total_value / b.sales_count : 0;
+      if (sortField === "unit_value") {
+        aVal = a.total_quantity > 0 ? a.total_value / a.total_quantity : 0;
+        bVal = b.total_quantity > 0 ? b.total_value / b.total_quantity : 0;
       } else {
         aVal = a[sortField];
         bVal = b[sortField];
@@ -680,11 +680,11 @@ const Sales: React.FC = () => {
                   )}
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     <TableSortLabel
-                      active={sortField === "avg_value"}
-                      direction={sortField === "avg_value" ? sortDir : "desc"}
-                      onClick={() => handleSort("avg_value")}
+                      active={sortField === "unit_value"}
+                      direction={sortField === "unit_value" ? sortDir : "desc"}
+                      onClick={() => handleSort("unit_value")}
                     >
-                      Ticket Médio
+                      Valor Unitário
                     </TableSortLabel>
                   </TableCell>
                   <TableCell width={50}></TableCell>
@@ -715,7 +715,7 @@ const Sales: React.FC = () => {
                           <TableCell align="right">{formatNumber(c.total_quantity)}</TableCell>
                         )}
                         <TableCell align="right">
-                          {formatCurrency(c.sales_count > 0 ? c.total_value / c.sales_count : 0)}
+                          {formatCurrency(c.total_quantity > 0 ? c.total_value / c.total_quantity : 0)}
                         </TableCell>
                         <TableCell>
                           {c.products.length > 0 && (
@@ -1060,10 +1060,10 @@ const Sales: React.FC = () => {
                   <CardContent sx={{ py: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <BarChartIcon fontSize="small" />
-                      <Typography variant="caption">Ticket Médio</Typography>
+                      <Typography variant="caption">Valor Unitário Médio</Typography>
                     </Box>
                     <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                      {formatCurrency(data.avgValue)}
+                      {formatCurrency(data.unitValue)}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -1177,10 +1177,10 @@ const Sales: React.FC = () => {
                   <CardContent sx={{ py: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <BarChartIcon fontSize="small" />
-                      <Typography variant="caption">Ticket Médio</Typography>
+                      <Typography variant="caption">Valor Unitário Médio</Typography>
                     </Box>
                     <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5 }}>
-                      {formatCurrency(data.avgValue)}
+                      {formatCurrency(data.unitValue)}
                     </Typography>
                   </CardContent>
                 </Card>
