@@ -142,6 +142,7 @@ type Consultant = {
 type CityStats = {
   city: string;
   count: number;
+  totalArea: number;
   properties: PropertyMapItem[];
   avgLat: number;
   avgLng: number;
@@ -279,6 +280,7 @@ const PropertiesMap: React.FC = () => {
         cityMap[city] = {
           city,
           count: 0,
+          totalArea: 0,
           properties: [],
           avgLat: 0,
           avgLng: 0,
@@ -286,6 +288,7 @@ const PropertiesMap: React.FC = () => {
       }
 
       cityMap[city].count += 1;
+      cityMap[city].totalArea += prop.area_ha || 0;
       cityMap[city].properties.push(prop);
     }
 
@@ -620,7 +623,7 @@ const PropertiesMap: React.FC = () => {
                       </Badge>
                     </ListItemIcon>
                     <ListItemText
-                      primary={stats.city}
+                      primary={`${stats.city} (${stats.totalArea.toLocaleString("pt-BR")} ha)`}
                       secondary={`${stats.count} propriedade${stats.count > 1 ? "s" : ""}`}
                       slotProps={{
                         primary: { sx: { fontWeight: filterCity === stats.city ? 600 : 400 } },
