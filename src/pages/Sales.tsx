@@ -57,6 +57,8 @@ type Product = {
   name: string;
   category: string;
   default_unit: string;
+  culture: string | null;
+  seeds_per_ha: number | null;
   active: boolean;
 };
 
@@ -149,6 +151,8 @@ const Sales: React.FC = () => {
     name: "",
     category: "",
     default_unit: "",
+    culture: "",
+    seeds_per_ha: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -541,22 +545,35 @@ const Sales: React.FC = () => {
   // ============================================================
 
   function openProductModal() {
-    setProductForm({ name: "", category: "", default_unit: "" });
+    setProductForm({ name: "", category: "", default_unit: "", culture: "", seeds_per_ha: "" });
     setOpenProduct(true);
   }
 
   async function saveProduct() {
     if (!productForm.name || !productForm.category || !productForm.default_unit) {
-      notify.warning("Todos os campos são obrigatórios");
+      notify.warning("Nome, categoria e unidade são obrigatórios");
+      return;
+    }
+
+    if (productForm.category === "Semente" && productForm.default_unit === "BB" && !productForm.seeds_per_ha) {
+      notify.warning("Para sementes em BB, informe a população de sementes/ha");
       return;
     }
 
     setSubmitting(true);
     try {
+      const payload = {
+        name: productForm.name,
+        category: productForm.category,
+        default_unit: productForm.default_unit,
+        culture: productForm.culture || null,
+        seeds_per_ha: productForm.seeds_per_ha ? Number(productForm.seeds_per_ha) : null,
+      };
+
       const res = await fetch(`${API_BASE}products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productForm),
+        body: JSON.stringify(payload),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || `status ${res.status}`);
@@ -1291,6 +1308,8 @@ const Sales: React.FC = () => {
                     <TableCell sx={{ fontWeight: 600 }}>Nome</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Unidade</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Cultura</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>População</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1302,6 +1321,10 @@ const Sales: React.FC = () => {
                         <Chip label={p.category} size="small" />
                       </TableCell>
                       <TableCell>{p.default_unit}</TableCell>
+                      <TableCell>{p.culture || "-"}</TableCell>
+                      <TableCell>
+                        {p.seeds_per_ha ? `${formatNumber(p.seeds_per_ha)} sem/ha` : "-"}
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={p.active ? "Ativo" : "Inativo"}
@@ -1313,7 +1336,7 @@ const Sales: React.FC = () => {
                   ))}
                   {products.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                         <Typography color="text.secondary">Nenhum produto cadastrado</Typography>
                       </TableCell>
                     </TableRow>
@@ -1592,6 +1615,43 @@ const Sales: React.FC = () => {
                 </MenuItem>
               ))}
             </TextField>
+
+            {productForm.category === "Semente" && (
+              <>
+                <TextField
+                  select
+                  label="Cultura"
+                  value={productForm.culture}
+                  onChange={(e) => setProductForm((f) => ({ ...f, culture: e.target.value }))}
+                  fullWidth
+                  helperText="Cultura da semente (Soja, Milho, Algodão)"
+                >
+                  <MenuItem value="">Não especificada</MenuItem>
+                  {cultures.map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                {productForm.default_unit === "BB" && (
+                  <TextField
+                    label="População (sementes/ha)"
+                    type="number"
+                    value={productForm.seeds_per_ha}
+                    onChange={(e) => setProductForm((f) => ({ ...f, seeds_per_ha: e.target.value }))}
+                    fullWidth
+                    required
+                    helperText="Ex: 300000 (300 mil sementes/ha). BB = 3.000.000 sementes"
+                    slotProps={{
+                      input: {
+                        endAdornment: <InputAdornment position="end">sem/ha</InputAdornment>,
+                      },
+                    }}
+                  />
+                )}
+              </>
+            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

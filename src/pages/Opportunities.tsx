@@ -34,6 +34,16 @@ type Property = {
   area_ha: number | null;
 };
 
+type Product = {
+  id: number;
+  name: string;
+  category: string;
+  default_unit: string;
+  culture: string | null;
+  seeds_per_ha: number | null;
+  active: boolean;
+};
+
 type Sale = {
   id: number;
   client_id: number;
@@ -47,6 +57,7 @@ type Sale = {
   value: number | null;
   period_type: string;
   period_year: string;
+  culture: string | null;
 };
 
 type Client = {
@@ -62,17 +73,19 @@ type ClientOpportunity = {
   client_name: string;
   region: string | null;
   total_area_ha: number;
-  seed_potential_scs: number;
-  seed_sold_scs: number;
-  seed_opportunity_scs: number;
+  seed_potential: number;
+  seed_sold: number;
+  seed_opportunity: number;
   opportunity_percentage: number;
   coverage_percentage: number;
 };
 
-type SortField = "total_area_ha" | "seed_potential_scs" | "seed_sold_scs" | "seed_opportunity_scs" | "coverage_percentage";
+type SortField = "total_area_ha" | "seed_potential" | "seed_sold" | "seed_opportunity" | "coverage_percentage";
 type SortDirection = "asc" | "desc";
 
-const SEEDS_PER_HA = 1.067;
+const SEEDS_PER_HA_MILHO = 1.067;
+const BB_SEEDS = 3_000_000;
+const DEFAULT_SOJA_SEEDS_PER_HA = 300_000;
 
 const Opportunities: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -81,19 +94,23 @@ const Opportunities: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [periods, setPeriods] = useState<Period[]>([]);
 
   const [filterPeriodType, setFilterPeriodType] = useState("");
   const [filterPeriodYear, setFilterPeriodYear] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
 
-  const [sortField, setSortField] = useState<SortField>("seed_opportunity_scs");
+  const [sortField, setSortField] = useState<SortField>("seed_opportunity");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
 
   const regions = useMemo(() => {
     const uniqueRegions = new Set(clients.map((c) => c.region).filter(Boolean));
     return Array.from(uniqueRegions) as string[];
   }, [clients]);
+
+  const isSojaMode = filterPeriodType === "Safra";
+  const unitLabel = isSojaMode ? "ha" : "scs";
 
   useEffect(() => {
     loadData();
@@ -102,17 +119,19 @@ const Opportunities: React.FC = () => {
   async function loadData() {
     setLoading(true);
     try {
-      const [clientsRes, propertiesRes, salesRes, periodsRes] = await Promise.all([
+      const [clientsRes, propertiesRes, salesRes, periodsRes, productsRes] = await Promise.all([
         fetch(`${API_BASE}clients`),
         fetch(`${API_BASE}properties`),
         fetch(`${API_BASE}sales`),
         fetch(`${API_BASE}sales/periods`),
+        fetch(`${API_BASE}products`),
       ]);
 
       setClients(await clientsRes.json());
       setProperties(await propertiesRes.json());
       setSales(await salesRes.json());
       setPeriods(await periodsRes.json());
+      setProducts(await productsRes.json());
     } catch (err) {
       console.error(err);
       setError("Erro ao carregar dados");
@@ -120,6 +139,14 @@ const Opportunities: React.FC = () => {
       setLoading(false);
     }
   }
+
+  const productMap = useMemo(() => {
+    const map: Record<number, Product> = {};
+    for (const p of products) {
+      map[p.id] = p;
+    }
+    return map;
+  }, [products]);
 
   const opportunities = useMemo(() => {
     const clientMap: Record<number, ClientOpportunity> = {};
@@ -132,19 +159,47 @@ const Opportunities: React.FC = () => {
 
       if (totalArea === 0) continue;
 
-      const seedPotential = totalArea * SEEDS_PER_HA;
+      let seedPotential: number;
+      let seedSold: number;
 
-      const clientSeedSales = sales.filter((s) => {
-        if (s.client_id !== client.id) return false;
-        if (s.product_category !== "Semente") return false;
-        if (filterPeriodType && s.period_type !== filterPeriodType) return false;
-        if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
-        return true;
-      });
+      if (isSojaMode) {
+        seedPotential = totalArea;
 
-      const seedSold = clientSeedSales
-        .filter((s) => s.unit === "Sacas")
-        .reduce((sum, s) => sum + s.quantity, 0);
+        const clientSojaSales = sales.filter((s) => {
+          if (s.client_id !== client.id) return false;
+          if (s.product_category !== "Semente") return false;
+          if (filterPeriodType && s.period_type !== filterPeriodType) return false;
+          if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
+          if (s.unit !== "BB") return false;
+          const product = productMap[s.product_id];
+          if (product && product.culture && product.culture !== "Soja") return false;
+          return true;
+        });
+
+        let areaCovered = 0;
+        for (const sale of clientSojaSales) {
+          const product = productMap[sale.product_id];
+          const seedsPerHa = product?.seeds_per_ha || DEFAULT_SOJA_SEEDS_PER_HA;
+          const haPerBB = BB_SEEDS / seedsPerHa;
+          areaCovered += sale.quantity * haPerBB;
+        }
+        seedSold = areaCovered;
+      } else {
+        seedPotential = totalArea * SEEDS_PER_HA_MILHO;
+
+        const clientMilhoSales = sales.filter((s) => {
+          if (s.client_id !== client.id) return false;
+          if (s.product_category !== "Semente") return false;
+          if (filterPeriodType && s.period_type !== filterPeriodType) return false;
+          if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
+          if (s.unit !== "Sacas") return false;
+          const product = productMap[s.product_id];
+          if (product && product.culture && product.culture !== "Milho") return false;
+          return true;
+        });
+
+        seedSold = clientMilhoSales.reduce((sum, s) => sum + s.quantity, 0);
+      }
 
       const seedOpportunity = Math.max(0, seedPotential - seedSold);
       const coveragePercentage = seedPotential > 0 ? (seedSold / seedPotential) * 100 : 0;
@@ -155,16 +210,16 @@ const Opportunities: React.FC = () => {
         client_name: client.name,
         region: client.region,
         total_area_ha: totalArea,
-        seed_potential_scs: seedPotential,
-        seed_sold_scs: seedSold,
-        seed_opportunity_scs: seedOpportunity,
+        seed_potential: seedPotential,
+        seed_sold: seedSold,
+        seed_opportunity: seedOpportunity,
         coverage_percentage: coveragePercentage,
         opportunity_percentage: opportunityPercentage,
       };
     }
 
     return Object.values(clientMap);
-  }, [clients, properties, sales, filterPeriodType, filterPeriodYear, filterRegion]);
+  }, [clients, properties, sales, productMap, filterPeriodType, filterPeriodYear, filterRegion, isSojaMode]);
 
   const sortedOpportunities = useMemo(() => {
     return [...opportunities].sort((a, b) => {
@@ -177,12 +232,31 @@ const Opportunities: React.FC = () => {
   const totals = useMemo(() => {
     return {
       totalArea: opportunities.reduce((sum, o) => sum + o.total_area_ha, 0),
-      totalPotential: opportunities.reduce((sum, o) => sum + o.seed_potential_scs, 0),
-      totalSold: opportunities.reduce((sum, o) => sum + o.seed_sold_scs, 0),
-      totalOpportunity: opportunities.reduce((sum, o) => sum + o.seed_opportunity_scs, 0),
+      totalPotential: opportunities.reduce((sum, o) => sum + o.seed_potential, 0),
+      totalSold: opportunities.reduce((sum, o) => sum + o.seed_sold, 0),
+      totalOpportunity: opportunities.reduce((sum, o) => sum + o.seed_opportunity, 0),
       clientsCount: opportunities.length,
     };
   }, [opportunities]);
+
+  const totalBBSold = useMemo(() => {
+    if (!isSojaMode) return 0;
+    return sales
+      .filter((s) => {
+        if (s.product_category !== "Semente") return false;
+        if (filterPeriodType && s.period_type !== filterPeriodType) return false;
+        if (filterPeriodYear && s.period_year !== filterPeriodYear) return false;
+        if (s.unit !== "BB") return false;
+        const product = productMap[s.product_id];
+        if (product && product.culture && product.culture !== "Soja") return false;
+        if (filterRegion) {
+          const client = clients.find((c) => c.id === s.client_id);
+          if (client?.region !== filterRegion) return false;
+        }
+        return true;
+      })
+      .reduce((sum, s) => sum + s.quantity, 0);
+  }, [sales, productMap, clients, filterPeriodType, filterPeriodYear, filterRegion, isSojaMode]);
 
   const overallCoverage = totals.totalPotential > 0
     ? (totals.totalSold / totals.totalPotential) * 100
@@ -224,7 +298,9 @@ const Opportunities: React.FC = () => {
           Oportunidades
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Potencial de crescimento em sementes por cliente (1 ha = {SEEDS_PER_HA} scs)
+          {isSojaMode
+            ? "Potencial de crescimento em sementes de soja (área em ha, vendas em BB)"
+            : `Potencial de crescimento em sementes de milho (1 ha = ${SEEDS_PER_HA_MILHO} scs)`}
         </Typography>
       </Box>
 
@@ -320,7 +396,7 @@ const Opportunities: React.FC = () => {
                 <Typography variant="caption">Potencial</Typography>
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                {formatNumber(totals.totalPotential)} scs
+                {formatNumber(totals.totalPotential)} {unitLabel}
               </Typography>
             </CardContent>
           </Card>
@@ -330,11 +406,18 @@ const Opportunities: React.FC = () => {
             <CardContent sx={{ py: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <SeedIcon fontSize="small" />
-                <Typography variant="caption">Vendido</Typography>
+                <Typography variant="caption">
+                  {isSojaMode ? "Área Coberta" : "Vendido"}
+                </Typography>
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                {formatNumber(totals.totalSold)} scs
+                {formatNumber(totals.totalSold)} {unitLabel}
               </Typography>
+              {isSojaMode && (
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  ({formatNumber(totalBBSold)} BB)
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -346,7 +429,7 @@ const Opportunities: React.FC = () => {
                 <Typography variant="caption">Oportunidade</Typography>
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                {formatNumber(totals.totalOpportunity)} scs
+                {formatNumber(totals.totalOpportunity)} {unitLabel}
               </Typography>
             </CardContent>
           </Card>
@@ -380,10 +463,11 @@ const Opportunities: React.FC = () => {
         />
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
           <Typography variant="caption" color="text.secondary">
-            {formatNumber(totals.totalSold)} scs vendidos
+            {formatNumber(totals.totalSold)} {unitLabel} {isSojaMode ? "cobertos" : "vendidos"}
+            {isSojaMode && ` (${formatNumber(totalBBSold)} BB)`}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {formatNumber(totals.totalPotential)} scs potencial
+            {formatNumber(totals.totalPotential)} {unitLabel} potencial
           </Typography>
         </Box>
       </Card>
@@ -412,29 +496,29 @@ const Opportunities: React.FC = () => {
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     <TableSortLabel
-                      active={sortField === "seed_potential_scs"}
-                      direction={sortField === "seed_potential_scs" ? sortDir : "desc"}
-                      onClick={() => handleSort("seed_potential_scs")}
+                      active={sortField === "seed_potential"}
+                      direction={sortField === "seed_potential" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_potential")}
                     >
-                      Potencial (scs)
+                      Potencial ({unitLabel})
                     </TableSortLabel>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     <TableSortLabel
-                      active={sortField === "seed_sold_scs"}
-                      direction={sortField === "seed_sold_scs" ? sortDir : "desc"}
-                      onClick={() => handleSort("seed_sold_scs")}
+                      active={sortField === "seed_sold"}
+                      direction={sortField === "seed_sold" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_sold")}
                     >
-                      Vendido (scs)
+                      {isSojaMode ? `Coberto (${unitLabel})` : `Vendido (${unitLabel})`}
                     </TableSortLabel>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     <TableSortLabel
-                      active={sortField === "seed_opportunity_scs"}
-                      direction={sortField === "seed_opportunity_scs" ? sortDir : "desc"}
-                      onClick={() => handleSort("seed_opportunity_scs")}
+                      active={sortField === "seed_opportunity"}
+                      direction={sortField === "seed_opportunity" ? sortDir : "desc"}
+                      onClick={() => handleSort("seed_opportunity")}
                     >
-                      Oportunidade (scs)
+                      Oportunidade ({unitLabel})
                     </TableSortLabel>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="center">
@@ -455,23 +539,23 @@ const Opportunities: React.FC = () => {
                       <Chip
                         label={`#${idx + 1}`}
                         size="small"
-                        color={o.seed_opportunity_scs > 0 ? "warning" : "success"}
+                        color={o.seed_opportunity > 0 ? "warning" : "success"}
                       />
                     </TableCell>
                     <TableCell sx={{ fontWeight: 500 }}>{o.client_name}</TableCell>
                     <TableCell>{o.region || "-"}</TableCell>
                     <TableCell align="right">{formatNumber(o.total_area_ha)}</TableCell>
-                    <TableCell align="right">{formatNumber(o.seed_potential_scs)}</TableCell>
-                    <TableCell align="right">{formatNumber(o.seed_sold_scs)}</TableCell>
+                    <TableCell align="right">{formatNumber(o.seed_potential)}</TableCell>
+                    <TableCell align="right">{formatNumber(o.seed_sold)}</TableCell>
                     <TableCell align="right">
                       <Typography
                         component="span"
                         sx={{
                           fontWeight: 600,
-                          color: o.seed_opportunity_scs > 0 ? "warning.main" : "success.main",
+                          color: o.seed_opportunity > 0 ? "warning.main" : "success.main",
                         }}
                       >
-                        {formatNumber(o.seed_opportunity_scs)}
+                        {formatNumber(o.seed_opportunity)}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
