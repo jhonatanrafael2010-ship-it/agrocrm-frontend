@@ -15,6 +15,8 @@ import {
   ListItemText,
   ListItemIcon,
   Badge,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import {
   Satellite as SatelliteIcon,
@@ -25,9 +27,12 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Place as PlaceIcon,
+  Route as RouteIcon,
+  Visibility as ViewIcon,
 } from "@mui/icons-material";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Polyline } from "react-leaflet";
 import L from "leaflet";
+import RoutingPanel from "../components/RoutingPanel";
 import "leaflet/dist/leaflet.css";
 import { API_BASE } from "../config";
 import { fetchWithCache } from "../utils/offlineSync";
@@ -225,6 +230,11 @@ const PropertiesMap: React.FC = () => {
   const [centerCoords, setCenterCoords] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const mapInitializedRef = useRef(false);
 
+  // Modo roteirização
+  const [mapMode, setMapMode] = useState<"view" | "routing">("view");
+  const [selectedForRoute, setSelectedForRoute] = useState<Set<number>>(new Set());
+  const [routePolyline, setRoutePolyline] = useState<[number, number][]>([]);
+
   const defaultCenter: [number, number] = [-14.235, -51.9253];
 
   const loadData = async () => {
@@ -377,6 +387,74 @@ const PropertiesMap: React.FC = () => {
     mapInitializedRef.current = false;
   };
 
+  // Funções de roteirização
+  const handleToggleRouteSelect = (id: number) => {
+    setSelectedForRoute((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleClearRouteSelection = () => {
+    setSelectedForRoute(new Set());
+  };
+
+  const handleRouteCalculated = (polyline: string, _orderedIds: number[]) => {
+    // Decodifica polyline do Google
+    const decoded = decodePolyline(polyline);
+    setRoutePolyline(decoded);
+  };
+
+  const handleClearRoute = () => {
+    setRoutePolyline([]);
+  };
+
+  // Decodifica polyline encoded do Google
+  const decodePolyline = (encoded: string): [number, number][] => {
+    const points: [number, number][] = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
+
+    while (index < encoded.length) {
+      let b;
+      let shift = 0;
+      let result = 0;
+
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+
+      const dlat = result & 1 ? ~(result >> 1) : result >> 1;
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+
+      const dlng = result & 1 ? ~(result >> 1) : result >> 1;
+      lng += dlng;
+
+      points.push([lat / 1e5, lng / 1e5]);
+    }
+
+    return points;
+  };
+
+  const isPropertySelected = (id: number) => selectedForRoute.has(id);
+
   return (
     <Box sx={{ p: { xs: 1, md: 3 }, minHeight: "100vh", height: "auto" }}>
       {/* Header */}
@@ -393,7 +471,22 @@ const PropertiesMap: React.FC = () => {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Mapa de Propriedades
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <ToggleButtonGroup
+            value={mapMode}
+            exclusive
+            onChange={(_, v) => v && setMapMode(v)}
+            size="small"
+          >
+            <ToggleButton value="view">
+              <ViewIcon sx={{ mr: 0.5 }} fontSize="small" />
+              Visualizar
+            </ToggleButton>
+            <ToggleButton value="routing">
+              <RouteIcon sx={{ mr: 0.5 }} fontSize="small" />
+              Roteirizar
+            </ToggleButton>
+          </ToggleButtonGroup>
           <IconButton onClick={loadData} disabled={loading}>
             <RefreshIcon />
           </IconButton>
@@ -592,7 +685,26 @@ const PropertiesMap: React.FC = () => {
 
       {/* Layout: Painel lateral + Mapa */}
       <Box sx={{ display: "flex", gap: 2, height: { xs: "auto", md: "calc(100vh - 320px)" }, minHeight: 400 }}>
-        {/* Painel de Municípios */}
+        {/* Painel lateral - Municípios ou Roteirização */}
+        {mapMode === "routing" ? (
+          <Box
+            sx={{
+              width: { xs: "100%", md: 320 },
+              flexShrink: 0,
+              display: { xs: "block", md: "block" },
+              height: "100%",
+            }}
+          >
+            <RoutingPanel
+              properties={propertiesWithCoords}
+              selectedIds={selectedForRoute}
+              onToggleSelect={handleToggleRouteSelect}
+              onClearSelection={handleClearRouteSelection}
+              onRouteCalculated={handleRouteCalculated}
+              onClearRoute={handleClearRoute}
+            />
+          </Box>
+        ) : (
         <Card
           sx={{
             width: { xs: "100%", md: showCityPanel ? 280 : "auto" },
@@ -683,17 +795,20 @@ const PropertiesMap: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        )}
 
-        {/* Toggle painel mobile */}
-        <Box sx={{ display: { xs: "block", md: "none" }, mb: 1 }}>
-          <Button
-            size="small"
-            startIcon={showCityPanel ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            onClick={() => setShowCityPanel(!showCityPanel)}
-          >
-            {showCityPanel ? "Ocultar municípios" : "Mostrar municípios"}
-          </Button>
-        </Box>
+        {/* Toggle painel mobile - só no modo visualização */}
+        {mapMode === "view" && (
+          <Box sx={{ display: { xs: "block", md: "none" }, mb: 1 }}>
+            <Button
+              size="small"
+              startIcon={showCityPanel ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              onClick={() => setShowCityPanel(!showCityPanel)}
+            >
+              {showCityPanel ? "Ocultar municípios" : "Mostrar municípios"}
+            </Button>
+          </Box>
+        )}
 
         {/* Mapa */}
         <Card sx={{ flex: 1, position: "relative", minHeight: 400 }}>
@@ -735,16 +850,34 @@ const PropertiesMap: React.FC = () => {
                 />
               )}
 
+              {/* Polyline da rota calculada */}
+              {routePolyline.length > 0 && (
+                <Polyline
+                  positions={routePolyline}
+                  color="#2563eb"
+                  weight={4}
+                  opacity={0.8}
+                />
+              )}
+
               {propertiesWithCoords.map((prop) => {
                 const showLabel = currentZoom >= 10;
-                const markerColor = getMarkerColor(prop.last_visit?.days_ago ?? null);
+                const isSelected = isPropertySelected(prop.id);
+                const markerColor = mapMode === "routing" && isSelected
+                  ? "#2563eb"  // Azul quando selecionado para rota
+                  : getMarkerColor(prop.last_visit?.days_ago ?? null);
 
                 return (
                   <Marker
-                    key={`${prop.id}-${showLabel}`}
+                    key={`${prop.id}-${showLabel}-${isSelected}`}
                     position={[prop.latitude, prop.longitude]}
                     icon={createColoredIcon(markerColor, showLabel && prop.client_name ? prop.client_name : undefined)}
                     eventHandlers={{
+                      click: () => {
+                        if (mapMode === "routing") {
+                          handleToggleRouteSelect(prop.id);
+                        }
+                      },
                       mouseover: (e) => {
                         e.target.openPopup();
                       },
