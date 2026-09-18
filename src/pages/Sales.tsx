@@ -147,6 +147,7 @@ const Sales: React.FC = () => {
 
   // Modal de produto
   const [openProduct, setOpenProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productForm, setProductForm] = useState({
     name: "",
     category: "",
@@ -544,8 +545,20 @@ const Sales: React.FC = () => {
   // CRUD Produtos
   // ============================================================
 
-  function openProductModal() {
-    setProductForm({ name: "", category: "", default_unit: "", culture: "", seeds_per_ha: "" });
+  function openProductModal(product?: Product) {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        name: product.name,
+        category: product.category,
+        default_unit: product.default_unit,
+        culture: product.culture || "",
+        seeds_per_ha: product.seeds_per_ha ? String(product.seeds_per_ha) : "",
+      });
+    } else {
+      setEditingProduct(null);
+      setProductForm({ name: "", category: "", default_unit: "", culture: "", seeds_per_ha: "" });
+    }
     setOpenProduct(true);
   }
 
@@ -570,19 +583,29 @@ const Sales: React.FC = () => {
         seeds_per_ha: productForm.seeds_per_ha ? Number(productForm.seeds_per_ha) : null,
       };
 
-      const res = await fetch(`${API_BASE}products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res;
+      if (editingProduct) {
+        res = await fetch(`${API_BASE}products/${editingProduct.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch(`${API_BASE}products`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || `status ${res.status}`);
 
-      notify.success("Produto cadastrado");
+      notify.success(editingProduct ? "Produto atualizado" : "Produto cadastrado");
       setOpenProduct(false);
+      setEditingProduct(null);
       loadData();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erro ao cadastrar produto";
+      const message = err instanceof Error ? err.message : "Erro ao salvar produto";
       notify.error(message);
     } finally {
       setSubmitting(false);
@@ -890,7 +913,7 @@ const Sales: React.FC = () => {
           <Button
             variant="outlined"
             startIcon={<InventoryIcon />}
-            onClick={openProductModal}
+            onClick={() => openProductModal()}
             sx={{ textTransform: "none", fontWeight: 600 }}
           >
             Novo Produto
@@ -1311,6 +1334,7 @@ const Sales: React.FC = () => {
                     <TableCell sx={{ fontWeight: 600 }}>Cultura</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>População</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                    <TableCell align="right"></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1332,11 +1356,16 @@ const Sales: React.FC = () => {
                           color={p.active ? "success" : "default"}
                         />
                       </TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" color="primary" onClick={() => openProductModal(p)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {products.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                         <Typography color="text.secondary">Nenhum produto cadastrado</Typography>
                       </TableCell>
                     </TableRow>
@@ -1572,12 +1601,14 @@ const Sales: React.FC = () => {
       {/* Modal de Produto */}
       <Dialog
         open={openProduct}
-        onClose={() => setOpenProduct(false)}
+        onClose={() => { setOpenProduct(false); setEditingProduct(null); }}
         maxWidth="sm"
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Novo Produto</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {editingProduct ? "Editar Produto" : "Novo Produto"}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             <TextField
@@ -1655,7 +1686,7 @@ const Sales: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpenProduct(false)} color="inherit">
+          <Button onClick={() => { setOpenProduct(false); setEditingProduct(null); }} color="inherit">
             Cancelar
           </Button>
           <Button variant="contained" onClick={saveProduct} disabled={submitting}>
