@@ -124,6 +124,7 @@ type PropertyMapItem = {
   client_id: number;
   client_name: string;
   client_region: string | null;
+  sales_periods: string[];
   last_visit: {
     id: number;
     date: string | null;
@@ -192,6 +193,17 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
 
 type MapFilter = "all" | "recent" | "attention" | "late" | "critical" | "no_visit";
 
+const SALES_PERIODS = [
+  { value: "", label: "Todos" },
+  { value: "no_sale", label: "Sem venda" },
+  { value: "Safra 26/27", label: "Safra 26/27" },
+  { value: "Safra 27/28", label: "Safra 27/28" },
+  { value: "Safra 28/29", label: "Safra 28/29" },
+  { value: "Safrinha 27", label: "Safrinha 27" },
+  { value: "Safrinha 28", label: "Safrinha 28" },
+  { value: "Safrinha 29", label: "Safrinha 29" },
+];
+
 const PropertiesMap: React.FC = () => {
   const [properties, setProperties] = useState<PropertyMapItem[]>([]);
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -206,6 +218,7 @@ const PropertiesMap: React.FC = () => {
   });
   const [filterRegion, setFilterRegion] = useState("");
   const [filterCity, setFilterCity] = useState("");
+  const [filterSales, setFilterSales] = useState("");
   const [currentZoom, setCurrentZoom] = useState(5);
   const [showCityPanel, setShowCityPanel] = useState(true);
   const [centerTrigger, setCenterTrigger] = useState(0);
@@ -338,10 +351,19 @@ const PropertiesMap: React.FC = () => {
     return extractCity(prop.city_state) === filterCity;
   };
 
+  const filterBySales = (prop: PropertyMapItem): boolean => {
+    if (!filterSales) return true;
+    if (filterSales === "no_sale") {
+      return !prop.sales_periods || prop.sales_periods.length === 0;
+    }
+    return prop.sales_periods?.includes(filterSales) ?? false;
+  };
+
   const propertiesWithCoords = properties
     .filter((p) => p.latitude && p.longitude)
     .filter(filterByStatus)
-    .filter(filterByCity);
+    .filter(filterByCity)
+    .filter(filterBySales);
 
   const handleCityClick = (stats: CityStats) => {
     setFilterCity(stats.city);
@@ -439,7 +461,7 @@ const PropertiesMap: React.FC = () => {
           </TextField>
           <TextField
             select
-            label="Status"
+            label="Status Visita"
             value={filterStatus}
             onChange={(e) => {
               setFilterStatus(e.target.value as MapFilter);
@@ -454,6 +476,24 @@ const PropertiesMap: React.FC = () => {
             <MenuItem value="late">Atrasados (16-30 dias)</MenuItem>
             <MenuItem value="critical">Críticos (&gt; 30 dias)</MenuItem>
             <MenuItem value="no_visit">Sem visita</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Vendas"
+            value={filterSales}
+            onChange={(e) => {
+              setFilterSales(e.target.value);
+              mapInitializedRef.current = false;
+            }}
+            size="small"
+            sx={{ minWidth: 150 }}
+          >
+            {SALES_PERIODS.map((p) => (
+              <MenuItem key={p.value} value={p.value}>
+                {p.label}
+              </MenuItem>
+            ))}
           </TextField>
 
           <Box sx={{ flex: 1 }} />
