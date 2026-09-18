@@ -612,6 +612,21 @@ const Sales: React.FC = () => {
     }
   }
 
+  function deleteProduct(id: number) {
+    toastConfirm("Deseja excluir este produto? Se houver vendas vinculadas, ele será desativado.", async () => {
+      try {
+        const res = await fetch(`${API_BASE}products/${id}`, { method: "DELETE" });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.message || `status ${res.status}`);
+        notify.success(body.message || "Produto excluído");
+        loadData();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Erro ao excluir";
+        notify.error(message);
+      }
+    });
+  }
+
   function handleProductChange(productId: string) {
     setSaleForm((f) => {
       const product = products.find((p) => p.id === Number(productId));
@@ -1359,6 +1374,9 @@ const Sales: React.FC = () => {
                       <TableCell align="right">
                         <IconButton size="small" color="primary" onClick={() => openProductModal(p)}>
                           <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => deleteProduct(p.id)}>
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
