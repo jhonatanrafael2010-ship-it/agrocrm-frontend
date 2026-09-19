@@ -59,7 +59,7 @@ type RouteResult = {
     start_address: string;
     end_address: string;
   }[];
-  polyline: string;
+  coordinates: [number, number][];
 };
 
 type Props = {
@@ -67,7 +67,7 @@ type Props = {
   selectedIds: Set<number>;
   onToggleSelect: (id: number) => void;
   onClearSelection: () => void;
-  onRouteCalculated: (polyline: string, orderedIds: number[]) => void;
+  onRouteCalculated: (coordinates: [number, number][], orderedIds: number[]) => void;
   onClearRoute: () => void;
 };
 
@@ -152,7 +152,7 @@ const RoutingPanel: React.FC<Props> = ({
       }
 
       setRouteResult(data.route);
-      onRouteCalculated(data.route.polyline, data.route.optimized_order);
+      onRouteCalculated(data.route.coordinates, data.route.optimized_order);
       notify.success("Rota calculada!");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao calcular rota";
