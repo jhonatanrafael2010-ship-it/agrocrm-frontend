@@ -405,9 +405,18 @@ const PropertiesMap: React.FC = () => {
   };
 
   const handleRouteCalculated = (polyline: string, _orderedIds: number[]) => {
-    // Decodifica polyline do Google
-    const decoded = decodePolyline(polyline);
-    setRoutePolyline(decoded);
+    // Polyline pode vir como múltiplas polylines separadas por "|"
+    const polylines = polyline.split('|');
+    const allPoints: [number, number][] = [];
+
+    for (const p of polylines) {
+      if (p) {
+        const decoded = decodePolyline(p);
+        allPoints.push(...decoded);
+      }
+    }
+
+    setRoutePolyline(allPoints);
   };
 
   const handleClearRoute = () => {
