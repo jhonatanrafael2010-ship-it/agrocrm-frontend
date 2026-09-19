@@ -73,7 +73,11 @@ type Props = {
   selectedIds: Set<number>;
   onToggleSelect: (id: number) => void;
   onClearSelection: () => void;
-  onRouteCalculated: (coordinates: [number, number][], orderedIds: number[]) => void;
+  onRouteCalculated: (
+    coordinates: [number, number][],
+    orderedIds: number[],
+    info?: { distanceKm: number; duration: string }
+  ) => void;
   onClearRoute: () => void;
   viaPoints: Waypoint[];
   onAddViaPoint: (point: Waypoint) => void;
@@ -138,7 +142,7 @@ const RoutingPanel: React.FC<Props> = ({
     setCalculating(true);
     setError(null);
     setRouteResult(null);
-    onClearRoute();
+    onClearRoute();  // Limpa rota antiga do mapa antes de calcular
 
     try {
       const destinations = selectedProperties.map((p) => ({
@@ -166,7 +170,10 @@ const RoutingPanel: React.FC<Props> = ({
       }
 
       setRouteResult(data.route);
-      onRouteCalculated(data.route.coordinates, data.route.optimized_order);
+      onRouteCalculated(data.route.coordinates, data.route.optimized_order, {
+        distanceKm: data.route.total_distance_km,
+        duration: data.route.total_duration_formatted,
+      });
       notify.success("Rota calculada!");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao calcular rota";

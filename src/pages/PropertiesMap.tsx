@@ -245,6 +245,7 @@ const PropertiesMap: React.FC = () => {
   const [mapMode, setMapMode] = useState<"view" | "routing">("view");
   const [selectedForRoute, setSelectedForRoute] = useState<Set<number>>(new Set());
   const [routePolyline, setRoutePolyline] = useState<[number, number][]>([]);
+  const [routeInfo, setRouteInfo] = useState<{ distanceKm: number; duration: string } | null>(null);
   const [viaPoints, setViaPoints] = useState<{ lat: number; lng: number; name: string }[]>([]);
 
   const defaultCenter: [number, number] = [-14.235, -51.9253];
@@ -416,12 +417,18 @@ const PropertiesMap: React.FC = () => {
     setSelectedForRoute(new Set());
   };
 
-  const handleRouteCalculated = (coordinates: [number, number][], _orderedIds: number[]) => {
+  const handleRouteCalculated = (
+    coordinates: [number, number][],
+    _orderedIds: number[],
+    info?: { distanceKm: number; duration: string }
+  ) => {
     setRoutePolyline(coordinates);
+    setRouteInfo(info || null);
   };
 
   const handleClearRoute = () => {
     setRoutePolyline([]);
+    setRouteInfo(null);
   };
 
   const handleAddViaPoint = (point: { lat: number; lng: number; name: string }) => {
@@ -848,12 +855,21 @@ const PropertiesMap: React.FC = () => {
 
               {/* Polyline da rota calculada */}
               {routePolyline.length > 0 && (
-                <Polyline
-                  positions={routePolyline}
-                  color="#2563eb"
-                  weight={4}
-                  opacity={0.8}
-                />
+                <>
+                  <Polyline
+                    positions={routePolyline}
+                    color="#2563eb"
+                    weight={5}
+                    opacity={0.9}
+                  />
+                  {/* Borda branca para destaque */}
+                  <Polyline
+                    positions={routePolyline}
+                    color="white"
+                    weight={8}
+                    opacity={0.5}
+                  />
+                </>
               )}
 
               {/* Marcadores de pontos de passagem */}
@@ -952,6 +968,39 @@ const PropertiesMap: React.FC = () => {
               <MapCenterOnCity lat={centerCoords.lat} lng={centerCoords.lng} trigger={centerTrigger} />
               <ZoomTracker onZoomChange={setCurrentZoom} />
             </MapContainer>
+          )}
+
+          {/* Overlay de distância/tempo da rota */}
+          {routeInfo && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 20,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 1000,
+                bgcolor: "rgba(37, 99, 235, 0.95)",
+                color: "white",
+                px: 3,
+                py: 1.5,
+                borderRadius: 2,
+                boxShadow: 3,
+                display: "flex",
+                gap: 3,
+                alignItems: "center",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <RouteIcon />
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {routeInfo.distanceKm} km
+                </Typography>
+              </Box>
+              <Box sx={{ width: 1, height: 24, bgcolor: "rgba(255,255,255,0.3)" }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {routeInfo.duration}
+              </Typography>
+            </Box>
           )}
 
           {/* Toggle Mapa/Satélite */}
