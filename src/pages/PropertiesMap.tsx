@@ -198,6 +198,17 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
 
 type MapFilter = "all" | "recent" | "attention" | "late" | "critical" | "no_visit";
 
+function MapClickHandler({ onCtrlClick }: { onCtrlClick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+        onCtrlClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+}
+
 const SALES_PERIODS = [
   { value: "", label: "Todos" },
   { value: "no_sale", label: "Sem venda" },
@@ -234,6 +245,7 @@ const PropertiesMap: React.FC = () => {
   const [mapMode, setMapMode] = useState<"view" | "routing">("view");
   const [selectedForRoute, setSelectedForRoute] = useState<Set<number>>(new Set());
   const [routePolyline, setRoutePolyline] = useState<[number, number][]>([]);
+  const [viaPoints, setViaPoints] = useState<{ lat: number; lng: number; name: string }[]>([]);
 
   const defaultCenter: [number, number] = [-14.235, -51.9253];
 
@@ -410,6 +422,18 @@ const PropertiesMap: React.FC = () => {
 
   const handleClearRoute = () => {
     setRoutePolyline([]);
+  };
+
+  const handleAddViaPoint = (point: { lat: number; lng: number; name: string }) => {
+    setViaPoints((prev) => [...prev, point]);
+  };
+
+  const handleRemoveViaPoint = (index: number) => {
+    setViaPoints((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearViaPoints = () => {
+    setViaPoints([]);
   };
 
   const isPropertySelected = (id: number) => selectedForRoute.has(id);
@@ -661,6 +685,10 @@ const PropertiesMap: React.FC = () => {
               onClearSelection={handleClearRouteSelection}
               onRouteCalculated={handleRouteCalculated}
               onClearRoute={handleClearRoute}
+              viaPoints={viaPoints}
+              onAddViaPoint={handleAddViaPoint}
+              onRemoveViaPoint={handleRemoveViaPoint}
+              onClearViaPoints={handleClearViaPoints}
             />
           </Box>
         ) : (
@@ -809,6 +837,15 @@ const PropertiesMap: React.FC = () => {
                 />
               )}
 
+              {/* Handler para Ctrl+Clique no modo roteirização */}
+              {mapMode === "routing" && (
+                <MapClickHandler
+                  onCtrlClick={(lat, lng) => {
+                    handleAddViaPoint({ lat, lng, name: `Via ${viaPoints.length + 1}` });
+                  }}
+                />
+              )}
+
               {/* Polyline da rota calculada */}
               {routePolyline.length > 0 && (
                 <Polyline
@@ -818,6 +855,15 @@ const PropertiesMap: React.FC = () => {
                   opacity={0.8}
                 />
               )}
+
+              {/* Marcadores de pontos de passagem */}
+              {viaPoints.map((vp, idx) => (
+                <Marker
+                  key={`via-${idx}`}
+                  position={[vp.lat, vp.lng]}
+                  icon={createColoredIcon("#0ea5e9", `Via ${idx + 1}`)}
+                />
+              ))}
 
               {propertiesWithCoords.map((prop) => {
                 const showLabel = currentZoom >= 10;

@@ -62,6 +62,12 @@ type RouteResult = {
   coordinates: [number, number][];
 };
 
+type Waypoint = {
+  lat: number;
+  lng: number;
+  name: string;
+};
+
 type Props = {
   properties: PropertyMapItem[];
   selectedIds: Set<number>;
@@ -69,6 +75,10 @@ type Props = {
   onClearSelection: () => void;
   onRouteCalculated: (coordinates: [number, number][], orderedIds: number[]) => void;
   onClearRoute: () => void;
+  viaPoints: Waypoint[];
+  onAddViaPoint: (point: Waypoint) => void;
+  onRemoveViaPoint: (index: number) => void;
+  onClearViaPoints: () => void;
 };
 
 const RoutingPanel: React.FC<Props> = ({
@@ -78,6 +88,9 @@ const RoutingPanel: React.FC<Props> = ({
   onClearSelection,
   onRouteCalculated,
   onClearRoute,
+  viaPoints,
+  onRemoveViaPoint,
+  onClearViaPoints,
 }) => {
   const [origin, setOrigin] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [originInput, setOriginInput] = useState("");
@@ -142,6 +155,7 @@ const RoutingPanel: React.FC<Props> = ({
           origin: { ...origin },
           destinations,
           return_to_origin: returnToOrigin,
+          via_points: viaPoints,
         }),
       });
 
@@ -203,6 +217,7 @@ const RoutingPanel: React.FC<Props> = ({
     setError(null);
     onClearSelection();
     onClearRoute();
+    onClearViaPoints();
   };
 
   return (
@@ -318,8 +333,30 @@ const RoutingPanel: React.FC<Props> = ({
         )}
       </List>
 
+      {/* Pontos de passagem (via points) */}
+      {viaPoints.length > 0 && (
+        <Box sx={{ px: 2, py: 1, bgcolor: "action.hover" }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+            Pontos de Passagem ({viaPoints.length})
+          </Typography>
+          {viaPoints.map((vp, idx) => (
+            <Chip
+              key={idx}
+              label={vp.name || `Via ${idx + 1}`}
+              size="small"
+              onDelete={() => onRemoveViaPoint(idx)}
+              sx={{ mr: 0.5, mb: 0.5 }}
+              color="info"
+            />
+          ))}
+        </Box>
+      )}
+
       {/* Opções e ações */}
       <CardContent sx={{ pt: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+          Dica: Ctrl+Clique no mapa para adicionar ponto de passagem
+        </Typography>
         <FormControlLabel
           control={
             <Switch
