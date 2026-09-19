@@ -381,16 +381,32 @@ const RoutingPanel: React.FC<Props> = ({
           </Alert>
         )}
 
-        <Button
-          variant="contained"
-          fullWidth
-          startIcon={calculating ? <CircularProgress size={20} color="inherit" /> : <CalculateIcon />}
-          onClick={handleCalculateRoute}
-          disabled={calculating || !origin || selectedProperties.length === 0}
-          sx={{ mt: 2 }}
-        >
-          {calculating ? "Calculando..." : "Calcular Rota"}
-        </Button>
+        <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={calculating ? <CircularProgress size={20} color="inherit" /> : <CalculateIcon />}
+            onClick={handleCalculateRoute}
+            disabled={calculating || !origin || selectedProperties.length === 0}
+          >
+            {calculating ? "Calculando..." : "Calcular Rota"}
+          </Button>
+          {routeResult && (
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={() => {
+                setRouteResult(null);
+                onClearRoute();
+                onClearViaPoints();
+              }}
+              title="Limpar rota e via points"
+              sx={{ minWidth: 48, px: 1 }}
+            >
+              <ClearIcon />
+            </Button>
+          )}
+        </Box>
 
         {/* Resultado */}
         {routeResult && (
