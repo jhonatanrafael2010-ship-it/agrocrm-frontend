@@ -245,6 +245,7 @@ const PropertiesMap: React.FC = () => {
   const [mapMode, setMapMode] = useState<"view" | "routing">("view");
   const [selectedForRoute, setSelectedForRoute] = useState<Set<number>>(new Set());
   const [routePolyline, setRoutePolyline] = useState<[number, number][]>([]);
+  const [routeVersion, setRouteVersion] = useState(0);
   const [routeInfo, setRouteInfo] = useState<{ distanceKm: number; duration: string } | null>(null);
   const [viaPoints, setViaPoints] = useState<{ lat: number; lng: number; name: string }[]>([]);
 
@@ -424,11 +425,13 @@ const PropertiesMap: React.FC = () => {
   ) => {
     setRoutePolyline(coordinates);
     setRouteInfo(info || null);
+    setRouteVersion((v) => v + 1);
   };
 
   const handleClearRoute = () => {
     setRoutePolyline([]);
     setRouteInfo(null);
+    setRouteVersion((v) => v + 1);
   };
 
   const handleAddViaPoint = (point: { lat: number; lng: number; name: string }) => {
@@ -856,18 +859,21 @@ const PropertiesMap: React.FC = () => {
               {/* Polyline da rota calculada */}
               {routePolyline.length > 0 && (
                 <>
+                  {/* Borda branca para destaque (renderiza primeiro = fica por baixo) */}
                   <Polyline
-                    positions={routePolyline}
-                    color="#2563eb"
-                    weight={5}
-                    opacity={0.9}
-                  />
-                  {/* Borda branca para destaque */}
-                  <Polyline
+                    key={`route-border-v${routeVersion}`}
                     positions={routePolyline}
                     color="white"
                     weight={8}
                     opacity={0.5}
+                  />
+                  {/* Linha principal azul */}
+                  <Polyline
+                    key={`route-main-v${routeVersion}`}
+                    positions={routePolyline}
+                    color="#2563eb"
+                    weight={5}
+                    opacity={0.9}
                   />
                 </>
               )}
