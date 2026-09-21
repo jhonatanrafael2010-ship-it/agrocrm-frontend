@@ -30,7 +30,7 @@ import {
   Route as RouteIcon,
   Visibility as ViewIcon,
 } from "@mui/icons-material";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import RoutingPanel from "../components/RoutingPanel";
 import "leaflet/dist/leaflet.css";
@@ -197,6 +197,53 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
 }
 
 type MapFilter = "all" | "recent" | "attention" | "late" | "critical" | "no_visit";
+
+function RoutePolyline({ positions, version }: { positions: [number, number][]; version: number }) {
+  const map = useMap();
+  const polylineRef = useRef<L.Polyline | null>(null);
+  const borderRef = useRef<L.Polyline | null>(null);
+
+  useEffect(() => {
+    // Remove polylines anteriores
+    if (polylineRef.current) {
+      map.removeLayer(polylineRef.current);
+      polylineRef.current = null;
+    }
+    if (borderRef.current) {
+      map.removeLayer(borderRef.current);
+      borderRef.current = null;
+    }
+
+    // Cria novas polylines se tiver posições
+    if (positions.length > 0) {
+      // Borda branca (por baixo)
+      borderRef.current = L.polyline(positions, {
+        color: "white",
+        weight: 8,
+        opacity: 0.5,
+      }).addTo(map);
+
+      // Linha principal azul (por cima)
+      polylineRef.current = L.polyline(positions, {
+        color: "#2563eb",
+        weight: 5,
+        opacity: 0.9,
+      }).addTo(map);
+    }
+
+    // Cleanup quando o componente desmonta
+    return () => {
+      if (polylineRef.current) {
+        map.removeLayer(polylineRef.current);
+      }
+      if (borderRef.current) {
+        map.removeLayer(borderRef.current);
+      }
+    };
+  }, [positions, version, map]);
+
+  return null;
+}
 
 function MapClickHandler({ onCtrlClick }: { onCtrlClick: (lat: number, lng: number) => void }) {
   useMapEvents({
@@ -856,27 +903,8 @@ const PropertiesMap: React.FC = () => {
                 />
               )}
 
-              {/* Polyline da rota calculada */}
-              {routePolyline.length > 0 && (
-                <>
-                  {/* Borda branca para destaque (renderiza primeiro = fica por baixo) */}
-                  <Polyline
-                    key={`route-border-v${routeVersion}`}
-                    positions={routePolyline}
-                    color="white"
-                    weight={8}
-                    opacity={0.5}
-                  />
-                  {/* Linha principal azul */}
-                  <Polyline
-                    key={`route-main-v${routeVersion}`}
-                    positions={routePolyline}
-                    color="#2563eb"
-                    weight={5}
-                    opacity={0.9}
-                  />
-                </>
-              )}
+              {/* Polyline da rota calculada - usa componente que limpa layer anterior */}
+              <RoutePolyline positions={routePolyline} version={routeVersion} />
 
               {/* Marcadores de pontos de passagem */}
               {viaPoints.map((vp, idx) => (
