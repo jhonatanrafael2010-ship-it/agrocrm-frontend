@@ -142,6 +142,7 @@ const RoutingPanel: React.FC<Props> = ({
     setCalculating(true);
     setError(null);
     setRouteResult(null);
+    console.log("[RoutingPanel] Chamando onClearRoute antes de calcular");
     onClearRoute();  // Limpa rota antiga do mapa antes de calcular
 
     try {

@@ -202,15 +202,22 @@ function RoutePolyline({ positions, version }: { positions: [number, number][]; 
   const map = useMap();
 
   useEffect(() => {
-    // Remove TODAS as polylines existentes no mapa (limpeza agressiva)
+    console.log(`[RoutePolyline] version=${version}, positions=${positions.length}`);
+
+    // Conta e remove TODAS as polylines existentes no mapa
+    let removedCount = 0;
     map.eachLayer((layer) => {
       if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
         map.removeLayer(layer);
+        removedCount++;
       }
     });
+    console.log(`[RoutePolyline] Removidas ${removedCount} polylines`);
 
     // Cria novas polylines se tiver posições
     if (positions.length > 0) {
+      console.log(`[RoutePolyline] Criando novas polylines com ${positions.length} pontos`);
+
       // Borda branca (por baixo)
       L.polyline(positions, {
         color: "white",
@@ -455,15 +462,23 @@ const PropertiesMap: React.FC = () => {
     _orderedIds: number[],
     info?: { distanceKm: number; duration: string }
   ) => {
+    console.log(`[handleRouteCalculated] ${coordinates.length} coordenadas`);
     setRoutePolyline(coordinates);
     setRouteInfo(info || null);
-    setRouteVersion((v) => v + 1);
+    setRouteVersion((v) => {
+      console.log(`[handleRouteCalculated] version: ${v} -> ${v + 1}`);
+      return v + 1;
+    });
   };
 
   const handleClearRoute = () => {
+    console.log("[handleClearRoute] Limpando rota");
     setRoutePolyline([]);
     setRouteInfo(null);
-    setRouteVersion((v) => v + 1);
+    setRouteVersion((v) => {
+      console.log(`[handleClearRoute] version: ${v} -> ${v + 1}`);
+      return v + 1;
+    });
   };
 
   const handleAddViaPoint = (point: { lat: number; lng: number; name: string }) => {
