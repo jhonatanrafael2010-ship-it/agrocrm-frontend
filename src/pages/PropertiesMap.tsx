@@ -200,46 +200,31 @@ type MapFilter = "all" | "recent" | "attention" | "late" | "critical" | "no_visi
 
 function RoutePolyline({ positions, version }: { positions: [number, number][]; version: number }) {
   const map = useMap();
-  const polylineRef = useRef<L.Polyline | null>(null);
-  const borderRef = useRef<L.Polyline | null>(null);
 
   useEffect(() => {
-    // Remove polylines anteriores
-    if (polylineRef.current) {
-      map.removeLayer(polylineRef.current);
-      polylineRef.current = null;
-    }
-    if (borderRef.current) {
-      map.removeLayer(borderRef.current);
-      borderRef.current = null;
-    }
+    // Remove TODAS as polylines existentes no mapa (limpeza agressiva)
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+        map.removeLayer(layer);
+      }
+    });
 
     // Cria novas polylines se tiver posições
     if (positions.length > 0) {
       // Borda branca (por baixo)
-      borderRef.current = L.polyline(positions, {
+      L.polyline(positions, {
         color: "white",
         weight: 8,
         opacity: 0.5,
       }).addTo(map);
 
       // Linha principal azul (por cima)
-      polylineRef.current = L.polyline(positions, {
+      L.polyline(positions, {
         color: "#2563eb",
         weight: 5,
         opacity: 0.9,
       }).addTo(map);
     }
-
-    // Cleanup quando o componente desmonta
-    return () => {
-      if (polylineRef.current) {
-        map.removeLayer(polylineRef.current);
-      }
-      if (borderRef.current) {
-        map.removeLayer(borderRef.current);
-      }
-    };
   }, [positions, version, map]);
 
   return null;
