@@ -204,33 +204,40 @@ function RoutePolyline({ positions, version }: { positions: [number, number][]; 
   useEffect(() => {
     console.log(`[RoutePolyline] version=${version}, positions=${positions.length}`);
 
-    // Conta e remove TODAS as polylines existentes no mapa
-    let removedCount = 0;
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
-        map.removeLayer(layer);
-        removedCount++;
+    // Remove TODAS as layers que são polylines de rota (marcadas com _isRouteLine)
+    const layersToRemove: L.Layer[] = [];
+    map.eachLayer((layer: L.Layer & { _isRouteLine?: boolean }) => {
+      if (layer._isRouteLine) {
+        layersToRemove.push(layer);
       }
     });
-    console.log(`[RoutePolyline] Removidas ${removedCount} polylines`);
+
+    console.log(`[RoutePolyline] Encontradas ${layersToRemove.length} polylines para remover`);
+    layersToRemove.forEach((layer) => {
+      map.removeLayer(layer);
+    });
 
     // Cria novas polylines se tiver posições
     if (positions.length > 0) {
       console.log(`[RoutePolyline] Criando novas polylines com ${positions.length} pontos`);
 
       // Borda branca (por baixo)
-      L.polyline(positions, {
+      const border = L.polyline(positions, {
         color: "white",
         weight: 8,
         opacity: 0.5,
-      }).addTo(map);
+      });
+      (border as L.Polyline & { _isRouteLine?: boolean })._isRouteLine = true;
+      border.addTo(map);
 
       // Linha principal azul (por cima)
-      L.polyline(positions, {
+      const main = L.polyline(positions, {
         color: "#2563eb",
         weight: 5,
         opacity: 0.9,
-      }).addTo(map);
+      });
+      (main as L.Polyline & { _isRouteLine?: boolean })._isRouteLine = true;
+      main.addTo(map);
     }
   }, [positions, version, map]);
 
