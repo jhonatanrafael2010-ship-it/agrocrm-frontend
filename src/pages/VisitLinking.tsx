@@ -166,7 +166,10 @@ const VisitLinking: React.FC = () => {
       .filter((p) => clientPropertyIds.includes(p.property_id))
       .map((p) => p.id);
 
-    let result = plantings.filter((p) => p.plot_id && clientPlotIds.includes(p.plot_id));
+    let result = plantings.filter((p) =>
+      (p.plot_id && clientPlotIds.includes(p.plot_id)) ||
+      (p.client_id === Number(selectedClient))
+    );
 
     // Also include plantings that have visits from this client
     const plantingIdsFromVisits = new Set(
@@ -283,6 +286,7 @@ const VisitLinking: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plot_id: newCycleForm.plot_id ? Number(newCycleForm.plot_id) : null,
+          client_id: selectedClient || null,
           culture: newCycleForm.culture,
           variety: newCycleForm.variety || null,
           planting_date: newCycleForm.planting_date || null,
