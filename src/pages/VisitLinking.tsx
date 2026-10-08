@@ -56,6 +56,7 @@ type Plot = { id: number; name: string; property_id: number };
 type Planting = {
   id: number;
   plot_id: number | null;
+  client_id: number | null;
   culture: string | null;
   variety: string | null;
   planting_date: string | null;
